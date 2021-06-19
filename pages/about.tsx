@@ -1,4 +1,4 @@
-import * as React from "react";
+import { Fragment } from 'react';
 import {
   Box,
   Stack,
@@ -11,7 +11,6 @@ import {
   useColorMode,
   useColorModeValue
 } from "@chakra-ui/react";
-// import placeholder from "assets/images/placeholder.png";
 import { FaGraduationCap } from "react-icons/fa";
 import { BsFillBriefcaseFill } from "react-icons/bs";
 import {
@@ -22,6 +21,7 @@ import {
 import { MotionBox } from "../components/layout/motion";
 import { companies, institutes } from "../data/data";
 import Header from "../components/layout/header";
+import Meta from '../components/meta';
 
 interface CardProps {
   title: string;
@@ -113,66 +113,69 @@ const Card = (props: CardProps) => {
   );
 };
 
-const About = ({companies, institutes}) => {
+const About = ({ companies, institutes }) => {
   const { colorMode } = useColorMode();
 
   return (
-    <PageSlideFade>
-      <StaggerChildren>
-        <MotionBox>
+    <Fragment>
+      <Meta title='About' />
+      <PageSlideFade>
+        <StaggerChildren>
+          <MotionBox>
+            <Heading>
+              <Flex alignItems="center">
+                <Header underlineColor={TURQUOISE} mt={0} mb={0}>
+                  Career
+              </Header>
+                <Stack pl={3}>
+                  <Box as={BsFillBriefcaseFill} size="25px" />
+                </Stack>
+              </Flex>
+            </Heading>
+          </MotionBox>
+          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
+            {companies.map((company, index) => (
+              <MotionBox whileHover={{ y: -5 }} key={index}>
+                <Card
+                  key={index}
+                  title={company.title}
+                  role={company.role}
+                  skills={company.skills}
+                  period={company.period}
+                  logo={company.logo}
+                  colorMode={colorMode}
+                />
+              </MotionBox>
+            ))}
+          </VStack>
           <Heading>
             <Flex alignItems="center">
               <Header underlineColor={TURQUOISE} mt={0} mb={0}>
-                Career
-              </Header>
+                Education
+            </Header>
               <Stack pl={3}>
-                <Box as={BsFillBriefcaseFill} size="25px" />
+                <Box as={FaGraduationCap} size="25px" />
               </Stack>
             </Flex>
           </Heading>
-        </MotionBox>
-        <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
-          {companies.map((company, index) => (
-            <MotionBox whileHover={{ y: -5 }} key={index}>
-              <Card
-                key={index}
-                title={company.title}
-                role={company.role}
-                skills={company.skills}
-                period={company.period}
-                logo={company.logo}
-                colorMode={colorMode}
-              />
-            </MotionBox>
-          ))}
-        </VStack>
-        <Heading>
-          <Flex alignItems="center">
-            <Header underlineColor={TURQUOISE} mt={0} mb={0}>
-              Education
-            </Header>
-            <Stack pl={3}>
-              <Box as={FaGraduationCap} size="25px" />
-            </Stack>
-          </Flex>
-        </Heading>
-        <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
-          {institutes.map((institute, index) => (
-            <MotionBox whileHover={{ y: -5 }} key={index}>
-              <Card
-                key={index}
-                title={institute.title}
-                role={institute.role}
-                skills={institute.skills}
-                period={institute.period}
-                logo={institute.logo}
-                colorMode={colorMode}
-              />
-            </MotionBox>
-          ))}
-        </VStack>
-      </StaggerChildren>
-    </PageSlideFade>
+          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
+            {institutes.map((institute, index) => (
+              <MotionBox whileHover={{ y: -5 }} key={index}>
+                <Card
+                  key={index}
+                  title={institute.title}
+                  role={institute.role}
+                  skills={institute.skills}
+                  period={institute.period}
+                  logo={institute.logo}
+                  colorMode={colorMode}
+                />
+              </MotionBox>
+            ))}
+          </VStack>
+        </StaggerChildren>
+      </PageSlideFade>
+    </Fragment>
   );
 };
 

@@ -29,6 +29,7 @@ const NotebookPost = () => {
 
   return (
     <>
+      <Meta title='Blog' description='create Notebook app with react and chakraUI' />
       <VStack mt={0} mb={6} spacing={1} align="start">
         <Heading as="h1" fontSize="3xl" lineHeight="shorter" fontWeight="bold">
           {post.title}
