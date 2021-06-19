@@ -40,7 +40,6 @@ export const articles = [
     live: "https://ma-ahmad.github.io/notebook",
     published: "2 Apr 2021",
     readTime: "1 min read",
-    images: ['/assets/images/posts/notebook-app/img_1.png', '/assets/images/posts/notebook-app/img_2.png', '/assets/images/posts/notebook-app/img_3.png', '/assets/images/posts/notebook-app/img_4.png', '/assets/images/posts/notebook-app/img_5.png', '/assets/images/posts/notebook-app/img_6png'],
     views: "2210"
   },
   {
