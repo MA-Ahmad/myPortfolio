@@ -1,4 +1,3 @@
-import React from "react";
 import { SlideFade } from "@chakra-ui/react";
 import { MotionBox } from "./motion";
 

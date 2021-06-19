@@ -1,4 +1,3 @@
-import * as React from "react";
 import { VStack, SimpleGrid } from "@chakra-ui/react";
 import ProjectCard from "./card";
 import Header from "../../layout/header";

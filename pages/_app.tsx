@@ -1,4 +1,3 @@
-import '../styles/globals.css'
 import App, { AppProps } from 'next/app'
 import { ChakraProvider } from "@chakra-ui/react"
 import Layout from '../components/layout/layout';
