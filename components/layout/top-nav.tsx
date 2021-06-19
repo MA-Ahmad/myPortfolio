@@ -1,4 +1,3 @@
-import * as React from "react";
 import {
   Box,
   Flex,
@@ -101,13 +100,14 @@ export default function TopNav() {
           />
           <HStack spacing={8} alignItems={"center"}>
             <Box>
-              <Avatar
-                as={Link}
-                size={"sm"}
-                href={"/"}
-                // src={UserIcon}
-                src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
-              />
+              <NextLink href={'/'} passHref>
+                <Avatar
+                  as={Link}
+                  size={"sm"}
+                  // src={UserIcon}
+                  src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
+                />
+              </NextLink>
             </Box>
             <HStack
               as={"nav"}
