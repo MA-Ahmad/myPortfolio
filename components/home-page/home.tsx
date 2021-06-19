@@ -14,7 +14,7 @@ import {
 import { MotionBox, MotionFlex } from "../layout/motion";
 import Header from "../layout/header";
 import Projects from "./projects";
-import "./home.module.css";
+import classes from "./home.module.css";
 import NextLink from 'next/link'
 // import UserIcon from "assets/images/user_icon.png";
 
@@ -26,7 +26,6 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ projects }) => {
-// const Home = ({ projects }) => {
 
   return (
     <Flex direction="column" align="center">
@@ -73,7 +72,7 @@ const Home: React.FC<HomeProps> = ({ projects }) => {
             }
           }}
         >
-          <Header underlineColor={ORANGE} emoji="👋" mt={0} className="face">
+          <Header underlineColor={ORANGE} emoji="👋" mt={0} className={classes.face}>
             Hey!
           </Header>
           <Box as="h2" fontSize="2xl" fontWeight="400" textAlign="left">
