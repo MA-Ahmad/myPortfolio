@@ -6,7 +6,6 @@ import {
   forwardRef,
 } from "@chakra-ui/react";
 import { motion, isValidMotionProp } from "framer-motion";
-// import placeholder from "assets/images/placeholder.png";
 
 export const MotionBox = motion(
   forwardRef((props, ref) => {
@@ -27,17 +26,17 @@ export const MotionFlex = motion(
   })
 );
 
-// export const MotionImage = motion.custom(
-//   forwardRef((props, ref) => {
-//     const chakraProps = Object.fromEntries(
-//       Object.entries(props).filter(([key]) => !isValidMotionProp(key))
-//     );
-//     return (
-//         <Image
-//           ref={ref}
-//           fallbackSrc={placeholder}
-//           {...chakraProps}
-//         />
-//     );
-//   })
-// );
+export const MotionImage = motion(
+  forwardRef((props, ref) => {
+    const chakraProps = Object.fromEntries(
+      Object.entries(props).filter(([key]) => !isValidMotionProp(key))
+    );
+    return (
+        <Image
+          ref={ref}
+          fallbackSrc={'/assets/images/placeholder.png'}
+          {...chakraProps}
+        />
+    );
+  })
+);
