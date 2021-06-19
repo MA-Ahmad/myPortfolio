@@ -1,5 +1,3 @@
-import { images } from "./notebook-app/images";
-
 export const articles = [
   {
     title: "Built a attractive portfolio page with React, ChakraUi, and framerMotion",
@@ -42,7 +40,7 @@ export const articles = [
     live: "https://ma-ahmad.github.io/notebook",
     published: "2 Apr 2021",
     readTime: "1 min read",
-    images: images,
+    images: ['/assets/images/posts/notebook-app/img_1.png', '/assets/images/posts/notebook-app/img_2.png', '/assets/images/posts/notebook-app/img_3.png', '/assets/images/posts/notebook-app/img_4.png', '/assets/images/posts/notebook-app/img_5.png', '/assets/images/posts/notebook-app/img_6png'],
     views: "2210"
   },
   {
@@ -70,7 +68,7 @@ export const articles = [
     live: "https://ma-ahmad.github.io/notebook",
     published: "1 Apr 2021",
     readTime: "1 min read",
-    images: images,
+    images: ['/assets/images/posts/notebook-app/img_1.png', '/assets/images/posts/notebook-app/img_2.png', '/assets/images/posts/notebook-app/img_3.png', '/assets/images/posts/notebook-app/img_4.png', '/assets/images/posts/notebook-app/img_5.png', '/assets/images/posts/notebook-app/img_6png'],
     views: "120"
   },
   {
