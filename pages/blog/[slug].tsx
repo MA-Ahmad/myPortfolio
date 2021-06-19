@@ -22,6 +22,7 @@ import { BiLinkExternal } from "react-icons/bi";
 import { articles } from "../../data/posts/articles";
 import { getTagColor } from "../../components/layout/theme";
 import Carousel from "../../components/blog/carousel";
+import Meta from '../../components/meta';
 
 const NotebookPost = () => {
   const textColor = useColorModeValue("gray.500", "gray.200");

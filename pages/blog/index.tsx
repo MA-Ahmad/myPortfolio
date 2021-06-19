@@ -5,6 +5,7 @@ import PostCard from "../../components/blog/card";
 import { PageSlideFade, StaggerChildren } from "../../components/layout/page-transitions";
 import Header from "../../components/layout/header";
 import { MotionBox } from "../../components/layout/motion";
+import Meta from '../../components/meta';
 
 const TURQUOISE = "#06b6d4";
 
