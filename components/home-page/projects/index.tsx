@@ -22,7 +22,6 @@ const Projects: React.FC<ProjectsProps> = ({ projects }) => {
           {projects.map((project, index) => (
             <MotionBox whileHover={{ y: -5 }} key={index}>
               <ProjectCard
-                // key={project.id}
                 title={project.title}
                 description={project.desc}
                 blurHash={project.blurHash}
