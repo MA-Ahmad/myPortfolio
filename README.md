@@ -9,8 +9,8 @@ Nextjs portfolio
 
 ## Screens
 ![Home Screen](/public/assets/images/screens/home_page.png)
-![Skills Screen](/assets/images/screens/skills.png)
-![OpenSource Screen](/assets/images/screens/open_source.png)
+![Skills Screen](/public/assets/images/screens/skills.png)
+![OpenSource Screen](/public/assets/images/screens/open_source.png)
 
 ## License
 
