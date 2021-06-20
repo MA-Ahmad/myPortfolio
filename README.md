@@ -8,7 +8,7 @@ Nextjs portfolio
 - [react icons](https://react-icons.github.io/react-icons/)
 
 ## Screens
-![Home Screen](/assets/images/screens/home_page.png)
+![Home Screen](/public/assets/images/screens/home_page.png)
 ![Skills Screen](/assets/images/screens/skills.png)
 ![OpenSource Screen](/assets/images/screens/open_source.png)
 
