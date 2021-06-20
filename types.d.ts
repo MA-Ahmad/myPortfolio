@@ -14,6 +14,9 @@ type project = {
     desc: string;
     link: string;
     views: string;
+    external: boolean;
+    isNew: boolean;
+    readTime: string;
     published: string;
     tags: string[];
     github_url: string;

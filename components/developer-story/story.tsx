@@ -36,6 +36,7 @@ const MyStory = ({ companies, institutes }) => {
             <StoryTimeline
               icon={BsFillBriefcaseFill}
               index={index}
+              key={index}
             >
               {" "}
               <HStack>
@@ -97,7 +98,7 @@ const MyStory = ({ companies, institutes }) => {
               </StoryTimeline>
               {institute.awards &&
                 institute.awards.map((award, index1) => (
-                  <StoryTimeline icon={FaAward} index={index1 + index + 1}>
+                  <StoryTimeline icon={FaAward} index={index1 + index + 1} key={index1}>
                     {" "}
                     <HStack>
                       <IconButton

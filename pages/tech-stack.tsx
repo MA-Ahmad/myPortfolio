@@ -78,7 +78,7 @@ const TechStack = ({ skills }) => {
                   onClick={() => filterSkills("")}
                 >
                   <HStack spacing={1}>
-                    <Icon as={AiTwotoneThunderbolt} weight="fill" />
+                    <Icon as={AiTwotoneThunderbolt} />
                     <Text>All</Text>
                   </HStack>
                 </Tab>
@@ -94,7 +94,7 @@ const TechStack = ({ skills }) => {
                   onClick={() => filterSkills("development")}
                 >
                   <HStack spacing={1}>
-                    <Icon as={BiDesktop} weight="fill" />
+                    <Icon as={BiDesktop} />
                     <Text>Web Development</Text>
                   </HStack>
                 </Tab>
@@ -110,7 +110,7 @@ const TechStack = ({ skills }) => {
                   onClick={() => filterSkills("design")}
                 >
                   <HStack spacing={1}>
-                    <Icon as={GiSpiderWeb} weight="fill" />
+                    <Icon as={GiSpiderWeb} />
                     <Text>Web Design</Text>
                   </HStack>
                 </Tab>
@@ -126,7 +126,7 @@ const TechStack = ({ skills }) => {
                   onClick={() => filterSkills("devops")}
                 >
                   <HStack spacing={1}>
-                    <Icon as={AiOutlineCloudServer} weight="fill" />
+                    <Icon as={AiOutlineCloudServer} />
                     <Text>Devops</Text>
                   </HStack>
                 </Tab>
@@ -145,7 +145,7 @@ const TechStack = ({ skills }) => {
                           name={tool.name}
                           description={tool.description}
                           image={tool.image}
-                          platform={"web"}
+                          // platform={"web"}
                           link={tool.link}
                         />
                       ))}
@@ -165,7 +165,7 @@ const TechStack = ({ skills }) => {
                           name={tool.name}
                           description={tool.description}
                           image={tool.image}
-                          platform={"web"}
+                          // platform={"web"}
                           link={tool.link}
                         />
                       ))}
@@ -185,7 +185,7 @@ const TechStack = ({ skills }) => {
                           name={tool.name}
                           description={tool.description}
                           image={tool.image}
-                          platform={"web"}
+                          // platform={"web"}
                           link={tool.link}
                         />
                       ))}
@@ -205,7 +205,7 @@ const TechStack = ({ skills }) => {
                           name={tool.name}
                           description={tool.description}
                           image={tool.image}
-                          platform={"web"}
+                          // platform={"web"}
                           link={tool.link}
                         />
                       ))}

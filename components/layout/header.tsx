@@ -3,7 +3,7 @@ import { PropsWithChildren } from 'react';
 import UnderlinedText from '../ui/underlined-text';
 
 interface Props extends BoxProps {
-  underlineColor: string;
+  underlineColor?: string;
   emoji?: string;
 }
 

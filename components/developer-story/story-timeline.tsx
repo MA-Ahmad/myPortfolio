@@ -34,7 +34,6 @@ export const StoryTimeline: React.FC<StoryTimelineProps> = ({
   const open = () => setIsOpen(!isOpen);
   const close = () => setIsOpen(false);
   const color = useColorModeValue("gray.700", "gray.200");
-  let place = index % 2 === 0 ? "right" : "left";
 
   return (
     <Flex minH={20} {...props}>
@@ -43,7 +42,7 @@ export const StoryTimeline: React.FC<StoryTimelineProps> = ({
           returnFocusOnClose={false}
           isOpen={isOpen}
           onClose={close}
-          placement={place}
+          placement={index % 2 === 0 ? "right" : "left"}
           closeOnBlur={false}
           // variant="responsive"
           width={["9.3rem", "13rem", "15rem", "100%"]}

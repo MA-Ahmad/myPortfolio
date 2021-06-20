@@ -32,7 +32,7 @@ const swipePower = (offset: number, velocity: number) => {
 };
 
 interface BtnProps {
-  icon: IconType;
+  icon: any;
   as: IconType;
   isRight: boolean;
   right?: string;

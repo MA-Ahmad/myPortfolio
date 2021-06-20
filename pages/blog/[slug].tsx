@@ -102,7 +102,7 @@ const NotebookPost = () => {
           <Button
             ml={2}
             variant="outline"
-            size={["sm"]}
+            size={"sm"}
             color={useColorModeValue("green.600", "green.200")}
             bg={useColorModeValue("white", "gray.800")}
             leftIcon={<BiLinkExternal size={18} />}
@@ -114,7 +114,7 @@ const NotebookPost = () => {
           <Button
             ml={2}
             variant="outline"
-            size={["sm"]}
+            size={"sm"}
             color={useColorModeValue("green.600", "green.200")}
             bg={useColorModeValue("white", "gray.800")}
             leftIcon={<FiGithub size={18} />}

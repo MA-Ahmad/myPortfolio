@@ -20,7 +20,7 @@ const LiveData = () => {
     if (isLargerThan720) {
       columnWidth = 300;
     } else {
-      columnWidth = "100%";
+      // columnWidth = "100%";
     }
   }
 
@@ -40,14 +40,15 @@ const LiveData = () => {
         </SimpleGrid>
       ) : (
         <Box mt={4}>
-          <StackGrid columnWidth={columnWidth}>
+          <StackGrid columnWidth={!isLargerThan982 && !isLargerThan720 ? '100%' : columnWidth}>
             {repos?.map((repo, index) => (
               <RepositoryCard
+                key={index}
                 title={repo.name}
                 description={repo.description}
                 language={repo.language}
                 url={repo.svn_url}
-                created_at={repo.created_at}
+                // created_at={repo.created_at}
                 stargazers_count={repo.stargazers_count}
                 forks_count={repo.forks_count}
               />

@@ -38,17 +38,21 @@ const mobileLinks = [
   { name: "Open Source", path: "/open-source" },
   { name: "Blog", path: "/blog" },
   { name: "Tech Stack", path: "/tech-stack" },
-  { name: "Developer Story", path: "/story-timeline" }
+  { name: "Developer Story", path: "/developer-story" }
 ];
 
 interface NavLinkProps {
-  index?: string;
+  index?: number;
   name: string;
   path: string;
   onClose: () => void;
 }
 
 const NavLink = (props: NavLinkProps) => {
+  const link = {
+    bg: useColorModeValue("gray.200", "gray.900"),
+    color: useColorModeValue("blue.500", "blue.200")
+  }
   return (
     <NextLink href={props.path} passHref>
       <Link
@@ -57,10 +61,10 @@ const NavLink = (props: NavLinkProps) => {
         rounded={"md"}
         _hover={{
           textDecoration: "none",
-          bg: useColorModeValue("gray.200", "gray.900")
+          bg: link.bg
         }}
         _activeLink={{
-          color: useColorModeValue("blue.500", "blue.200")
+          color: link.color
         }}
         onClick={() => props.onClose()}
         // to={props.path}
@@ -148,7 +152,7 @@ export default function TopNav() {
                             <Icon
                               as={AiTwotoneThunderbolt}
                               size={18}
-                              color={useColorModeValue("blue.500", "blue.200")}
+                              color={menuProps.color}
                             />
                             <Text>Tech Stack</Text>
                           </HStack>
@@ -162,10 +166,7 @@ export default function TopNav() {
                               <Icon
                                 as={BsBook}
                                 size={18}
-                                color={useColorModeValue(
-                                  "blue.500",
-                                  "blue.200"
-                                )}
+                                color={menuProps.color}
                               />
                               <Text>Open Source</Text>
                             </HStack>
@@ -179,10 +180,7 @@ export default function TopNav() {
                               <Icon
                                 as={MdTimeline}
                                 size={18}
-                                color={useColorModeValue(
-                                  "blue.500",
-                                  "blue.200"
-                                )}
+                                color={menuProps.color}
                               />
                               <Text>Developer Story</Text>
                             </HStack>
@@ -196,10 +194,7 @@ export default function TopNav() {
                               <Icon
                                 as={BsCheckCircle}
                                 size={18}
-                                color={useColorModeValue(
-                                  "blue.500",
-                                  "blue.200"
-                                )}
+                                color={menuProps.color}
                               />
                               <Text>Achievements</Text>
                             </HStack>
@@ -239,6 +234,7 @@ export default function TopNav() {
             <Stack as={"nav"} spacing={4}>
               {mobileLinks.map((link, index) => (
                 <NavLink
+                  key={index}
                   index={index}
                   name={link.name}
                   path={link.path}

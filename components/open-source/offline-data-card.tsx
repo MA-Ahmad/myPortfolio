@@ -35,7 +35,7 @@ interface RepositoryCardProps {
   live: string;
   stars: string;
   fork: string;
-  created: string;
+  created?: string;
 }
 const RepositoryCard = (props: RepositoryCardProps) => {
   const {
@@ -159,8 +159,8 @@ const RepositoryCard = (props: RepositoryCardProps) => {
             <Flex justifyContent={"space-between"} width="100%">
               <Box>
                 <HStack spacing="1">
-                  {technologies.map(tech => (
-                    <Tag size="sm" colorScheme={getTagColor(tech)}>
+                  {technologies.map((tech, index) => (
+                    <Tag key={index} size="sm" colorScheme={getTagColor(tech)}>
                       <Text fontSize={["0.55rem", "inherit", "inherit"]}>
                         {tech}
                       </Text>

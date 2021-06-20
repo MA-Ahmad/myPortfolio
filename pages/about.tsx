@@ -30,7 +30,7 @@ interface CardProps {
   period: string;
   logo: string;
   colorMode: string;
-  alt: string;
+  alt?: string;
 }
 
 const TURQUOISE = "#06b6d4";
