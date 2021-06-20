@@ -15,8 +15,8 @@ import {
 } from "@chakra-ui/react";
 import NextLink from 'next/link'
 import { FaEye } from "react-icons/fa";
-import { getTagColor } from "../layout/theme";
-import { CardTransition } from "../layout/page-transitions";
+import { getTagColor } from "../ui/theme";
+import { CardTransition } from "../ui/page-transitions";
 
 export interface PostCardProps {
   article: article;

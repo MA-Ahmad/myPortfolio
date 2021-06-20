@@ -19,14 +19,14 @@ import {
 import { GiHamburgerMenu } from "react-icons/gi";
 import { AiOutlineClose } from "react-icons/ai";
 import { FaGithub } from "react-icons/fa";
-import { ColorModeSwitcher } from "./ColorModeSwitcher";
+import { ColorModeSwitcher } from "../ui/ColorModeSwitcher";
 // import UserIcon from "assets/images/user_icon.png";
 import { AiTwotoneThunderbolt } from "react-icons/ai";
 import { BiChevronDown } from "react-icons/bi";
 import { BsCheckCircle } from "react-icons/bs";
 import { MdTimeline } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
-import NextLink from 'next/link'
+import NextLink from "next/link";
 
 const webLinks = [
   { name: "About", path: "/about" },
@@ -39,7 +39,6 @@ const mobileLinks = [
   { name: "Blog", path: "/blog" },
   { name: "Tech Stack", path: "/tech-stack" },
   { name: "Developer Story", path: "/story-timeline" }
-
 ];
 
 interface NavLinkProps {
@@ -64,7 +63,7 @@ const NavLink = (props: NavLinkProps) => {
           color: useColorModeValue("blue.500", "blue.200")
         }}
         onClick={() => props.onClose()}
-      // to={props.path}
+        // to={props.path}
       >
         {props.name}
       </Link>
@@ -100,7 +99,7 @@ export default function TopNav() {
           />
           <HStack spacing={8} alignItems={"center"}>
             <Box>
-              <NextLink href={'/'} passHref>
+              <NextLink href={"/"} passHref>
                 <Avatar
                   as={Link}
                   size={"sm"}
@@ -123,80 +122,93 @@ export default function TopNav() {
                 />
               ))}
               <Menu isLazy>
-                <MenuButton
-                  as={Button}
-                  variant="ghost"
-                  size="sm"
-                  px={2}
-                  py={1.5}
-                  fontSize={"1em"}
-                  rounded={"md"}
-                  height={"auto "}
-                  _hover={menuProps}
-                  _expanded={menuProps}
-                  _focus={{ boxShadow: "outline" }}
-                  rightIcon={<BiChevronDown size={18} />}
-                >
-                  Links
-                </MenuButton>
-                <MenuList zIndex={5}>
-                  <NextLink href={'/tech-stack'} passHref>
-                    <Link>
-                      <MenuItem>
-                        <HStack>
-                          <Icon
-                            as={AiTwotoneThunderbolt}
-                            size={18}
-                            color={useColorModeValue("blue.500", "blue.200")}
-                          />
-                          <Text>Tech Stack</Text>
-                        </HStack>
-                      </MenuItem>
-                    </Link>
-                  </NextLink>
-                  <NextLink href={'/open-source'} passHref>
-                    <Link>
-                      <MenuItem>
-                        <HStack>
-                          <Icon
-                            as={BsBook}
-                            size={18}
-                            color={useColorModeValue("blue.500", "blue.200")}
-                          />
-                          <Text>Open Source</Text>
-                        </HStack>
-                      </MenuItem>
-                    </Link>
-                  </NextLink>
-                  <NextLink href={'/story-timeline'} passHref>
-                    <Link>
-                      <MenuItem>
-                        <HStack>
-                          <Icon
-                            as={MdTimeline}
-                            size={18}
-                            color={useColorModeValue("blue.500", "blue.200")}
-                          />
-                          <Text>Developer Story</Text>
-                        </HStack>
-                      </MenuItem>
-                    </Link>
-                  </NextLink>
-                  <NextLink href={'/achievements'} passHref>
-                    <Link>
-                      <MenuItem>
-                        <HStack>
-                          <Icon
-                            as={BsCheckCircle}
-                            size={18}
-                            color={useColorModeValue("blue.500", "blue.200")}
-                          />
-                          <Text>Achievements</Text>
-                        </HStack>
-                      </MenuItem>
-                    </Link>
-                  </NextLink>
-                </MenuList>
+                {({ isOpen, onClose }) => (
+                  <>
+                    <MenuButton
+                      as={Button}
+                      variant="ghost"
+                      size="sm"
+                      px={2}
+                      py={1.5}
+                      fontSize={"1em"}
+                      rounded={"md"}
+                      height={"auto "}
+                      _hover={menuProps}
+                      _expanded={menuProps}
+                      _focus={{ boxShadow: "outline" }}
+                      rightIcon={<BiChevronDown size={18} />}
+                    >
+                      Links
+                    </MenuButton>
+                    <MenuList zIndex={5}>
+                      <NextLink href={"/tech-stack"} passHref>
+                        <Link onClick={onClose}>
+                        <MenuItem>
+                          <HStack>
+                            <Icon
+                              as={AiTwotoneThunderbolt}
+                              size={18}
+                              color={useColorModeValue("blue.500", "blue.200")}
+                            />
+                            <Text>Tech Stack</Text>
+                          </HStack>
+                        </MenuItem>
+                        </Link>
+                      </NextLink>
+                      <NextLink href={"/open-source"} passHref>
+                        <Link onClick={onClose}>
+                          <MenuItem>
+                            <HStack>
+                              <Icon
+                                as={BsBook}
+                                size={18}
+                                color={useColorModeValue(
+                                  "blue.500",
+                                  "blue.200"
+                                )}
+                              />
+                              <Text>Open Source</Text>
+                            </HStack>
+                          </MenuItem>
+                        </Link>
+                      </NextLink>
+                      <NextLink href={"/story-timeline"} passHref>
+                        <Link onClick={onClose}>
+                          <MenuItem>
+                            <HStack>
+                              <Icon
+                                as={MdTimeline}
+                                size={18}
+                                color={useColorModeValue(
+                                  "blue.500",
+                                  "blue.200"
+                                )}
+                              />
+                              <Text>Developer Story</Text>
+                            </HStack>
+                          </MenuItem>
+                        </Link>
+                      </NextLink>
+                      <NextLink href={"/achievements"} passHref>
+                        <Link onClick={onClose}>
+                          <MenuItem>
+                            <HStack>
+                              <Icon
+                                as={BsCheckCircle}
+                                size={18}
+                                color={useColorModeValue(
+                                  "blue.500",
+                                  "blue.200"
+                                )}
+                              />
+                              <Text>Achievements</Text>
+                            </HStack>
+                          </MenuItem>
+                        </Link>
+                      </NextLink>
+                    </MenuList>
+                  </>
+                )}
               </Menu>
             </HStack>
           </HStack>

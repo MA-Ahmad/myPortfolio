@@ -2,10 +2,10 @@ import { Fragment } from 'react';
 import { Stack } from "@chakra-ui/react";
 import { articles } from "../../data/posts/articles";
 import PostCard from "../../components/blog/card";
-import { PageSlideFade, StaggerChildren } from "../../components/layout/page-transitions";
+import { PageSlideFade, StaggerChildren } from "../../components/ui/page-transitions";
 import Header from "../../components/layout/header";
-import { MotionBox } from "../../components/layout/motion";
-import Meta from '../../components/meta';
+import { MotionBox } from "../../components/ui/motion";
+import Meta from '../../components/layout/meta';
 
 const TURQUOISE = "#06b6d4";
 

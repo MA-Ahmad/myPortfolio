@@ -10,7 +10,7 @@ import {
   ListItem,
   useColorModeValue
 } from "@chakra-ui/react";
-import { MotionBox, MotionFlex } from "../layout/motion";
+import { MotionBox, MotionFlex } from "../ui/motion";
 import Header from "../layout/header";
 import Projects from "./projects";
 import classes from "./home.module.css";

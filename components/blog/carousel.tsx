@@ -3,7 +3,7 @@ import { IconButton, Box, Flex } from "@chakra-ui/react";
 import { BiLeftArrowAlt, BiRightArrowAlt } from "react-icons/bi";
 import { AnimatePresence } from "framer-motion";
 import { IconType } from "react-icons/lib/cjs";
-import { MotionImage } from "../layout/motion";
+import { MotionImage } from "../ui/motion";
 
 const variants = {
   enter: (direction: number) => {

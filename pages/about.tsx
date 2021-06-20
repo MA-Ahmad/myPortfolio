@@ -17,11 +17,11 @@ import {
   PageSlideFade,
   StaggerChildren,
   CardTransition
-} from "../components/layout/page-transitions";
-import { MotionBox } from "../components/layout/motion";
+} from "../components/ui/page-transitions";
+import { MotionBox } from "../components/ui/motion";
 import { companies, institutes } from "../data/data";
 import Header from "../components/layout/header";
-import Meta from '../components/meta';
+import Meta from '../components/layout/meta';
 
 interface CardProps {
   title: string;

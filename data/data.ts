@@ -1,28 +1,3 @@
-// import PhaedraLogo from "assets/images/logos/phaedra.jpeg";
-// import BrainxLogo from "assets/images/logos/brainxtech.png";
-// import CodenyaLogo from "assets/images/logos/codenya.png";
-// import BrainplowLogo from "assets/images/logos/brainplow.jpg";
-// import UniLogo from "assets/images/logos/fast.png";
-// import figma from "assets/images/skills/figma.png";
-// import vscode from "assets/images/skills/vscode.png";
-// import react from "assets/images/skills/react.png";
-// import ruby from "assets/images/skills/ruby.png";
-// import rails from "assets/images/skills/rails.png";
-// import javascript from "assets/images/skills/javascript.png";
-// import typescript from "assets/images/skills/typescript.png";
-// import html5 from "assets/images/skills/html-5.png";
-// import css3 from "assets/images/skills/css3.png";
-// import python from "assets/images/skills/python.png";
-// import bootstrap from "assets/images/skills/bootstrap.png";
-// import postgres from "assets/images/skills/postgresql.png";
-// import redis from "assets/images/skills/redis.png";
-// import mysql from "assets/images/skills/mysql.png";
-// import heroku from "assets/images/skills/heroku.png";
-// import docean from "assets/images/skills/digital-ocean.png";
-// import aws from "assets/images/skills/aws.png";
-// import nginx from "assets/images/skills/nginx.png";
-
-
 export const companies = [
   {
     title: "Phaedra Solutions",
@@ -30,7 +5,6 @@ export const companies = [
     role: "Senior Software Engineer",
     skills: ["ruby", "rails", "typescript", "javascript", "react", "aws"],
     period: "2019 - Present",
-    // logo: PhaedraLogo
     logo: '/assets/images/logos/phaedra.jpeg'
   },
   {
@@ -40,7 +14,6 @@ export const companies = [
     skills: ["ruby", "rails", "javascript", "python"],
     period: "2018 - 2019",
     logo: '/assets/images/logos/brainxtech.png'
-    // logo: BrainxLogo
   },
   {
     title: "Codenya Studio",
@@ -49,7 +22,6 @@ export const companies = [
     skills: ["ruby", "rails", "python", "typescript", "react", "aws"],
     period: "2018 - Present",
     logo: '/assets/images/logos/codenya.png'
-    // logo: CodenyaLogo
   },
   {
     title: "Brainplow",
@@ -58,7 +30,6 @@ export const companies = [
     skills: ["javascript", "python", "angular"],
     period: "2017 - 2018",
     logo: '/assets/images/logos/brainplow.jpg'
-    // logo: BrainplowLogo
   }
 ];
 
@@ -72,7 +43,6 @@ export const institutes = [
     period: "2013 - 2017",
     startingYear: "2013",
     logo: '/assets/images/logos/fast.png',
-    // logo: UniLogo,
     awards: [
       {
         title: "Speed Programming Battle",
@@ -106,131 +76,131 @@ export const institutes = [
   }
 ];
 
-// export const skills = [
-//   {
-//     name: "Ruby on Rails",
-//     description: "Web development",
-//     link: "https://rubyonrails.org/",
-//     type: "development",
-//     image: rails
-//   },
-//   {
-//     name: "React",
-//     description: "Web development",
-//     link: "https://reactjs.org/",
-//     type: "development",
-//     image: react
-//   },
-//   {
-//     name: "Ruby",
-//     description: "Web development, scrapping",
-//     link: "https://www.ruby-lang.org/en/",
-//     type: "development",
-//     image: ruby
-//   },
-//   {
-//     name: "Python",
-//     description: "Web development, scrapping",
-//     link: "https://www.python.org/",
-//     type: "development",
-//     image: python
-//   },
-//   {
-//     name: "Javascript",
-//     description: "Web development",
-//     link: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-//     type: "development",
-//     image: javascript
-//   },
-//   {
-//     name: "Typescript",
-//     description: "Web development",
-//     link: "https://www.typescriptlang.org/",
-//     type: "development",
-//     image: typescript
-//   },
-//   {
-//     name: "Html5",
-//     description: "Web layouts",
-//     link: "https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5",
-//     type: "development",
-//     image: html5
-//   },
-//   {
-//     name: "Css3",
-//     description: "Web design",
-//     link: "https://developer.mozilla.org/en-US/docs/Web/CSS",
-//     type: "design",
-//     image: css3
-//   },
-//   {
-//     name: "Bootstrap",
-//     description: "Web design",
-//     link: "https://getbootstrap.com/",
-//     type: "design",
-//     image: bootstrap
-//   },
-//   {
-//     name: "Postgres",
-//     description: "Database",
-//     link: "https://www.postgresql.org/",
-//     type: "database",
-//     image: postgres
-//   },
-//   {
-//     name: "Mysql",
-//     description: "Database",
-//     link: "https://www.mysql.com/",
-//     type: "database",
-//     image: mysql
-//   },
-//   {
-//     name: "Redis",
-//     description: "Database",
-//     link: "https://redis.io/",
-//     type: "database",
-//     image: redis
-//   },
-//   {
-//     name: "Heroku",
-//     description: "Devops",
-//     link: "https://www.heroku.com/",
-//     type: "devops",
-//     image: heroku
-//   },
-//   {
-//     name: "AWS",
-//     description: "Devops",
-//     link: "https://aws.amazon.com/",
-//     type: "devops",
-//     image: aws
-//   },
-//   {
-//     name: "Digital Ocean",
-//     description: "Devops",
-//     link: "https://www.digitalocean.com/",
-//     type: "devops",
-//     image: docean
-//   },
-//   {
-//     name: "Nginx",
-//     description: "Web server",
-//     link: "https://www.nginx.com/",
-//     type: "devops",
-//     image: nginx
-//   },
-//   {
-//     name: "Visual Studio Code",
-//     description: "Code editor of choice",
-//     link: "https://code.visualstudio.com/",
-//     type: "development",
-//     image: vscode
-//   },
-//   {
-//     name: "Figma",
-//     description: "Collaborative Design",
-//     link: "https://www.figma.com/",
-//     type: "design",
-//     image: figma
-//   }
-// ];
+export const skillsArray = [
+  {
+    name: "Ruby on Rails",
+    description: "Web development",
+    link: "https://rubyonrails.org/",
+    type: "development",
+    image: '/assets/images/skills/rails.png'
+  },
+  {
+    name: "React",
+    description: "Web development",
+    link: "https://reactjs.org/",
+    type: "development",
+    image: '/assets/images/skills/react.png'
+  },
+  {
+    name: "Ruby",
+    description: "Web development, scrapping",
+    link: "https://www.ruby-lang.org/en/",
+    type: "development",
+    image: '/assets/images/skills/ruby.png'
+  },
+  {
+    name: "Python",
+    description: "Web development, scrapping",
+    link: "https://www.python.org/",
+    type: "development",
+    image: '/assets/images/skills/python.png'
+  },
+  {
+    name: "Javascript",
+    description: "Web development",
+    link: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+    type: "development",
+    image: '/assets/images/skills/javascript.png'
+  },
+  {
+    name: "Typescript",
+    description: "Web development",
+    link: "https://www.typescriptlang.org/",
+    type: "development",
+    image: '/assets/images/skills/typescript.png'
+  },
+  {
+    name: "Html5",
+    description: "Web layouts",
+    link: "https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5",
+    type: "development",
+    image: '/assets/images/skills/html-5.png'
+  },
+  {
+    name: "Css3",
+    description: "Web design",
+    link: "https://developer.mozilla.org/en-US/docs/Web/CSS",
+    type: "design",
+    image: '/assets/images/skills/css3.png'
+  },
+  {
+    name: "Bootstrap",
+    description: "Web design",
+    link: "https://getbootstrap.com/",
+    type: "design",
+    image: '/assets/images/skills/bootstrap.png'
+  },
+  {
+    name: "Postgres",
+    description: "Database",
+    link: "https://www.postgresql.org/",
+    type: "database",
+    image: '/assets/images/skills/postgresql.png'
+  },
+  {
+    name: "Mysql",
+    description: "Database",
+    link: "https://www.mysql.com/",
+    type: "database",
+    image: '/assets/images/skills/mysql.png'
+  },
+  {
+    name: "Redis",
+    description: "Database",
+    link: "https://redis.io/",
+    type: "database",
+    image: '/assets/images/skills/redis.png'
+  },
+  {
+    name: "Heroku",
+    description: "Devops",
+    link: "https://www.heroku.com/",
+    type: "devops",
+    image: '/assets/images/skills/heroku.png'
+  },
+  {
+    name: "AWS",
+    description: "Devops",
+    link: "https://aws.amazon.com/",
+    type: "devops",
+    image: 'assets/images/skills/aws.png'
+  },
+  {
+    name: "Digital Ocean",
+    description: "Devops",
+    link: "https://www.digitalocean.com/",
+    type: "devops",
+    image: '/assets/images/skills/digital-ocean.png'
+  },
+  {
+    name: "Nginx",
+    description: "Web server",
+    link: "https://www.nginx.com/",
+    type: "devops",
+    image: '/assets/images/skills/nginx.png'
+  },
+  {
+    name: "Visual Studio Code",
+    description: "Code editor of choice",
+    link: "https://code.visualstudio.com/",
+    type: "development",
+    image: '/assets/images/skills/vscode.png'
+  },
+  {
+    name: "Figma",
+    description: "Collaborative Design",
+    link: "https://www.figma.com/",
+    type: "design",
+    image: '/assets/images/skills/figma.png'
+  }
+];
