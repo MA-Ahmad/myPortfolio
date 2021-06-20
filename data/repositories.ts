@@ -1,18 +1,8 @@
-import blog1 from "../assets/images/repositories/blog_1.png";
-import blog2 from "../assets/images/repositories/blog_2.png";
-import blog3 from "../assets/images/repositories/blog_3.png";
-import portfolio from "../assets/images/repositories/portfolio.png";
-import portfoliov2 from "../assets/images/repositories/portfolio-v2.png";
-import quickstart from "../assets/images/repositories/quickstart.jpeg";
-import cardportfolio from "../assets/images/repositories/cardportfolio.jpeg";
-import imgGallery from "../assets/images/repositories/image_gallery.png";
-import notebook from "../assets/images/repositories/notebook_app.png";
-
 export const repositories = [
   {
     title: "Portfolio1",
     description: "Personal portfolio app to show my skills and experience.",
-    cover: portfoliov2,
+    cover: '/assets/images/repositories/portfolio-v2.png',
     technologies: ["react", "chakraUi"],
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
@@ -23,7 +13,7 @@ export const repositories = [
   {
     title: "Portfolio2",
     description: "Personal portfolio app to show my skills and experience.",
-    cover: portfolio,
+    cover: '/assets/images/repositories/portfolio.png',
     technologies: ["react", "chakraUi"],
     url: "https://github.com/MA-Ahmad/portfolio",
     live: "https://mahmad.me/",
@@ -33,7 +23,7 @@ export const repositories = [
   {
     title: "Card portfolio",
     description: "A portfolio template.",
-    cover: cardportfolio,
+    cover: '/assets/images/repositories/cardportfolio.jpeg',
     technologies: ["react", "typescript", "chakraUI"],
     url: "https://github.com/MA-Ahmad/card-portfolio",
     live: "https://ma-ahmad.github.io/card-portfolio",
@@ -44,7 +34,7 @@ export const repositories = [
     title: "Notebook",
     description:
       "This is a notebook app which will help you to crate notes for your daily work.",
-    cover: notebook,
+    cover: '/assets/images/repositories/notebook_app.png',
     technologies: ["react", "typescript", "chakraUI"],
     url: "https://github.com/MA-Ahmad/notebook",
     live: "https://ma-ahmad.github.io/notebook",
@@ -57,7 +47,7 @@ export const repositories = [
     description:
       "A React Blog App built by using libraries like ChakraUI, Formik.",
     technologies: ["react", "chakraUi", "formik"],
-    cover: blog1,
+    cover: '/assets/images/repositories/blog_1.png',
     url: "https://github.com/MA-Ahmad/reactBlog",
     live: "https://ma-ahmad.github.io/reactBlog",
     blurHash: "LMMaw^IV~pxu00%LRjNGAIIVadt6",
@@ -67,7 +57,7 @@ export const repositories = [
   {
     title: "Blog App (front-end)",
     description: "React frontend of a blog app with rails on backend.",
-    cover: blog2,
+    cover: '/assets/images/repositories/blog_2.png',
     technologies: ["react", "rails", "chakraUi"],
     url: "https://github.com/MA-Ahmad/blog-app-react-frontend",
     live: "https://blog-frontend-react.herokuapp.com",
@@ -78,7 +68,7 @@ export const repositories = [
     title: "Image Gallery",
     description:
       "Simple gallery with images from the pixabay API. Tailwind css is built into workflow with postcss and autoprefixer.",
-    cover: imgGallery,
+    cover: '/assets/images/repositories/image_gallery.png',
     technologies: ["react", "tailwindCss"],
     url: "https://github.com/MA-Ahmad/react-image-gallery",
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
@@ -87,7 +77,7 @@ export const repositories = [
   {
     title: "Blogify",
     description: "A simple react+rails(RR) CRUD app with tailwindcss.",
-    cover: blog3,
+    cover: '/assets/images/repositories/blog_3.png',
     technologies: ["rails", "tailwindCss"],
     url: "https://github.com/MA-Ahmad/react_rails_blog",
     live: "https://react-on-rails-blog.herokuapp.com",
@@ -97,7 +87,7 @@ export const repositories = [
   {
     title: "Rails template",
     description: "A rails app template built with tailwindcss.",
-    cover: quickstart,
+    cover: '/assets/images/repositories/quickstart.jpeg',
     technologies: ["rails", "tailwindCss"],
     url: "https://github.com/MA-Ahmad/quickstart-rails-tailwind",
     live: "https://quickstart-rails-tailwind.herokuapp.com",
