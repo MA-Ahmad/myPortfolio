@@ -21,6 +21,8 @@
     "react-icons": "^4.2.0",
     "react-palette": "^1.0.2",
     "react-progressive-image": "^0.6.0",
+    "react-stack-grid": "^0.7.1",
+    "use-http": "^1.0.21",
     "use-sound": "^4.0.0"
   },
   "devDependencies": {
