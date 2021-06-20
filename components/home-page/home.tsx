@@ -141,7 +141,7 @@ const Home: React.FC<HomeProps> = ({ projects }) => {
                 </NextLink>
               </ListItem>
               <ListItem>
-                <NextLink href={'/story-timeline'} passHref>
+                <NextLink href={'/developer-story'} passHref>
                   <Link>
                     Story page
                 </Link>

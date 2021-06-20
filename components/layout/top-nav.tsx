@@ -172,7 +172,7 @@ export default function TopNav() {
                           </MenuItem>
                         </Link>
                       </NextLink>
-                      <NextLink href={"/story-timeline"} passHref>
+                      <NextLink href={"/developer-story"} passHref>
                         <Link onClick={onClose}>
                           <MenuItem>
                             <HStack>
