@@ -7,8 +7,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "24",
-    fork: "4"
+    stars: "25",
+    fork: "5"
   },
   {
     title: "Portfolio2",
@@ -18,7 +18,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio",
     live: "https://mahmad.me/",
     blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
-    stars: "4"
+    stars: "8"
   },
   {
     title: "Card portfolio",
