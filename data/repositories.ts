@@ -7,8 +7,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "27",
-    fork: "5"
+    stars: "28",
+    fork: "6"
   },
   {
     title: "Portfolio2",
@@ -18,7 +18,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio",
     live: "https://mahmad.me/",
     blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
-    stars: "8"
+    stars: "10"
   },
   {
     title: "Card portfolio",
@@ -28,7 +28,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/card-portfolio",
     live: "https://ma-ahmad.github.io/card-portfolio",
     blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
-    stars: "5"
+    stars: "7"
   },
   {
     title: "Notebook",
@@ -39,7 +39,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/notebook",
     live: "https://ma-ahmad.github.io/notebook",
     blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
-    stars: "12",
+    stars: "13",
     fork: "3"
   },
   {
@@ -92,7 +92,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/quickstart-rails-tailwind",
     live: "https://quickstart-rails-tailwind.herokuapp.com",
     blurHash: "LLPGmg?wRPS~D%D%ozxa00?G-;R%",
-    stars: "5"
+    stars: "6"
   },
   // {
   //   title: "Video-to-text",
