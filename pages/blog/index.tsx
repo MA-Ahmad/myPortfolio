@@ -6,6 +6,9 @@ import { PageSlideFade, StaggerChildren } from "../../components/ui/page-transit
 import Header from "../../components/layout/header";
 import { MotionBox } from "../../components/ui/motion";
 import Meta from '../../components/layout/meta';
+import { GetStaticProps } from 'next'
+import { getAllArticles } from '../../lib/devto'
+
 
 const TURQUOISE = "#06b6d4";
 
@@ -31,12 +34,19 @@ const Posts = ({ articles }) => {
   );
 };
 
-export function getStaticProps() {
-  return {
-    props: {
-      articles
-    },
-  };
+// export function getStaticProps() {
+//   return {
+//     props: {
+//       articles
+//     },
+//   };
+// }
+
+export const getStaticProps: GetStaticProps = async () => {
+  const articles = await getAllArticles()
+  console.log(articles)
+  // Pass articles to the page via props
+  return { props: { articles } }
 }
 
 export default Posts;
