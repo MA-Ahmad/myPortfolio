@@ -1,6 +1,6 @@
 import { Fragment } from 'react';
 import { Stack } from "@chakra-ui/react";
-import { articles } from "../../data/posts/articles";
+// import { articles } from "../../data/posts/articles";
 import PostCard from "../../components/blog/card";
 import { PageSlideFade, StaggerChildren } from "../../components/ui/page-transitions";
 import Header from "../../components/layout/header";
@@ -44,7 +44,6 @@ const Posts = ({ articles }) => {
 
 export const getStaticProps: GetStaticProps = async () => {
   const articles = await getAllArticles()
-  console.log(articles)
   // Pass articles to the page via props
   return { props: { articles } }
 }
