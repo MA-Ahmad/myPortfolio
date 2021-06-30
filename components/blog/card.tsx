@@ -10,21 +10,25 @@ import {
   Icon,
   Flex,
   Image,
-  Badge,
-  Box
 } from "@chakra-ui/react";
-import NextLink from 'next/link'
-import { FaEye } from "react-icons/fa";
+import NextLink from "next/link";
+import { AiOutlineLike } from "react-icons/ai";
+import { FaRegCommentDots } from "react-icons/fa";
 import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
+import IArticle from "../../interfaces/IArticle";
+import moment from "moment";
 
-export interface PostCardProps {
-  article: article;
+interface IProps {
+  article: IArticle;
 }
 
-const PostCard: React.SFC<PostCardProps> = ({ article }) => {
+const PostCard: React.SFC<IProps> = ({ article }) => {
   const textColor = useColorModeValue("gray.500", "gray.200");
-  const devIcon = useColorModeValue('/assets/images/logos/dev.png', '/assets/images/logos/dev_white.png');
+  const devIcon = useColorModeValue(
+    "/assets/images/logos/dev.png",
+    "/assets/images/logos/dev_white.png"
+  );
 
   return (
     <CardTransition>
@@ -39,63 +43,32 @@ const PostCard: React.SFC<PostCardProps> = ({ article }) => {
         bg={useColorModeValue("white", "gray.800")}
         align="left"
       >
-        {article.external ? (
-          <Tooltip hasArrow label="Dev.to" placement="top">
-            <Image
-              src={devIcon}
-              width="2rem"
-              height="2rem"
-              position="absolute"
-              color="#cbd5e0"
-              right="0.5rem"
-              top="-14px"
-            />
-          </Tooltip>
-        ) : (
-            <Tooltip hasArrow label="mahmad.me" placement="top">
-              <Box position="absolute" color="#cbd5e0" right="0.5rem" top="-14px">
-                <Badge ml="1" variant="solid" colorScheme="blackAlpha">
-                  Website
-              </Badge>
-              </Box>
-            </Tooltip>
-          )}
+        <Tooltip hasArrow label="Dev.to" placement="top">
+          <Image
+            src={devIcon}
+            width="2rem"
+            height="2rem"
+            position="absolute"
+            color="#cbd5e0"
+            right="0.5rem"
+            top="-14px"
+          />
+        </Tooltip>
+
         <Heading fontSize="lg" align="left" mt={0}>
-          {article.external ? (
-            <NextLink href={article.link} passHref>
-              <Text as={Link} target="_blank">
-                {article.title}
-              </Text>
-            </NextLink>
-          ) : (
-              <NextLink href={article.link} passHref>
-                <Link>
-                  {article.title}
-                </Link>
-              </NextLink>
-            )}
-          {article.isNew && (
-            <Badge
-              ml="1"
-              mb="1"
-              colorScheme="green"
-              fontSize="0.7em"
-              lineHeight={1.5}
-            >
-              New
-            </Badge>
-          )}
+          <NextLink href={article.devToURL} passHref>
+            <Text as={Link} target="_blank">
+              {article.title}
+            </Text>
+          </NextLink>
         </Heading>
         <HStack spacing={2} isInline>
           <Tooltip hasArrow label="Published" placement="top">
             <Text fontSize="sm" fontWeight="400" color={textColor}>
-              {article.published}
+              {moment(article.publishedAt).format("Do MMMM YYYY")}
             </Text>
           </Tooltip>
-          <Text fontSize="sm" fontWeight="400" color={textColor}>
-            •
-          </Text>
-          <Tooltip hasArrow label="Views" placement="top">
+          <Tooltip hasArrow label="Reactions" placement="top">
             <Flex alignItems="center">
               <Text
                 fontSize="sm"
@@ -104,24 +77,24 @@ const PostCard: React.SFC<PostCardProps> = ({ article }) => {
                 align="left"
                 color={textColor}
               >
-                {article.views}
+                {article.publicReactionsCount}
               </Text>
-              <Icon as={FaEye} ml={1} color={textColor} />
+              <Icon as={AiOutlineLike} ml={1} mb={1} color={textColor} />
             </Flex>
           </Tooltip>
-          <Text fontSize="sm" fontWeight="600" color={textColor}>
-            •
-          </Text>
-          <Tooltip hasArrow label="Read time" placement="top">
-            <Text
-              fontSize="sm"
-              noOfLines={1}
-              fontWeight="400"
-              align="left"
-              color={textColor}
-            >
-              {article.readTime}
-            </Text>
+          <Tooltip hasArrow label="Comments" placement="top">
+            <Flex alignItems="center">
+              <Text
+                fontSize="sm"
+                noOfLines={1}
+                fontWeight="400"
+                align="left"
+                color={textColor}
+              >
+                {article.commentsCount}
+              </Text>
+              <Icon as={FaRegCommentDots} ml={1} mb={1} color={textColor} />
+            </Flex>
           </Tooltip>
           <HStack spacing={1} alignItems="center" d={["none", "none", "flex"]}>
             {article.tags.map(tag => (
@@ -149,7 +122,7 @@ const PostCard: React.SFC<PostCardProps> = ({ article }) => {
           ))}
         </HStack>
         <Text align="left" fontSize="md" noOfLines={4} color={textColor}>
-          {article.desc}
+          {article.description}
         </Text>
       </VStack>
     </CardTransition>
