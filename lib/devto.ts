@@ -6,7 +6,7 @@ const username = 'm_ahmad'
 // Get all users articles from Dev.to and filter by ones with a canonical URL to your blog
 export const getAllArticles = async (): Promise<IArticle[]> => {
     const params = { username, per_page: 1000 }
-    const headers = { 'api-key': '3uzf2dPaHEzNnuSGiztxpy6n' }
+    const headers = { 'api-key': process.env.DEVTO_APIKEY }
 
     const { data }: AxiosResponse = await axios.get(`https://dev.to/api/articles/me`, {
         params,
@@ -18,8 +18,6 @@ export const getAllArticles = async (): Promise<IArticle[]> => {
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types, @typescript-eslint/no-explicit-any
 const convertDevtoResponseToArticle = (data: any): IArticle => {
-
-    console.log(data)
     const article: IArticle = {
         id: data.id,
         title: data.title,
