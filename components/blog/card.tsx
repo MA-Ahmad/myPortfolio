@@ -35,7 +35,6 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
       <VStack
         spacing={1}
         p={4}
-        isExternal
         _hover={{ shadow: "md", textDecoration: "none" }}
         borderWidth="1px"
         position="relative"
