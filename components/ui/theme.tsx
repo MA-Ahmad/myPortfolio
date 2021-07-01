@@ -2,9 +2,12 @@ import { extendTheme } from "@chakra-ui/react";
 import { mode } from "@chakra-ui/theme-tools"
 
 export const theme = extendTheme({
+  // fonts: {
+  //   heading: "'Red Hat Display', sans-serif",
+  //   body: "'Red Hat Text', sans-serif",
+  // },
   fonts: {
-    heading: "'Red Hat Display', sans-serif",
-    body: "'Red Hat Text', sans-serif",
+    body: `Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"`
   },
   styles: {
     global: (props) => ({
