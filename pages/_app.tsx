@@ -3,6 +3,8 @@ import { ChakraProvider } from "@chakra-ui/react"
 import Layout from '../components/layout/layout';
 import { theme } from '../components/ui/theme';
 
+import 'highlight.js/styles/railscasts.css'
+
 function MyApp({ Component, pageProps }: AppProps) {
   return (
     <ChakraProvider theme={theme} resetCSS={true}>

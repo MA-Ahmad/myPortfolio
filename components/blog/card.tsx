@@ -9,7 +9,7 @@ import {
   useColorModeValue,
   Icon,
   Flex,
-  Image,
+  Image
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { AiOutlineLike } from "react-icons/ai";
@@ -17,6 +17,7 @@ import { FaRegCommentDots } from "react-icons/fa";
 import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
 import IArticle from "../../interfaces/IArticle";
+import { convertCanonicalURLToRelative } from "../../lib/devto";
 import moment from "moment";
 
 interface IProps {
@@ -55,8 +56,12 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
         </Tooltip>
 
         <Heading fontSize="lg" align="left" mt={0}>
-          <NextLink href={article.devToURL} passHref>
-            <Text as={Link} target="_blank">
+          {/* <NextLink href={article.devToURL} passHref> */}
+          <NextLink
+            href={`/blog${convertCanonicalURLToRelative(article.canonical)}`}
+            passHref
+          >
+            <Text as={Link}>
               {article.title}
             </Text>
           </NextLink>
