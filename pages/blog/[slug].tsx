@@ -109,7 +109,7 @@ const ArticlePage = ({ article, publishedDate, remarkContent }: IProps) => {
             />
             <VStack align="start" spacing="0" fontSize="sm">
               <Text fontWeight="bold">Muhammad Ahmad</Text>
-              <Text>{publishedDate}</Text>
+              {publishedDate && <Text>{publishedDate}</Text>}
             </VStack>
           </HStack>
         </HStack>
