@@ -61,9 +61,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
             href={`/blog${convertCanonicalURLToRelative(article.canonical)}`}
             passHref
           >
-            <Text as={Link}>
-              {article.title}
-            </Text>
+            <Text as={Link}>{article.title}</Text>
           </NextLink>
         </Heading>
         <HStack spacing={2} isInline>
