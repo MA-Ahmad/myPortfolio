@@ -1,11 +1,8 @@
 import axios, { AxiosResponse } from "axios";
 import IArticle from "../interfaces/IArticle";
-import ICachedArticle from "../interfaces/ICachedArticle";
 import { convertMarkdownToHtml, sanitizeDevToMarkdown } from "./markdown";
 
 const username = "m_ahmad";
-// const blogURL = 'https://https://my-portfolio-ma-ahmad.vercel.app/blog/'
-// const blogURL = 'http://localhost:3000/blog/'
 const blogURL = "https://dev.to/m_ahmad";
 
 // Get all users articles from Dev.to and filter by ones with a canonical URL to your blog
@@ -66,13 +63,13 @@ const convertDevtoResponseToArticle = (data: any): IArticle => {
   return article;
 };
 
-// Gets an article from Dev.to using the ID that was saved to the cache earlier
-export const getArticleFromCache = (
-  cache: ICachedArticle[],
-  slug: string
-): IArticle => {
-  const article = cache.find(cachedArticle => {
-    return cachedArticle.slug === `/${slug}`;
-  }) as IArticle;
-  return article;
-};
+// // Gets an article from Dev.to using the ID that was saved to the cache earlier
+// export const getArticleFromCache = (
+//   cache: ICachedArticle[],
+//   slug: string
+// ): IArticle => {
+//   const article = cache.find(cachedArticle => {
+//     return cachedArticle.slug === `/${slug}`;
+//   }) as IArticle;
+//   return article;
+// };
