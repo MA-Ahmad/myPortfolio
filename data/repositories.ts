@@ -11,6 +11,17 @@ export const repositories = [
     fork: "6"
   },
   {
+    title: "Dev.to clone",
+    description:
+      "This portfolio built by using Next.js, ChakraUi and Typescript.",
+    cover: '/assets/images/repositories/devto.png',
+    technologies: ["Nextjs", "chakraUi"],
+    url: "https://github.com/MA-Ahmad/dev.to-clone",
+    live: "https://dev-to-clone-ma.vercel.app",
+    blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
+    stars: "24"
+  },
+  {
     title: "Portfolio2",
     description: "Personal portfolio app to show my skills and experience.",
     cover: '/assets/images/repositories/portfolio.png',
