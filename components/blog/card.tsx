@@ -58,10 +58,17 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
 
         <HStack justifyContent="space-between" isInline>
           <Heading fontSize="lg" align="left" mt={0}>
-            <NextLink href={article.devToURL} passHref>
-              <Text as={Link} target="_blank">
-                {article.title}
-              </Text>
+            <NextLink
+              href={article.devToURL ? article.devToURL : article.slug}
+              passHref
+            >
+              {article.devToURL ? (
+                <Text as={Link} target="_blank">
+                  {article.title}
+                </Text>
+              ) : (
+                <Text as={Link}>{article.title}</Text>
+              )}
             </NextLink>
           </Heading>
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
