@@ -1,192 +1,104 @@
 import fs from "fs";
-import moment from "moment";
-import Head from "next/head";
-import { GetStaticPaths, GetStaticProps } from "next";
 import path from "path";
-import { ParsedUrlQuery } from "querystring";
-import IArticle from "../../interfaces/IArticle";
-import { getAllBlogArticles, getArticleFromCache } from "../../lib/devto";
-import { Image } from "@chakra-ui/image";
+import matter from "gray-matter";
+import html from "remark-html";
 import {
+  Box,
   Heading,
-  HStack,
   VStack,
   Text,
-  Avatar,
-  Box,
+  HStack,
   Tag,
-  Flex,
-  Icon,
-  useColorModeValue
+  Image
 } from "@chakra-ui/react";
-import { getTagColor } from "../../components/ui/theme";
 import remark from "remark";
 import prism from "remark-prism";
-import remarkHtml from "remark-html";
+import { getTagColor } from "../../components/ui/theme";
+import dayjs from "dayjs";
+import localizedFormat from "dayjs/plugin/localizedFormat";
 
-const cacheFile = ".dev-to-cache.json";
+dayjs.extend(localizedFormat);
 
-interface IProps {
-  article: IArticle;
-  publishedDate: string;
-  remarkContent: string;
-}
-
-interface IParams extends ParsedUrlQuery {
-  slug: string;
-}
-
-const ArticlePage = ({ article, publishedDate, remarkContent }: IProps) => {
-  const textColor = useColorModeValue("gray.500", "gray.200");
-
+const ArticlePage = ({
+  frontmatter: { title, date, description, category, tags, coverImage },
+  slug,
+  remarkContent
+}) => {
   return (
-    <>
-      <Head>
-        <meta name="viewport" content="initial-scale=1.0, width=device-width" />
-        <meta name="Description" content="Put your description here." />
-        <link
-          href="https://unpkg.com/prismjs@0.0.1/themes/prism-okaidia.css"
-          rel="stylesheet"
-        />
-      </Head>
-      <Box textAlign="left">
-        {article?.coverImage && (
-          <Image
-            src={article.coverImage}
-            objectFit="cover"
-            borderRadius="5px"
-            maxWidth="100%"
-            height="auto"
-            alt={`Cover for ${article.title}`}
-          />
+    <Box>
+      <VStack marginBottom="5" alignItems="left" textAlign="left">
+        {coverImage ? (
+          <Image src={coverImage} layout="fixed" rounded="md" />
+        ) : (
+          ""
         )}
-        <Heading as="h1" size="2xl" mt="15px">
-          {article?.title}
+        <Heading as="h1" size="lg">
+          {title}
         </Heading>
-        <HStack
-          spacing={2}
-          mt="15px"
-          isInline
-          justify="space-between"
-          align="center"
-        >
-          <HStack spacing={1} alignItems="center" d={["none", "flex", "flex"]}>
-            {article?.tags.map(tag => (
-              <Tag
-                size="md"
-                padding="0 3px"
-                key={tag}
-                colorScheme={getTagColor(tag)}
-                fontWeight="500"
-              >
-                {`#${tag}`}
-              </Tag>
-            ))}
-          </HStack>
-          <HStack>
-            <Flex alignItems="center">
-              <Text
-                fontSize="lg"
-                noOfLines={1}
-                fontWeight="400"
-                align="left"
-                color={textColor}
-              >
-                {article?.publicReactionsCount}&nbsp;
-                <span role="img" aria-label="Heart">
-                  💖
-                </span>
-              </Text>
-            </Flex>
-          </HStack>
+        <HStack spacing={1} alignItems="center" d={["none", "none", "flex"]}>
+          {tags.map(tag => (
+            <Tag
+              size="sm"
+              padding="0 3px"
+              key={tag}
+              colorScheme={getTagColor(tag)}
+            >
+              {tag}
+            </Tag>
+          ))}
         </HStack>
-
-        <HStack mt="15px" width="100%" justify="space-between">
-          <HStack>
-            <Avatar
-              size={"md"}
-              src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
-            />
-            <VStack align="start" spacing="0" fontSize="sm">
-              <Text fontWeight="bold">Muhammad Ahmad</Text>
-              {publishedDate && <Text>{publishedDate}</Text>}
-            </VStack>
-          </HStack>
+        <HStack spacing={2} alignItems="left">
+          <Text fontSize="xs">Published on</Text>
+          <Text fontSize="xs" fontWeight="bold">
+            {dayjs(date).format("LL")}
+          </Text>
         </HStack>
-
-        <Box mt="15px" maxW={800}>
-          <Box
-            as="article"
-            width="100%"
-            px="6"
-            margin="0 auto"
-            dangerouslySetInnerHTML={{ __html: article?.html }}
-          />
-
-          {/* <article
-          className="prose dark:prose-dark lg:prose-lg w-full md:w-5/6 xl:w-9/12"
-          dangerouslySetInnerHTML={{ __html: article?.html }}
-        /> */}
-        </Box>
+      </VStack>
+      <Box className="article">
+        <div dangerouslySetInnerHTML={{ __html: remarkContent }} />
       </Box>
-    </>
+    </Box>
   );
 };
 
-const markdownToHtml = async (markdown: string) => {
+export async function markdownToHtml(markdown) {
   const result = await remark()
-    .use(remarkHtml)
+    .use(html)
     .use(prism)
     .process(markdown);
   return result.toString();
-};
+}
 
-export const getStaticProps: GetStaticProps = async context => {
-  const { slug } = context.params as IParams;
-  console.log(slug);
+const root = process.cwd();
 
-  // Read cache and parse to object
-  const cacheContents = fs.readFileSync(
-    path.join(process.cwd(), cacheFile),
+export async function getStaticPaths() {
+  return {
+    fallback: false,
+    paths: fs.readdirSync(path.join(root, "data", "articles")).map(p => ({
+      params: {
+        slug: p.replace(/\.mdx/, "")
+      }
+    }))
+  };
+}
+
+export async function getStaticProps({ params: { slug } }) {
+  const markdownWithMeta = fs.readFileSync(
+    path.join(root, "data", "articles", `${slug}.mdx`),
     "utf-8"
   );
-  const cache = JSON.parse(cacheContents);
 
-  // Fetch the article from the cache
-  const article: IArticle = await getArticleFromCache(cache, slug);
+  const { data: frontmatter, content } = matter(markdownWithMeta);
 
-  // const article: IArticle = await getAllArticles()
+  const remarkContent = await markdownToHtml(content);
 
-  const publishedDate = moment(article.publishedAt).format("Do MMMM YYYY");
-
-  const remarkContent = await markdownToHtml(article.markdown);
-
-  console.log(article);
-
-  return { props: { article, publishedDate, remarkContent } };
-};
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  // Get the published articles and cache them for use in getStaticProps
-  const articles: IArticle[] = await getAllBlogArticles();
-
-  // Save article data to cache file
-  fs.writeFileSync(
-    path.join(process.cwd(), cacheFile),
-    JSON.stringify(articles)
-  );
-
-  // Get the paths we want to pre-render based on posts
-  const paths = articles.map(({ slug }) => {
-    return {
-      params: { slug }
-    };
-  });
-
-  // We'll pre-render only these paths at build time.
-  // { fallback: false } means other routes should 404.
-  //   return { paths, fallback: false };
-  return { paths, fallback: true };
-};
+  return {
+    props: {
+      frontmatter,
+      slug,
+      remarkContent
+    }
+  };
+}
 
 export default ArticlePage;
