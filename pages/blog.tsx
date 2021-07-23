@@ -47,7 +47,7 @@ export const getStaticProps: GetStaticProps = async () => {
     .map(p => p.replace(/\.mdx/, ""));
   console.log(paths);
 
-  let articlesLocal = [];
+  const articlesLocal = [];
   paths.map(p => {
     const markdownWithMeta = fs.readFileSync(
       path.join(root, "data", "articles", `${p}.mdx`),
