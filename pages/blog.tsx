@@ -34,14 +34,6 @@ const Posts = ({ articles }) => {
   );
 };
 
-// export function getStaticProps() {
-//   return {
-//     props: {
-//       articles
-//     },
-//   };
-// }
-
 export const getStaticProps: GetStaticProps = async () => {
   const articles = await getAllBlogArticles()
   // Pass articles to the page via props
