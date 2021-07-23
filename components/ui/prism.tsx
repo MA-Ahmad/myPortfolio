@@ -24,6 +24,7 @@ const prismBaseTheme = css`
     font-family: "Inter", sans-serif;
     margin: ${theme.space[4]} 0 ${theme.space[4]};
     line-height: ${theme.lineHeights.tall};
+    font-size: 1rem;
   }
 
   .article p {
