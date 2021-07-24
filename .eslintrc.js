@@ -10,7 +10,7 @@ module.exports = {
   overrides: [
     // This configuration will apply only to TypeScript files
     {
-      files: ["**/*.ts", "**/*.tsx"],
+      files: ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
       parser: "@typescript-eslint/parser",
       settings: { react: { version: "detect" } },
       env: {
@@ -34,7 +34,8 @@ module.exports = {
             allowConciseArrowFunctionExpressionsStartingWithVoid: true
           }
         ]
-      }
+      },
+      parserOptions: { sourceType: "module" }
     }
   ]
 };
