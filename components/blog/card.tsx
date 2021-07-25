@@ -44,17 +44,21 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
         bg={useColorModeValue("white", "gray.800")}
         align="left"
       >
-        <Tooltip hasArrow label="Dev.to" placement="top">
-          <Image
-            src={devIcon}
-            width="2rem"
-            height="2rem"
-            position="absolute"
-            color="#cbd5e0"
-            right="0.5rem"
-            top="-14px"
-          />
-        </Tooltip>
+        {article.devToURL ? (
+          <Tooltip hasArrow label="Dev.to" placement="top">
+            <Image
+              src={devIcon}
+              width="2rem"
+              height="2rem"
+              position="absolute"
+              color="#cbd5e0"
+              right="0.5rem"
+              top="-14px"
+            />
+          </Tooltip>
+        ) : (
+          ""
+        )}
 
         <HStack justifyContent="space-between" isInline>
           <Heading fontSize="lg" align="left" mt={0}>
