@@ -7,18 +7,13 @@ import {
   Link,
   Tooltip,
   useColorModeValue,
-  Icon,
   Flex,
   Image,
-  Box
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { AiOutlineLike } from "react-icons/ai";
-import { FaRegCommentDots } from "react-icons/fa";
 import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
 import IArticle from "../../interfaces/IArticle";
-import { convertCanonicalURLToRelative } from "../../lib/devto";
 import moment from "moment";
 
 interface IProps {
