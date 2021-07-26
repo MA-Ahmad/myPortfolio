@@ -210,6 +210,7 @@ export default function TopNav() {
           <Flex alignItems={"center"}>
             <IconButton
               as={Link}
+              target="_blank"
               href={"https://github.com/MA-Ahmad"}
               size={"md"}
               icon={<FaGithub />}
