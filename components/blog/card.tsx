@@ -8,19 +8,19 @@ import {
   Tooltip,
   useColorModeValue,
   Flex,
-  Image,
+  Image
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
-import IArticle from "../../interfaces/IArticle";
+import { BlogPost } from "../../interfaces/interface";
 import moment from "moment";
 
 interface IProps {
-  article: IArticle;
+  post: BlogPost;
 }
 
-const PostCard: React.SFC<IProps> = ({ article }) => {
+const PostCard: React.SFC<IProps> = ({ post }) => {
   const textColor = useColorModeValue("gray.500", "gray.200");
   const devIcon = useColorModeValue(
     "/assets/images/logos/dev.png",
@@ -39,7 +39,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
         bg={useColorModeValue("white", "gray.800")}
         align="left"
       >
-        {article.devToURL ? (
+        {post.url ? (
           <Tooltip hasArrow label="Dev.to" placement="top">
             <Image
               src={devIcon}
@@ -57,21 +57,18 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
 
         <HStack justifyContent="space-between" isInline>
           <Heading fontSize="lg" align="left" mt={0}>
-            <NextLink
-              href={article.devToURL ? article.devToURL : article.slug}
-              passHref
-            >
-              {article.devToURL ? (
+            <NextLink href={post.url ? post.url : post.slug} passHref>
+              {post.url ? (
                 <Text as={Link} target="_blank">
-                  {article.title}
+                  {post.title}
                 </Text>
               ) : (
-                <Text as={Link}>{article.title}</Text>
+                <Text as={Link}>{post.title}</Text>
               )}
             </NextLink>
           </Heading>
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
-            {article.publicReactionsCount ? (
+            {post.public_reactions_count ? (
               <Flex alignItems="center">
                 <Text
                   fontSize="sm"
@@ -80,7 +77,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
                   align="left"
                   color={textColor}
                 >
-                  {article.publicReactionsCount}
+                  {post.public_reactions_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -114,7 +111,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
             ) : (
               ""
             )}
-            {article.commentsCount ? (
+            {post.comments_count ? (
               <Flex alignItems="center">
                 <Text
                   fontSize="sm"
@@ -123,7 +120,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
                   align="left"
                   color={textColor}
                 >
-                  {article.commentsCount}
+                  {post.comments_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -191,10 +188,10 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
         <HStack spacing={2} isInline>
           <Tooltip hasArrow label="Published" placement="top">
             <Text fontSize="sm" fontWeight="600" color={textColor}>
-              {moment(article.publishedAt).format("Do MMMM YYYY")}
+              {moment(post.published_at).format("Do MMMM YYYY")}
             </Text>
           </Tooltip>
-          {article.publicReactionsCount ? (
+          {post.public_reactions_count ? (
             <Tooltip hasArrow label="Reactions" placement="top">
               <Flex alignItems="center" d={["flex", "none", "none"]}>
                 <Text
@@ -204,7 +201,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
                   align="left"
                   color={textColor}
                 >
-                  {article.publicReactionsCount}
+                  {post.public_reactions_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -239,7 +236,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
           ) : (
             ""
           )}
-          {article.commentsCount ? (
+          {post.comments_count ? (
             <Tooltip hasArrow label="Comments" placement="top">
               <Flex alignItems="center" d={["flex", "none", "none"]}>
                 <Text
@@ -249,7 +246,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
                   align="left"
                   color={textColor}
                 >
-                  {article.commentsCount}
+                  {post.comments_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -314,7 +311,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
             ""
           )}
           <HStack spacing={1} alignItems="center" d={["none", "none", "flex"]}>
-            {article.tags.map(tag => (
+            {post.tag_list.map(tag => (
               <Tag
                 size="sm"
                 padding="0 3px"
@@ -327,7 +324,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
           </HStack>
         </HStack>
         <HStack spacing={1} alignItems="center" d={["flex", "flex", "none"]}>
-          {article.tags.map(tag => (
+          {post.tag_list.map(tag => (
             <Tag
               size="sm"
               padding="0 3px"
@@ -339,7 +336,7 @@ const PostCard: React.SFC<IProps> = ({ article }) => {
           ))}
         </HStack>
         <Text align="left" fontSize="md" noOfLines={4} color={textColor}>
-          {article.description}
+          {post.description}
         </Text>
       </VStack>
     </CardTransition>
