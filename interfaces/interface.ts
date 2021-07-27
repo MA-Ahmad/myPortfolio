@@ -4,7 +4,7 @@ export interface IArticle {
     description: string
     coverImage?: string
     tags: string[]
-    tag_list: string[]
+    tag_list?: string[]
     publishedAt: string
     devToSlug?: string
     devToPath?: string
