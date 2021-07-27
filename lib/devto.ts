@@ -1,5 +1,5 @@
 import axios, { AxiosResponse } from "axios";
-import IArticle from "../interfaces/IArticle";
+import { IArticle } from "../interfaces/interface";
 import { convertMarkdownToHtml, sanitizeDevToMarkdown } from "./markdown";
 
 const username = "m_ahmad";
