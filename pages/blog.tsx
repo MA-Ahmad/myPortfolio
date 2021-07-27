@@ -17,7 +17,7 @@ import matter from "gray-matter";
 
 const TURQUOISE = "#06b6d4";
 
-const Posts = ({ articles }) => {
+const Posts = ({ posts }) => {
   return (
     <Fragment>
       <Meta title="Blog" description="A list of all articles and posts!" />
@@ -27,9 +27,9 @@ const Posts = ({ articles }) => {
         </Header>
         <StaggerChildren>
           <Stack spacing={4} mt={12}>
-            {articles.map((article, index) => (
+            {posts.map((post, index) => (
               <MotionBox whileHover={{ y: -5 }} key={index}>
-                <PostCard article={article} />
+                <PostCard post={post} />
               </MotionBox>
             ))}
           </Stack>
@@ -41,34 +41,77 @@ const Posts = ({ articles }) => {
 
 const root = process.cwd();
 
+// export const getStaticProps: GetStaticProps = async () => {
+//   const paths = fs
+//     .readdirSync(path.join(root, "data", "articles"))
+//     .map(p => p.replace(/\.mdx/, ""));
+//   console.log(paths);
+
+//   const articlesLocal = [];
+//   paths.map(p => {
+//     const markdownWithMeta = fs.readFileSync(
+//       path.join(root, "data", "articles", `${p}.mdx`),
+//       "utf-8"
+//     );
+//     const { data: frontmatter, content } = matter(markdownWithMeta);
+//     articlesLocal.push({
+//       slug: `blog/${p}`,
+//       title: frontmatter.title,
+//       description: frontmatter.description,
+//       publishedAt: frontmatter.date,
+//       tags: frontmatter.tags,
+//       devToURL: null
+//     });
+//   });
+
+//   const articlesDevto = await getAllBlogArticles();
+//   const articles = [ ...articlesLocal, ...articlesDevto ]
+
+//   return { props: { articles } };
+// };
+
+const getPosts = async () => {
+  const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
+  const posts = await res.json();
+
+  return posts;
+};
+
 export const getStaticProps: GetStaticProps = async () => {
   const paths = fs
-    .readdirSync(path.join(root, "data", "articles"))
+    .readdirSync(path.join(root, "data", "posts"))
     .map(p => p.replace(/\.mdx/, ""));
-  console.log(paths);
 
-  const articlesLocal = [];
+  const localPosts = [];
   paths.map(p => {
     const markdownWithMeta = fs.readFileSync(
-      path.join(root, "data", "articles", `${p}.mdx`),
+      path.join(root, "data", "posts", `${p}.mdx`),
       "utf-8"
     );
-    const { data: frontmatter, content } = matter(markdownWithMeta);
-    articlesLocal.push({
+    const { data: frontmatter } = matter(markdownWithMeta);
+    localPosts.push({
       slug: `blog/${p}`,
       title: frontmatter.title,
       description: frontmatter.description,
-      publishedAt: frontmatter.date,
-      tags: frontmatter.tags,
-      devToURL: null
+      published_at: frontmatter.date,
+      tag_list: frontmatter.tags,
+      url: null
     });
   });
 
-  const articlesDevto = await getAllBlogArticles();
-  const articles = [ ...articlesLocal, ...articlesDevto ]
+  const devtoPosts = await getPosts();
+  const posts = [...localPosts, ...devtoPosts];
 
-  // Pass articles to the page via props
-  return { props: { articles } };
+  if (!posts) {
+    return {
+      notFound: true
+    };
+  }
+
+  return {
+    props: { posts }, // will be passed to the page component as props
+    revalidate: 1
+  };
 };
 
 export default Posts;
