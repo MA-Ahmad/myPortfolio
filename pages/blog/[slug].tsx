@@ -74,7 +74,7 @@ const root = process.cwd();
 export async function getStaticPaths() {
   return {
     fallback: false,
-    paths: fs.readdirSync(path.join(root, "data", "articles")).map(p => ({
+    paths: fs.readdirSync(path.join(root, "data", "posts")).map(p => ({
       params: {
         slug: p.replace(/\.mdx/, "")
       }
@@ -84,7 +84,7 @@ export async function getStaticPaths() {
 
 export async function getStaticProps({ params: { slug } }) {
   const markdownWithMeta = fs.readFileSync(
-    path.join(root, "data", "articles", `${slug}.mdx`),
+    path.join(root, "data", "posts", `${slug}.mdx`),
     "utf-8"
   );
 
