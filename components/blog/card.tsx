@@ -57,14 +57,8 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
 
         <HStack justifyContent="space-between" isInline>
           <Heading fontSize="lg" align="left" mt={0}>
-            <NextLink href={post.url ? post.url : post.slug} passHref>
-              {post.url ? (
-                <Text as={Link} target="_blank">
-                  {post.title}
-                </Text>
-              ) : (
-                <Text as={Link}>{post.title}</Text>
-              )}
+            <NextLink href={`/blog/${post.slug}`} passHref>
+              <Text as={Link}>{post.title}</Text>
             </NextLink>
           </Heading>
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
