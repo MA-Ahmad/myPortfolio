@@ -90,10 +90,12 @@ export const getStaticProps: GetStaticProps = async () => {
     );
     const { data: frontmatter } = matter(markdownWithMeta);
     localPosts.push({
-      slug: `blog/${p}`,
+      slug: p,
       title: frontmatter.title,
       description: frontmatter.description,
-      published_at: frontmatter.date,
+      published_at: frontmatter.published_at,
+      comments_count: frontmatter.comments_count,
+      public_reactions_count: frontmatter.public_reactions_count,
       tag_list: frontmatter.tags,
       url: null
     });
