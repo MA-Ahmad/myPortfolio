@@ -280,10 +280,9 @@ export const getStaticPaths: GetStaticPaths = async () => {
         slug: p.replace(/\.mdx/, "")
       }
     }));
-  const paths = [...devtoPaths, ...localPaths];
 
   return {
-    paths,
+    paths: [...devtoPaths, ...localPaths],
     fallback: true
   };
 };
@@ -291,11 +290,10 @@ export const getStaticPaths: GetStaticPaths = async () => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const devData: BlogPost[] = await getAllBlogs();
 
-  console.log(params);
   const selectedBlog = devData.filter(data => data?.slug === params?.slug);
-  console.log(selectedBlog);
   let blogObj = null,
     remarkContent = null;
+
   if (selectedBlog.length) {
     const res = await fetch(
       `https://dev.to/api/articles/${selectedBlog[0]?.id}`
@@ -314,7 +312,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     blogObj = frontmatter;
     remarkContent = await markdownToHtml(content);
   }
-  
+
   if (!devData) {
     return {
       notFound: true
