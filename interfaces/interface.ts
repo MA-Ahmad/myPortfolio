@@ -28,6 +28,7 @@ export interface BlogPost {
     canonical_url: string
     slug: string
     body_markdown: string
+    tags: string[]
     tag_list: string[]
     comments_count: number
     cover_image: string
