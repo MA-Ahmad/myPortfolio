@@ -23,33 +23,40 @@ import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 
 dayjs.extend(localizedFormat);
 
-const ArticlePage = ({
-  // frontmatter: { title, date, description, category, tags, coverImage },
-  frontmatter: {
-    title,
-    published_at,
-    description,
-    category,
-    public_reactions_count,
-    comments_count,
-    tags,
-    cover_image
-  },
-  slug,
-  remarkContent
+export interface AllBlogProps {
+  blogDetails: BlogPost;
+  articleContent: string;
+}
+
+// const ArticlePage = ({
+//   frontmatter: {
+// title,
+// published_at,
+// description,
+// category,
+// public_reactions_count,
+// comments_count,
+// tags,
+// cover_image
+//   },
+//   slug,
+//   remarkContent
+// })
+const ArticlePage: NextPage<AllBlogProps> = ({
+  articleContent,
+  blogDetails
 }) => {
   const textColor = useColorModeValue("gray.500", "gray.200");
-
   return (
     <Box>
       <VStack marginBottom="5" alignItems="left" textAlign="left">
-        {cover_image ? (
-          <Image src={cover_image} layout="fixed" rounded="md" />
+        {blogDetails?.cover_image ? (
+          <Image src={blogDetails.cover_image} layout="fixed" rounded="md" />
         ) : (
           ""
         )}
         <Heading as="h1" size="lg">
-          {title}
+          {blogDetails?.title}
         </Heading>
         <HStack
           justifyContent="space-between"
@@ -57,7 +64,7 @@ const ArticlePage = ({
           flexDirection={["column", "row", "row"]}
         >
           <HStack spacing={1} alignItems="center">
-            {tags.map(tag => (
+            {blogDetails?.tags.map(tag => (
               <Tag
                 size={"md"}
                 padding="0 3px"
@@ -69,7 +76,7 @@ const ArticlePage = ({
             ))}
           </HStack>
           <HStack spacing={2} isInline pt={["0.5rem", "0", "0"]}>
-            {public_reactions_count ? (
+            {blogDetails?.public_reactions_count ? (
               <Flex alignItems="center">
                 <Text
                   fontSize="sm"
@@ -78,7 +85,7 @@ const ArticlePage = ({
                   align="left"
                   color={textColor}
                 >
-                  {public_reactions_count}
+                  {blogDetails.public_reactions_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -112,7 +119,7 @@ const ArticlePage = ({
             ) : (
               ""
             )}
-            {comments_count ? (
+            {blogDetails?.comments_count ? (
               <Flex alignItems="center">
                 <Text
                   fontSize="sm"
@@ -121,7 +128,7 @@ const ArticlePage = ({
                   align="left"
                   color={textColor}
                 >
-                  {comments_count}
+                  {blogDetails.comments_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -193,12 +200,12 @@ const ArticlePage = ({
         >
           <Text fontSize="xs">Published on</Text>
           <Text fontSize="xs" fontWeight="bold">
-            {dayjs(published_at).format("LL")}
+            {dayjs(blogDetails?.published_at).format("LL")}
           </Text>
         </HStack>
       </VStack>
       <Box className="article">
-        <div dangerouslySetInnerHTML={{ __html: remarkContent }} />
+        <div dangerouslySetInnerHTML={{ __html: articleContent }} />
       </Box>
     </Box>
   );
@@ -320,8 +327,8 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   }
   return {
     props: {
-      remarkContent,
-      frontmatter: blogObj
+      articleContent: remarkContent,
+      blogDetails: blogObj
     }, // will be passed to the page component as props
     revalidate: 1
   };
