@@ -20,6 +20,7 @@ import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import { BlogPost } from "../../interfaces/interface";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import Meta from "components/layout/meta";
 
 dayjs.extend(localizedFormat);
 
@@ -28,20 +29,6 @@ export interface AllBlogProps {
   articleContent: string;
 }
 
-// const ArticlePage = ({
-//   frontmatter: {
-// title,
-// published_at,
-// description,
-// category,
-// public_reactions_count,
-// comments_count,
-// tags,
-// cover_image
-//   },
-//   slug,
-//   remarkContent
-// })
 const ArticlePage: NextPage<AllBlogProps> = ({
   articleContent,
   blogDetails
@@ -49,6 +36,8 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   const textColor = useColorModeValue("gray.500", "gray.200");
   return (
     <Box>
+      <Meta></Meta>
+      <Meta title={blogDetails?.title} description={blogDetails?.description} />
       <VStack marginBottom="5" alignItems="left" textAlign="left">
         {blogDetails?.cover_image ? (
           <Image src={blogDetails.cover_image} layout="fixed" rounded="md" />
@@ -295,7 +284,9 @@ const markdownToHtml = async (markdown: string) => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const devData: BlogPost[] = await getAllBlogs();
 
-  const selectedBlog = devData.filter(data => data?.slug === params?.slug && data.canonical_url.includes('dev.to'));
+  const selectedBlog = devData.filter(
+    data => data?.slug === params?.slug && data.canonical_url.includes("dev.to")
+  );
   let blogObj = null,
     remarkContent = null;
 
