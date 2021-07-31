@@ -1,16 +1,16 @@
 import { Fragment } from "react";
 import { Stack } from "@chakra-ui/react";
-// import { articles } from "../../data/posts/articles";
-import PostCard from "../components/blog/card";
+// import { articles } from "data/posts/articles";
+import PostCard from "components/blog/card";
 import {
   PageSlideFade,
   StaggerChildren
-} from "../components/ui/page-transitions";
-import Header from "../components/layout/header";
-import { MotionBox } from "../components/ui/motion";
-import Meta from "../components/layout/meta";
+} from "components/ui/page-transitions";
+import Header from "components/layout/header";
+import { MotionBox } from "components/ui/motion";
+import Meta from "components/layout/meta";
 import { GetStaticProps } from "next";
-import { getAllBlogArticles } from "../lib/devto";
+import { getAllBlogArticles } from "lib/devto";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";

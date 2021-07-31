@@ -1,7 +1,7 @@
 import * as React from "react";
-import MyStory from "../components/developer-story/story";
-import { companies, institutes } from "../data/data";
-import Meta from '../components/layout/meta';
+import MyStory from "components/developer-story/story";
+import { companies, institutes } from "data/data";
+import Meta from 'components/layout/meta';
 
 const Index = ({ companies, institutes }) => {
   return (

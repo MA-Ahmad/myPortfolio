@@ -1,6 +1,6 @@
 import * as React from "react";
-import Achievements from "../components/achievements/achievements";
-import Meta from '../components/layout/meta';
+import Achievements from "components/achievements/achievements";
+import Meta from 'components/layout/meta';
 
 const Index = () => {
     return (

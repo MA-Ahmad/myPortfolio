@@ -12,8 +12,20 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "baseUrl": ".",
+    "paths": {
+      "*": ["/*"],
+      "components/*": ["components/*"],
+      "lib/*": ["lib/*"],
+      "data/*": ["data/*"],
+      "pages/*": ["pages/*"],
+      "posts/*": ["posts/*"],
+      "config/*": ["config/*"],
+      "interfaces/*": ["interfaces/*"],
+      "public/*": ["public/*"],
+    }
   },
-  "include": ["next-env.d.ts", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "lib/gtag.js", "pages/blog/[slug].tsx"],
+  "include": ["next-env.d.ts", "**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx", "pages/blog/[slug].tsx"],
   "exclude": ["node_modules"]
 }

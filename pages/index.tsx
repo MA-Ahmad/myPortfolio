@@ -1,7 +1,7 @@
 import { Fragment } from 'react';
-import Home from '../components/home-page/home';
-import { projectsList } from "../data/projects-list";
-import Meta from '../components/layout/meta';
+import Home from 'components/home-page/home';
+import { projectsList } from "data/projects-list";
+import Meta from 'components/layout/meta';
 
 export default function Index({ projects }) {
   return (

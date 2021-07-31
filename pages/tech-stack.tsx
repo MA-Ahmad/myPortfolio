@@ -13,16 +13,16 @@ import {
   useColorModeValue,
   SimpleGrid
 } from "@chakra-ui/react";
-import Section from "../components/skills/section";
+import Section from "components/skills/section";
 import { AiTwotoneThunderbolt, AiOutlineCloudServer } from "react-icons/ai";
 import { BiDesktop } from "react-icons/bi";
 import { GiSpiderWeb } from "react-icons/gi";
-import SkillCard from "../components/skills/skill-card";
-import { skillsArray } from "../data/data";
-import Header from "../components/layout/header";
-import { MotionBox } from "../components/ui/motion";
-import { container, PageSlideFade } from "../components/ui/page-transitions";
-import Meta from '../components/layout/meta';
+import SkillCard from "components/skills/skill-card";
+import { skillsArray } from "data/data";
+import Header from "components/layout/header";
+import { MotionBox } from "components/ui/motion";
+import { container, PageSlideFade } from "components/ui/page-transitions";
+import Meta from 'components/layout/meta';
 
 const TechStack = ({ skills }) => {
   const [skillsList, setSkillsList] = useState([]);

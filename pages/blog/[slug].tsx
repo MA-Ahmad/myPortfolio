@@ -36,7 +36,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   const textColor = useColorModeValue("gray.500", "gray.200");
   return (
     <Box>
-      <Meta></Meta>
       <Meta title={blogDetails?.title} description={blogDetails?.description} />
       <VStack marginBottom="5" alignItems="left" textAlign="left">
         {blogDetails?.cover_image ? (
