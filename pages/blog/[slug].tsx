@@ -251,8 +251,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({
 //   };
 // }
 
-const root = process.cwd();
-
 const getAllBlogs = async () => {
   const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
 
@@ -265,14 +263,7 @@ const getAllBlogs = async () => {
   return data;
 };
 
-const markdownToHtml = async (markdown: string) => {
-  const result = await remark()
-    .use(html)
-    .use(prism)
-    .process(markdown);
-  return result.toString();
-};
-
+const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
   const devData: BlogPost[] = await getAllBlogs();
 
@@ -292,6 +283,14 @@ export const getStaticPaths: GetStaticPaths = async () => {
     paths: [...devtoPaths, ...localPaths],
     fallback: true
   };
+};
+
+const markdownToHtml = async (markdown: string) => {
+  const result = await remark()
+    .use(html)
+    .use(prism)
+    .process(markdown);
+  return result.toString();
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
@@ -329,7 +328,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     props: {
       articleContent: remarkContent,
       blogDetails: blogObj
-    }, // will be passed to the page component as props
+    },
     revalidate: 1
   };
 };
