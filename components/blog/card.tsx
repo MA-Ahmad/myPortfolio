@@ -329,7 +329,7 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
             </Tag>
           ))}
         </HStack>
-        <Text align="left" fontSize="md" noOfLines={4} color={textColor}>
+        <Text align="left" fontSize="md" noOfLines={1} color={textColor}>
           {post.description}
         </Text>
       </VStack>
