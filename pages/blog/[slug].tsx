@@ -266,7 +266,6 @@ const getAllBlogs = async () => {
 const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
   const devData: BlogPost[] = await getAllBlogs();
-
   const devtoPaths = devData.map(data => ({
     params: { slug: data?.slug }
   }));
@@ -296,7 +295,7 @@ const markdownToHtml = async (markdown: string) => {
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const devData: BlogPost[] = await getAllBlogs();
 
-  const selectedBlog = devData.filter(data => data?.slug === params?.slug);
+  const selectedBlog = devData.filter(data => data?.slug === params?.slug && data.canonical_url.includes('dev.to'));
   let blogObj = null,
     remarkContent = null;
 
