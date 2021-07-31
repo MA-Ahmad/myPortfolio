@@ -39,8 +39,6 @@ const Posts = ({ posts }) => {
   );
 };
 
-const root = process.cwd();
-
 // export const getStaticProps: GetStaticProps = async () => {
 //   const paths = fs
 //     .readdirSync(path.join(root, "data", "articles"))
@@ -70,12 +68,17 @@ const root = process.cwd();
 //   return { props: { articles } };
 // };
 
+
+
+
 const getPosts = async () => {
   const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
   const posts = await res.json();
 
   return posts;
 };
+
+const root = process.cwd();
 
 export const getStaticProps: GetStaticProps = async () => {
   const paths = fs
@@ -94,10 +97,9 @@ export const getStaticProps: GetStaticProps = async () => {
       title: frontmatter.title,
       description: frontmatter.description,
       published_at: frontmatter.published_at,
-      comments_count: frontmatter.comments_count,
-      public_reactions_count: frontmatter.public_reactions_count,
+      comments_count: frontmatter.comments_count ? frontmatter.comments_count : null,
+      public_reactions_count: frontmatter.public_reactions_count ? frontmatter.public_reactions_count : null,
       tag_list: frontmatter.tags,
-      url: null
     });
   });
 
@@ -111,7 +113,7 @@ export const getStaticProps: GetStaticProps = async () => {
   }
 
   return {
-    props: { posts }, // will be passed to the page component as props
+    props: { posts },
     revalidate: 1
   };
 };
