@@ -7,6 +7,7 @@ type Props = {
   children: ReactNode;
   title?: string;
   description?: string;
+  keywords?: string
 };
 
 const variants = {
@@ -15,9 +16,9 @@ const variants = {
   exit: { opacity: 0, x: 0, y: -100 }
 };
 
-const PageLayout = ({ children, title, description }: Props): JSX.Element => (
+const PageLayout = ({ children, title, description, keywords }: Props): JSX.Element => (
   <Fragment>
-    <Meta title={title} description={description} />
+    <Meta title={title} description={description} keywords={keywords} />
     <motion.main
       initial="hidden"
       animate="enter"
