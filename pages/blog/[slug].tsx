@@ -274,7 +274,8 @@ const getAllBlogs = async () => {
 
 const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
-  const devData: BlogPost[] = await getAllBlogs();
+  let devData: BlogPost[] = await getAllBlogs();
+  devData = devData.filter(data => data.canonical_url.includes("dev.to"));
   const devtoPaths = devData.map(data => ({
     params: { slug: data?.slug }
   }));

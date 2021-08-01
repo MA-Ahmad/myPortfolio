@@ -5,7 +5,6 @@ import PostCard from "components/blog/card";
 import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { MotionBox } from "components/ui/motion";
-import Meta from "components/layout/meta";
 import { GetStaticProps } from "next";
 import { getAllBlogArticles } from "lib/devto";
 import fs from "fs";
@@ -112,7 +111,7 @@ export const getStaticProps: GetStaticProps = async () => {
       "utf-8"
     );
     const { data: frontmatter } = matter(markdownWithMeta);
-    let devPost = devtoPosts.filter(
+    const devPost = devtoPosts.filter(
       data =>
         !data.canonical_url.includes("dev.to") &&
         data.canonical_url.split("/blog/")[1] === p
