@@ -8,8 +8,8 @@ import {
   Link,
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getTagColor } from "../../ui/theme";
-import LazyImage from "../../ui/lazy-image";
+import { getTagColor } from "components/ui/theme";
+import LazyImage from "components/ui/lazy-image";
 
 interface ProjectCardProps {
   title: string;

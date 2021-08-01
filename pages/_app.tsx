@@ -1,30 +1,37 @@
-import { useEffect } from 'react'
+import { useEffect } from "react";
 import App, { AppProps } from "next/app";
 import { ChakraProvider } from "@chakra-ui/react";
-import Layout from "components/layout/layout";
+import AppLayout from "components/layout/appLayout";
 import { theme } from "components/ui/theme";
-import { PrismGlobal } from 'components/ui/prism'
-import { useRouter } from 'next/router'
-import * as gtag from 'lib/gtag'
+import { PrismGlobal } from "components/ui/prism";
+import { useRouter } from "next/router";
+import * as gtag from "lib/gtag";
+import { AnimatePresence } from "framer-motion";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  const router = useRouter()
+  const router = useRouter();
   useEffect(() => {
-    const handleRouteChange = (url) => {
-      gtag.pageview(url)
-    }
-    router.events.on('routeChangeComplete', handleRouteChange)
+    const handleRouteChange = url => {
+      gtag.pageview(url);
+    };
+    router.events.on("routeChangeComplete", handleRouteChange);
     return () => {
-      router.events.off('routeChangeComplete', handleRouteChange)
-    }
-  }, [router.events])
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, [router.events]);
 
   return (
     <ChakraProvider theme={theme} resetCSS={true}>
       <PrismGlobal />
-      <Layout>
-        <Component {...pageProps} />
-      </Layout>
+      <AppLayout>
+        <AnimatePresence
+          exitBeforeEnter
+          initial={false}
+          onExitComplete={() => window.scrollTo(0, 0)}
+        >
+          <Component {...pageProps} />
+        </AnimatePresence>
+      </AppLayout>
     </ChakraProvider>
   );
 }

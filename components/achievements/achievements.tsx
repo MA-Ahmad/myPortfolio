@@ -8,8 +8,8 @@ import {
 } from "react-icons/fi";
 import { VStack, Heading, Box, Link, LinkProps } from "@chakra-ui/react";
 import { TimelineItem } from "./Timeline";
-import { PageSlideFade } from "../ui/page-transitions";
-import Header from "../layout/header";
+import { PageSlideFade } from "components/ui/page-transitions";
+import Header from "components/layout/header";
 import NextLink from "next/link";
 
 interface ExternalLinkProps extends LinkProps {

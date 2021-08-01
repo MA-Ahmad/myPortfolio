@@ -21,6 +21,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import { BlogPost } from "../../interfaces/interface";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Meta from "components/layout/meta";
+import PageLayout from "components/layout/pageLayout";
 
 dayjs.extend(localizedFormat);
 
@@ -35,8 +36,10 @@ const ArticlePage: NextPage<AllBlogProps> = ({
 }) => {
   const textColor = useColorModeValue("gray.500", "gray.200");
   return (
-    <Box>
-      <Meta title={blogDetails?.title} description={blogDetails?.description} />
+    <PageLayout
+      title={blogDetails?.title}
+      description={blogDetails?.description}
+    >
       <VStack marginBottom="5" alignItems="left" textAlign="left">
         {blogDetails?.cover_image ? (
           <Image src={blogDetails.cover_image} layout="fixed" rounded="md" />
@@ -195,7 +198,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
       <Box className="article">
         <div dangerouslySetInnerHTML={{ __html: articleContent }} />
       </Box>
-    </Box>
+    </PageLayout>
   );
 };
 

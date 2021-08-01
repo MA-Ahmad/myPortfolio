@@ -2,10 +2,7 @@ import { Fragment } from "react";
 import { Stack } from "@chakra-ui/react";
 // import { articles } from "data/posts/articles";
 import PostCard from "components/blog/card";
-import {
-  PageSlideFade,
-  StaggerChildren
-} from "components/ui/page-transitions";
+import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { MotionBox } from "components/ui/motion";
 import Meta from "components/layout/meta";
@@ -14,27 +11,52 @@ import { getAllBlogArticles } from "lib/devto";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
+import { motion, AnimatePresence } from "framer-motion";
+import PageLayout from "components/layout/pageLayout";
 
 const TURQUOISE = "#06b6d4";
 
 const Posts = ({ posts }) => {
   return (
     <Fragment>
-      <Meta title="Blog" description="A list of all articles and posts!" />
-      <PageSlideFade>
-        <Header underlineColor={TURQUOISE} mt={0} mb={0}>
-          Featured Articles
-        </Header>
-        <StaggerChildren>
-          <Stack spacing={4} mt={12}>
-            {posts.map((post, index) => (
-              <MotionBox whileHover={{ y: -5 }} key={index}>
-                <PostCard post={post} />
-              </MotionBox>
-            ))}
-          </Stack>
-        </StaggerChildren>
-      </PageSlideFade>
+      <PageLayout title="Blog" description="A list of all articles and posts!">
+        <PageSlideFade>
+          <Header underlineColor={TURQUOISE} mt={0} mb={0}>
+            Featured Articles
+          </Header>
+          <StaggerChildren>
+            <Stack spacing={4} mt={6}>
+              <AnimatePresence>
+                {posts.map((post, i) => (
+                  <motion.div
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                      hidden: i => ({
+                        opacity: 0,
+                        y: -30 * i
+                      }),
+                      visible: i => ({
+                        opacity: 1,
+                        y: 0,
+                        transition: {
+                          delay: i * 0.1
+                        }
+                      })
+                    }}
+                    custom={i}
+                    key={post.slug}
+                  >
+                    <MotionBox whileHover={{ y: -5 }} key={i}>
+                      <PostCard post={post} />
+                    </MotionBox>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </Stack>
+          </StaggerChildren>
+        </PageSlideFade>
+      </PageLayout>
     </Fragment>
   );
 };
@@ -68,9 +90,6 @@ const Posts = ({ posts }) => {
 //   return { props: { articles } };
 // };
 
-
-
-
 const getPosts = async () => {
   const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
   const posts = await res.json();
@@ -97,9 +116,13 @@ export const getStaticProps: GetStaticProps = async () => {
       title: frontmatter.title,
       description: frontmatter.description,
       published_at: frontmatter.published_at,
-      comments_count: frontmatter.comments_count ? frontmatter.comments_count : null,
-      public_reactions_count: frontmatter.public_reactions_count ? frontmatter.public_reactions_count : null,
-      tag_list: frontmatter.tags,
+      comments_count: frontmatter.comments_count
+        ? frontmatter.comments_count
+        : null,
+      public_reactions_count: frontmatter.public_reactions_count
+        ? frontmatter.public_reactions_count
+        : null,
+      tag_list: frontmatter.tags
     });
   });
 

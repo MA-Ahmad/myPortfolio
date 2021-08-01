@@ -3,7 +3,7 @@ import { Box } from "@chakra-ui/react";
 import TopNav from "./top-nav";
 import Footer from "./footer";
 
-function Layout(props) {
+function AppLayout(props) {
   return (
     <Fragment>
       <TopNav />
@@ -23,4 +23,4 @@ function Layout(props) {
   );
 }
 
-export default Layout;
+export default AppLayout;

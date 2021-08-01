@@ -10,8 +10,8 @@ import {
   ListItem,
   useColorModeValue
 } from "@chakra-ui/react";
-import { MotionBox, MotionFlex } from "../ui/motion";
-import Header from "../layout/header";
+import { MotionBox, MotionFlex } from "components/ui/motion";
+import Header from "components/layout/header";
 import Projects from "./projects";
 import NextLink from 'next/link'
 // import UserIcon from "assets/images/user_icon.png";
