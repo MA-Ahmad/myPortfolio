@@ -7,7 +7,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "28",
+    stars: "30",
     fork: "6"
   },
   {
@@ -19,27 +19,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/dev.to-clone",
     live: "https://dev-to-clone-ma.vercel.app",
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
-    stars: "24"
-  },
-  {
-    title: "Portfolio2",
-    description: "Personal portfolio app to show my skills and experience.",
-    cover: '/assets/images/repositories/portfolio.png',
-    technologies: ["react", "chakraUi"],
-    url: "https://github.com/MA-Ahmad/portfolio",
-    live: "https://mahmad.me/",
-    blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
-    stars: "10"
-  },
-  {
-    title: "Card portfolio",
-    description: "A portfolio template.",
-    cover: '/assets/images/repositories/cardportfolio.jpeg',
-    technologies: ["react", "typescript", "chakraUI"],
-    url: "https://github.com/MA-Ahmad/card-portfolio",
-    live: "https://ma-ahmad.github.io/card-portfolio",
-    blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
-    stars: "7"
+    stars: "29"
   },
   {
     title: "Notebook",
@@ -50,9 +30,30 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/notebook",
     live: "https://ma-ahmad.github.io/notebook",
     blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
-    stars: "13",
-    fork: "3"
+    stars: "15",
+    fork: "4"
   },
+  {
+    title: "Portfolio2",
+    description: "Personal portfolio app to show my skills and experience.",
+    cover: '/assets/images/repositories/portfolio.png',
+    technologies: ["react", "chakraUi"],
+    url: "https://github.com/MA-Ahmad/portfolio",
+    live: "https://mahmad.me/",
+    blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
+    stars: "11"
+  },
+  {
+    title: "Card portfolio",
+    description: "A portfolio template.",
+    cover: '/assets/images/repositories/cardportfolio.jpeg',
+    technologies: ["react", "typescript", "chakraUI"],
+    url: "https://github.com/MA-Ahmad/card-portfolio",
+    live: "https://ma-ahmad.github.io/card-portfolio",
+    blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
+    stars: "9"
+  },
+  
   {
     title: "Blog App",
     description:
@@ -76,6 +77,16 @@ export const repositories = [
     stars: "6"
   },
   {
+    title: "Rails template",
+    description: "A rails app template built with tailwindcss.",
+    cover: '/assets/images/repositories/quickstart.jpeg',
+    technologies: ["rails", "tailwindCss"],
+    url: "https://github.com/MA-Ahmad/quickstart-rails-tailwind",
+    live: "https://quickstart-rails-tailwind.herokuapp.com",
+    blurHash: "LLPGmg?wRPS~D%D%ozxa00?G-;R%",
+    stars: "6"
+  },
+  {
     title: "Image Gallery",
     description:
       "Simple gallery with images from the pixabay API. Tailwind css is built into workflow with postcss and autoprefixer.",
@@ -95,16 +106,7 @@ export const repositories = [
     blurHash: "L6O;6=00M|og00_4_4s:E9-oxVoL",
     stars: "2"
   },
-  {
-    title: "Rails template",
-    description: "A rails app template built with tailwindcss.",
-    cover: '/assets/images/repositories/quickstart.jpeg',
-    technologies: ["rails", "tailwindCss"],
-    url: "https://github.com/MA-Ahmad/quickstart-rails-tailwind",
-    live: "https://quickstart-rails-tailwind.herokuapp.com",
-    blurHash: "LLPGmg?wRPS~D%D%ozxa00?G-;R%",
-    stars: "6"
-  },
+  
   // {
   //   title: "Video-to-text",
   //   description: "Convert a video to text using ruby.",
