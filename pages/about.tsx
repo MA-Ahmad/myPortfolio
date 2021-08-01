@@ -1,4 +1,3 @@
-import { Fragment } from 'react';
 import {
   Box,
   Stack,
@@ -21,7 +20,7 @@ import {
 import { MotionBox } from "components/ui/motion";
 import { companies, institutes } from "data/data";
 import Header from "components/layout/header";
-import Meta from 'components/layout/meta';
+import PageLayout from "components/layout/pageLayout";
 
 interface CardProps {
   title: string;
@@ -55,7 +54,7 @@ const Card = (props: CardProps) => {
               w={16}
               h={16}
               objectFit="cover"
-              fallbackSrc={'/assets/images/placeholder.png'}
+              fallbackSrc={"/assets/images/placeholder.png"}
               src={logo}
               alt={alt}
             />
@@ -117,8 +116,10 @@ const About = ({ companies, institutes }) => {
   const { colorMode } = useColorMode();
 
   return (
-    <Fragment>
-      <Meta title='About' />
+    <PageLayout
+      title="About"
+      description="My educational and professional journey so far"
+    >
       <PageSlideFade>
         <StaggerChildren>
           <MotionBox>
@@ -126,14 +127,20 @@ const About = ({ companies, institutes }) => {
               <Flex alignItems="center">
                 <Header underlineColor={TURQUOISE} mt={0} mb={0}>
                   Career
-              </Header>
+                </Header>
                 <Stack pl={3}>
                   <Box as={BsFillBriefcaseFill} size="25px" />
                 </Stack>
               </Flex>
             </Heading>
           </MotionBox>
-          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
+          <VStack
+            spacing={4}
+            marginBottom={6}
+            align="left"
+            mx={[0, 0, 6]}
+            mt={12}
+          >
             {companies.map((company, index) => (
               <MotionBox whileHover={{ y: -5 }} key={index}>
                 <Card
@@ -152,13 +159,19 @@ const About = ({ companies, institutes }) => {
             <Flex alignItems="center">
               <Header underlineColor={TURQUOISE} mt={0} mb={0}>
                 Education
-            </Header>
+              </Header>
               <Stack pl={3}>
                 <Box as={FaGraduationCap} size="25px" />
               </Stack>
             </Flex>
           </Heading>
-          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
+          <VStack
+            spacing={4}
+            marginBottom={6}
+            align="left"
+            mx={[0, 0, 6]}
+            mt={12}
+          >
             {institutes.map((institute, index) => (
               <MotionBox whileHover={{ y: -5 }} key={index}>
                 <Card
@@ -175,15 +188,16 @@ const About = ({ companies, institutes }) => {
           </VStack>
         </StaggerChildren>
       </PageSlideFade>
-    </Fragment>
+    </PageLayout>
   );
 };
 
 export function getStaticProps() {
   return {
     props: {
-      companies, institutes
-    },
+      companies,
+      institutes
+    }
   };
 }
 

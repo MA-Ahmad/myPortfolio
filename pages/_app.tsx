@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import App, { AppProps } from "next/app";
-import { ChakraProvider } from "@chakra-ui/react";
+import { ChakraProvider, Box } from "@chakra-ui/react";
 import AppLayout from "components/layout/appLayout";
 import { theme } from "components/ui/theme";
 import { PrismGlobal } from "components/ui/prism";
@@ -29,7 +29,9 @@ function MyApp({ Component, pageProps }: AppProps) {
           initial={false}
           onExitComplete={() => window.scrollTo(0, 0)}
         >
-          <Component {...pageProps} />
+          <Box key={router.route}>
+            <Component {...pageProps} />
+          </Box>
         </AnimatePresence>
       </AppLayout>
     </ChakraProvider>

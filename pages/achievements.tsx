@@ -1,14 +1,12 @@
-import * as React from "react";
 import Achievements from "components/achievements/achievements";
-import Meta from 'components/layout/meta';
+import PageLayout from "components/layout/pageLayout";
 
 const Index = () => {
-    return (
-        <React.Fragment>
-            <Meta title='Achievements' keywords="My achievements" />
-            <Achievements />
-        </React.Fragment>
-    )
+  return (
+    <PageLayout title="Achievements" keywords="My achievements">
+      <Achievements />
+    </PageLayout>
+  );
 };
 
 export default Index;

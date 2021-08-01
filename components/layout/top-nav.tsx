@@ -85,7 +85,7 @@ export default function TopNav() {
 
   return (
     <>
-      <Box bg={useColorModeValue("white", "gray.700")} px={4} boxShadow={"lg"}>
+      <Box bg={useColorModeValue("white", "gray.700")} px={4} boxShadow={"lg"} position="fixed" width="100%" zIndex="55">
         <Flex
           h={16}
           alignItems={"center"}

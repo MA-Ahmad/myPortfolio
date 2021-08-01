@@ -22,7 +22,7 @@ import { skillsArray } from "data/data";
 import Header from "components/layout/header";
 import { MotionBox } from "components/ui/motion";
 import { container, PageSlideFade } from "components/ui/page-transitions";
-import Meta from 'components/layout/meta';
+import PageLayout from "../components/layout/pageLayout";
 
 const TechStack = ({ skills }) => {
   const [skillsList, setSkillsList] = useState([]);
@@ -38,15 +38,17 @@ const TechStack = ({ skills }) => {
   };
 
   return (
-    <React.Fragment>
-      <Meta title='Skills' keywords="rails, ruby, react, javascript, typescript" />
+    <PageLayout
+      title="Skills"
+      keywords="rails, ruby, react, javascript, typescript"
+    >
       <PageSlideFade>
         <VStack spacing={8}>
           <Section>
             <VStack>
               <Header mt={0} mb={1}>
                 Tech Stack
-            </Header>
+              </Header>
               <Text
                 fontSize={"xl"}
                 color={useColorModeValue("gray.500", "gray.200")}
@@ -55,7 +57,7 @@ const TechStack = ({ skills }) => {
               >
                 A list of my favorite tools and technologies that I use on a
                 regular basis.
-            </Text>
+              </Text>
             </VStack>
           </Section>
           <Section>
@@ -217,16 +219,15 @@ const TechStack = ({ skills }) => {
           </Section>
         </VStack>
       </PageSlideFade>
-    </React.Fragment>
+    </PageLayout>
   );
 };
-
 
 export function getStaticProps() {
   return {
     props: {
       skills: skillsArray
-    },
+    }
   };
 }
 
