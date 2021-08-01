@@ -100,10 +100,11 @@ const getPosts = async () => {
 const root = process.cwd();
 
 export const getStaticProps: GetStaticProps = async () => {
+  let devtoPosts = await getPosts();
+
   const paths = fs
     .readdirSync(path.join(root, "data", "posts"))
     .map(p => p.replace(/\.mdx/, ""));
-
   const localPosts = [];
   paths.map(p => {
     const markdownWithMeta = fs.readFileSync(
@@ -111,6 +112,12 @@ export const getStaticProps: GetStaticProps = async () => {
       "utf-8"
     );
     const { data: frontmatter } = matter(markdownWithMeta);
+    let devPost = devtoPosts.filter(
+      data =>
+        !data.canonical_url.includes("dev.to") &&
+        data.canonical_url.split("/blog/")[1] === p
+    )[0];
+
     localPosts.push({
       slug: p,
       title: frontmatter.title,
@@ -118,15 +125,15 @@ export const getStaticProps: GetStaticProps = async () => {
       published_at: frontmatter.published_at,
       comments_count: frontmatter.comments_count
         ? frontmatter.comments_count
-        : null,
+        : devPost?.comments_count,
       public_reactions_count: frontmatter.public_reactions_count
         ? frontmatter.public_reactions_count
-        : null,
+        : devPost?.public_reactions_count,
       tag_list: frontmatter.tags
     });
   });
 
-  const devtoPosts = await getPosts();
+  devtoPosts = devtoPosts.filter(data => data.canonical_url.includes("dev.to"));
   const posts = [...localPosts, ...devtoPosts];
 
   if (!posts) {
