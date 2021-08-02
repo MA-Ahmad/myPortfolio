@@ -38,7 +38,7 @@ const mobileLinks = [
   { name: "Open Source", path: "/open-source" },
   { name: "Blog", path: "/blog" },
   { name: "Tech Stack", path: "/tech-stack" },
-  { name: "Developer Story", path: "/developer-story" }
+  { name: "Achievements", path: "/achievements" }
 ];
 
 interface NavLinkProps {
