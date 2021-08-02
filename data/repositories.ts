@@ -7,7 +7,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "30",
+    stars: "31",
     fork: "6"
   },
   {
@@ -22,6 +22,17 @@ export const repositories = [
     stars: "29"
   },
   {
+    title: "Portfolio2",
+    description: "Portfolio app to show my skills and experience.",
+    cover: '/assets/images/repositories/portfolio-v2.png',
+    technologies: ["Nextjs", "react", "chakraUi"],
+    url: "https://github.com/MA-Ahmad/myPortfolio",
+    live: "https://my-portfolio-ma-ahmad.vercel.app",
+    blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
+    stars: "21",
+    fork: "4"
+  },
+  {
     title: "Notebook",
     description:
       "This is a notebook app which will help you to crate notes for your daily work.",
@@ -34,7 +45,7 @@ export const repositories = [
     fork: "4"
   },
   {
-    title: "Portfolio2",
+    title: "Portfolio3",
     description: "Personal portfolio app to show my skills and experience.",
     cover: '/assets/images/repositories/portfolio.png',
     technologies: ["react", "chakraUi"],
