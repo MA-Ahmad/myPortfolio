@@ -52,7 +52,7 @@ const NavLink = (props: NavLinkProps) => {
   const link = {
     bg: useColorModeValue("gray.200", "gray.900"),
     color: useColorModeValue("blue.500", "blue.200")
-  }
+  };
   return (
     <NextLink href={props.path} passHref>
       <Link
@@ -85,7 +85,14 @@ export default function TopNav() {
 
   return (
     <>
-      <Box bg={useColorModeValue("white", "gray.700")} px={4} boxShadow={"lg"} position="fixed" width="100%" zIndex="55">
+      <Box
+        bg={useColorModeValue("white", "gray.700")}
+        px={4}
+        boxShadow={"lg"}
+        position="fixed"
+        width="100%"
+        zIndex="55"
+      >
         <Flex
           h={16}
           alignItems={"center"}
@@ -147,16 +154,16 @@ export default function TopNav() {
                     <MenuList zIndex={5}>
                       <NextLink href={"/tech-stack"} passHref>
                         <Link onClick={onClose}>
-                        <MenuItem>
-                          <HStack>
-                            <Icon
-                              as={AiTwotoneThunderbolt}
-                              size={18}
-                              color={menuProps.color}
-                            />
-                            <Text>Tech Stack</Text>
-                          </HStack>
-                        </MenuItem>
+                          <MenuItem>
+                            <HStack>
+                              <Icon
+                                as={AiTwotoneThunderbolt}
+                                size={18}
+                                color={menuProps.color}
+                              />
+                              <Text>Tech Stack</Text>
+                            </HStack>
+                          </MenuItem>
                         </Link>
                       </NextLink>
                       <NextLink href={"/open-source"} passHref>
@@ -208,19 +215,6 @@ export default function TopNav() {
             </HStack>
           </HStack>
           <Flex alignItems={"center"}>
-            <IconButton
-              as={Link}
-              target="_blank"
-              href={"https://github.com/MA-Ahmad"}
-              size={"md"}
-              icon={<FaGithub />}
-              aria-label={"Github account"}
-              bg={useColorModeValue("white", "gray.700")}
-              _hover={{
-                textDecoration: "none",
-                bg: useColorModeValue("gray.200", "gray.900")
-              }}
-            />
             <ColorModeSwitcher justifySelf="flex-end" />
           </Flex>
         </Flex>

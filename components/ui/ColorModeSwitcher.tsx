@@ -1,20 +1,18 @@
 import {
   useColorMode,
   useColorModeValue,
-  IconButton,
-  IconButtonProps,
-  Tooltip
+  IconButtonProps
 } from "@chakra-ui/react";
 import { FaMoon, FaSun } from "react-icons/fa";
 import useSound from "use-sound";
-// import lightswitch from "../../assets/audios/lightswitch.mp3";
+import { AnimatePresence } from "framer-motion";
+import { MotionBox } from "./motion";
 
 type ColorModeSwitcherProps = Omit<IconButtonProps, "aria-label">;
 
 export const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = props => {
   const { toggleColorMode } = useColorMode();
-  const text = useColorModeValue("dark", "light");
-  const SwitchIcon = useColorModeValue(FaMoon, FaSun);
+  const mode = useColorModeValue("dark", "light");
 
   const [play] = useSound("/assets/audios/lightswitch.mp3", {
     volume: 0.05,
@@ -25,29 +23,24 @@ export const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = props => {
   });
 
   const handleClick = () => {
-    text === "dark" ? play({ id: "on" }) : play({ id: "off" });
+    mode === "dark" ? play({ id: "on" }) : play({ id: "off" });
     toggleColorMode();
   };
 
   return (
-    <Tooltip
-      label={text === "dark" ? "Dark mode" : "Light mode"}
-      aria-label="A tooltip"
-    >
-      <IconButton
-        size="md"
-        fontSize="md"
-        variant="ghost"
-        color="current"
-        marginLeft="2"
+    <AnimatePresence exitBeforeEnter initial={false}>
+      <MotionBox
         onClick={handleClick}
-        icon={<SwitchIcon />}
-        aria-label={`Switch to ${text} mode`}
-        _hover={{
-          bg: useColorModeValue("gray.200", "gray.900")
-        }}
-        {...props}
-      />
-    </Tooltip>
+        key={mode === "dark" ? "dark-icon" : "light-icon"}
+        initial={{ y: -20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 20, opacity: 0 }}
+        transition={{ duration: 0.2 }}
+        cursor="pointer"
+        fontSize={["2xl", "3xl", "3xl"]}
+      >
+        {mode === "dark" ? "🌙" : "🌤"}
+      </MotionBox>
+    </AnimatePresence>
   );
 };
