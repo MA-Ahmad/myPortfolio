@@ -336,7 +336,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         !data.canonical_url.includes("dev.to") &&
         data.canonical_url.split("/blog/")[1] === params?.slug
     )[0];
-    console.log(devtoPost);
     if (devtoPost) {
       frontmatter["comments_count"] = devtoPost?.comments_count;
       frontmatter["public_reactions_count"] = devtoPost?.public_reactions_count;
