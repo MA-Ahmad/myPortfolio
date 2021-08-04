@@ -216,9 +216,9 @@ const ArticlePage: NextPage<AllBlogProps> = ({
             <div dangerouslySetInnerHTML={{ __html: articleContent }} />
           </Box>
         </motion.div>
-        {blogDetails.slug ? (
+        {blogDetails?.url ? (
           <DevToCallToAction
-            href={`https://dev.to/m_ahmad/${blogDetails.slug}`}
+            href={blogDetails.url}
           />
         ) : (
           ""
@@ -339,7 +339,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     if (devtoPost) {
       frontmatter["comments_count"] = devtoPost?.comments_count;
       frontmatter["public_reactions_count"] = devtoPost?.public_reactions_count;
-      frontmatter["slug"] = devtoPost?.slug;
+      frontmatter["url"] = devtoPost?.url;
+    } else {
+      frontmatter["url"] = null;
     }
     blogObj = frontmatter;
     remarkContent = await markdownToHtml(content);
