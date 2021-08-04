@@ -340,8 +340,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       frontmatter["comments_count"] = devtoPost?.comments_count;
       frontmatter["public_reactions_count"] = devtoPost?.public_reactions_count;
       frontmatter["url"] = devtoPost?.url;
-    } else {
-      frontmatter["url"] = null;
     }
     blogObj = frontmatter;
     remarkContent = await markdownToHtml(content);
