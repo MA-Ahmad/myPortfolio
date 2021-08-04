@@ -23,6 +23,7 @@ import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import Meta from "components/layout/meta";
 import PageLayout from "components/layout/pageLayout";
 import { MotionImage } from "components/ui/motion";
+import DevToCallToAction from "components/layout/DevToCallToAction";
 import { fadeInUp, stagger } from "components/ui/page-transitions";
 import { motion } from "framer-motion";
 
@@ -215,6 +216,13 @@ const ArticlePage: NextPage<AllBlogProps> = ({
             <div dangerouslySetInnerHTML={{ __html: articleContent }} />
           </Box>
         </motion.div>
+        {blogDetails.slug ? (
+          <DevToCallToAction
+            href={`https://dev.to/m_ahmad/${blogDetails.slug}`}
+          />
+        ) : (
+          ""
+        )}
       </motion.div>
     </PageLayout>
   );
@@ -328,9 +336,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
         !data.canonical_url.includes("dev.to") &&
         data.canonical_url.split("/blog/")[1] === params?.slug
     )[0];
+    console.log(devtoPost);
     if (devtoPost) {
       frontmatter["comments_count"] = devtoPost?.comments_count;
       frontmatter["public_reactions_count"] = devtoPost?.public_reactions_count;
+      frontmatter["slug"] = devtoPost?.slug;
     }
     blogObj = frontmatter;
     remarkContent = await markdownToHtml(content);
@@ -341,6 +351,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       notFound: true
     };
   }
+
   return {
     props: {
       articleContent: remarkContent,
