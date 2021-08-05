@@ -10,7 +10,6 @@ import {
   HStack,
   Flex,
   Tag,
-  Image,
   useColorModeValue
 } from "@chakra-ui/react";
 import remark from "remark";
@@ -20,7 +19,6 @@ import dayjs from "dayjs";
 import localizedFormat from "dayjs/plugin/localizedFormat";
 import { BlogPost } from "../../interfaces/interface";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
-import Meta from "components/layout/meta";
 import PageLayout from "components/layout/pageLayout";
 import { MotionImage } from "components/ui/motion";
 import DevToCallToAction from "components/layout/DevToCallToAction";
