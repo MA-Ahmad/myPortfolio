@@ -41,6 +41,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
     <PageLayout
       title={blogDetails?.title}
       description={blogDetails?.description}
+      image={blogDetails?.cover_image}
     >
       <motion.div initial="initial" animate="animate" variants={stagger}>
         <VStack marginBottom="5" alignItems="left" textAlign="left">
