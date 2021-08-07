@@ -5,9 +5,10 @@ import { Box } from "@chakra-ui/react";
 
 type Props = {
   children: ReactNode;
-  title?: string;
+  title: string;
   description?: string;
-  keywords?: string
+  keywords?: string;
+  image?: string;
 };
 
 const variants = {
@@ -16,9 +17,20 @@ const variants = {
   exit: { opacity: 0, x: 0, y: -100 }
 };
 
-const PageLayout = ({ children, title, description, keywords }: Props): JSX.Element => (
+const PageLayout = ({
+  children,
+  title,
+  description,
+  keywords,
+  image
+}: Props): JSX.Element => (
   <Fragment>
-    <Meta title={title} description={description} keywords={keywords} />
+    <Meta
+      title={title}
+      description={description}
+      keywords={keywords}
+      image={image}
+    />
     <motion.main
       initial="hidden"
       animate="enter"
