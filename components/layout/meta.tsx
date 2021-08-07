@@ -1,6 +1,13 @@
 import Head from "next/head";
 
-const Meta = ({ title, keywords, description, image }) => {
+type Props = {
+    title: string;
+    description?: string;
+    keywords?: string;
+    image?: string;
+  };
+
+const Meta = ({ title, keywords, description, image } : Props): JSX.Element => {
   return (
     <Head>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
