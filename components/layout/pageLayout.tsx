@@ -1,7 +1,6 @@
 import React, { Fragment, ReactNode } from "react";
 import { motion } from "framer-motion";
 import Meta from "./meta";
-import { Box } from "@chakra-ui/react";
 
 type Props = {
   children: ReactNode;
