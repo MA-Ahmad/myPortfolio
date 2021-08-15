@@ -227,46 +227,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   );
 };
 
-// export async function markdownToHtml(markdown) {
-//   const result = await remark()
-//     .use(html)
-//     .use(prism)
-//     .process(markdown);
-//   return result.toString();
-// }
-
-// const root = process.cwd();
-
-// export async function getStaticPaths() {
-//   return {
-//     fallback: false,
-//     paths: fs.readdirSync(path.join(root, "data", "posts")).map(p => ({
-//       params: {
-//         slug: p.replace(/\.mdx/, "")
-//       }
-//     }))
-//   };
-// }
-
-// export async function getStaticProps({ params: { slug } }) {
-//   const markdownWithMeta = fs.readFileSync(
-//     path.join(root, "data", "posts", `${slug}.mdx`),
-//     "utf-8"
-//   );
-
-//   const { data: frontmatter, content } = matter(markdownWithMeta);
-
-//   const remarkContent = await markdownToHtml(content);
-
-//   return {
-//     props: {
-//       frontmatter,
-//       slug,
-//       remarkContent
-//     }
-//   };
-// }
-
 const getAllBlogs = async () => {
   const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
 
