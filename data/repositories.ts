@@ -11,6 +11,17 @@ export const repositories = [
     fork: "6"
   },
   {
+    title: "Portfolio2",
+    description: "Portfolio app to show my skills and experience.",
+    cover: '/assets/images/repositories/portfolio-v2.png',
+    technologies: ["Nextjs", "react", "chakraUi"],
+    url: "https://github.com/MA-Ahmad/myPortfolio",
+    live: "https://my-portfolio-ma-ahmad.vercel.app",
+    blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
+    stars: "29",
+    fork: "5"
+  },
+  {
     title: "Dev.to clone",
     description:
       "This portfolio built by using Next.js, ChakraUi and Typescript.",
@@ -21,17 +32,6 @@ export const repositories = [
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
     stars: "29",
     fork: "3"
-  },
-  {
-    title: "Portfolio2",
-    description: "Portfolio app to show my skills and experience.",
-    cover: '/assets/images/repositories/portfolio-v2.png',
-    technologies: ["Nextjs", "react", "chakraUi"],
-    url: "https://github.com/MA-Ahmad/myPortfolio",
-    live: "https://my-portfolio-ma-ahmad.vercel.app",
-    blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "29",
-    fork: "5"
   },
   {
     title: "Notebook",
