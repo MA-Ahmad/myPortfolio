@@ -65,7 +65,6 @@ export const repositories = [
     blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
     stars: "9"
   },
-  
   {
     title: "Blog App",
     description:
@@ -75,7 +74,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/reactBlog",
     live: "https://ma-ahmad.github.io/reactBlog",
     blurHash: "LMMaw^IV~pxu00%LRjNGAIIVadt6",
-    stars: "9",
+    stars: "13",
     fork: "1"
   },
   {
@@ -86,7 +85,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/blog-app-react-frontend",
     live: "https://blog-frontend-react.herokuapp.com",
     blurHash: "LSN1AcH?~Wtl00={M{NG0eIoj]xa",
-    stars: "6"
+    stars: "8"
   },
   {
     title: "Rails template",
@@ -96,7 +95,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/quickstart-rails-tailwind",
     live: "https://quickstart-rails-tailwind.herokuapp.com",
     blurHash: "LLPGmg?wRPS~D%D%ozxa00?G-;R%",
-    stars: "6"
+    stars: "8"
   },
   {
     title: "Image Gallery",
@@ -106,7 +105,7 @@ export const repositories = [
     technologies: ["react", "tailwindCss"],
     url: "https://github.com/MA-Ahmad/react-image-gallery",
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
-    stars: "2"
+    stars: "3"
   },
   {
     title: "Blogify",
@@ -116,7 +115,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/react_rails_blog",
     live: "https://react-on-rails-blog.herokuapp.com",
     blurHash: "L6O;6=00M|og00_4_4s:E9-oxVoL",
-    stars: "2"
+    stars: "4"
   },
   
   // {
