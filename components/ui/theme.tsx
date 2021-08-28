@@ -31,7 +31,7 @@ export const theme = extendTheme({
         fontWeight: "500",
         _hover: {
           color: mode("blue.600", "blue.300")(props),
-        },
+        }
       },
     }),
   },
@@ -68,7 +68,7 @@ export const theme = extendTheme({
     Button: {
       baseStyle: {
         fontWeight: "500",
-        rounded: "xl",
+        rounded: "xl"
       },
     },
     Tag: {
@@ -87,6 +87,9 @@ export const theme = extendTheme({
         _hover: {
           textDecoration: "none",
         },
+        _focus: {
+          boxShadow: 'none'
+        }
       },
       variants: {
         text: {
@@ -108,7 +111,7 @@ export const theme = extendTheme({
           },
         },
       },
-    },
+    }
   },
   mdx: {
     h1: {

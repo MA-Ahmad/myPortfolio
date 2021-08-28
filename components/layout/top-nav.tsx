@@ -146,7 +146,7 @@ export default function TopNav() {
                       height={"auto "}
                       _hover={menuProps}
                       _expanded={menuProps}
-                      _focus={{ boxShadow: "outline" }}
+                      _focus={{ boxShadow: "none" }}
                       rightIcon={<BiChevronDown size={18} />}
                     >
                       Links
