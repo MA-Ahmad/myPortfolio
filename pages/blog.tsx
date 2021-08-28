@@ -5,7 +5,8 @@ import {
   InputGroup,
   InputRightElement,
   Icon,
-  Heading
+  Heading,
+  useColorModeValue
 } from "@chakra-ui/react";
 import PostCard from "components/blog/card";
 import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
@@ -40,6 +41,7 @@ const Posts = ({ posts }) => {
             <Input
               placeholder="Search articles"
               onChange={e => setSearchValue(e.target.value)}
+              background={useColorModeValue("gray.100", "#1e2533")}
             />
             <InputRightElement>
               <Icon as={BiSearch} w={6} h={6} />
