@@ -1,5 +1,12 @@
-import { Fragment } from "react";
-import { Stack } from "@chakra-ui/react";
+import { Fragment, useState } from "react";
+import {
+  Stack,
+  Input,
+  InputGroup,
+  InputRightElement,
+  Icon,
+  Heading
+} from "@chakra-ui/react";
 import PostCard from "components/blog/card";
 import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
 import Header from "components/layout/header";
@@ -10,21 +17,43 @@ import path from "path";
 import matter from "gray-matter";
 import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "components/layout/pageLayout";
+import { BiSearch } from "react-icons/bi";
 
 const TURQUOISE = "#06b6d4";
 
 const Posts = ({ posts }) => {
+  const [searchValue, setSearchValue] = useState("");
+
+  const filteredBlogPosts = posts.filter(data => {
+    const searchContent = data.title + data.description;
+    return searchContent.toLowerCase().includes(searchValue.toLowerCase());
+  });
+
   return (
     <Fragment>
       <PageLayout title="Blog" description="A list of all articles and posts!">
         <PageSlideFade>
-          <Header underlineColor={TURQUOISE} mt={0} mb={0}>
+          <Header underlineColor={TURQUOISE} mt={0} mb={6}>
             Featured Articles
           </Header>
+          <InputGroup maxW="30rem">
+            <Input
+              placeholder="Search articles"
+              onChange={e => setSearchValue(e.target.value)}
+            />
+            <InputRightElement>
+              <Icon as={BiSearch} w={6} h={6} />
+            </InputRightElement>
+          </InputGroup>
           <StaggerChildren>
             <Stack spacing={4} mt={6}>
               <AnimatePresence>
-                {posts.map((post, i) => (
+                {!filteredBlogPosts.length && (
+                  <Heading as="h1" pt={10} pb={10}>
+                    No articles found
+                  </Heading>
+                )}
+                {filteredBlogPosts.map((post, i) => (
                   <motion.div
                     initial="hidden"
                     animate="visible"
