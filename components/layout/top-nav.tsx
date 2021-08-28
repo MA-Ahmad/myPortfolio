@@ -27,6 +27,7 @@ import { BsCheckCircle } from "react-icons/bs";
 import { MdTimeline } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import NextLink from "next/link";
+import { useRouter } from "next/router";
 
 const webLinks = [
   { name: "About", path: "/about" },
@@ -49,10 +50,12 @@ interface NavLinkProps {
 }
 
 const NavLink = (props: NavLinkProps) => {
+  const router = useRouter();
   const link = {
     bg: useColorModeValue("gray.200", "gray.900"),
     color: useColorModeValue("blue.500", "blue.200")
   };
+
   return (
     <NextLink href={props.path} passHref>
       <Link
@@ -63,11 +66,9 @@ const NavLink = (props: NavLinkProps) => {
           textDecoration: "none",
           bg: link.bg
         }}
-        _activeLink={{
-          color: link.color
-        }}
+        bg={router.pathname === props.path ? link.bg : "transparent"}
+        color={router.pathname === props.path ? link.color : "inherit"}
         onClick={() => props.onClose()}
-        // to={props.path}
       >
         {props.name}
       </Link>
