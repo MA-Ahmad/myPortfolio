@@ -42,6 +42,13 @@ const mobileLinks = [
   { name: "Achievements", path: "/achievements" }
 ];
 
+const dropdownLinks = [
+  { name: "Tech Stack", path: "/tech-stack" },
+  { name: "Open Source", path: "/open-source" },
+  { name: "Developer Story", path: "/developer-story" },
+  { name: "Achievements", path: "/achievements" }
+];
+
 interface NavLinkProps {
   index?: number;
   name: string;
@@ -76,7 +83,44 @@ const NavLink = (props: NavLinkProps) => {
   );
 };
 
+interface MenuLinkProps {
+  name: string;
+  path: string;
+  color: string;
+  bg: string;
+  rPath: string;
+  onClose: () => void;
+}
+
+const MenuLink = (props: MenuLinkProps) => {
+  const iconsObj = {
+    "/tech-stack": (
+      <Icon as={AiTwotoneThunderbolt} size={18} color={props.color} />
+    ),
+    "/open-source": <Icon as={BsBook} size={18} color={props.color} />,
+    "/developer-story": <Icon as={MdTimeline} size={18} color={props.color} />,
+    "/achievements": <Icon as={BsCheckCircle} size={18} color={props.color} />
+  };
+
+  return (
+    <NextLink href={props.path} passHref>
+      <Link onClick={() => props.onClose()}>
+        <MenuItem
+          color={props.rPath === props.path && props.color}
+          bg={props.rPath === props.path && props.bg}
+        >
+          <HStack>
+            {iconsObj[props.path]}
+            <Text>{props.name}</Text>
+          </HStack>
+        </MenuItem>
+      </Link>
+    </NextLink>
+  );
+};
+
 export default function TopNav() {
+  const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const menuProps = {
@@ -133,7 +177,7 @@ export default function TopNav() {
                   onClose={onClose}
                 />
               ))}
-              <Menu isLazy>
+              <Menu autoSelect={false} isLazy>
                 {({ isOpen, onClose }) => (
                   <>
                     <MenuButton
@@ -153,62 +197,17 @@ export default function TopNav() {
                       Links
                     </MenuButton>
                     <MenuList zIndex={5}>
-                      <NextLink href={"/tech-stack"} passHref>
-                        <Link onClick={onClose}>
-                          <MenuItem>
-                            <HStack>
-                              <Icon
-                                as={AiTwotoneThunderbolt}
-                                size={18}
-                                color={menuProps.color}
-                              />
-                              <Text>Tech Stack</Text>
-                            </HStack>
-                          </MenuItem>
-                        </Link>
-                      </NextLink>
-                      <NextLink href={"/open-source"} passHref>
-                        <Link onClick={onClose}>
-                          <MenuItem>
-                            <HStack>
-                              <Icon
-                                as={BsBook}
-                                size={18}
-                                color={menuProps.color}
-                              />
-                              <Text>Open Source</Text>
-                            </HStack>
-                          </MenuItem>
-                        </Link>
-                      </NextLink>
-                      <NextLink href={"/developer-story"} passHref>
-                        <Link onClick={onClose}>
-                          <MenuItem>
-                            <HStack>
-                              <Icon
-                                as={MdTimeline}
-                                size={18}
-                                color={menuProps.color}
-                              />
-                              <Text>Developer Story</Text>
-                            </HStack>
-                          </MenuItem>
-                        </Link>
-                      </NextLink>
-                      <NextLink href={"/achievements"} passHref>
-                        <Link onClick={onClose}>
-                          <MenuItem>
-                            <HStack>
-                              <Icon
-                                as={BsCheckCircle}
-                                size={18}
-                                color={menuProps.color}
-                              />
-                              <Text>Achievements</Text>
-                            </HStack>
-                          </MenuItem>
-                        </Link>
-                      </NextLink>
+                      {dropdownLinks.map((link, index) => (
+                        <MenuLink
+                          key={index}
+                          path={link.path}
+                          name={link.name}
+                          onClose={onClose}
+                          color={menuProps.color}
+                          bg={menuProps.bg}
+                          rPath={router.pathname}
+                        />
+                      ))}
                     </MenuList>
                   </>
                 )}
