@@ -39,7 +39,7 @@ export function useLocalSetting<T>(
       }
       try {
         _setValue(JSON.parse(json))
-      } catch {}
+      } catch { console.log('catch block') }
     }
     loadFromStorage()
     window.addEventListener('storage', loadFromStorage)
