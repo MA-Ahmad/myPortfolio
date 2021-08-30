@@ -28,6 +28,8 @@ import { MdTimeline } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import NextLink from "next/link";
 import { useRouter } from "next/router";
+import { AccentPicker } from "components/Accent";
+import { useLinkColor } from "components/ui/theme";
 
 const webLinks = [
   { name: "About", path: "/about" },
@@ -120,6 +122,7 @@ const MenuLink = (props: MenuLinkProps) => {
 };
 
 export default function TopNav() {
+  const linkColor = useLinkColor();
   const router = useRouter();
   const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -215,6 +218,13 @@ export default function TopNav() {
             </HStack>
           </HStack>
           <Flex alignItems={"center"}>
+            <AccentPicker
+              aria-label="Accent Color Picker"
+              variant="ghost"
+              zIndex={1}
+              color={linkColor}
+              mr={2}
+            />
             <ColorModeSwitcher justifySelf="flex-end" />
           </Flex>
         </Flex>

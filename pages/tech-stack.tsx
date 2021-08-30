@@ -32,7 +32,6 @@ const TechStack = ({ skills }) => {
   }, []);
 
   const filterSkills = tab => {
-    console.log(skills.filter(skill => skill.type === tab));
     if (tab.length) setSkillsList(skills.filter(skill => skill.type === tab));
     else setSkillsList(skills);
   };

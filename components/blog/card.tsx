@@ -15,12 +15,14 @@ import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
 import { BlogPost } from "../../interfaces/interface";
 import moment from "moment";
+import { useLinkColor } from "components/ui/theme";
 
 interface IProps {
   post: BlogPost;
 }
 
 const PostCard: React.SFC<IProps> = ({ post }) => {
+  const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
   const devIcon = useColorModeValue(
     "/assets/images/logos/dev.png",
@@ -58,7 +60,9 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
         <HStack justifyContent="space-between" isInline>
           <Heading fontSize="lg" align="left" mt={0}>
             <NextLink href={`/blog/${post.slug}`} passHref>
-              <Text as={Link}>{post.title}</Text>
+              <Text as={Link} color={linkColor}>
+                {post.title}
+              </Text>
             </NextLink>
           </Heading>
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>

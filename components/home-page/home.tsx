@@ -14,6 +14,7 @@ import { MotionBox, MotionFlex } from "components/ui/motion";
 import Header from "components/layout/header";
 import Projects from "./projects";
 import NextLink from 'next/link'
+import { useLinkColor } from 'components/ui/theme'
 // import UserIcon from "assets/images/user_icon.png";
 
 const ANIMATION_DURATION = 0.5;
@@ -24,6 +25,7 @@ interface HomeProps {
 }
 
 const Home: React.FC<HomeProps> = ({ projects }) => {
+  const linkColor = useLinkColor()
 
   return (
     <Flex direction="column" align="center">
@@ -131,7 +133,7 @@ const Home: React.FC<HomeProps> = ({ projects }) => {
             <UnorderedList textAlign="left" paddingLeft={5} m={0}>
               <ListItem>
                 <NextLink href={'/open-source'} passHref>
-                  <Link>
+                  <Link color={linkColor}>
                     Live/Local Github Repos
                   <Badge ml="1" colorScheme="green">
                       New
@@ -140,23 +142,9 @@ const Home: React.FC<HomeProps> = ({ projects }) => {
                 </NextLink>
               </ListItem>
               <ListItem>
-                <NextLink href={'/developer-story'} passHref>
-                  <Link>
-                    Story page
-                </Link>
-                </NextLink>
-              </ListItem>
-              <ListItem>
                 <NextLink href={'/tech-stack'} passHref>
-                  <Link>
+                  <Link color={linkColor}>
                     Tech Stack
-                </Link>
-                </NextLink>
-              </ListItem>
-              <ListItem>
-                <NextLink href={'/achievements'} passHref>
-                  <Link>
-                    Achievements
                 </Link>
                 </NextLink>
               </ListItem>

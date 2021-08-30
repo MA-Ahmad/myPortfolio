@@ -2,11 +2,13 @@ import { useEffect } from "react";
 import App, { AppProps } from "next/app";
 import { ChakraProvider, Box } from "@chakra-ui/react";
 import AppLayout from "components/layout/appLayout";
-import { theme } from "components/ui/theme";
 import { PrismGlobal } from "components/ui/prism";
 import { useRouter } from "next/router";
 import * as gtag from "lib/gtag";
 import { AnimatePresence } from "framer-motion";
+import { theme } from "components/ui/theme";
+import { AccentGlobal } from "components/Accent";
+import { FontsGlobal } from "components/ui/theme/fonts";
 
 function MyApp({ Component, pageProps }: AppProps) {
   const router = useRouter();
@@ -22,6 +24,8 @@ function MyApp({ Component, pageProps }: AppProps) {
 
   return (
     <ChakraProvider theme={theme} resetCSS={true}>
+      <FontsGlobal />
+      <AccentGlobal />
       <PrismGlobal />
       <AppLayout>
         <AnimatePresence

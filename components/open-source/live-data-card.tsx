@@ -11,7 +11,7 @@ import {
   Tooltip
 } from "@chakra-ui/react";
 import { MotionBox } from "../ui/motion";
-import { getTagColor } from "../ui/theme";
+import { getTagColor, useLinkColor } from "../ui/theme";
 import { BiGitRepoForked, BiStar } from "react-icons/bi";
 import { FiGithub } from "react-icons/fi";
 
@@ -32,7 +32,8 @@ const RepositoryCard = (props: RepositoryCardProps) => {
     stargazers_count,
     forks_count,
   } = props;
-
+  const linkColor = useLinkColor();
+  
   const handleLinkClick = (
     e: React.MouseEvent<HTMLParagraphElement, MouseEvent>,
     link: string
@@ -72,7 +73,8 @@ const RepositoryCard = (props: RepositoryCardProps) => {
                     noOfLines={1}
                     fontWeight="600"
                     align="left"
-                    color={"blue.500"}
+                    // color={"blue.500"}
+                    color={linkColor}
                   >
                     {title}
                   </Text>

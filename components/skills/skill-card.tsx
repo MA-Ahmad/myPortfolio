@@ -13,8 +13,10 @@ import { usePalette } from "react-palette";
 import { MotionBox } from "../ui/motion";
 import { item } from "../ui/page-transitions";
 import NextLink from 'next/link';
+import { useLinkColor } from "components/ui/theme";
 
 const SkillCard = ({ name, image, link, description }) => {
+  const linkColor= useLinkColor();
   const { data, loading } = usePalette(image);
 
   return (
@@ -71,7 +73,7 @@ const SkillCard = ({ name, image, link, description }) => {
               h="100%"
             >
               <VStack spacing={0} align="start" flexGrow={1}>
-                <Text fontWeight="bold" fontSize="md" noOfLines={2}>
+                <Text fontWeight="bold" fontSize="md" noOfLines={2} color={linkColor}>
                   {name}
                 </Text>
                 <Text

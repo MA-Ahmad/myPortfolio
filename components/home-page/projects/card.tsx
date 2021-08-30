@@ -10,6 +10,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { getTagColor } from "components/ui/theme";
 import LazyImage from "components/ui/lazy-image";
+import { useLinkColor } from 'components/ui/theme'
 
 interface ProjectCardProps {
   title: string;
@@ -28,6 +29,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   link,
   technologies
 }) => {
+  const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
   const [isOpen, setIsOpen] = React.useState(false);
   const toggleOpen = () => setIsOpen(!isOpen);
@@ -68,6 +70,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                   fontSize="md"
                   noOfLines={1}
                   onClick={e => e.stopPropagation()}
+                  color={linkColor}
                   isExternal
                 >
                   {title}

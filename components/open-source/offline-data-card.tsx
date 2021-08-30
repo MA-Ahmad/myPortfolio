@@ -19,11 +19,12 @@ import {
   Tooltip
 } from "@chakra-ui/react";
 import { MotionBox } from "../ui/motion";
-import { getTagColor } from "../ui/theme";
+import { getTagColor, useLinkColor } from "../ui/theme";
 import { AiOutlineStar, AiOutlineShareAlt } from "react-icons/ai";
 import { FiGithub } from "react-icons/fi";
 import { CardTransition } from "../ui/page-transitions";
 import LazyImage from "../ui/lazy-image";
+
 interface RepositoryCardProps {
   key: number;
   title: string;
@@ -37,6 +38,7 @@ interface RepositoryCardProps {
   fork: string;
   created?: string;
 }
+
 const RepositoryCard = (props: RepositoryCardProps) => {
   const {
     key,
@@ -51,6 +53,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
     fork,
   } = props;
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const linkColor = useLinkColor();
 
   const handleClick = () => {
     onOpen();
@@ -143,6 +146,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
                     fontWeight="600"
                     align="left"
                     onClick={e => handleLinkClick(e, url)}
+                    color={linkColor}
                   >
                     {title}
                   </Text>
