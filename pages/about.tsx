@@ -5,7 +5,6 @@ import {
   Heading,
   Flex,
   Text,
-  Tag,
   Image,
   useColorMode,
   useColorModeValue
@@ -21,6 +20,7 @@ import { MotionBox } from "components/ui/motion";
 import { companies, institutes } from "data/data";
 import Header from "components/layout/header";
 import PageLayout from "components/layout/pageLayout";
+import { Tags } from "components/ui/Tags";
 
 interface CardProps {
   title: string;
@@ -80,11 +80,15 @@ const Card = (props: CardProps) => {
                 alignItems="center"
                 display={["none", "none", "flex", "flex"]}
               >
-                {skills.map(skill => (
-                  <Tag size="sm" padding="0 3px" key={skill}>
-                    {skill}
-                  </Tag>
-                ))}
+                <Tags
+                  tags={skills}
+                  interactive={false}
+                  tagProps={{
+                    colorScheme: "gray",
+                    padding: "0 3px",
+                    size: "sm"
+                  }}
+                />
               </Stack>
             </Stack>
           </Flex>
@@ -101,11 +105,15 @@ const Card = (props: CardProps) => {
           alignItems="center"
           display={["flex", "flex", "none", "none"]}
         >
-          {skills.map(skill => (
-            <Tag size="sm" padding="0 3px" key={skill}>
-              {skill}
-            </Tag>
-          ))}
+          <Tags
+            tags={skills}
+            interactive={false}
+            tagProps={{
+              colorScheme: "gray",
+              padding: "0 3px",
+              size: "sm"
+            }}
+          />
         </Stack>
       </Box>
     </CardTransition>

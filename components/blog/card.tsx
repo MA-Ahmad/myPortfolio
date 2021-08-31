@@ -3,7 +3,6 @@ import {
   HStack,
   Heading,
   Text,
-  Tag,
   Link,
   Tooltip,
   useColorModeValue,
@@ -11,11 +10,11 @@ import {
   Image
 } from "@chakra-ui/react";
 import NextLink from "next/link";
-import { getTagColor } from "../ui/theme";
 import { CardTransition } from "../ui/page-transitions";
 import { BlogPost } from "../../interfaces/interface";
 import moment from "moment";
 import { useLinkColor } from "components/ui/theme";
+import { Tags } from "components/ui/Tags";
 
 interface IProps {
   post: BlogPost;
@@ -309,29 +308,25 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
             ""
           )}
           <HStack spacing={1} alignItems="center" d={["none", "none", "flex"]}>
-            {post.tag_list.map(tag => (
-              <Tag
-                size="sm"
-                padding="0 3px"
-                key={tag}
-                colorScheme={getTagColor(tag)}
-              >
-                {tag}
-              </Tag>
-            ))}
+            <Tags
+              tags={post.tag_list}
+              interactive={false}
+              tagProps={{
+                padding: "0 3px",
+                size: "sm"
+              }}
+            />
           </HStack>
         </HStack>
         <HStack spacing={1} alignItems="center" d={["flex", "flex", "none"]}>
-          {post.tag_list.map(tag => (
-            <Tag
-              size="sm"
-              padding="0 3px"
-              key={tag}
-              colorScheme={getTagColor(tag)}
-            >
-              {tag}
-            </Tag>
-          ))}
+          <Tags
+            tags={post.tag_list}
+            interactive={false}
+            tagProps={{
+              padding: "0 3px",
+              size: "sm"
+            }}
+          />
         </HStack>
         <Text align="left" fontSize="md" noOfLines={1} color={textColor}>
           {post.description}

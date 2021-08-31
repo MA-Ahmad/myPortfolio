@@ -4,13 +4,12 @@ import {
   VStack,
   Text,
   useColorModeValue,
-  Tag,
-  Link,
+  Link
 } from "@chakra-ui/react";
 import { motion, AnimatePresence } from "framer-motion";
-import { getTagColor } from "components/ui/theme";
 import LazyImage from "components/ui/lazy-image";
-import { useLinkColor } from 'components/ui/theme'
+import { useLinkColor } from "components/ui/theme";
+import { Tag } from "components/ui/Tags";
 
 interface ProjectCardProps {
   title: string;
@@ -77,9 +76,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 </Text>
                 <HStack spacing="1">
                   {technologies.map((tech, index) => (
-                    <Tag key={index} size="sm" colorScheme={getTagColor(tech)}>
-                      {tech}
-                    </Tag>
+                    <Tag name={tech} mt="1px" interactive={false} mr="auto" />
                   ))}
                 </HStack>
               </HStack>
