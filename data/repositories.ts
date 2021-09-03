@@ -43,7 +43,7 @@ export const repositories = [
     live: "https://ma-ahmad.github.io/notebook",
     blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
     stars: "15",
-    fork: "5"
+    fork: "6"
   },
   {
     title: "Portfolio3",
@@ -53,7 +53,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio",
     live: "https://mahmad.me/",
     blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
-    stars: "11"
+    stars: "13",
+    fork: "2"
   },
   {
     title: "Card portfolio",
@@ -63,7 +64,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/card-portfolio",
     live: "https://ma-ahmad.github.io/card-portfolio",
     blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
-    stars: "9"
+    stars: "9",
+    fork: "2"
   },
   {
     title: "Blog App",
