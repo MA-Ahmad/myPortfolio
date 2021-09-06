@@ -43,7 +43,7 @@ export const repositories = [
     live: "https://ma-ahmad.github.io/notebook",
     blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
     stars: "15",
-    fork: "6"
+    fork: "7"
   },
   {
     title: "Portfolio3",
