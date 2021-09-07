@@ -87,7 +87,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/blog-app-react-frontend",
     live: "https://blog-frontend-react.herokuapp.com",
     blurHash: "LSN1AcH?~Wtl00={M{NG0eIoj]xa",
-    stars: "8"
+    stars: "8",
+    fork: "1"
   },
   {
     title: "Rails template",
