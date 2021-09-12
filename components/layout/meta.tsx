@@ -8,6 +8,7 @@ type Props = {
   };
 
 const Meta = ({ title, keywords, description, image } : Props): JSX.Element => {
+  title = title.includes('Ahmad') ? title : title.concat(' | Muhammad Ahmad')
   return (
     <Head>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
