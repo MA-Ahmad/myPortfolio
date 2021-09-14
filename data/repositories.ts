@@ -19,7 +19,7 @@ export const repositories = [
     live: "https://my-portfolio-ma-ahmad.vercel.app",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
     stars: "36",
-    fork: "10"
+    fork: "11"
   },
   {
     title: "Dev.to clone",
@@ -87,7 +87,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/blog-app-react-frontend",
     live: "https://blog-frontend-react.herokuapp.com",
     blurHash: "LSN1AcH?~Wtl00={M{NG0eIoj]xa",
-    stars: "8",
+    stars: "10",
     fork: "1"
   },
   {
