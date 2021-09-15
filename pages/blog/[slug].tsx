@@ -56,7 +56,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
             ""
           )}
           <motion.div variants={fadeInUp}>
-            <Heading as="h1" size="lg">
+            <Heading as="h1" size="xl" mt="2" mb="2">
               {blogDetails?.title}
             </Heading>
           </motion.div>

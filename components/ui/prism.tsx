@@ -7,7 +7,22 @@ const prismBaseTheme = css`
   .article {
     text-align: left;
   }
+  
+  .article h1 {
+    font-family: "Noto Serif", serif;
+    padding: ${theme.space[4]} 0 ${theme.space[2]};
+    font-size: ${theme.fontSizes["4xl"]};
+    font-weight: ${theme.fontWeights.bold};
+  }
+
   .article h2 {
+    font-family: "Noto Serif", serif;
+    padding: ${theme.space[4]} 0 ${theme.space[2]};
+    font-size: ${theme.fontSizes["3xl"]};
+    font-weight: ${theme.fontWeights.bold};
+  }
+
+  .article h3 {
     font-family: "Noto Serif", serif;
     padding: ${theme.space[4]} 0 ${theme.space[2]};
     font-size: ${theme.fontSizes["2xl"]};
