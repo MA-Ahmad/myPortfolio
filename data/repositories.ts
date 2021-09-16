@@ -19,7 +19,7 @@ export const repositories = [
     live: "https://my-portfolio-ma-ahmad.vercel.app",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
     stars: "36",
-    fork: "11"
+    fork: "12"
   },
   {
     title: "Dev.to clone",
