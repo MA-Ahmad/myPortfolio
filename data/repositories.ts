@@ -7,7 +7,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "37",
+    stars: "40",
     fork: "9"
   },
   {
@@ -18,7 +18,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/myPortfolio",
     live: "https://my-portfolio-ma-ahmad.vercel.app",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "38",
+    stars: "39",
     fork: "13"
   },
   {
@@ -30,7 +30,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/dev.to-clone",
     live: "https://dev-to-clone-ma.vercel.app",
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
-    stars: "30",
+    stars: "32",
     fork: "4"
   },
   {
