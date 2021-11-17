@@ -7,8 +7,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio-v2",
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "58",
-    fork: "9"
+    stars: "59",
+    fork: "11"
   },
   {
     title: "Portfolio2",
@@ -18,8 +18,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/myPortfolio",
     live: "https://my-portfolio-ma-ahmad.vercel.app",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "56",
-    fork: "13"
+    stars: "63",
+    fork: "14"
   },
   {
     title: "Dev.to clone",
@@ -30,7 +30,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/dev.to-clone",
     live: "https://dev-to-clone-ma.vercel.app",
     blurHash: "LMOWg4wIS$WBH?sAkCR*?^bcnNoy",
-    stars: "50",
+    stars: "52",
     fork: "4"
   },
   {
@@ -42,7 +42,7 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/notebook",
     live: "https://ma-ahmad.github.io/notebook",
     blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
-    stars: "15",
+    stars: "18",
     fork: "7"
   },
   {
@@ -53,8 +53,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/portfolio",
     live: "https://mahmad.me/",
     blurHash: "L35O{d~XeoMyDhRPxv%Ms=xunmRQ",
-    stars: "14",
-    fork: "2"
+    stars: "15",
+    fork: "5"
   },
   {
     title: "Card portfolio",
@@ -64,8 +64,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/card-portfolio",
     live: "https://ma-ahmad.github.io/card-portfolio",
     blurHash: "L15#hiax00og^Uf65Nj]oPfkWRf6",
-    stars: "9",
-    fork: "2"
+    stars: "10",
+    fork: "3"
   },
   {
     title: "Blog App",
