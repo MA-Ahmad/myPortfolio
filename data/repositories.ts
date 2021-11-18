@@ -76,8 +76,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/reactBlog",
     live: "https://ma-ahmad.github.io/reactBlog",
     blurHash: "LMMaw^IV~pxu00%LRjNGAIIVadt6",
-    stars: "13",
-    fork: "1"
+    stars: "14",
+    fork: "2"
   },
   {
     title: "Blog App (front-end)",
@@ -87,8 +87,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/blog-app-react-frontend",
     live: "https://blog-frontend-react.herokuapp.com",
     blurHash: "LSN1AcH?~Wtl00={M{NG0eIoj]xa",
-    stars: "10",
-    fork: "1"
+    stars: "12",
+    fork: "2"
   },
   {
     title: "Rails template",
