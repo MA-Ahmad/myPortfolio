@@ -1,17 +1,6 @@
 export const repositories = [
   {
     title: "Portfolio1",
-    description: "Personal portfolio app to show my skills and experience.",
-    cover: '/assets/images/repositories/portfolio-v2.png',
-    technologies: ["react", "chakraUi"],
-    url: "https://github.com/MA-Ahmad/portfolio-v2",
-    live: "https://ma-ahmad.github.io/portfolio-v2",
-    blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "64",
-    fork: "11"
-  },
-  {
-    title: "Portfolio2",
     description: "Portfolio app to show my skills and experience.",
     cover: '/assets/images/repositories/portfolio-v2.png',
     technologies: ["Nextjs", "react", "chakraUi"],
@@ -20,6 +9,17 @@ export const repositories = [
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
     stars: "65",
     fork: "14"
+  },
+  {
+    title: "Portfolio2",
+    description: "Personal portfolio app to show my skills and experience.",
+    cover: '/assets/images/repositories/portfolio-v2.png',
+    technologies: ["react", "chakraUi"],
+    url: "https://github.com/MA-Ahmad/portfolio-v2",
+    live: "https://ma-ahmad.github.io/portfolio-v2",
+    blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
+    stars: "64",
+    fork: "11"
   },
   {
     title: "Dev.to clone",
