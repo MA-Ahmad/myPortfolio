@@ -19,7 +19,7 @@ export const repositories = [
     live: "https://ma-ahmad.github.io/portfolio-v2",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
     stars: "64",
-    fork: "11"
+    fork: "12"
   },
   {
     title: "Dev.to clone",
