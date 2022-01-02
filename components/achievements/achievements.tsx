@@ -4,8 +4,9 @@ import {
   FiHome,
   FiEdit2,
   FiUsers,
-  FiBarChart2
+  FiBarChart2,
 } from "react-icons/fi";
+import { FaTools } from "react-icons/fa";
 import { VStack, Heading, Box, Link, LinkProps } from "@chakra-ui/react";
 import { TimelineItem } from "./Timeline";
 import { PageSlideFade } from "components/ui/page-transitions";
@@ -64,6 +65,18 @@ const Achievements = () => {
             2021
           </Heading>
           <Box>
+            <TimelineItem icon={FaTools}>Learnt{" "}
+              <ExternalLink
+                color={linkColor}
+                url="https://www.typescriptlang.org"
+                text={"Typescript"}
+                target="_blank"
+              /> and <ExternalLink
+                color={linkColor}
+                url="https://nextjs.org"
+                text={"Next.js"}
+                target="_blank"
+              /></TimelineItem>
             <TimelineItem icon={FiUsers}>Became a dad ❤️</TimelineItem>
             <TimelineItem icon={FiPackage}>
               Published my first post on this website{" "}
@@ -78,7 +91,7 @@ const Achievements = () => {
               />
             </TimelineItem>
             <TimelineItem icon={FiBarChart2}>
-              Collected 6k+ post views and 350+ total reactions on{" "}
+              Collected 34k+ posts views and 1.5k+ total reactions on{" "}
               <ExternalLink
                 color={linkColor}
                 url="https://dev.to/m_ahmad"
