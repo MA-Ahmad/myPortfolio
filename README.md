@@ -1,5 +1,5 @@
 
-This is a portfolio application built using Next.js.
+This is a portfolio application built using Next.js and Chakra UI.
 
 ## Overview
 
