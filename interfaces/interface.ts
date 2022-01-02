@@ -47,4 +47,8 @@ export interface BlogPost {
     crossposted_at: null | string
     last_comment_at: string
     body_html: string
-  }
+}
+
+export interface Props {
+    posts: BlogPost[]
+}
