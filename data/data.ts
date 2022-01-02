@@ -63,16 +63,6 @@ export const institutes = [
         date: "Nov 1, 2013"
       }
     ]
-  },
-  {
-    short_title: "Govt Degree College",
-    title: "Govt Degree College",
-    alt: "college image",
-    role: "FSC",
-    skills: ["mathematic", "chemistry", "physics"],
-    period: "2011 - 2013",
-    startingYear: "2011",
-    logo: ""
   }
 ];
 
