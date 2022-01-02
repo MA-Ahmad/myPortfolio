@@ -12,10 +12,10 @@ import {
 } from "@chakra-ui/react";
 import { MotionBox, MotionFlex } from "components/ui/motion";
 import Header from "components/layout/header";
-import Projects from "./projects";
 import NextLink from 'next/link'
 import { useLinkColor } from 'components/ui/theme'
-// import UserIcon from "assets/images/user_icon.png";
+import PopularArticles from "./PopularArticles";
+import { Props } from "interfaces/interface";
 
 const ANIMATION_DURATION = 0.5;
 const ORANGE = "#ff9400";
@@ -24,7 +24,9 @@ interface HomeProps {
   projects: project[];
 }
 
-const Home: React.FC<HomeProps> = ({ projects }) => {
+const Home: React.FC<Props> = props => {
+  const { posts } = props;
+
   const linkColor = useLinkColor()
 
   return (
@@ -150,7 +152,7 @@ const Home: React.FC<HomeProps> = ({ projects }) => {
               </ListItem>
             </UnorderedList>
           </Stack>
-          <Projects projects={projects} />
+          <PopularArticles posts={posts} />
         </Box>
       </MotionBox>
     </Flex>
