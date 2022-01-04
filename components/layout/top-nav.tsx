@@ -38,17 +38,19 @@ const webLinks = [
 
 const mobileLinks = [
   { name: "About", path: "/about" },
+  { name: "Projects", path: "/projects" },
   { name: "Open Source", path: "/open-source" },
   { name: "Blog", path: "/blog" },
   { name: "Tech Stack", path: "/tech-stack" },
-  { name: "Achievements", path: "/achievements" }
+  { name: "Achievements", path: "/achievements" },
 ];
 
 const dropdownLinks = [
+  { name: "Projects", path: "/projects" },
   { name: "Tech Stack", path: "/tech-stack" },
   { name: "Open Source", path: "/open-source" },
-  { name: "Developer Story", path: "/developer-story" },
-  { name: "Achievements", path: "/achievements" }
+  { name: "Achievements", path: "/achievements" },
+  // { name: "Developer Story", path: "/developer-story" }
 ];
 
 interface NavLinkProps {
@@ -100,8 +102,8 @@ const MenuLink = (props: MenuLinkProps) => {
       <Icon as={AiTwotoneThunderbolt} size={18} color={props.color} />
     ),
     "/open-source": <Icon as={BsBook} size={18} color={props.color} />,
-    "/developer-story": <Icon as={MdTimeline} size={18} color={props.color} />,
-    "/achievements": <Icon as={BsCheckCircle} size={18} color={props.color} />
+    "/achievements": <Icon as={BsCheckCircle} size={18} color={props.color} />,
+    "/projects": <Icon as={MdTimeline} size={18} color={props.color} />
   };
 
   return (
