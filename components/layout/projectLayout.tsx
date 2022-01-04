@@ -11,10 +11,8 @@ import {
 } from "@chakra-ui/react";
 import { HiOutlineExternalLink } from "react-icons/hi";
 import { MotionBox, MotionFlex, MotionList, MotionText } from "components/ui/motion";
-import { useLinkColor } from "components/ui/theme";
 
 const ProjectLayoutMed = ({ project }) => {
-  const linkColor = useLinkColor();
 
   return (
     <Flex display={["flex", "flex", "none"]} rounded="xl"
@@ -38,8 +36,6 @@ const ProjectLayoutMed = ({ project }) => {
           rounded="md" objectFit="cover" opacity={0.5} />
         <Box width={'full'}
           height={'full'} position="absolute" bg={useColorModeValue("gray.100", "gray.900")} opacity={useColorModeValue("0.5", "1")}></Box>
-        {/* <div className="absolute transition duration-100  inset-0 bg-gray-100 bg-opacity-90  rounded-lg md:bg-opacity-30  md:hover:bg-opacity-0" /> */}
-
       </a>
       <MotionBox initial="initial"
         animate="animate" width={["full", "70%"]} rounded="lg" my="auto" px="6" py="3" position="relative" zIndex="10">
@@ -56,7 +52,6 @@ const ProjectLayoutMed = ({ project }) => {
                 align="left"
                 p="4"
                 fontSize="sm"
-                color={linkColor}
               >
                 {project.description}
               </MotionText>
@@ -99,7 +94,6 @@ const ProjectLayoutMed = ({ project }) => {
 };
 
 const LeftProjectLayoutLarge = ({ project }) => {
-  const linkColor = useLinkColor();
 
   return (
     <Flex width="full" display={["none", "none", "flex"]}>
@@ -168,7 +162,6 @@ const LeftProjectLayoutLarge = ({ project }) => {
               align="right"
               p="4"
               fontSize="md"
-              color={linkColor}
             >
               {project.description}
             </MotionText>
@@ -211,7 +204,6 @@ const LeftProjectLayoutLarge = ({ project }) => {
 };
 
 const RightProjectLayoutLarge = ({ project }) => {
-  const linkColor = useLinkColor();
 
   return (
     <Flex width="full" display={["none", "none", "flex"]}>
@@ -235,7 +227,6 @@ const RightProjectLayoutLarge = ({ project }) => {
               align="left"
               p="4"
               fontSize="md"
-              color={linkColor}
             >
               {project.description}
             </MotionText>
