@@ -3,6 +3,8 @@ import {
   Flex,
   Image,
   forwardRef,
+  Text,
+  List
 } from "@chakra-ui/react";
 import { motion, isValidMotionProp } from "framer-motion";
 
@@ -23,6 +25,26 @@ export const MotionFlex = motion(
       Object.entries(props).filter(([key]) => !isValidMotionProp(key))
     );
     return <Flex ref={ref} {...chakraProps} />;
+  })
+);
+
+export const MotionText = motion(
+  forwardRef((props, ref) => {
+    const chakraProps = Object.fromEntries(
+      // do not pass framer props to DOM element
+      Object.entries(props).filter(([key]) => !isValidMotionProp(key))
+    );
+    return <Text ref={ref} {...chakraProps} />;
+  })
+);
+
+export const MotionList = motion(
+  forwardRef((props, ref) => {
+    const chakraProps = Object.fromEntries(
+      // do not pass framer props to DOM element
+      Object.entries(props).filter(([key]) => !isValidMotionProp(key))
+    );
+    return <List ref={ref} {...chakraProps} />;
   })
 );
 

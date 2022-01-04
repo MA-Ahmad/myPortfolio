@@ -20,10 +20,6 @@ import { Props } from "interfaces/interface";
 const ANIMATION_DURATION = 0.5;
 const ORANGE = "#ff9400";
 
-interface HomeProps {
-  projects: project[];
-}
-
 const Home: React.FC<Props> = props => {
   const { posts } = props;
 
