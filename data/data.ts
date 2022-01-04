@@ -15,14 +15,14 @@ export const companies = [
     period: "2018 - 2019",
     logo: '/assets/images/logos/brainxtech.png'
   },
-  {
-    title: "Codenya Studio",
-    alt: "CS image",
-    role: "Co-founder, CTO",
-    skills: ["ruby", "rails", "python", "typescript", "react", "aws"],
-    period: "2018 - Present",
-    logo: '/assets/images/logos/codenya.png'
-  },
+  // {
+  //   title: "Codenya Studio",
+  //   alt: "CS image",
+  //   role: "Co-founder, CTO",
+  //   skills: ["ruby", "rails", "python", "typescript", "react", "aws"],
+  //   period: "2018 - Present",
+  //   logo: '/assets/images/logos/codenya.png'
+  // },
   {
     title: "Brainplow",
     alt: "Brainplow image",
