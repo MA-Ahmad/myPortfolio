@@ -79,7 +79,7 @@ const Achievements = () => {
               /></TimelineItem>
             <TimelineItem icon={FiUsers}>Became a dad ❤️</TimelineItem>
             <TimelineItem icon={FiPackage}>
-              Published my first post on this website{" "}
+              Published 3 posts on my portfolio website{" "}
               <InternalLink color={linkColor} url="/blog" text={"Blog"} />
             </TimelineItem>
             <TimelineItem icon={FiPackage}>
@@ -87,7 +87,7 @@ const Achievements = () => {
               <InternalLink
                 color={linkColor}
                 url="/open-source"
-                text={"9 open-source repositories"}
+                text={"20+ open-source repositories"}
               />
             </TimelineItem>
             <TimelineItem icon={FiBarChart2}>
@@ -104,7 +104,7 @@ const Achievements = () => {
               Framer-motion,{" "}
               <ExternalLink
                 color={linkColor}
-                url="https://github.com/MA-Ahmad/portfolio"
+                url="https://github.com/MA-Ahmad/myPortfolio"
                 text={"source on Github"}
                 target="_blank"
               />
