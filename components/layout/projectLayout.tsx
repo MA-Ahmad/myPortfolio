@@ -7,7 +7,9 @@ import {
   Flex,
   Image,
   Box,
-  ListItem
+  ListItem,
+  Skeleton,
+  AspectRatio
 } from "@chakra-ui/react";
 import { HiOutlineExternalLink } from "react-icons/hi";
 import { MotionBox, MotionFlex, MotionList, MotionText } from "components/ui/motion";
@@ -27,13 +29,16 @@ const ProjectLayoutMed = ({ project }) => {
       overflow="hidden"
       position="relative">
       <a href={project.site} target="_blank" rel="noopener noreferrer">
-        <Image src={project.imageLight}
-          blurHash={project.blurHash}
-          size="lg"
-          width={'full'}
-          height={'full'}
-          position="absolute"
-          rounded="md" objectFit="cover" opacity={0.5} />
+        <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
+          <Image
+            src={project.imageLight}
+            fallback={<Skeleton />}
+            size="lg"
+            width={'full'}
+            height={'full'}
+            position="absolute"
+            rounded="xl" objectFit="cover" opacity={0.5} />
+        </AspectRatio>
         <Box width={'full'}
           height={'full'} position="absolute" bg={useColorModeValue("gray.100", "gray.900")} opacity={useColorModeValue("0.5", "1")}></Box>
       </a>
@@ -121,7 +126,6 @@ const LeftProjectLayoutLarge = ({ project }) => {
         overflow="hidden"
         position="relative"
       >
-
         <a href={project.site} target="_blank" rel="noopener noreferrer">
           {/* <LazyImage
           src={project.imageLight}
@@ -132,13 +136,16 @@ const LeftProjectLayoutLarge = ({ project }) => {
           layout="fixed"
           rounded="md"
         /> */}
-          <Image src={project.imageLight}
-            blurHash={project.blurHash}
-            size="lg"
-            width={'full'}
-            height={'full'}
-            position="absolute"
-            rounded="md" objectFit="cover" opacity={0.5} _hover={{ opacity: 1 }} />
+          <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
+            <Image
+              src={project.imageLight}
+              fallback={<Skeleton />}
+              size="lg"
+              width={'full'}
+              height={'full'}
+              position="absolute"
+              rounded="xl" objectFit="cover" opacity={0.5} _hover={{ opacity: 1 }} />
+          </AspectRatio>
         </a>
       </MotionBox>
       <MotionBox initial="initial"
@@ -288,24 +295,16 @@ const RightProjectLayoutLarge = ({ project }) => {
         overflow="hidden"
         position="relative"
       >
-
         <a href={project.site} target="_blank" rel="noopener noreferrer">
-          {/* <LazyImage
-          src={project.imageLight}
-          blurHash={project.blurHash}
-          size="sm"
-          width={100}
-          height={100}
-          layout="fixed"
-          rounded="md"
-        /> */}
-          <Image src={project.imageLight}
-            blurHash={project.blurHash}
-            size="lg"
-            width={'full'}
-            height={'full'}
-            position="absolute"
-            rounded="md" objectFit="cover" opacity={0.5} _hover={{ opacity: 1 }} />
+          <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
+            <Image src={project.imageLight}
+              fallback={<Skeleton />}
+              size="lg"
+              width={'full'}
+              height={'full'}
+              position="absolute"
+              rounded="xl" objectFit="cover" opacity={0.5} _hover={{ opacity: 1 }} />
+          </AspectRatio>
         </a>
       </MotionBox>
     </Flex>
