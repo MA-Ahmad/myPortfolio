@@ -126,24 +126,24 @@ const Home: React.FC<Props> = props => {
             fontSize="md"
           >
             <Text textAlign="center" color="#53c8c4" fontWeight="bold">
-              Highlights
+              New year, new content:
             </Text>
             <UnorderedList textAlign="left" paddingLeft={5} m={0}>
               <ListItem>
-                <NextLink href={'/open-source'} passHref>
+                <NextLink href={'/projects'} passHref>
                   <Link color={linkColor}>
-                    Live/Local Github Repos
-                  <Badge ml="1" colorScheme="green">
+                    Projects page
+                    <Badge ml="1" colorScheme="green">
                       New
-                  </Badge>
+                    </Badge>
                   </Link>
                 </NextLink>
               </ListItem>
               <ListItem>
-                <NextLink href={'/tech-stack'} passHref>
+                <NextLink href={'/'} passHref>
                   <Link color={linkColor}>
-                    Tech Stack
-                </Link>
+                    Updated portfolio home page
+                  </Link>
                 </NextLink>
               </ListItem>
             </UnorderedList>
