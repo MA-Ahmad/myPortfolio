@@ -60,7 +60,7 @@ const Achievements = () => {
         </Header>
       </Box>
       <VStack textAlign="start" align="start" mb={5}>
-        <Box>
+        <Box zIndex={5}>
           <Heading fontSize="2xl" fontWeight="600" my={5}>
             2021
           </Heading>
@@ -112,7 +112,7 @@ const Achievements = () => {
             </TimelineItem>
           </Box>
         </Box>
-        <Box>
+        <Box zIndex={5}>
           <Heading fontSize="2xl" fontWeight="600" my={5}>
             2020
           </Heading>

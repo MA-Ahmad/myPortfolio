@@ -59,7 +59,7 @@ const TechStack = ({ skills }) => {
               </Text>
             </VStack>
           </Section>
-          <Section>
+          <Section zIndex={5}>
             <Tabs
               variant="soft-rounded"
               colorScheme="blue"
