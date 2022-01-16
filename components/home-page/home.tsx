@@ -13,7 +13,7 @@ import {
 import { MotionBox, MotionFlex } from "components/ui/motion";
 import Header from "components/layout/header";
 import NextLink from 'next/link'
-import { useLinkColor } from 'components/ui/theme'
+import { useLinkColor, useHoverLinkColor } from 'components/ui/theme'
 import PopularArticles from "./PopularArticles";
 import { Props } from "interfaces/interface";
 
@@ -23,8 +23,8 @@ const ORANGE = "#ff9400";
 const Home: React.FC<Props> = props => {
   const { posts } = props;
 
-  const linkColor = useLinkColor()
-
+  const linkColor = useLinkColor();
+  const hoverLinkColor = useHoverLinkColor();
   return (
     <Flex direction="column" align="center">
       <Flex direction={["column", "column", "row"]}>

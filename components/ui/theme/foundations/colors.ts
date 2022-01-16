@@ -2,14 +2,20 @@ import { ThemeOverride, useColorModeValue, theme as defaultTheme } from '@chakra
 import { transparentize } from '@chakra-ui/theme-tools'
 
 export const linkColors = {
-  light: 'accent.500',
-  dark: 'accent.400',
+  light: 'accent.400',
+  dark: 'accent.500',
+  lhover: 'accent.200',
+  dhover: 'accent.700',
   visitedLight: 'accent.300',
   visitedDark: 'accent.600'
 }
 
 export function useLinkColor() {
-  return useColorModeValue(linkColors.light, linkColors.dark)
+  return useColorModeValue(linkColors.dark, linkColors.light)
+}
+
+export function useHoverLinkColor() {
+  return useColorModeValue(linkColors.dhover, linkColors.lhover)
 }
 
 export function useVisitedLinkColor() {

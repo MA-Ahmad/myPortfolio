@@ -2,8 +2,10 @@ import { extendTheme, ThemeOverride } from '@chakra-ui/react'
 import { colors } from './foundations/colors'
 import { mergeWith } from '@chakra-ui/utils'
 import { mode } from "@chakra-ui/theme-tools"
+import { useHoverLinkColor } from './foundations/colors'
+
 // Re-exports
-export { useLinkColor, accentKeys } from './foundations/colors'
+export { useLinkColor, useHoverLinkColor, accentKeys } from './foundations/colors'
 export type { ColorKeys } from './foundations/colors'
 
 export function makeTheme(overrides: ThemeOverride = {}) {
@@ -39,8 +41,11 @@ export const extendedTheme = extendTheme({
         transitionTimingFunction: "ease-out",
         fontWeight: "500",
         _hover: {
-          color: mode("blue.600", "blue.300")(props),
+          color: useHoverLinkColor('dark', 'light')
         }
+        // _hover: {
+        //   color: mode("blue.600", "blue.300")(props),
+        // }
       },
     }),
   },
