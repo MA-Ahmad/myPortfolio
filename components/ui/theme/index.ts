@@ -41,7 +41,7 @@ export const extendedTheme = extendTheme({
         transitionTimingFunction: "ease-out",
         fontWeight: "500",
         _hover: {
-          color: useHoverLinkColor('dark', 'light')
+          color: useHoverLinkColor()
         }
         // _hover: {
         //   color: mode("blue.600", "blue.300")(props),
