@@ -27,8 +27,8 @@ function AppLayout(props) {
 
 function DottedSvgs() {
   return (
-    <Box position="absolute" height="50rem" width="100%" overflow="hidden" display={['none', 'none', 'block']}>
-      <Box position="relative" height="full" mx="auto" maxW="960px">
+    <Box position="absolute" height="50rem" width="100%" overflow="hidden" display={['none', 'none', 'block']} zIndex={0}>
+      <Box position="relative" height="full" mx="auto" maxW="940px">
         <Box position="absolute" left="100%">
           <svg className={`${styles.dottedRightTransform} ${styles.dottedColor}`} width="404" height="784" fill="none" viewBox="0 0 404 784">
             <defs>

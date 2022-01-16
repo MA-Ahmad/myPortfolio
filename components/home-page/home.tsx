@@ -110,6 +110,7 @@ const Home: React.FC<Props> = props => {
             duration: ANIMATION_DURATION
           }
         }}
+        zIndex={1}
       >
         <Box mt={10}>
           <Stack
