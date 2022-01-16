@@ -39,16 +39,16 @@ const Projects: NextPage = () => {
               {subtitle}
             </Text>
           </VStack>
-          <VStack spacing={8} mt={["7", "0", "0"]}>
+          <VStack spacing={8} mt={["7", "7", "0"]}>
             {projectsList.map((project, index) => (
-              <>
+              <Fragment key={index}>
                 <ProjectLayoutMed project={project} />
                 {index % 2 === 0 ? (
                   <LeftProjectLayoutLarge project={project} />
                 ) : (
                   <RightProjectLayoutLarge project={project} />
                 )}
-              </>
+              </Fragment>
             ))}
           </VStack>
         </PageSlideFade>
