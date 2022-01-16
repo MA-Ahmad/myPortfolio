@@ -28,7 +28,7 @@ import { MdTimeline } from "react-icons/md";
 import { BsBook } from "react-icons/bs";
 import NextLink from "next/link";
 import { useRouter } from "next/router";
-import { AccentPicker } from "components/Accent";
+import { AccentPicker } from "components/ui/theme/Accent";
 import { useLinkColor } from "components/ui/theme";
 
 const webLinks = [

@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import * as gtag from "lib/gtag";
 import { AnimatePresence } from "framer-motion";
 import { theme } from "components/ui/theme";
-import { AccentGlobal } from "components/Accent";
+import { AccentGlobal } from "components/ui/theme/Accent";
 import { FontsGlobal } from "components/ui/theme/fonts";
 
 function MyApp({ Component, pageProps }: AppProps) {
