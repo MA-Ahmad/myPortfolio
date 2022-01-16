@@ -5,7 +5,6 @@ import PageLayout from "components/layout/pageLayout";
 
 const Index: NextPage<Props> = props => {
     const { posts } = props;
-    console.log(posts);
   return (
     <PageLayout title="Muhammad Ahmad - Full Stack Developer">
       <Home posts={posts} />
