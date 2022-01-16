@@ -1,9 +1,9 @@
 .dottedRightTransform {
-  transform: translateX(-10%) translateY(-45%);
+  transform: translateX(0%) translateY(-45%);
 }
 
 .dottedLeftTransform {
-  transform: translateX(5%) translateY(52%);
+  transform: translateX(0%) translateY(52%);
 }
 
 .dottedColor {
