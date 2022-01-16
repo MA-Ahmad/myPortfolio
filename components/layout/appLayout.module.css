@@ -1,0 +1,11 @@
+.dottedRightTransform {
+  transform: translateX(-10%) translateY(-45%);
+}
+
+.dottedLeftTransform {
+  transform: translateX(5%) translateY(52%);
+}
+
+.dottedColor {
+  color: rgba(55,65,81, 1);
+}
