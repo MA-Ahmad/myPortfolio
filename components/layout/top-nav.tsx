@@ -30,6 +30,7 @@ import NextLink from "next/link";
 import { useRouter } from "next/router";
 import { AccentPicker } from "components/ui/theme/Accent";
 import { useLinkColor } from "components/ui/theme";
+import { MotionBox } from "components/ui/motion";
 
 const webLinks = [
   { name: "About", path: "/about" },
@@ -42,14 +43,14 @@ const mobileLinks = [
   { name: "Open Source", path: "/open-source" },
   { name: "Blog", path: "/blog" },
   { name: "Tech Stack", path: "/tech-stack" },
-  { name: "Achievements", path: "/achievements" },
+  { name: "Achievements", path: "/achievements" }
 ];
 
 const dropdownLinks = [
   { name: "Projects", path: "/projects" },
   { name: "Tech Stack", path: "/tech-stack" },
   { name: "Open Source", path: "/open-source" },
-  { name: "Achievements", path: "/achievements" },
+  { name: "Achievements", path: "/achievements" }
   // { name: "Developer Story", path: "/developer-story" }
 ];
 
@@ -57,6 +58,7 @@ interface NavLinkProps {
   index?: number;
   name: string;
   path: string;
+  linkColor: string;
   onClose: () => void;
 }
 
@@ -78,7 +80,7 @@ const NavLink = (props: NavLinkProps) => {
           bg: link.bg
         }}
         bg={router.pathname === props.path ? link.bg : "transparent"}
-        color={router.pathname === props.path ? link.color : "inherit"}
+        color={router.pathname === props.path ? props.linkColor : "inherit"}
         onClick={() => props.onClose()}
       >
         {props.name}
@@ -159,16 +161,18 @@ export default function TopNav() {
             onClick={isOpen ? onClose : onOpen}
           />
           <HStack spacing={8} alignItems={"center"}>
-            <Box>
+            <MotionBox whileHover={{ scale: 1.2 }} shadow="md" rounded="full">
               <NextLink href={"/"} passHref>
                 <Avatar
                   as={Link}
                   size={"sm"}
                   // src={UserIcon}
+                  showBorder={true}
+                  borderColor={linkColor}
                   src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
                 />
               </NextLink>
-            </Box>
+            </MotionBox>
             <HStack
               as={"nav"}
               spacing={4}
@@ -179,6 +183,7 @@ export default function TopNav() {
                   key={index}
                   name={link.name}
                   path={link.path}
+                  linkColor={linkColor}
                   onClose={onClose}
                 />
               ))}
@@ -194,8 +199,6 @@ export default function TopNav() {
                       fontSize={"1em"}
                       rounded={"md"}
                       height={"auto "}
-                      _hover={menuProps}
-                      _expanded={menuProps}
                       _focus={{ boxShadow: "none" }}
                       rightIcon={<BiChevronDown size={18} />}
                     >
@@ -208,7 +211,7 @@ export default function TopNav() {
                           path={link.path}
                           name={link.name}
                           onClose={onClose}
-                          color={menuProps.color}
+                          color={linkColor}
                           bg={menuProps.bg}
                           rPath={router.pathname}
                         />
@@ -245,6 +248,7 @@ export default function TopNav() {
                   index={index}
                   name={link.name}
                   path={link.path}
+                  linkColor={linkColor}
                   onClose={onClose}
                 />
               ))}

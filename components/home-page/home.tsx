@@ -12,8 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { MotionBox, MotionFlex } from "components/ui/motion";
 import Header from "components/layout/header";
-import NextLink from 'next/link'
-import { useLinkColor, useHoverLinkColor } from 'components/ui/theme'
+import NextLink from "next/link";
+import { useLinkColor } from "components/ui/theme";
 import PopularArticles from "./PopularArticles";
 import { Props } from "interfaces/interface";
 
@@ -22,9 +22,8 @@ const ORANGE = "#ff9400";
 
 const Home: React.FC<Props> = props => {
   const { posts } = props;
-
   const linkColor = useLinkColor();
-  const hoverLinkColor = useHoverLinkColor();
+
   return (
     <Flex direction="column" align="center">
       <Flex direction={["column", "column", "row"]}>
@@ -44,11 +43,15 @@ const Home: React.FC<Props> = props => {
           m="auto"
           mb={[16, 16, "auto"]}
         >
-          <Avatar
-            size={"2xl"}
-            // src={UserIcon}
-            src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
-          />
+          <MotionBox whileHover={{ scale: 1.2 }} rounded="full" shadow="lg">
+            <Avatar
+              size={"2xl"}
+              // src={UserIcon}
+              showBorder={true}
+              borderColor={linkColor}
+              src={"https://avatars2.githubusercontent.com/u/37842853?v=4"}
+            />
+          </MotionBox>
         </MotionBox>
         <MotionFlex
           ml={["auto", "auto", 16]}
@@ -70,7 +73,15 @@ const Home: React.FC<Props> = props => {
             }
           }}
         >
-          <Header underlineColor={ORANGE} emoji="👋" mt={0}>
+          <Header
+            as={"text"}
+            underlineColor={ORANGE}
+            emoji="👋"
+            mt={0}
+            variant="gradient"
+            fromcolor="blue.400"
+            tocolor="red.500"
+          >
             Hey!
           </Header>
           <Box as="h2" fontSize="2xl" fontWeight="400" textAlign="left">
@@ -126,12 +137,19 @@ const Home: React.FC<Props> = props => {
             rounded="sm"
             fontSize="md"
           >
-            <Text textAlign="center" color="#53c8c4" fontWeight="bold">
+            <Text
+              textAlign="center"
+              color="#53c8c4"
+              fontWeight="bold"
+              variant="gradient"
+              fromcolor="blue.400"
+              tocolor="red.500"
+            >
               New year, new content:
             </Text>
             <UnorderedList textAlign="left" paddingLeft={5} m={0}>
               <ListItem>
-                <NextLink href={'/projects'} passHref>
+                <NextLink href={"/projects"} passHref>
                   <Link color={linkColor}>
                     Projects page
                     <Badge ml="1" colorScheme="green">
@@ -141,10 +159,8 @@ const Home: React.FC<Props> = props => {
                 </NextLink>
               </ListItem>
               <ListItem>
-                <NextLink href={'/'} passHref>
-                  <Link color={linkColor}>
-                    Updated portfolio home page
-                  </Link>
+                <NextLink href={"/"} passHref>
+                  <Link color={linkColor}>Updated portfolio home page</Link>
                 </NextLink>
               </ListItem>
             </UnorderedList>
