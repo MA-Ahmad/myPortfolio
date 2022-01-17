@@ -74,7 +74,6 @@ const Home: React.FC<Props> = props => {
           }}
         >
           <Header
-            as={"text"}
             underlineColor={ORANGE}
             emoji="👋"
             mt={0}
