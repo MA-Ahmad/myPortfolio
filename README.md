@@ -1,17 +1,11 @@
+# [Mahmad.me](https://mahmad.me)
 
-This is a portfolio application built using Next.js and Chakra UI.
-
-## Overview
-
-This application is built using the following technologies:
-
-- [Typescript](https://www.typescriptlang.org/)
-- [Nextjs](https://nextjs.org/)
-- [Chakra UI](https://chakra-ui.com)
-- [Framer Motion](https://www.framer.com/motion/)
-- [react icons](https://react-icons.github.io/react-icons/)
-- [remark](https://remark.js.org/)
-- [prismjs](https://prismjs.com/)
+- **Framework**: [Next.js](https://nextjs.org/)
+- **Styling**: [Chakra UI](https://chakra-ui.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Highlight Content**: [prismjs](https://prismjs.com/)
+- **Markdown Processor**: [remark](https://remark.js.org/)
+- **Deployment**: [Vercel](https://vercel.com)
 
 ## Requirements
 
