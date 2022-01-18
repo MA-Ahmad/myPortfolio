@@ -42,7 +42,9 @@ The above command will start the application on [http://localhost:3000/](http://
 
 
 ## Screens
+### Home 
 ![Home Screen](/public/assets/images/screens/home_page.png)
+### Blog
 ![Skills Screen](/public/assets/images/screens/blog_page.png)
 
 ## License
