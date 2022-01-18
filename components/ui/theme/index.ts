@@ -3,6 +3,7 @@ import { colors } from './foundations/colors'
 import { mergeWith } from '@chakra-ui/utils'
 import { mode } from "@chakra-ui/theme-tools"
 import { useHoverLinkColor } from './foundations/colors'
+import { getColor } from '@chakra-ui/theme-tools'
 
 // Re-exports
 export { useLinkColor, useHoverLinkColor, accentKeys } from './foundations/colors'
@@ -67,10 +68,28 @@ export const extendedTheme = extendTheme({
         rounded: "xl"
       },
     },
+    Text: {
+      variants: {
+        gradient: (props) => {
+          const { theme, fromcolor, tocolor } = props
+          const lgFrom = getColor(theme, fromcolor)
+          const lgTo = getColor(theme, tocolor)
+          return {
+            background: `linear-gradient(135deg, ${lgFrom}, ${lgTo})`,
+            backgroundClip: 'text',
+            textFillColor: 'transparent',
+            _hover: {
+                background: `linear-gradient(315deg, ${lgFrom}, ${lgTo})`,
+                backgroundClip: 'text',
+            },
+          }
+        },
+      }
+    },
     Tag: {
       baseStyle: {
         rounded: "lg",
-      },
+      }
     },
     textarea: {
       baseStyle: {
@@ -85,28 +104,28 @@ export const extendedTheme = extendTheme({
         },
         _focus: {
           boxShadow: 'none'
-        }
-      },
-      variants: {
-        text: {
-          color: "blue.400",
-          transition: "color 0.15s",
-          transitionTimingFunction: "ease-out",
-          fontWeight: "500",
-          _hover: {
-            color: "blue.300",
-          },
         },
-        gradient: {
-          bgGradient: "linear(to-br, blue.400,blue.300)",
-          bgClip: "text",
-          fontWeight: "500",
-          _hover: {
-            bgGradient: "linear(to-br, blue.500,blue.300)",
+        variants: {
+          text: {
+            color: "blue.400",
+            transition: "color 0.15s",
+            transitionTimingFunction: "ease-out",
+            fontWeight: "500",
+            _hover: {
+              color: "blue.300",
+            },
+          },
+          gradient: {
+            bgGradient: "linear(to-br, blue.400,blue.300)",
             bgClip: "text",
+            fontWeight: "500",
+            _hover: {
+              bgGradient: "linear(to-br, blue.500,blue.300)",
+              bgClip: "text",
+            },
           },
         },
-      },
+      }
     }
   },
   mdx: {
