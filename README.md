@@ -10,6 +10,8 @@ This application is built using the following technologies:
 - [Chakra UI](https://chakra-ui.com)
 - [Framer Motion](https://www.framer.com/motion/)
 - [react icons](https://react-icons.github.io/react-icons/)
+- [remark](https://remark.js.org/)
+- [prismjs](https://prismjs.com/)
 
 ## Requirements
 
