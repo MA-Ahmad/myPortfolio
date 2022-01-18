@@ -41,8 +41,7 @@ The above command will start the application on [http://localhost:3000/](http://
 
 ## Screens
 ![Home Screen](/public/assets/images/screens/home_page.png)
-![Skills Screen](/public/assets/images/screens/skills.png)
-![OpenSource Screen](/public/assets/images/screens/open_source.png)
+![Skills Screen](/public/assets/images/screens/blog_page.png)
 
 ## License
 
