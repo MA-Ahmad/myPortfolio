@@ -77,9 +77,6 @@ const Home: React.FC<Props> = props => {
             underlineColor={ORANGE}
             emoji="👋"
             mt={0}
-            variant="gradient"
-            fromcolor="blue.400"
-            tocolor="red.500"
           >
             Hey!
           </Header>
