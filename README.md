@@ -5,6 +5,7 @@
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
 - **Highlight Blog Content**: [prismjs](https://prismjs.com/)
 - **Markdown Processor**: [remark](https://remark.js.org/)
+- **ORM**: [prisma](https://www.prisma.io/)
 - **Deployment**: [Vercel](https://vercel.com)
 
 ## Requirements
