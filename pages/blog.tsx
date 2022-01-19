@@ -96,9 +96,16 @@ const getPosts = async () => {
   return posts;
 };
 
+const getDbPosts = async () => {
+  const res = await fetch('http://localhost:3000/api/posts')
+  const posts = await res.json()
+  return posts;
+}
+
 const root = process.cwd();
 
 export const getStaticProps: GetStaticProps = async () => {
+  const dbPosts = await getDbPosts();
   let devtoPosts = await getPosts();
 
   const paths = fs
@@ -139,6 +146,15 @@ export const getStaticProps: GetStaticProps = async () => {
   devtoPosts = devtoPosts.filter(data => data.canonical_url.includes("dev.to"));
   const posts = [...localPosts, ...devtoPosts];
 
+  // Add dev.to reactions_count + db likes
+  posts.map((post, index) => {
+    let p = dbPosts.filter((p) => p.slug === post.slug)[0];
+    if (p) {
+      post.public_reactions_count = Number(post.public_reactions_count) + Number(p.likes);
+      posts[index] = post;
+    }
+  })
+    
   if (!posts) {
     return {
       notFound: true
