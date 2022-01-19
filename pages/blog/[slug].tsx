@@ -1,3 +1,5 @@
+import * as React from "react";
+import { useState, useEffect } from "react";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -10,7 +12,8 @@ import {
   HStack,
   Flex,
   Tag,
-  useColorModeValue
+  useColorModeValue,
+  Collapse
 } from "@chakra-ui/react";
 import remark from "remark";
 import prism from "remark-prism";
@@ -24,6 +27,8 @@ import { MotionImage } from "components/ui/motion";
 import DevToCallToAction from "components/layout/DevToCallToAction";
 import { fadeInUp, stagger } from "components/ui/page-transitions";
 import { motion } from "framer-motion";
+import { usePostLikes } from "lib/usePostLikes"
+import { LikeButton } from "components/ui/LikeButton";
 
 dayjs.extend(localizedFormat);
 
@@ -36,13 +41,39 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   articleContent,
   blogDetails
 }) => {
+  const { currentUserLikes, totalPostLikes, isLoading, increment } = usePostLikes(blogDetails?.slug);
+  const [showLikeButton, setShowLikeButton] = useState(false);
   const textColor = useColorModeValue("gray.500", "gray.200");
+  const borderColor = useColorModeValue("transparent", "gray.700");
+
+  useEffect(() => {
+    window.addEventListener("scroll", listenToScroll);
+    return () =>
+      window.removeEventListener("scroll", listenToScroll);
+  }, [])
+
+  const listenToScroll = () => {
+    if (window.scrollY > 400)
+      setShowLikeButton(true)
+    else
+      setShowLikeButton(false)
+  }
+
   return (
     <PageLayout
       title={blogDetails?.title}
       description={blogDetails?.description}
       image={blogDetails?.cover_image}
     >
+      <Collapse in={showLikeButton} animateOpacity>
+        <Box position="fixed" right="10%" top="50%" display={['none', 'none', 'none', 'block']}>
+          <LikeButton id={blogDetails?.slug} devToLikes={blogDetails?.public_reactions_count} />
+        </Box>
+      </Collapse>
+      {/* {showLikeButton && 
+      <Box position="fixed" right="10%" top="50%">
+        <LikeButton id={'create-professional-portfolio-website-with-nextjs-and-chakraui-4lkn'} />
+      </Box>} */}
       <motion.div initial="initial" animate="animate" variants={stagger}>
         <VStack marginBottom="5" alignItems="left" textAlign="left">
           {blogDetails?.cover_image ? (
@@ -51,6 +82,8 @@ const ArticlePage: NextPage<AllBlogProps> = ({
               variants={fadeInUp}
               layout="fixed"
               rounded="md"
+              border="2px solid"
+              borderColor={borderColor}
             />
           ) : (
             ""
@@ -88,7 +121,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                       align="left"
                       color={textColor}
                     >
-                      {blogDetails.public_reactions_count}
+                      {Number(blogDetails.public_reactions_count) + totalPostLikes}
                     </Text>
                     &nbsp;
                     <svg
@@ -301,6 +334,11 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       frontmatter["url"] = devtoPost?.url;
     }
     blogObj = frontmatter;
+
+    // If slug not existed in blogObj
+    if (params?.slug) {
+      blogObj.slug = params?.slug
+    }
     remarkContent = await markdownToHtml(content);
   }
 
