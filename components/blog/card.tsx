@@ -7,7 +7,8 @@ import {
   Tooltip,
   useColorModeValue,
   Flex,
-  Image
+  Image,
+  Spinner
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { CardTransition } from "../ui/page-transitions";
@@ -15,6 +16,7 @@ import { BlogPost } from "../../interfaces/interface";
 import moment from "moment";
 import { useLinkColor } from "components/ui/theme";
 import { Tags } from "components/ui/Tags";
+import { usePostLikes } from "lib/usePostLikes"
 
 interface IProps {
   post: BlogPost;
@@ -27,6 +29,7 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
     "/assets/images/logos/dev.png",
     "/assets/images/logos/dev_white.png"
   );
+  const { totalPostLikes, isLoading } = usePostLikes(post?.slug);
 
   return (
     <CardTransition>
@@ -74,7 +77,10 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
                   align="left"
                   color={textColor}
                 >
-                  {post.public_reactions_count}
+                  {isLoading ? <Spinner size='xs' speed='0.65s'
+                    emptyColor='gray.200'
+                    color={linkColor} /> :
+                    (Number(post.public_reactions_count) + Number(totalPostLikes))}
                 </Text>
                 &nbsp;
                 <svg
@@ -198,7 +204,10 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
                   align="left"
                   color={textColor}
                 >
-                  {post.public_reactions_count}
+                  {isLoading ? <Spinner size='xs' speed='0.65s'
+                    emptyColor='gray.200'
+                    color={linkColor} /> :
+                    (Number(post.public_reactions_count) + Number(totalPostLikes))}
                 </Text>
                 &nbsp;
                 <svg

@@ -1,7 +1,7 @@
 import { usePostLikes } from "lib/usePostLikes"
 import React from "react"
 import { MotionBox, MotionFlex } from "./motion"
-import { Icon, useColorModeValue, Progress } from '@chakra-ui/react'
+import { Icon, useColorModeValue, Progress, Spinner } from '@chakra-ui/react'
 import { Box, HStack } from "@chakra-ui/layout"
 import { BsHeartFill } from "react-icons/bs";
 import { useLinkColor } from "components/ui/theme";
@@ -78,7 +78,9 @@ export const LikeButton = ({ id, devToLikes }: { id: string, devToLikes: number 
         </Box>
       </button>
       <Box fontSize="lg" fontWeight="semibold" color={linkColor}>
-        <span>{Number(totalPostLikes) + Number(devToLikes)}</span>
+        {isLoading ? <Spinner size='xs' speed='0.65s'
+          emptyColor='gray.200'
+          color={linkColor} /> : <span>{Number(totalPostLikes) + Number(devToLikes)}</span>}
       </Box>
     </HStack>
   )
