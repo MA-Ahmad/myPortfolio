@@ -3,7 +3,7 @@
 - **Framework**: [Next.js](https://nextjs.org/)
 - **Styling**: [Chakra UI](https://chakra-ui.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Highlight Content**: [prismjs](https://prismjs.com/)
+- **Highlight Blog Content**: [prismjs](https://prismjs.com/)
 - **Markdown Processor**: [remark](https://remark.js.org/)
 - **Deployment**: [Vercel](https://vercel.com)
 
