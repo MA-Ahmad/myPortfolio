@@ -20,9 +20,10 @@ import { Tags } from "components/ui/Tags";
 interface IProps {
   post: BlogPost;
   isLoading: boolean;
+  postDbLikes: number;
 }
 
-const PostCard: React.SFC<IProps> = ({ post, isLoading }) => {
+const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
   const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
   const devIcon = useColorModeValue(
@@ -79,7 +80,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading }) => {
                   {isLoading ? <Spinner size='xs' speed='0.65s'
                     emptyColor='gray.200'
                     color={linkColor} /> :
-                    post.public_reactions_count}
+                    Number(post.public_reactions_count) + postDbLikes}
                 </Text>
                 &nbsp;
                 <svg
