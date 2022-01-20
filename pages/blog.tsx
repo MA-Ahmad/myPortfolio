@@ -1,4 +1,4 @@
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   Stack,
   Input,
@@ -12,7 +12,7 @@ import PostCard from "components/blog/card";
 import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { MotionBox } from "components/ui/motion";
-import { GetStaticProps } from "next";
+import { GetStaticProps, GetServerSideProps } from "next";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -25,20 +25,17 @@ const TURQUOISE = "#06b6d4";
 
 const Posts = ({ posts }) => {
   const [searchValue, setSearchValue] = useState("");
-
   const { allPosts, isLoading } = fetchAllPosts();
+
   const filteredBlogPosts = posts.filter(data => {
     const searchContent = data.title + data.description;
     return searchContent.toLowerCase().includes(searchValue.toLowerCase());
   });
 
-  allPosts && filteredBlogPosts.map((post, index) => {
-    const p = allPosts.filter((p) => p.slug === post.slug)[0];
-    if (p) {
-      post.public_reactions_count = Number(post.public_reactions_count) + Number(p.likes);
-      posts[index] = post;
-    }
-  })
+  const getPostLikes = (post) => {
+    const p = allPosts?.filter((p) => p.slug === post.slug)[0];
+    return p?.likes || 0;
+  }
 
   return (
     <Fragment>
@@ -86,7 +83,7 @@ const Posts = ({ posts }) => {
                     key={post.slug}
                   >
                     <MotionBox whileHover={{ y: -5 }} key={i}>
-                      <PostCard post={post} isLoading={isLoading} />
+                      <PostCard post={post} postDbLikes={getPostLikes(post)} isLoading={isLoading} />
                     </MotionBox>
                   </motion.div>
                 ))}
@@ -108,7 +105,7 @@ const getPosts = async () => {
 
 const root = process.cwd();
 
-export const getStaticProps: GetStaticProps = async () => {
+export const getServerSideProps: GetServerSideProps = async () => {
   let devtoPosts = await getPosts();
 
   const paths = fs
@@ -135,20 +132,20 @@ export const getStaticProps: GetStaticProps = async () => {
       comments_count: frontmatter.comments_count
         ? frontmatter.comments_count
         : devPost?.comments_count
-        ? devPost?.comments_count
-        : 0,
+          ? devPost?.comments_count
+          : 0,
       public_reactions_count: frontmatter.public_reactions_count
         ? frontmatter.public_reactions_count
         : devPost?.public_reactions_count
-        ? devPost?.public_reactions_count
-        : 0,
+          ? devPost?.public_reactions_count
+          : 0,
       tag_list: frontmatter.tags
     });
   });
 
   devtoPosts = devtoPosts.filter(data => data.canonical_url.includes("dev.to"));
   const posts = [...localPosts, ...devtoPosts];
-    
+
   if (!posts) {
     return {
       notFound: true
@@ -156,8 +153,7 @@ export const getStaticProps: GetStaticProps = async () => {
   }
 
   return {
-    props: { posts },
-    revalidate: 1
+    props: { posts }
   };
 };
 
