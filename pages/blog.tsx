@@ -27,7 +27,7 @@ const Posts = ({ posts }) => {
   const [searchValue, setSearchValue] = useState("");
   const { allPosts, isLoading } = fetchAllPosts();
 
-  let filteredBlogPosts = posts.filter(data => {
+  const filteredBlogPosts = posts.filter(data => {
     const searchContent = data.title + data.description;
     return searchContent.toLowerCase().includes(searchValue.toLowerCase());
   });
