@@ -11,7 +11,8 @@ import {
   Flex,
   SimpleGrid,
   Box,
-  Image
+  Image,
+  Spinner
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import moment from "moment";
@@ -19,11 +20,13 @@ import { useLinkColor } from "components/ui/theme";
 import Header from "../layout/header";
 import { CardTransition } from "components/ui/page-transitions";
 import { MotionBox } from "components/ui/motion";
+import { fetchAllPosts } from "lib/fetchAllPosts";
 
 const ORANGE = "#ff9400";
 
 const PopularArticles: React.FC<Props> = props => {
   const { posts } = props;
+  const { allPosts, isLoading } = fetchAllPosts();
 
   const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
@@ -45,6 +48,11 @@ const PopularArticles: React.FC<Props> = props => {
   }
 
   const mostLikedData = posts.sort(compare).slice(0, 3);
+
+  const getPostLikes = (slug) => {
+    const p = allPosts?.filter((p) => p.slug === slug)[0];
+    return p?.likes || 0;
+  }
 
   return (
     <VStack align="start" spacing={8} width="100%">
@@ -85,15 +93,18 @@ const PopularArticles: React.FC<Props> = props => {
                       <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
                         {positive_reactions_count ? (
                           <Flex alignItems="center">
-                            <Text
-                              fontSize="sm"
-                              noOfLines={1}
-                              fontWeight="400"
-                              align="left"
-                              color={textColor}
-                            >
-                              {positive_reactions_count}
-                            </Text>
+                            {isLoading ? <Spinner size='xs' speed='0.65s'
+                              emptyColor='gray.200'
+                              color={linkColor} /> :
+                              <Text
+                                fontSize="sm"
+                                noOfLines={1}
+                                fontWeight="400"
+                                align="left"
+                                color={textColor}
+                              >
+                                {Number(positive_reactions_count) + getPostLikes(slug)}
+                              </Text>}
                             &nbsp;
                             <svg
                               id="Capa_1"
@@ -209,15 +220,18 @@ const PopularArticles: React.FC<Props> = props => {
                       {positive_reactions_count ? (
                         <Tooltip hasArrow label="Reactions" placement="top">
                           <Flex alignItems="center" d={["flex", "none", "none"]}>
-                            <Text
-                              fontSize="sm"
-                              noOfLines={1}
-                              fontWeight="400"
-                              align="left"
-                              color={textColor}
-                            >
-                              {positive_reactions_count}
-                            </Text>
+                            {isLoading ? <Spinner size='xs' speed='0.65s'
+                              emptyColor='gray.200'
+                              color={linkColor} /> :
+                              <Text
+                                fontSize="sm"
+                                noOfLines={1}
+                                fontWeight="400"
+                                align="left"
+                                color={textColor}
+                              >
+                                {Number(positive_reactions_count) + getPostLikes(slug)}
+                              </Text>}
                             &nbsp;
                             <svg
                               id="Capa_1"
