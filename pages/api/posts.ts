@@ -13,7 +13,7 @@ export default async function handler(
         },
       }
     })
-    res.json(allPosts)
+    res.json({ allPosts })
     return
   } catch (err: any) {
     res.status(500).json({

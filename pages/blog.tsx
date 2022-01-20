@@ -19,16 +19,26 @@ import matter from "gray-matter";
 import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "components/layout/pageLayout";
 import { BiSearch } from "react-icons/bi";
+import { fetchAllPosts } from "lib/fetchAllPosts"
 
 const TURQUOISE = "#06b6d4";
 
 const Posts = ({ posts }) => {
   const [searchValue, setSearchValue] = useState("");
 
+  const { allPosts, isLoading } = fetchAllPosts();
   const filteredBlogPosts = posts.filter(data => {
     const searchContent = data.title + data.description;
     return searchContent.toLowerCase().includes(searchValue.toLowerCase());
   });
+
+  allPosts && filteredBlogPosts.map((post, index) => {
+    const p = allPosts.filter((p) => p.slug === post.slug)[0];
+    if (p) {
+      post.public_reactions_count = Number(post.public_reactions_count) + Number(p.likes);
+      posts[index] = post;
+    }
+  })
 
   return (
     <Fragment>
@@ -76,7 +86,7 @@ const Posts = ({ posts }) => {
                     key={post.slug}
                   >
                     <MotionBox whileHover={{ y: -5 }} key={i}>
-                      <PostCard post={post} />
+                      <PostCard post={post} isLoading={isLoading} />
                     </MotionBox>
                   </motion.div>
                 ))}
@@ -96,16 +106,9 @@ const getPosts = async () => {
   return posts;
 };
 
-const getDbPosts = async () => {
-  const res = await fetch(`${process.env.SITE_URL}/api/posts`)
-  const posts = await res.json()
-  return posts;
-}
-
 const root = process.cwd();
 
 export const getStaticProps: GetStaticProps = async () => {
-  const dbPosts = await getDbPosts();
   let devtoPosts = await getPosts();
 
   const paths = fs
@@ -145,15 +148,6 @@ export const getStaticProps: GetStaticProps = async () => {
 
   devtoPosts = devtoPosts.filter(data => data.canonical_url.includes("dev.to"));
   const posts = [...localPosts, ...devtoPosts];
-
-  // Add dev.to reactions_count + db likes
-  posts.map((post, index) => {
-    const p = dbPosts.filter((p) => p.slug === post.slug)[0];
-    if (p) {
-      post.public_reactions_count = Number(post.public_reactions_count) + Number(p.likes);
-      posts[index] = post;
-    }
-  })
     
   if (!posts) {
     return {

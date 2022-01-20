@@ -8,6 +8,7 @@ import {
   useColorModeValue,
   Flex,
   Image,
+  Spinner
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { CardTransition } from "../ui/page-transitions";
@@ -18,9 +19,10 @@ import { Tags } from "components/ui/Tags";
 
 interface IProps {
   post: BlogPost;
+  isLoading: boolean;
 }
 
-const PostCard: React.SFC<IProps> = ({ post }) => {
+const PostCard: React.SFC<IProps> = ({ post, isLoading }) => {
   const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
   const devIcon = useColorModeValue(
@@ -74,7 +76,10 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
                   align="left"
                   color={textColor}
                 >
-                  {Number(post.public_reactions_count)}
+                  {isLoading ? <Spinner size='xs' speed='0.65s'
+                    emptyColor='gray.200'
+                    color={linkColor} /> :
+                    post.public_reactions_count}
                 </Text>
                 &nbsp;
                 <svg
@@ -198,8 +203,9 @@ const PostCard: React.SFC<IProps> = ({ post }) => {
                   align="left"
                   color={textColor}
                 >
-
-                  {Number(post.public_reactions_count)}
+                  {
+                    isLoading ? <Spinner size='xs' speed='0.65s' emptyColor='gray.200' color={linkColor} /> : post.public_reactions_count
+                  }
                 </Text>
                 &nbsp;
                 <svg
