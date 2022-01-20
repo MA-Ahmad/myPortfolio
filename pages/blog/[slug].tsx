@@ -81,7 +81,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
           <MotionBox whileHover={{ scale: 1.02 }} rounded="full" shadow="lg">
             <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
               <Image
-                src={blogDetails.cover_image}
+                src={blogDetails?.cover_image}
                 fallback={<Skeleton />}
                 size="lg"
                 width={'full'}
