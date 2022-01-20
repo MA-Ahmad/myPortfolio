@@ -70,10 +70,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({
           <LikeButton id={blogDetails?.slug} devToLikes={blogDetails?.public_reactions_count} />
         </Box>
       </Collapse>
-      {/* {showLikeButton && 
-      <Box position="fixed" right="10%" top="50%">
-        <LikeButton id={'create-professional-portfolio-website-with-nextjs-and-chakraui-4lkn'} />
-      </Box>} */}
       <motion.div initial="initial" animate="animate" variants={stagger}>
         <VStack marginBottom="5" alignItems="left" textAlign="left">
           {blogDetails?.cover_image ? (
