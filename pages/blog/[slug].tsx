@@ -13,7 +13,8 @@ import {
   Flex,
   Tag,
   useColorModeValue,
-  Collapse
+  Collapse,
+  Spinner
 } from "@chakra-ui/react";
 import remark from "remark";
 import prism from "remark-prism";
@@ -29,6 +30,7 @@ import { fadeInUp, stagger } from "components/ui/page-transitions";
 import { motion } from "framer-motion";
 import { usePostLikes } from "lib/usePostLikes"
 import { LikeButton } from "components/ui/LikeButton";
+import { useLinkColor } from "components/ui/theme";
 
 dayjs.extend(localizedFormat);
 
@@ -41,10 +43,11 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   articleContent,
   blogDetails
 }) => {
-  const { currentUserLikes, totalPostLikes, isLoading, increment } = usePostLikes(blogDetails?.slug);
+  const { currentUserLikes, totalPostLikes, isLoading } = usePostLikes(blogDetails?.slug);
   const [showLikeButton, setShowLikeButton] = useState(false);
   const textColor = useColorModeValue("gray.500", "gray.200");
   const borderColor = useColorModeValue("transparent", "gray.700");
+  const linkColor = useLinkColor();
 
   useEffect(() => {
     window.addEventListener("scroll", listenToScroll);
@@ -67,7 +70,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
     >
       <Collapse in={showLikeButton} animateOpacity>
         <Box position="fixed" right="10%" top="50%" display={['none', 'none', 'none', 'block']}>
-          <LikeButton id={blogDetails?.slug} devToLikes={blogDetails?.public_reactions_count} />
+          <LikeButton id={blogDetails?.slug} devToLikes={blogDetails?.public_reactions_count} linkColor={linkColor} />
         </Box>
       </Collapse>
       <motion.div initial="initial" animate="animate" variants={stagger}>
@@ -117,7 +120,10 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                       align="left"
                       color={textColor}
                     >
-                      {Number(blogDetails.public_reactions_count) + totalPostLikes}
+                      {isLoading ? <Spinner size='xs' speed='0.65s'
+                        emptyColor='gray.200'
+                        color={linkColor} /> :
+                        (Number(blogDetails.public_reactions_count) + totalPostLikes)}
                     </Text>
                     &nbsp;
                     <svg
