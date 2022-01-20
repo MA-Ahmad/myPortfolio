@@ -97,7 +97,7 @@ const getPosts = async () => {
 };
 
 const getDbPosts = async () => {
-  const res = await fetch(process.env.SITE_URL + '/api/posts')
+  const res = await fetch(`${process.env.SITE_URL}/api/posts`)
   const posts = await res.json()
   return posts;
 }
