@@ -4,13 +4,11 @@ import { MotionBox, MotionFlex } from "./motion"
 import { Icon, useColorModeValue, Progress, Spinner } from '@chakra-ui/react'
 import { Box, HStack } from "@chakra-ui/layout"
 import { BsHeartFill } from "react-icons/bs";
-import { useLinkColor } from "components/ui/theme";
 
 const emojis = ["👍", "🙏", "🥰"]
 
-export const LikeButton = ({ id, devToLikes }: { id: string, devToLikes: number }) => {
+export const LikeButton = ({ id, devToLikes, linkColor }: { id: string, devToLikes: number, linkColor: string }) => {
   const { currentUserLikes, totalPostLikes, isLoading, increment } = usePostLikes(id);
-  const linkColor = useLinkColor();
 
   return (
     <HStack alignItems="center" spacing={2} mb={2}>
