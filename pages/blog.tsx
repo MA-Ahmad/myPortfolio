@@ -97,7 +97,7 @@ const getPosts = async () => {
 };
 
 const getDbPosts = async () => {
-  const res = await fetch('http://localhost:3000/api/posts')
+  const res = await fetch(process.env.SITE_URL + '/api/posts')
   const posts = await res.json()
   return posts;
 }
@@ -148,7 +148,7 @@ export const getStaticProps: GetStaticProps = async () => {
 
   // Add dev.to reactions_count + db likes
   posts.map((post, index) => {
-    let p = dbPosts.filter((p) => p.slug === post.slug)[0];
+    const p = dbPosts.filter((p) => p.slug === post.slug)[0];
     if (p) {
       post.public_reactions_count = Number(post.public_reactions_count) + Number(p.likes);
       posts[index] = post;
