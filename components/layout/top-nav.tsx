@@ -142,7 +142,7 @@ export default function TopNav() {
         px={4}
         boxShadow={"lg"}
         position="fixed"
-        width="100%"
+        minW="100%"
         zIndex="55"
       >
         <Flex
