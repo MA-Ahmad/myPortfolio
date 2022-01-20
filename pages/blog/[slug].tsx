@@ -14,7 +14,10 @@ import {
   Tag,
   useColorModeValue,
   Collapse,
-  Spinner
+  Spinner,
+  Image,
+  AspectRatio,
+  Skeleton
 } from "@chakra-ui/react";
 import remark from "remark";
 import prism from "remark-prism";
@@ -24,7 +27,7 @@ import localizedFormat from "dayjs/plugin/localizedFormat";
 import { BlogPost } from "../../interfaces/interface";
 import { GetStaticPaths, GetStaticProps, NextPage } from "next";
 import PageLayout from "components/layout/pageLayout";
-import { MotionImage } from "components/ui/motion";
+import { MotionBox, MotionImage } from "components/ui/motion";
 import DevToCallToAction from "components/layout/DevToCallToAction";
 import { fadeInUp, stagger } from "components/ui/page-transitions";
 import { motion } from "framer-motion";
@@ -56,7 +59,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   }, [])
 
   const listenToScroll = () => {
-    if (window.scrollY > 400)
+    if (window.scrollY > 150)
       setShowLikeButton(true)
     else
       setShowLikeButton(false)
@@ -75,18 +78,22 @@ const ArticlePage: NextPage<AllBlogProps> = ({
       </Collapse>
       <motion.div initial="initial" animate="animate" variants={stagger}>
         <VStack marginBottom="5" alignItems="left" textAlign="left">
-          {blogDetails?.cover_image ? (
-            <MotionImage
-              src={blogDetails.cover_image}
-              variants={fadeInUp}
-              layout="fixed"
-              rounded="md"
-              border="2px solid"
-              borderColor={borderColor}
-            />
-          ) : (
-            ""
-          )}
+          <MotionBox whileHover={{ scale: 1.02 }} rounded="full" shadow="lg">
+            <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
+              <Image
+                src={blogDetails.cover_image}
+                fallback={<Skeleton />}
+                size="lg"
+                width={'full'}
+                height={'full'}
+                position="absolute"
+                border="2px solid"
+                borderColor={borderColor}
+                rounded="xl" objectFit="cover" />
+            </AspectRatio>
+            <Box width={'full'}
+              height={'full'} bg={useColorModeValue("gray.100", "gray.900")} opacity={useColorModeValue("0.5", "1")}></Box>
+          </MotionBox>
           <motion.div variants={fadeInUp}>
             <Heading as="h1" size="xl" mt="2" mb="2">
               {blogDetails?.title}
@@ -113,18 +120,18 @@ const ArticlePage: NextPage<AllBlogProps> = ({
               <HStack spacing={2} isInline pt={["0.5rem", "0", "0"]}>
                 {blogDetails?.public_reactions_count ? (
                   <Flex alignItems="center">
-                    <Text
-                      fontSize="sm"
-                      noOfLines={1}
-                      fontWeight="400"
-                      align="left"
-                      color={textColor}
-                    >
-                      {isLoading ? <Spinner size='xs' speed='0.65s'
-                        emptyColor='gray.200'
-                        color={linkColor} /> :
-                        (Number(blogDetails.public_reactions_count) + totalPostLikes)}
-                    </Text>
+                    {isLoading ? <Spinner size='xs' speed='0.65s'
+                      emptyColor='gray.200'
+                      color={linkColor} /> :
+                      <Text
+                        fontSize="sm"
+                        noOfLines={1}
+                        fontWeight="400"
+                        align="left"
+                        color={textColor}
+                      >
+                        {(Number(blogDetails.public_reactions_count) + totalPostLikes)}
+                      </Text>}
                     &nbsp;
                     <svg
                       id="Capa_1"

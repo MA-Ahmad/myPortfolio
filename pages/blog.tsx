@@ -19,7 +19,7 @@ import matter from "gray-matter";
 import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "components/layout/pageLayout";
 import { BiSearch } from "react-icons/bi";
-import { fetchAllPosts } from "lib/fetchAllPosts"
+import { fetchAllPosts } from "lib/fetchAllPosts";
 
 const TURQUOISE = "#06b6d4";
 

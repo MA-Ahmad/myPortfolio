@@ -70,18 +70,18 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
             {post.public_reactions_count ? (
               <Flex alignItems="center">
-                <Text
-                  fontSize="sm"
-                  noOfLines={1}
-                  fontWeight="400"
-                  align="left"
-                  color={textColor}
-                >
-                  {isLoading ? <Spinner size='xs' speed='0.65s'
-                    emptyColor='gray.200'
-                    color={linkColor} /> :
-                    Number(post.public_reactions_count) + postDbLikes}
-                </Text>
+                {isLoading ? <Spinner size='xs' speed='0.65s'
+                  emptyColor='gray.200'
+                  color={linkColor} /> :
+                  <Text
+                    fontSize="sm"
+                    noOfLines={1}
+                    fontWeight="400"
+                    align="left"
+                    color={textColor}
+                  >
+                    {Number(post.public_reactions_count) + postDbLikes}
+                  </Text>}
                 &nbsp;
                 <svg
                   id="Capa_1"
@@ -197,17 +197,17 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
           {post.public_reactions_count ? (
             <Tooltip hasArrow label="Reactions" placement="top">
               <Flex alignItems="center" d={["flex", "none", "none"]}>
-                <Text
-                  fontSize="sm"
-                  noOfLines={1}
-                  fontWeight="400"
-                  align="left"
-                  color={textColor}
-                >
-                  {
-                    isLoading ? <Spinner size='xs' speed='0.65s' emptyColor='gray.200' color={linkColor} /> : post.public_reactions_count
-                  }
-                </Text>
+                {isLoading ? <Spinner size='xs' speed='0.65s' emptyColor='gray.200' color={linkColor} /> :
+                  <Text
+                    fontSize="sm"
+                    noOfLines={1}
+                    fontWeight="400"
+                    align="left"
+                    color={textColor}
+                  >
+                    {Number(post.public_reactions_count) + postDbLikes}
+                  </Text>
+                }
                 &nbsp;
                 <svg
                   id="Capa_1"
