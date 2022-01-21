@@ -78,7 +78,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
       </Collapse>
       <motion.div initial="initial" animate="animate" variants={stagger}>
         <VStack marginBottom="5" alignItems="left" textAlign="left">
-          <MotionBox whileHover={{ scale: 1.02 }} rounded="full" shadow="lg">
+          <MotionBox whileHover={{ scale: 1.02 }} shadow="lg">
             <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
               <Image
                 src={blogDetails?.cover_image}
