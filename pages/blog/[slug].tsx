@@ -118,7 +118,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                 ))}
               </HStack>
               <HStack spacing={2} isInline pt={["0.5rem", "0", "0"]}>
-                {blogDetails?.public_reactions_count ? (
+                {blogDetails?.public_reactions_count || totalPostLikes ? (
                   <Flex alignItems="center">
                     {isLoading ? <Spinner size='xs' speed='0.65s'
                       emptyColor='gray.200'
@@ -130,7 +130,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                         align="left"
                         color={textColor}
                       >
-                        {(Number(blogDetails.public_reactions_count) + totalPostLikes)}
+                        {(Number(blogDetails.public_reactions_count) || 0) + totalPostLikes }
                       </Text>}
                     &nbsp;
                     <svg

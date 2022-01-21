@@ -79,8 +79,7 @@ export const LikeButton = ({ id, devToLikes, linkColor }: { id: string, devToLik
         {isLoading ? <Spinner size='xs' speed='0.65s'
           emptyColor='gray.200'
           color={linkColor} /> :
-          (devToLikes || totalPostLikes) ?
-            <span>{Number(totalPostLikes) + Number(devToLikes)}</span> : ""}
+          <span>{totalPostLikes + (Number(devToLikes) || 0)}</span>}
       </Box>
     </HStack>
   )

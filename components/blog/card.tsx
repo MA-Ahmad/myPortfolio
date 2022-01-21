@@ -68,7 +68,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
             </NextLink>
           </Heading>
           <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
-            {post.public_reactions_count ? (
+            {post.public_reactions_count || postDbLikes ? (
               <Flex alignItems="center">
                 {isLoading ? <Spinner size='xs' speed='0.65s'
                   emptyColor='gray.200'
@@ -80,7 +80,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
                     align="left"
                     color={textColor}
                   >
-                    {Number(post.public_reactions_count) + postDbLikes}
+                    {(Number(post.public_reactions_count) || 0) + postDbLikes}
                   </Text>}
                 &nbsp;
                 <svg
