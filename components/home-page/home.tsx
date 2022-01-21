@@ -17,6 +17,7 @@ import NextLink from "next/link";
 import { useLinkColor } from "components/ui/theme";
 import PopularArticles from "./PopularArticles";
 import { Props } from "interfaces/interface";
+import { newContent } from 'data/data';
 
 const ANIMATION_DURATION = 0.5;
 const ORANGE = "#ff9400";
@@ -146,6 +147,7 @@ const Home: React.FC<Props> = props => {
           </Box>
         </MotionFlex>
       </Flex>
+
       <MotionBox
         w="100%"
         opacity="0"
@@ -163,63 +165,58 @@ const Home: React.FC<Props> = props => {
         zIndex={1}
       >
         <Box mt={10}>
-          <Stack
-            mb={10}
-            mx={[0, 0, 10]}
-            padding={4}
-            align="start"
-            borderLeft="4px solid"
-            borderColor={"#53c8c4"}
-            color={"whatsapp"}
-            _hover={{ shadow: "lg" }}
-            backgroundColor={useColorModeValue("gray.100", "#1e2533")}
-            rounded="sm"
-            fontSize="md"
-          >
-            <Text
-              textAlign="center"
-              color="#53c8c4"
-              fontWeight="bold"
-              fontSize={["md", "lg"]}
-              variant="gradient"
-              fromcolor="blue.400"
-              tocolor="red.500"
-            >
-              New year, new content:
-            </Text>
-            <UnorderedList textAlign="left" paddingLeft={5} m={0}>
-              <ListItem>
-                <NextLink href={"/blog/started-2022-by-updating-portfolio-website-1jde-temp-slug-4553258"} passHref>
-                  <Link color={linkColor}>
-                    Started 2022 by updating portfolio website
-                    <Badge ml="1" colorScheme="green">
-                      New
-                    </Badge>
-                  </Link>
-                </NextLink>
-              </ListItem>
-              <ListItem>
-                <NextLink href={"/projects"} passHref>
-                  <Link color={linkColor}>
-                    Projects page
-                    <Badge ml="1" colorScheme="green">
-                      New
-                    </Badge>
-                  </Link>
-                </NextLink>
-              </ListItem>
-              <ListItem>
-                <NextLink href={"/"} passHref>
-                  <Link color={linkColor}>Updated portfolio home page</Link>
-                </NextLink>
-              </ListItem>
-            </UnorderedList>
-          </Stack>
+          <ContentBox linkColor={linkColor} />
           <PopularArticles posts={posts} />
         </Box>
       </MotionBox>
     </Flex>
   );
 };
+
+const ContentBox = ({ linkColor }) => {
+
+  return (
+    <Stack
+      mb={10}
+      mx={[0, 0, 10]}
+      padding={4}
+      align="start"
+      borderLeft="4px solid"
+      borderColor={linkColor}
+      color={"whatsapp"}
+      _hover={{ shadow: "lg" }}
+      backgroundColor={useColorModeValue("gray.100", "#1e2533")}
+      rounded="sm"
+      fontSize="md"
+    >
+      <Text
+        textAlign="center"
+        color="#53c8c4"
+        fontWeight="bold"
+        fontSize={["md", "lg"]}
+        variant="gradient"
+        fromcolor="blue.400"
+        tocolor="red.500"
+      >
+        New year, new content:
+      </Text>
+      <UnorderedList textAlign="left" paddingLeft={5} m={0}>
+        {newContent.map((content, index) => (
+          <ListItem key={index}>
+            <NextLink href={content.link} passHref>
+              <Link color={linkColor}>
+                {content.text}
+                {content.showNewTag &&
+                  <Badge ml="1" colorScheme="green">
+                    New
+                  </Badge>}
+              </Link>
+            </NextLink>
+          </ListItem>
+        ))}
+      </UnorderedList>
+    </Stack>
+  )
+}
 
 export default Home;

@@ -194,3 +194,21 @@ export const skillsArray = [
     image: '/assets/images/skills/figma.png'
   }
 ];
+
+export const newContent = [
+  {
+    link: '/blog/started-2022-by-updating-portfolio-website-1jde-temp-slug-4553258',
+    text: 'Started 2022 by updating portfolio website',
+    showNewTag: true,
+  },
+  {
+    link: '/projects',
+    text: 'Projects page',
+    showNewTag: true,
+  },
+  {
+    link: '/',
+    text: 'Updated portfolio home page',
+    showNewTag: false,
+  }
+]
