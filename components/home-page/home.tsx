@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   Flex,
   Avatar,
@@ -19,10 +20,21 @@ import { Props } from "interfaces/interface";
 
 const ANIMATION_DURATION = 0.5;
 const ORANGE = "#ff9400";
+const emojis = ["👋", "👍", "🖐"]
 
 const Home: React.FC<Props> = props => {
   const { posts } = props;
   const linkColor = useLinkColor();
+  const [showEmogi, setShowEmoji] = useState(false);
+  const [emojiCounter, setEmojiCounter] = useState(-1);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (emojiCounter >= 3)
+        setEmojiCounter(0);
+    }, 500)
+    return () => clearInterval(interval);
+  }, [emojiCounter])
 
   return (
     <Flex direction="column" align="center">
@@ -54,6 +66,7 @@ const Home: React.FC<Props> = props => {
           </MotionBox>
         </MotionBox>
         <MotionFlex
+          position="relative"
           ml={["auto", "auto", 16]}
           m={["auto", "initial"]}
           w={["90%", "85%", "80%"]}
@@ -73,13 +86,43 @@ const Home: React.FC<Props> = props => {
             }
           }}
         >
-          <Header
-            underlineColor={ORANGE}
-            emoji="👋"
-            mt={0}
-          >
-            Hey!
-          </Header>
+          <Box position="relative">
+            <Box position="absolute" width="full" fontSize="2xl" textAlign="center">
+              {emojis.map((item, index) => {
+                return (
+                  <MotionBox key={index}
+                    position="absolute"
+                    right="80%"
+                    animate={showEmogi && emojiCounter === index ? "show" : "hide"}
+                    variants={{
+                      hide: { translateY: -80, opacity: 0 },
+                      show: {
+                        translateY: [0, -40, -60],
+                        opacity: [0, 1, 0],
+                      },
+                    }}
+                    initial="hide">
+                    {item}
+                  </MotionBox>
+                )
+              })}
+            </Box>
+            <MotionBox whileHover={{ translateY: -5, }} width="max-content">
+              <Header
+                underlineColor={ORANGE}
+                emoji="👋"
+                mt={0}
+                cursor="pointer"
+                width="max-content"
+                onClick={() => {
+                  setEmojiCounter(prevCounter => prevCounter + 1)
+                  setShowEmoji(true);
+                }}
+              >
+                Hey!
+              </Header>
+            </MotionBox>
+          </Box>
           <Box as="h2" fontSize="2xl" fontWeight="400" textAlign="left">
             My name is{" "}
             <Box as="strong" fontWeight="600">
@@ -145,6 +188,16 @@ const Home: React.FC<Props> = props => {
               New year, new content:
             </Text>
             <UnorderedList textAlign="left" paddingLeft={5} m={0}>
+              <ListItem>
+                <NextLink href={"/blog/started-2022-by-updating-portfolio-website-1jde-temp-slug-4553258"} passHref>
+                  <Link color={linkColor}>
+                    Started 2022 by updating portfolio website
+                    <Badge ml="1" colorScheme="green">
+                      New
+                    </Badge>
+                  </Link>
+                </NextLink>
+              </ListItem>
               <ListItem>
                 <NextLink href={"/projects"} passHref>
                   <Link color={linkColor}>
