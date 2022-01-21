@@ -31,7 +31,8 @@ const Posts = ({ posts }) => {
     const searchContent = data.title + data.description;
     return searchContent.toLowerCase().includes(searchValue.toLowerCase());
   });
-
+  filteredBlogPosts?.sort((a,b) =>  +new Date(b.published_at) - +new Date(a.published_at));
+  
   const getPostLikes = (post) => {
     const p = allPosts?.filter((p) => p.slug === post.slug)[0];
     return p?.likes || 0;
@@ -99,7 +100,6 @@ const Posts = ({ posts }) => {
 const getPosts = async () => {
   const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
   const posts = await res.json();
-
   return posts;
 };
 
