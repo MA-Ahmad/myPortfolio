@@ -8,6 +8,11 @@ const prismBaseTheme = css`
     text-align: left;
   }
   
+  .article img {
+    border: 2px solid;
+    border-color: ${theme.colors.gray[700]}
+  }
+
   .article h1 {
     font-family: "Noto Serif", serif;
     padding: ${theme.space[4]} 0 ${theme.space[2]};
