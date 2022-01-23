@@ -49,6 +49,19 @@ export interface BlogPost {
     body_html: string
 }
 
+interface Project {
+  title: string
+  imageLight: string
+  blurHash: string
+  site: string
+  description: string
+  techStack: string[]
+}
+
+export interface ProjectProps {
+    projects: Project[]
+}
+
 export interface Props {
     posts: BlogPost[]
 }

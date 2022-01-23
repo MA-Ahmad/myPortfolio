@@ -10,6 +10,7 @@ import PageLayout from "components/layout/pageLayout";
 import { PageSlideFade } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { LeftProjectLayoutLarge, ProjectLayoutMed, RightProjectLayoutLarge } from "components/layout/projectLayout";
+import { ProjectProps } from "interfaces/interface";
 
 const title = "Projects 📚";
 const subtitle =
@@ -17,7 +18,8 @@ const subtitle =
 
 const TURQUOISE = "#06b6d4";
 
-const Projects: NextPage = () => {
+const Projects: NextPage<ProjectProps> = (props) => {
+  const { projects } = props;
 
   return (
     <Fragment>
@@ -35,7 +37,7 @@ const Projects: NextPage = () => {
             </Text>
           </VStack>
           <VStack spacing={8} mt={["7", "7", "0"]}>
-            {projectsList.map((project, index) => (
+            {projects.map((project, index) => (
               <Fragment key={index}>
                 <ProjectLayoutMed project={project} />
                 {index % 2 === 0 ? (
@@ -51,5 +53,13 @@ const Projects: NextPage = () => {
     </Fragment>
   );
 };
+
+export function getStaticProps() {
+  return {
+    props: {
+      projects: projectsList
+    }
+  };
+}
 
 export default Projects;
