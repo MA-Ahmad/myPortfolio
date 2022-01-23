@@ -43,6 +43,7 @@ export default async function handler(
 
         res.json({
           totalPostLikes: post?.likes || 0,
+          totalPostViews: post?.views || 0,
           currentUserLikes: user?.likes || 0,
         })
         return
@@ -51,43 +52,67 @@ export default async function handler(
       case "POST": {
         const count = z.number().min(1).max(3).parse(req.body.count)
 
-        // Upsert: if a row exists, update it by incrementing likes. If it
-        // doesn't exist, create a new row with the number of likes this api
-        // route receives
-        const [post, user] = await Promise.all([
-          // increment the number of times everyone has liked this post
-          prisma.post.upsert({
+        if (req.body.type === 'views') {
+
+          // increment the number of times everyone has viewed this post
+          const post = await prisma.post.upsert({
             where: { slug: postId },
             create: {
               slug: postId,
-              likes: count,
+              views: count,
             },
             update: {
-              likes: {
+              views: {
                 increment: count,
               },
             },
-          }),
+          })
 
-          // increment the number of times this user has liked this post
-          prisma.session.upsert({
-            where: { id: sessionId },
-            create: {
-              id: sessionId,
-              likes: count,
-            },
-            update: {
-              likes: {
-                increment: count,
+          res.json({
+            totalPostLikes: post?.likes || 0,
+            totalPostViews: post?.views || 0,
+          })
+
+        } else {
+          // Upsert: if a row exists, update it by incrementing likes. If it
+          // doesn't exist, create a new row with the number of likes this api
+          // route receives
+          const [post, user] = await Promise.all([
+            // increment the number of times everyone has liked this post
+            prisma.post.upsert({
+              where: { slug: postId },
+              create: {
+                slug: postId,
+                likes: count,
               },
-            },
-          }),
-        ])
+              update: {
+                likes: {
+                  increment: count,
+                },
+              },
+            }),
 
-        res.json({
-          totalPostLikes: post?.likes || 0,
-          currentUserLikes: user?.likes || 0,
-        })
+            // increment the number of times this user has liked this post
+            prisma.session.upsert({
+              where: { id: sessionId },
+              create: {
+                id: sessionId,
+                likes: count,
+              },
+              update: {
+                likes: {
+                  increment: count,
+                },
+              },
+            }),
+          ])
+
+          res.json({
+            totalPostLikes: post?.likes || 0,
+            totalPostViews: post?.views || 0,
+            currentUserLikes: user?.likes || 0,
+          })
+        }
 
         return
       }

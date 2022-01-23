@@ -31,7 +31,7 @@ import { MotionBox, MotionImage } from "components/ui/motion";
 import DevToCallToAction from "components/layout/DevToCallToAction";
 import { fadeInUp, stagger } from "components/ui/page-transitions";
 import { motion } from "framer-motion";
-import { usePostLikes } from "lib/usePostLikes"
+import { usePostData } from "lib/usePostData";
 import { LikeButton } from "components/ui/LikeButton";
 import { useLinkColor } from "components/ui/theme";
 import { getDevtoPosts } from "lib/fetchPosts";
@@ -43,17 +43,20 @@ export interface AllBlogProps {
   articleContent: string;
 }
 
+const POST_VIEW_LIMIT = 100;
+
 const ArticlePage: NextPage<AllBlogProps> = ({
   articleContent,
   blogDetails
 }) => {
-  const { currentUserLikes, totalPostLikes, isLoading } = usePostLikes(blogDetails?.slug);
+  const { totalPostLikes, totalPostViews, isLoading, incrementViews } = usePostData(blogDetails?.slug);
   const [showLikeButton, setShowLikeButton] = useState(false);
   const textColor = useColorModeValue("gray.500", "gray.200");
   const borderColor = useColorModeValue("transparent", "gray.700");
   const linkColor = useLinkColor();
 
   useEffect(() => {
+    incrementViews();
     window.addEventListener("scroll", listenToScroll);
     return () =>
       window.removeEventListener("scroll", listenToScroll);
@@ -131,7 +134,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                         align="left"
                         color={textColor}
                       >
-                        {(Number(blogDetails.public_reactions_count) || 0) + totalPostLikes }
+                        {(Number(blogDetails.public_reactions_count) || 0) + totalPostLikes}
                       </Text>}
                     &nbsp;
                     <svg
@@ -232,6 +235,36 @@ const ArticlePage: NextPage<AllBlogProps> = ({
                       <path d="m268.419 260.253c0-16.143-13.134-29.276-29.277-29.276s-29.276 13.133-29.276 29.276c0 16.144 13.134 29.277 29.276 29.277 16.143 0 29.277-13.133 29.277-29.277zm-43.554 0c0-7.872 6.404-14.276 14.276-14.276s14.277 6.404 14.277 14.276-6.405 14.277-14.277 14.277-14.276-6.405-14.276-14.277z" />
                       <path d="m338.756 260.253c0-16.143-13.134-29.276-29.277-29.276s-29.276 13.133-29.276 29.276c0 16.144 13.134 29.277 29.276 29.277 16.143 0 29.277-13.133 29.277-29.277zm-43.554 0c0-7.872 6.404-14.276 14.276-14.276s14.277 6.404 14.277 14.276-6.405 14.277-14.277 14.277-14.276-6.405-14.276-14.277z" />
                       <path d="m438.874 3.863h-276.72c-40.321 0-73.126 32.804-73.126 73.125v11.83h-15.903c-40.321.001-73.125 32.805-73.125 73.126v185.938c0 40.322 32.804 73.125 73.125 73.125h78.18c4.143 0 7.5-3.358 7.5-7.5s-3.357-7.5-7.5-7.5h-78.18c-32.05 0-58.125-26.075-58.125-58.125v-185.938c0-32.05 26.075-58.125 58.125-58.125h276.721c32.05 0 58.125 26.075 58.125 58.125v185.938c0 32.05-26.075 58.125-58.125 58.125-8.543 0-16.518 3.758-21.881 10.312-29.417 35.95-64.447 61.355-88.653 76.336-2.257 1.393-4.855-.96-3.669-3.382 9.512-19.408 16.805-39.761 21.675-60.494 2.728-11.618-6.129-22.772-18.109-22.772h-52.903c-4.143 0-7.5 3.358-7.5 7.5s3.357 7.5 7.5 7.5h52.903c2.301 0 4.027 2.128 3.506 4.342-4.612 19.638-11.523 38.924-20.541 57.323-7.776 15.872 10.025 32.025 25.032 22.738 25.178-15.583 61.642-42.04 92.368-79.591 2.503-3.058 6.247-4.812 10.272-4.812 40.321 0 73.125-32.804 73.125-73.125v-11.83h15.903c40.322 0 73.126-32.804 73.126-73.125v-75.469c0-4.142-3.357-7.5-7.5-7.5s-7.5 3.358-7.5 7.5v75.469c0 32.05-26.075 58.125-58.126 58.125h-15.903v-159.108c0-40.321-32.804-73.125-73.125-73.125h-245.818v-11.83c0-32.05 26.075-58.125 58.126-58.125h276.72c32.051 0 58.126 26.075 58.126 58.125v75.469c0 4.142 3.357 7.5 7.5 7.5s7.5-3.358 7.5-7.5v-75.469c0-40.322-32.804-73.126-73.126-73.126z" />
+                    </svg>
+                  </Flex>
+                ) : (
+                  ""
+                )}
+                {blogDetails && totalPostViews > POST_VIEW_LIMIT ? (
+                  <Flex alignItems="center">
+                    {isLoading ? <Spinner size='xs' speed='0.65s'
+                      emptyColor='gray.200'
+                      color={linkColor} /> :
+                      <Text
+                        fontSize="sm"
+                        noOfLines={1}
+                        fontWeight="400"
+                        align="left"
+                        color={textColor}
+                      >
+                        {totalPostViews}
+                      </Text>}
+                    &nbsp;
+                    <svg xmlns="http://www.w3.org/2000/svg"
+                      x="0px" y="0px"
+                      width="32" height="32"
+                      viewBox="0 0 64 64"
+                      style={{ fill: "#000000" }}>
+                      <path fill="#4294ff" d="M31.9731,50.0024A33.6859,33.6859,0,0,1,2,32,34.3076,34.3076,0,0,1,32,14.0005L32.1733,14A33.5651,33.5651,0,0,1,62,32,33.73,33.73,0,0,1,32,50.0024Z"></path>
+                      <circle cx="32" cy="32" r="11" fill="#376cfb"></circle>
+                      <path fill="#232328" d="M32,20A12,12,0,1,0,44,32,12.0137,12.0137,0,0,0,32,20Zm0,22A10,10,0,1,1,42,32,10.0111,10.0111,0,0,1,32,42Z"></path><path fill="#232328" d="M32,24a8.0092,8.0092,0,0,0-8,8,1,1,0,0,0,2,0,6.0066,6.0066,0,0,1,6-6,1,1,0,0,0,0-2Z"></path>
+                      <path fill="#232328" d="M62.88,31.5239A34.5329,34.5329,0,0,0,32.1733,13c-.059,0-.12,0-.1782.0005A35.3079,35.3079,0,0,0,1.1206,31.5239a1.0012,1.0012,0,0,0,0,.9522A34.6681,34.6681,0,0,0,31.9731,51.0024h.0274A34.7185,34.7185,0,0,0,62.88,32.4761,1.0039,1.0039,0,0,0,62.88,31.5239ZM31.999,49.0024h-.0259A32.674,32.674,0,0,1,3.1416,32,32.864,32.864,0,0,1,32.0049,15.0005C32.061,15,32.1162,15,32.1724,15a32.5341,32.5341,0,0,1,28.686,17A32.7229,32.7229,0,0,1,31.999,49.0024Z">
+                      </path>
                     </svg>
                   </Flex>
                 ) : (

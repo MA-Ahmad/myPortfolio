@@ -1,4 +1,4 @@
-import { usePostLikes } from "lib/usePostLikes"
+import { usePostData } from "lib/usePostData"
 import React from "react"
 import { MotionBox, MotionFlex } from "./motion"
 import { Icon, useColorModeValue, Progress, Spinner } from '@chakra-ui/react'
@@ -8,7 +8,7 @@ import { BsHeartFill } from "react-icons/bs";
 const emojis = ["👍", "🙏", "🥰"]
 
 export const LikeButton = ({ id, devToLikes, linkColor }: { id: string, devToLikes: number, linkColor: string }) => {
-  const { currentUserLikes, totalPostLikes, isLoading, increment } = usePostLikes(id);
+  const { currentUserLikes, totalPostLikes, isLoading, incrementLikes } = usePostData(id);
 
   return (
     <HStack alignItems="center" spacing={2} mb={2}>
@@ -16,7 +16,7 @@ export const LikeButton = ({ id, devToLikes, linkColor }: { id: string, devToLik
         className="focus:outline-none"
         onClick={() => {
           if (isLoading) return
-          increment()
+          incrementLikes()
         }}
       >
         <Box position="relative">
