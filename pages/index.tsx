@@ -2,6 +2,7 @@ import Home from "components/home-page/home";
 import { GetStaticProps, NextPage } from "next";
 import { BlogPostProps } from "interfaces/interface";
 import PageLayout from "components/layout/pageLayout";
+import { getDevtoPosts } from "lib/fetchPosts";
 
 const Index: NextPage<BlogPostProps> = props => {
     const { posts } = props;
@@ -12,15 +13,8 @@ const Index: NextPage<BlogPostProps> = props => {
   );
 }
 
-const getPosts = async () => {
-  const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
-  const posts = await res.json();
-
-  return posts;
-};
-
 export const getStaticProps: GetStaticProps = async () => {
-  const posts = await getPosts();
+  const posts = await getDevtoPosts();
 
   if (!posts) {
     return {

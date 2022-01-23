@@ -20,13 +20,13 @@ import { useLinkColor } from "components/ui/theme";
 import Header from "../layout/header";
 import { CardTransition } from "components/ui/page-transitions";
 import { MotionBox } from "components/ui/motion";
-import { fetchAllPosts } from "lib/fetchAllPosts";
+import { getDbPosts } from "lib/fetchPosts";
 
 const ORANGE = "#ff9400";
 
 const PopularArticles: React.FC<BlogPostProps> = props => {
   const { posts } = props;
-  const { allPosts, isLoading } = fetchAllPosts();
+  const { dbPosts, isLoading } = getDbPosts();
 
   const linkColor = useLinkColor();
   const textColor = useColorModeValue("gray.500", "gray.200");
@@ -50,7 +50,7 @@ const PopularArticles: React.FC<BlogPostProps> = props => {
   const mostLikedData = posts.sort(compare).slice(0, 3);
 
   const getPostLikes = (slug) => {
-    const p = allPosts?.filter((p) => p.slug === slug)[0];
+    const p = dbPosts?.filter((p) => p.slug === slug)[0];
     return p?.likes || 0;
   }
 

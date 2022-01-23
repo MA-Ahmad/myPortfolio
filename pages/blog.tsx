@@ -12,20 +12,20 @@ import PostCard from "components/blog/card";
 import { PageSlideFade, StaggerChildren } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { MotionBox } from "components/ui/motion";
-import { GetStaticProps, GetServerSideProps } from "next";
+import { GetServerSideProps } from "next";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import { motion, AnimatePresence } from "framer-motion";
 import PageLayout from "components/layout/pageLayout";
 import { BiSearch } from "react-icons/bi";
-import { fetchAllPosts } from "lib/fetchAllPosts";
+import { getDbPosts, getDevtoPosts } from "lib/fetchPosts";
 
 const TURQUOISE = "#06b6d4";
 
 const Posts = ({ posts }) => {
   const [searchValue, setSearchValue] = useState("");
-  const { allPosts, isLoading } = fetchAllPosts();
+  const { dbPosts, isLoading } = getDbPosts();
 
   const filteredBlogPosts = posts.filter(data => {
     const searchContent = data.title + data.description;
@@ -34,7 +34,7 @@ const Posts = ({ posts }) => {
   filteredBlogPosts?.sort((a,b) =>  +new Date(b.published_at) - +new Date(a.published_at));
   
   const getPostLikes = (post) => {
-    const p = allPosts?.filter((p) => p.slug === post.slug)[0];
+    const p = dbPosts?.filter((p) => p.slug === post.slug)[0];
     return p?.likes || 0;
   }
 
@@ -97,16 +97,10 @@ const Posts = ({ posts }) => {
   );
 };
 
-const getPosts = async () => {
-  const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
-  const posts = await res.json();
-  return posts;
-};
-
 const root = process.cwd();
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  let devtoPosts = await getPosts();
+  let devtoPosts = await getDevtoPosts();
 
   const paths = fs
     .readdirSync(path.join(root, "data", "posts"))

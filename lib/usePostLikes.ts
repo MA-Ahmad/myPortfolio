@@ -2,7 +2,7 @@ import React from "react"
 import { useDebounce } from "react-use"
 import useSWR from "swr"
 
-const API_URL = `/api/likes/`
+const API_URL = '/api/likes/'
 
 type LikesPayload = {
   totalPostLikes: number

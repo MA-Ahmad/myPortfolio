@@ -6,14 +6,14 @@ export default async function handler(
   res: NextApiResponse,
 ) {
   try {
-    const allPosts = await prisma.post.findMany({
+    const posts = await prisma.post.findMany({
       where: {
         likes: {
           not: 0
         },
       }
     })
-    res.json({ allPosts })
+    res.json({ dbPosts: posts })
     return
   } catch (err: any) {
     res.status(500).json({

@@ -34,6 +34,7 @@ import { motion } from "framer-motion";
 import { usePostLikes } from "lib/usePostLikes"
 import { LikeButton } from "components/ui/LikeButton";
 import { useLinkColor } from "components/ui/theme";
+import { getDevtoPosts } from "lib/fetchPosts";
 
 dayjs.extend(localizedFormat);
 
@@ -269,21 +270,9 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   );
 };
 
-const getAllBlogs = async () => {
-  const res = await fetch("https://dev.to/api/articles?username=m_ahmad");
-
-  if (res.status < 200 || res.status >= 300) {
-    throw new Error(
-      `Error fetching... Status code: ${res.status}, ${res.statusText}`
-    );
-  }
-  const data = await res.json();
-  return data;
-};
-
 const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
-  let devData: BlogPost[] = await getAllBlogs();
+  let devData: BlogPost[] = await getDevtoPosts();
   devData = devData.filter(data => data.canonical_url.includes("dev.to"));
   const devtoPaths = devData.map(data => ({
     params: { slug: data?.slug }
@@ -312,7 +301,7 @@ const markdownToHtml = async (markdown: string) => {
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const devData: BlogPost[] = await getAllBlogs();
+  const devData: BlogPost[] = await getDevtoPosts();
 
   const selectedBlog = devData.filter(
     data => data?.slug === params?.slug && data.canonical_url.includes("dev.to")
