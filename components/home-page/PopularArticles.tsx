@@ -1,5 +1,5 @@
 import React from "react";
-import { Props } from "interfaces/interface";
+import { BlogPostProps } from "interfaces/interface";
 import {
   VStack,
   HStack,
@@ -24,7 +24,7 @@ import { fetchAllPosts } from "lib/fetchAllPosts";
 
 const ORANGE = "#ff9400";
 
-const PopularArticles: React.FC<Props> = props => {
+const PopularArticles: React.FC<BlogPostProps> = props => {
   const { posts } = props;
   const { allPosts, isLoading } = fetchAllPosts();
 

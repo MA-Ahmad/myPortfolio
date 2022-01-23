@@ -1,9 +1,9 @@
 import Home from "components/home-page/home";
 import { GetStaticProps, NextPage } from "next";
-import { Props } from "interfaces/interface";
+import { BlogPostProps } from "interfaces/interface";
 import PageLayout from "components/layout/pageLayout";
 
-const Index: NextPage<Props> = props => {
+const Index: NextPage<BlogPostProps> = props => {
     const { posts } = props;
   return (
     <PageLayout title="Muhammad Ahmad - Full Stack Developer">

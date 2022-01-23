@@ -49,6 +49,10 @@ export interface BlogPost {
     body_html: string
 }
 
+export interface BlogPostProps {
+    posts: BlogPost[]
+}
+
 interface Project {
   title: string
   imageLight: string
@@ -60,8 +64,4 @@ interface Project {
 
 export interface ProjectProps {
     projects: Project[]
-}
-
-export interface Props {
-    posts: BlogPost[]
 }

@@ -16,14 +16,14 @@ import Header from "components/layout/header";
 import NextLink from "next/link";
 import { useLinkColor } from "components/ui/theme";
 import PopularArticles from "./PopularArticles";
-import { Props } from "interfaces/interface";
+import { BlogPostProps } from "interfaces/interface";
 import { newContent } from 'data/data';
 
 const ANIMATION_DURATION = 0.5;
 const ORANGE = "#ff9400";
 const emojis = ["👋", "👍", "🖐"]
 
-const Home: React.FC<Props> = props => {
+const Home: React.FC<BlogPostProps> = props => {
   const { posts } = props;
   const linkColor = useLinkColor();
   const [showEmogi, setShowEmoji] = useState(false);
