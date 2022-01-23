@@ -3,10 +3,6 @@ import { NextPage } from "next";
 import {
   VStack,
   Text,
-  Heading,
-  Flex,
-  Stack,
-  Box,
   useColorModeValue,
 } from "@chakra-ui/react";
 import { projectsList } from "../data/projectData";
@@ -14,7 +10,6 @@ import PageLayout from "components/layout/pageLayout";
 import { PageSlideFade } from "components/ui/page-transitions";
 import Header from "components/layout/header";
 import { LeftProjectLayoutLarge, ProjectLayoutMed, RightProjectLayoutLarge } from "components/layout/projectLayout";
-import { BsFillBriefcaseFill } from "react-icons/bs";
 
 const title = "Projects 📚";
 const subtitle =

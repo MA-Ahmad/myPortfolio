@@ -8,8 +8,7 @@ import {
   useColorModeValue,
   Flex,
   Image,
-  Spinner,
-  Box
+  Spinner
 } from "@chakra-ui/react";
 import NextLink from "next/link";
 import { CardTransition } from "../ui/page-transitions";
