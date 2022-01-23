@@ -205,10 +205,5 @@ export const newContent = [
     link: '/projects',
     text: 'Projects page',
     showNewTag: true,
-  },
-  {
-    link: '/',
-    text: 'Updated portfolio home page',
-    showNewTag: false,
   }
 ]
