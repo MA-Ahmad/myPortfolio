@@ -7,8 +7,8 @@ export const repositories = [
     url: "https://github.com/MA-Ahmad/myPortfolio",
     live: "https://mahmad.me",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
-    stars: "68",
-    fork: "15"
+    stars: "81",
+    fork: "17"
   },
   {
     title: "Portfolio2",
@@ -19,7 +19,7 @@ export const repositories = [
     live: "https://ma-ahmad.github.io/portfolio",
     blurHash: "L25#he^nryxc^-w$V{V_56bqx[M{",
     stars: "67",
-    fork: "12"
+    fork: "13"
   },
   {
     title: "Dev.to clone",
