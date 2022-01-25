@@ -1,39 +1,39 @@
-import { SlideFade } from "@chakra-ui/react";
-import { MotionBox } from "./motion";
+import { SlideFade } from '@chakra-ui/react'
+import { MotionBox } from './motion'
 
 const staggerVariants = {
   initial: {
     opacity: 0,
-    translateY: -20
+    translateY: -20,
   },
   enter: {
-    transition: { staggerChildren: 0.15, delayChildren: 0.4 }
+    transition: { staggerChildren: 0.15, delayChildren: 0.4 },
   },
   exit: {
-    transition: { staggerChildren: 0.05, staggerDirection: -1 }
-  }
-};
+    transition: { staggerChildren: 0.05, staggerDirection: -1 },
+  },
+}
 
 const variants = {
   initial: {
     opacity: 0,
-    translateY: -20
+    translateY: -20,
   },
   enter: {
     y: 0,
     opacity: 1,
     transition: {
-      y: { stiffness: 1000, velocity: -100 }
-    }
+      y: { stiffness: 1000, velocity: -100 },
+    },
   },
   exit: {
     y: 50,
     opacity: 0,
     transition: {
-      y: { stiffness: 1000 }
-    }
-  }
-};
+      y: { stiffness: 1000 },
+    },
+  },
+}
 
 export const easing = [0.6, -0.05, 0.01, 0.99]
 
@@ -61,7 +61,6 @@ export const fadeInUp = {
   },
 }
 
-
 export const container = {
   hidden: { opacity: 1, scale: 0 },
   visible: {
@@ -69,37 +68,37 @@ export const container = {
     scale: 1,
     transition: {
       delayChildren: 0.3,
-      staggerChildren: 0.2
-    }
-  }
-};
+      staggerChildren: 0.2,
+    },
+  },
+}
 
 export const item = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
-    opacity: 1
-  }
-};
+    opacity: 1,
+  },
+}
 
 export const PageSlideFade = ({ children }) => {
-  return <SlideFade in>{children}</SlideFade>;
-};
+  return <SlideFade in>{children}</SlideFade>
+}
 
 export const StaggerChildren = ({ children }) => {
   return (
     <MotionBox
       animate={{
         opacity: 1,
-        translateY: 0
+        translateY: 0,
       }}
       variants={staggerVariants}
     >
       {children}
     </MotionBox>
-  );
-};
+  )
+}
 
 export const CardTransition = ({ children }) => {
-  return <MotionBox variants={variants}>{children}</MotionBox>;
-};
+  return <MotionBox variants={variants}>{children}</MotionBox>
+}

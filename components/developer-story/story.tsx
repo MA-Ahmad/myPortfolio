@@ -1,4 +1,4 @@
-import * as React from "react";
+import * as React from 'react'
 import {
   Text,
   VStack,
@@ -7,17 +7,16 @@ import {
   Image,
   HStack,
   Divider,
-  IconButton
-} from "@chakra-ui/react";
-import { StoryTimeline } from "./story-timeline";
-import { FaGraduationCap, FaAward, FaMedal } from "react-icons/fa";
-import { BsFillBriefcaseFill } from "react-icons/bs";
-import Header from "../layout/header";
-import Section from "../skills/section";
-import { PageSlideFade } from "../ui/page-transitions";
+  IconButton,
+} from '@chakra-ui/react'
+import { StoryTimeline } from './story-timeline'
+import { FaGraduationCap, FaAward, FaMedal } from 'react-icons/fa'
+import { BsFillBriefcaseFill } from 'react-icons/bs'
+import Header from '../shared/header'
+import Section from '../skills/section'
+import { PageSlideFade } from '../shared/animations/page-transitions'
 
 const MyStory = ({ companies, institutes }) => {
-
   return (
     <VStack>
       <Section mb={14}>
@@ -31,14 +30,10 @@ const MyStory = ({ companies, institutes }) => {
       </Section>
       <VStack textAlign="start" align="flex-start" mb={0}>
         <Box>
-          <StoryTimeline year={"2021"} index={0} />
+          <StoryTimeline year={'2021'} index={0} />
           {companies.map((company, index) => (
-            <StoryTimeline
-              icon={BsFillBriefcaseFill}
-              index={index}
-              key={index}
-            >
-              {" "}
+            <StoryTimeline icon={BsFillBriefcaseFill} index={index} key={index}>
+              {' '}
               <HStack>
                 <Image
                   rounded="full"
@@ -64,14 +59,14 @@ const MyStory = ({ companies, institutes }) => {
               <Text fontSize={[12, 13, 15]}>{company.role}</Text>
             </StoryTimeline>
           ))}
-          <StoryTimeline year={"2017"} index={0} />
+          <StoryTimeline year={'2017'} index={0} />
           {institutes.map((institute, index) => (
             <>
               <StoryTimeline
                 icon={FaGraduationCap}
                 index={index > 0 ? index + 1 : index}
               >
-                {" "}
+                {' '}
                 <HStack>
                   <Image
                     rounded="full"
@@ -98,8 +93,12 @@ const MyStory = ({ companies, institutes }) => {
               </StoryTimeline>
               {institute.awards &&
                 institute.awards.map((award, index1) => (
-                  <StoryTimeline icon={FaAward} index={index1 + index + 1} key={index1}>
-                    {" "}
+                  <StoryTimeline
+                    icon={FaAward}
+                    index={index1 + index + 1}
+                    key={index1}
+                  >
+                    {' '}
                     <HStack>
                       <IconButton
                         colorScheme="blue"
@@ -135,7 +134,7 @@ const MyStory = ({ companies, institutes }) => {
         </Box>
       </VStack>
     </VStack>
-  );
-};
+  )
+}
 
-export default MyStory;
+export default MyStory

@@ -1,4 +1,8 @@
-import { ThemeOverride, useColorModeValue, theme as defaultTheme } from '@chakra-ui/react'
+import {
+  ThemeOverride,
+  useColorModeValue,
+  theme as defaultTheme,
+} from '@chakra-ui/react'
 import { transparentize } from '@chakra-ui/theme-tools'
 
 export const linkColors = {
@@ -7,7 +11,7 @@ export const linkColors = {
   lhover: 'accent.200',
   dhover: 'accent.700',
   visitedLight: 'accent.300',
-  visitedDark: 'accent.600'
+  visitedDark: 'accent.600',
 }
 
 export function useLinkColor() {
@@ -26,14 +30,17 @@ export function getTagBackgroundDark(
   accentKey: ColorKeys,
   theme: ThemeOverride
 ) {
-  return accentKey && transparentize((theme.colors as any)[accentKey][200], 0.1)(theme)
+  return (
+    accentKey &&
+    transparentize((theme.colors as any)[accentKey][200], 0.1)(theme)
+  )
 }
 
 export const colors = {
   ...defaultTheme.colors,
   gray: {
     ...defaultTheme.colors.gray,
-    1000: '#121721'
+    1000: '#121721',
   },
   defaultAccent: {
     50: '#e3f2fc',
@@ -45,7 +52,7 @@ export const colors = {
     600: '#0053b4',
     700: '#003b82',
     800: '#002451',
-    900: '#000d21'
+    900: '#000d21',
   },
   accent: {
     // See src/components/Accent.tsx for CSS variable definition
@@ -58,8 +65,8 @@ export const colors = {
     600: 'var(--colors-accent-600)',
     700: 'var(--colors-accent-700)',
     800: 'var(--colors-accent-800)',
-    900: 'var(--colors-accent-900)'
-  }
+    900: 'var(--colors-accent-900)',
+  },
 }
 
 export type ColorKeys = keyof typeof colors
@@ -73,5 +80,5 @@ export const accentKeys: ColorKeys[] = [
   'pink',
   'teal',
   'purple',
-  'red'
+  'red',
 ]
