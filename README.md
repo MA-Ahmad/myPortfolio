@@ -11,6 +11,7 @@
 ## Overview
 
 - `components/*` - Contains all components related to pages (blog, projects, about, etc).
+
   - `shared/*` - All reusable components like header, footer etc.
   - `layouts/*` - The different page layouts.
   -  `theme/*` - Manage theme of site. 
