@@ -1,36 +1,36 @@
-import { css, Global } from "@emotion/react";
-import { useColorMode } from "@chakra-ui/react";
-import { theme } from "@chakra-ui/react";
+import { css, Global } from '@emotion/react'
+import { useColorMode } from '@chakra-ui/react'
+import { theme } from '@chakra-ui/react'
 // import { theme } from "./theme";
 
 const prismBaseTheme = css`
   .article {
     text-align: left;
   }
-  
+
   .article img {
     border: 2px solid;
-    border-color: ${theme.colors.gray[700]}
+    border-color: ${theme.colors.gray[700]};
   }
 
   .article h1 {
-    font-family: "Noto Serif", serif;
+    font-family: 'Noto Serif', serif;
     padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes["4xl"]};
+    font-size: ${theme.fontSizes['4xl']};
     font-weight: ${theme.fontWeights.bold};
   }
 
   .article h2 {
-    font-family: "Noto Serif", serif;
+    font-family: 'Noto Serif', serif;
     padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes["3xl"]};
+    font-size: ${theme.fontSizes['3xl']};
     font-weight: ${theme.fontWeights.bold};
   }
 
   .article h3 {
-    font-family: "Noto Serif", serif;
+    font-family: 'Noto Serif', serif;
     padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes["2xl"]};
+    font-size: ${theme.fontSizes['2xl']};
     font-weight: ${theme.fontWeights.bold};
   }
 
@@ -41,7 +41,7 @@ const prismBaseTheme = css`
   .article p,
   .article ul,
   .article ol {
-    font-family: "Inter", sans-serif;
+    font-family: 'Inter', sans-serif;
     margin: ${theme.space[4]} 0 ${theme.space[4]};
     line-height: ${theme.lineHeights.tall};
     font-size: 1rem;
@@ -76,7 +76,7 @@ const prismBaseTheme = css`
   }
 
   .article .icon.icon-link::before {
-    content: "#";
+    content: '#';
     margin-right: ${theme.space[2]};
     display: inline-flex;
   }
@@ -87,12 +87,12 @@ const prismBaseTheme = css`
     border-left: 3px solid;
   }
 
-  code[class*="language-"],
-  pre[class*="language-"] {
+  code[class*='language-'],
+  pre[class*='language-'] {
     color: ${theme.colors.gray[800]};
     background: none;
-    font-family: "Menlo", Monaco, Consolas, Courier New, monospace;
-    font-size: ${theme.fontSizes["sm"]};
+    font-family: 'Menlo', Monaco, Consolas, Courier New, monospace;
+    font-size: ${theme.fontSizes['sm']};
     text-align: left;
     white-space: pre;
     word-spacing: normal;
@@ -109,7 +109,7 @@ const prismBaseTheme = css`
     width: 100%;
   }
 
-  pre[class*="language-"] {
+  pre[class*='language-'] {
     padding-top: ${theme.space[4]};
     padding-bottom: ${theme.space[4]};
     padding-left: ${theme.space[4]};
@@ -119,26 +119,26 @@ const prismBaseTheme = css`
     min-width: 100%;
   }
 
-  :not(pre) > code[class*="language-"],
-  pre[class*="language-"] {
+  :not(pre) > code[class*='language-'],
+  pre[class*='language-'] {
     background: ${theme.colors.gray[50]};
     border: 1px solid ${theme.colors.gray[200]};
     border-radius: ${theme.radii.md};
   }
 
-  :not(pre) > code[class*="language-"] {
+  :not(pre) > code[class*='language-'] {
     padding: 0.1em;
     border-radius: 0.3em;
     white-space: normal;
   }
 
   :not(pre) > code {
-    font-size: ${theme.fontSizes["sm"]};
+    font-size: ${theme.fontSizes['sm']};
   }
 
   :not(pre) > code:before,
   :not(pre) > code:after {
-    content: "\`";
+    content: '\`';
   }
 
   .token.comment,
@@ -242,12 +242,12 @@ const prismBaseTheme = css`
       margin-top: 0;
     }
   }
-`;
+`
 
 export const prismLightTheme = css`
   ${prismBaseTheme};
 
-  :not(pre) > code[class*="language-"] {
+  :not(pre) > code[class*='language-'] {
     background: #011627;
   }
 
@@ -287,7 +287,7 @@ export const prismLightTheme = css`
   .token.selector,
   .token.doctype {
     color: rgb(199, 146, 234);
-    font-style: "italic";
+    font-style: 'italic';
   }
 
   .token.class-name {
@@ -312,13 +312,13 @@ export const prismLightTheme = css`
     color: rgb(178, 204, 214);
   }
 
-  code[class*="language-"],
-  pre[class*="language-"] {
+  code[class*='language-'],
+  pre[class*='language-'] {
     color: ${theme.colors.gray[50]};
   }
 
-  :not(pre) > code[class*="language-"],
-  pre[class*="language-"] {
+  :not(pre) > code[class*='language-'],
+  pre[class*='language-'] {
     background: ${theme.colors.gray[800]};
     border: 1px solid ${theme.colors.gray[700]};
   }
@@ -345,12 +345,12 @@ export const prismLightTheme = css`
     line-height: 2;
     border-color: ${theme.colors.gray[500]};
   }
-`;
+`
 
 export const prismDarkTheme = css`
   ${prismBaseTheme};
 
-  :not(pre) > code[class*="language-"] {
+  :not(pre) > code[class*='language-'] {
     background: #011627;
   }
 
@@ -390,7 +390,7 @@ export const prismDarkTheme = css`
   .token.selector,
   .token.doctype {
     color: rgb(199, 146, 234);
-    font-style: "italic";
+    font-style: 'italic';
   }
 
   .token.class-name {
@@ -415,13 +415,13 @@ export const prismDarkTheme = css`
     color: rgb(178, 204, 214);
   }
 
-  code[class*="language-"],
-  pre[class*="language-"] {
+  code[class*='language-'],
+  pre[class*='language-'] {
     color: ${theme.colors.gray[50]};
   }
 
-  :not(pre) > code[class*="language-"],
-  pre[class*="language-"] {
+  :not(pre) > code[class*='language-'],
+  pre[class*='language-'] {
     background: ${theme.colors.gray[800]};
     border: 1px solid ${theme.colors.gray[700]};
   }
@@ -448,11 +448,11 @@ export const prismDarkTheme = css`
     line-height: 2;
     border-color: ${theme.colors.gray[500]};
   }
-`;
+`
 
 export const PrismGlobal = () => {
-  const { colorMode } = useColorMode();
+  const { colorMode } = useColorMode()
   return (
-    <Global styles={colorMode === "light" ? prismLightTheme : prismDarkTheme} />
-  );
-};
+    <Global styles={colorMode === 'light' ? prismLightTheme : prismDarkTheme} />
+  )
+}

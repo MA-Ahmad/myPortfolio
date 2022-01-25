@@ -1,17 +1,12 @@
-import React from "react";
-import { IconButton, IconButtonProps, Icon } from "@chakra-ui/react";
-import {
-  theme,
-  ColorKeys,
-  useLinkColor,
-  accentKeys
-} from "components/ui/theme";
-import { useLocalSetting } from "components/hooks/useLocalSetting";
-import { css, Global } from "@emotion/react";
-import { getTagBackgroundDark } from "components/ui/theme/foundations/colors";
+import React from 'react'
+import { IconButton, IconButtonProps, Icon } from '@chakra-ui/react'
+import { theme, ColorKeys, useLinkColor, accentKeys } from 'components/theme'
+import { useLocalSetting } from 'components/hooks/useLocalSetting'
+import { css, Global } from '@emotion/react'
+import { getTagBackgroundDark } from 'components/theme/colors'
 
 export const AccentPickerIcon = ({ ...props }) => {
-  const color = useLinkColor();
+  const color = useLinkColor()
   return (
     <Icon viewBox="0 0 200 200" boxSize="1.3em" color={color} {...props}>
       <path
@@ -19,20 +14,20 @@ export const AccentPickerIcon = ({ ...props }) => {
         d="M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0"
       />
     </Icon>
-  );
-};
+  )
+}
 
 export const AccentPicker: React.FC<IconButtonProps> = ({ ...props }) => {
   const [key, setAccentKey] = useLocalSetting<ColorKeys>(
-    "accent",
-    "defaultAccent"
-  );
+    'accent',
+    'defaultAccent'
+  )
 
   const update = React.useCallback(() => {
-    let index = accentKeys.indexOf(key);
-    index = (index + 1) % accentKeys.length;
-    setAccentKey(accentKeys[index]);
-  }, [key]);
+    let index = accentKeys.indexOf(key)
+    index = (index + 1) % accentKeys.length
+    setAccentKey(accentKeys[index])
+  }, [key])
 
   return (
     <IconButton
@@ -41,12 +36,12 @@ export const AccentPicker: React.FC<IconButtonProps> = ({ ...props }) => {
       onMouseDown={update}
       {...props}
     />
-  );
-};
+  )
+}
 
 export const AccentGlobal: React.FC = () => {
-  const [accentKey] = useLocalSetting<ColorKeys>("accent", "defaultAccent");
-  const accent = theme.colors[accentKey];
+  const [accentKey] = useLocalSetting<ColorKeys>('accent', 'defaultAccent')
+  const accent = theme.colors[accentKey]
   const styles = React.useMemo(
     () => css`
       :root {
@@ -64,6 +59,6 @@ export const AccentGlobal: React.FC = () => {
       }
     `,
     [accentKey]
-  );
-  return <Global styles={styles} />;
-};
+  )
+  return <Global styles={styles} />
+}

@@ -1,5 +1,5 @@
-import * as React from "react";
-import { useState } from "react";
+import * as React from 'react'
+import { useState } from 'react'
 import {
   Icon,
   VStack,
@@ -11,30 +11,33 @@ import {
   Tab,
   TabPanel,
   useColorModeValue,
-  SimpleGrid
-} from "@chakra-ui/react";
-import Section from "components/skills/section";
-import { AiTwotoneThunderbolt, AiOutlineCloudServer } from "react-icons/ai";
-import { BiDesktop } from "react-icons/bi";
-import { GiSpiderWeb } from "react-icons/gi";
-import SkillCard from "components/skills/skill-card";
-import { skillsArray } from "data/data";
-import Header from "components/layout/header";
-import { MotionBox } from "components/ui/motion";
-import { container, PageSlideFade } from "components/ui/page-transitions";
-import PageLayout from "../components/layout/pageLayout";
+  SimpleGrid,
+} from '@chakra-ui/react'
+import Section from 'components/skills/section'
+import { AiTwotoneThunderbolt, AiOutlineCloudServer } from 'react-icons/ai'
+import { BiDesktop } from 'react-icons/bi'
+import { GiSpiderWeb } from 'react-icons/gi'
+import SkillCard from 'components/skills/skill-card'
+import { skillsArray } from 'data/data'
+import Header from 'components/shared/header'
+import { MotionBox } from 'components/shared/animations/motion'
+import {
+  container,
+  PageSlideFade,
+} from 'components/shared/animations/page-transitions'
+import PageLayout from '../components/layouts/pageLayout'
 
 const TechStack = ({ skills }) => {
-  const [skillsList, setSkillsList] = useState([]);
+  const [skillsList, setSkillsList] = useState([])
 
   React.useEffect(() => {
-    setSkillsList(skills);
-  }, []);
+    setSkillsList(skills)
+  }, [])
 
-  const filterSkills = tab => {
-    if (tab.length) setSkillsList(skills.filter(skill => skill.type === tab));
-    else setSkillsList(skills);
-  };
+  const filterSkills = (tab) => {
+    if (tab.length) setSkillsList(skills.filter((skill) => skill.type === tab))
+    else setSkillsList(skills)
+  }
 
   return (
     <PageLayout
@@ -49,8 +52,8 @@ const TechStack = ({ skills }) => {
                 Tech Stack
               </Header>
               <Text
-                fontSize={"xl"}
-                color={useColorModeValue("gray.500", "gray.200")}
+                fontSize={'xl'}
+                color={useColorModeValue('gray.500', 'gray.200')}
                 maxW="lg"
                 textAlign="center"
               >
@@ -68,15 +71,15 @@ const TechStack = ({ skills }) => {
             >
               <TabList display="flex" flexWrap="wrap">
                 <Tab
-                  bg={useColorModeValue("gray.100", "gray.800")}
-                  color={useColorModeValue("gray.600", "gray.500")}
+                  bg={useColorModeValue('gray.100', 'gray.800')}
+                  color={useColorModeValue('gray.600', 'gray.500')}
                   _selected={{
-                    color: "green.800",
-                    bg: "green.100"
+                    color: 'green.800',
+                    bg: 'green.100',
                   }}
                   mr={2}
                   mt={2}
-                  onClick={() => filterSkills("")}
+                  onClick={() => filterSkills('')}
                 >
                   <HStack spacing={1}>
                     <Icon as={AiTwotoneThunderbolt} />
@@ -84,15 +87,15 @@ const TechStack = ({ skills }) => {
                   </HStack>
                 </Tab>
                 <Tab
-                  bg={useColorModeValue("gray.100", "gray.800")}
-                  color={useColorModeValue("gray.500", "gray.500")}
+                  bg={useColorModeValue('gray.100', 'gray.800')}
+                  color={useColorModeValue('gray.500', 'gray.500')}
                   _selected={{
-                    color: useColorModeValue("gray.100", "gray.800"),
-                    bg: useColorModeValue("gray.900", "gray.100")
+                    color: useColorModeValue('gray.100', 'gray.800'),
+                    bg: useColorModeValue('gray.900', 'gray.100'),
                   }}
                   mr={2}
                   mt={2}
-                  onClick={() => filterSkills("development")}
+                  onClick={() => filterSkills('development')}
                 >
                   <HStack spacing={1}>
                     <Icon as={BiDesktop} />
@@ -100,15 +103,15 @@ const TechStack = ({ skills }) => {
                   </HStack>
                 </Tab>
                 <Tab
-                  bg={useColorModeValue("gray.100", "gray.800")}
-                  color={useColorModeValue("gray.600", "gray.500")}
+                  bg={useColorModeValue('gray.100', 'gray.800')}
+                  color={useColorModeValue('gray.600', 'gray.500')}
                   _selected={{
-                    color: "green.800",
-                    bg: "green.100"
+                    color: 'green.800',
+                    bg: 'green.100',
                   }}
                   mr={2}
                   mt={2}
-                  onClick={() => filterSkills("design")}
+                  onClick={() => filterSkills('design')}
                 >
                   <HStack spacing={1}>
                     <Icon as={GiSpiderWeb} />
@@ -116,15 +119,15 @@ const TechStack = ({ skills }) => {
                   </HStack>
                 </Tab>
                 <Tab
-                  bg={useColorModeValue("gray.100", "gray.800")}
-                  color={useColorModeValue("gray.600", "gray.500")}
+                  bg={useColorModeValue('gray.100', 'gray.800')}
+                  color={useColorModeValue('gray.600', 'gray.500')}
                   _selected={{
-                    color: "red.800",
-                    bg: "red.100"
+                    color: 'red.800',
+                    bg: 'red.100',
                   }}
                   mr={2}
                   mt={2}
-                  onClick={() => filterSkills("devops")}
+                  onClick={() => filterSkills('devops')}
                 >
                   <HStack spacing={1}>
                     <Icon as={AiOutlineCloudServer} />
@@ -132,7 +135,7 @@ const TechStack = ({ skills }) => {
                   </HStack>
                 </Tab>
               </TabList>
-              <TabPanels minHeight={"45vh"}>
+              <TabPanels minHeight={'45vh'}>
                 <TabPanel px={0}>
                   <MotionBox
                     variants={container}
@@ -219,15 +222,15 @@ const TechStack = ({ skills }) => {
         </VStack>
       </PageSlideFade>
     </PageLayout>
-  );
-};
+  )
+}
 
 export function getStaticProps() {
   return {
     props: {
-      skills: skillsArray
-    }
-  };
+      skills: skillsArray,
+    },
+  }
 }
 
-export default TechStack;
+export default TechStack

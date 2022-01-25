@@ -1,13 +1,14 @@
-import useSWR from "swr"
+import useSWR from 'swr'
+import axios, { AxiosResponse } from 'axios'
 
 const API_URL = '/api/posts/'
 
 type PostProps = {
-  id: string;
-  slug: string;
-  likes: number;
-  views: number;
-  createdAt: Date;
+  id: string
+  slug: string
+  likes: number
+  views: number
+  createdAt: Date
 }
 
 type PostsPayload = {
@@ -30,12 +31,15 @@ export const getDbPosts = () => {
 }
 
 export const getDevtoPosts = async () => {
-  const res = await fetch(`${process.env.DEVTO_APIURL}/articles?username=${process.env.DEVTO_USERNAME}`);
+  const res = await fetch(
+    `${process.env.DEVTO_APIURL}/articles?username=${process.env.DEVTO_USERNAME}`
+  )
+
   if (res.status < 200 || res.status >= 300) {
     throw new Error(
       `Error fetching... Status code: ${res.status}, ${res.statusText}`
-    );
+    )
   }
-  const dev_posts = await res.json();
-  return dev_posts;
-};
+  const dev_posts = await res.json()
+  return dev_posts
+}

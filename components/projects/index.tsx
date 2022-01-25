@@ -1,14 +1,14 @@
-import { VStack, SimpleGrid } from "@chakra-ui/react";
-import ProjectCard from "./card";
-import Header from "../layout/header";
-import { AnimateSharedLayout } from "framer-motion";
-import { MotionBox } from "../ui/motion";
+import { VStack, SimpleGrid } from '@chakra-ui/react'
+import ProjectCard from './card'
+import Header from '../shared/header'
+import { AnimateSharedLayout } from 'framer-motion'
+import { MotionBox } from '../shared/animations/motion'
 
 interface ProjectsProps {
-  projects: project[];
+  projects: project[]
 }
 
-const ORANGE = "#ff9400";
+const ORANGE = '#ff9400'
 
 const Projects: React.FC<ProjectsProps> = ({ projects }) => {
   return (
@@ -33,7 +33,7 @@ const Projects: React.FC<ProjectsProps> = ({ projects }) => {
         </SimpleGrid>
       </AnimateSharedLayout>
     </VStack>
-  );
-};
+  )
+}
 
-export default Projects;
+export default Projects

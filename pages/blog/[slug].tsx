@@ -20,22 +20,25 @@ import {
 } from '@chakra-ui/react'
 import remark from 'remark'
 import prism from 'remark-prism'
-import { getTagColor } from '../../components/ui/theme'
+import { getTagColor } from '../../components/theme'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import { BlogPost } from '../../interfaces/interface'
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next'
-import PageLayout from 'components/layout/pageLayout'
-import { MotionBox, MotionImage } from 'components/ui/motion'
-import DevToCallToAction from 'components/layout/DevToCallToAction'
-import { fadeInUp, stagger } from 'components/ui/page-transitions'
+import PageLayout from 'components/layouts/pageLayout'
+import { MotionBox } from 'components/shared/animations/motion'
+import DevToCallToAction from 'components/shared/DevToCallToAction'
+import {
+  fadeInUp,
+  stagger,
+} from 'components/shared/animations/page-transitions'
 import { motion } from 'framer-motion'
 import { usePostData } from 'lib/usePostData'
-import { LikeButton } from 'components/ui/LikeButton'
-import { useLinkColor } from 'components/ui/theme'
+import { LikeButton } from 'components/shared/LikeButton'
+import { useLinkColor } from 'components/theme'
 import { getDevtoPosts } from 'lib/fetchPosts'
-import { HeartIcon, CommentIcon, EyeIcon } from 'components/ui/icons/Icons'
-import DisplayText from 'components/ui/icons/DisplayText'
+import { HeartIcon, CommentIcon, EyeIcon } from 'components/shared/icons/Icons'
+import DisplayText from 'components/shared/icons/DisplayText'
 
 dayjs.extend(localizedFormat)
 

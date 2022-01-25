@@ -1,23 +1,17 @@
-import * as React from "react";
-import {
-  HStack,
-  VStack,
-  Text,
-  useColorModeValue,
-  Link
-} from "@chakra-ui/react";
-import { motion, AnimatePresence } from "framer-motion";
-import LazyImage from "components/ui/lazy-image";
-import { useLinkColor } from "components/ui/theme";
-import { Tag } from "components/ui/Tags";
+import * as React from 'react'
+import { HStack, VStack, Text, useColorModeValue, Link } from '@chakra-ui/react'
+import { motion, AnimatePresence } from 'framer-motion'
+import LazyImage from 'components/shared/lazy-image'
+import { useLinkColor } from 'components/theme'
+import { Tag } from 'components/shared/Tags'
 
 interface ProjectCardProps {
-  title: string;
-  description: string;
-  logo: string;
-  blurHash: string;
-  link: string;
-  technologies: string[];
+  title: string
+  description: string
+  logo: string
+  blurHash: string
+  link: string
+  technologies: string[]
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -26,28 +20,28 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   logo,
   blurHash,
   link,
-  technologies
+  technologies,
 }) => {
-  const linkColor = useLinkColor();
-  const textColor = useColorModeValue("gray.500", "gray.200");
-  const [isOpen, setIsOpen] = React.useState(false);
-  const toggleOpen = () => setIsOpen(!isOpen);
+  const linkColor = useLinkColor()
+  const textColor = useColorModeValue('gray.500', 'gray.200')
+  const [isOpen, setIsOpen] = React.useState(false)
+  const toggleOpen = () => setIsOpen(!isOpen)
 
   return (
     <motion.div layout onClick={toggleOpen}>
       <HStack
         p={4}
-        bg={useColorModeValue("white", "gray.800")}
+        bg={useColorModeValue('white', 'gray.800')}
         rounded="xl"
         borderWidth="1px"
-        borderColor={useColorModeValue("gray.100", "gray.700")}
+        borderColor={useColorModeValue('gray.100', 'gray.700')}
         w="100%"
         h="100%"
         textAlign="left"
         align="start"
         spacing={4}
         cursor="pointer"
-        _hover={{ shadow: "lg" }}
+        _hover={{ shadow: 'lg' }}
       >
         <LazyImage
           src={logo}
@@ -68,7 +62,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                   fontWeight="bold"
                   fontSize="md"
                   noOfLines={1}
-                  onClick={e => e.stopPropagation()}
+                  onClick={(e) => e.stopPropagation()}
                   color={linkColor}
                   isExternal
                 >
@@ -119,7 +113,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </VStack>
       </HStack>
     </motion.div>
-  );
-};
+  )
+}
 
-export default ProjectCard;
+export default ProjectCard

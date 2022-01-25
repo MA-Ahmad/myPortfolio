@@ -8,40 +8,40 @@ import {
   useColorModeValue,
   Flex,
   Image,
-} from "@chakra-ui/react";
-import NextLink from "next/link";
-import { CardTransition } from "../ui/page-transitions";
-import { BlogPost } from "../../interfaces/interface";
-import moment from "moment";
-import { useLinkColor } from "components/ui/theme";
-import { Tags } from "components/ui/Tags";
-import { HeartIcon, CommentIcon } from "components/ui/icons/Icons";
-import DisplayText from "components/ui/icons/DisplayText";
+} from '@chakra-ui/react'
+import NextLink from 'next/link'
+import { CardTransition } from '../shared/animations/page-transitions'
+import { BlogPost } from '../../interfaces/interface'
+import moment from 'moment'
+import { useLinkColor } from 'components/theme'
+import { Tags } from 'components/shared/Tags'
+import { HeartIcon, CommentIcon } from 'components/shared/icons/Icons'
+import DisplayText from 'components/shared/icons/DisplayText'
 
 interface IProps {
-  post: BlogPost;
-  isLoading: boolean;
-  postDbLikes: number;
+  post: BlogPost
+  isLoading: boolean
+  postDbLikes: number
 }
 
 const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
-  const linkColor = useLinkColor();
-  const textColor = useColorModeValue("gray.500", "gray.200");
+  const linkColor = useLinkColor()
+  const textColor = useColorModeValue('gray.500', 'gray.200')
   const devIcon = useColorModeValue(
-    "/assets/images/logos/dev.png",
-    "/assets/images/logos/dev_white.png"
-  );
+    '/assets/images/logos/dev.png',
+    '/assets/images/logos/dev_white.png'
+  )
 
   return (
     <CardTransition>
       <VStack
         spacing={1}
         p={4}
-        _hover={{ shadow: "md", textDecoration: "none" }}
+        _hover={{ shadow: 'md', textDecoration: 'none' }}
         borderWidth="1px"
         position="relative"
         rounded="md"
-        bg={useColorModeValue("white", "gray.800")}
+        bg={useColorModeValue('white', 'gray.800')}
         align="left"
       >
         {post.url ? (
@@ -57,7 +57,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
             />
           </Tooltip>
         ) : (
-          ""
+          ''
         )}
 
         <HStack justifyContent="space-between" isInline>
@@ -68,15 +68,20 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
               </Text>
             </NextLink>
           </Heading>
-          <HStack spacing={2} isInline d={["none", "flex", "flex"]}>
+          <HStack spacing={2} isInline d={['none', 'flex', 'flex']}>
             {post.public_reactions_count || postDbLikes ? (
               <Flex alignItems="center">
-                <DisplayText isLoading={isLoading} value={(Number(post.public_reactions_count) || 0) + postDbLikes} />
+                <DisplayText
+                  isLoading={isLoading}
+                  value={
+                    (Number(post.public_reactions_count) || 0) + postDbLikes
+                  }
+                />
                 &nbsp;
                 <HeartIcon />
               </Flex>
             ) : (
-              ""
+              ''
             )}
             {post.comments_count ? (
               <Flex alignItems="center">
@@ -85,58 +90,67 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
                 <CommentIcon />
               </Flex>
             ) : (
-              ""
+              ''
             )}
           </HStack>
         </HStack>
-        <HStack spacing={2} isInline justifyContent={["space-between", "flex-start"]}>
+        <HStack
+          spacing={2}
+          isInline
+          justifyContent={['space-between', 'flex-start']}
+        >
           <Tooltip hasArrow label="Published" placement="top">
             <Text fontSize="sm" fontWeight="600" color={textColor}>
-              {moment(post.published_at).format("Do MMMM YYYY")}
+              {moment(post.published_at).format('Do MMMM YYYY')}
             </Text>
           </Tooltip>
           <HStack spacing={2}>
             {post.public_reactions_count || postDbLikes ? (
               <Tooltip hasArrow label="Reactions" placement="top">
-                <Flex alignItems="center" d={["flex", "none", "none"]}>
-                  <DisplayText isLoading={isLoading} value={(Number(post.public_reactions_count) || 0) + postDbLikes} />
+                <Flex alignItems="center" d={['flex', 'none', 'none']}>
+                  <DisplayText
+                    isLoading={isLoading}
+                    value={
+                      (Number(post.public_reactions_count) || 0) + postDbLikes
+                    }
+                  />
                   &nbsp;
                   <HeartIcon />
                 </Flex>
               </Tooltip>
             ) : (
-              ""
+              ''
             )}
             {post.comments_count ? (
               <Tooltip hasArrow label="Comments" placement="top">
-                <Flex alignItems="center" d={["flex", "none", "none"]}>
+                <Flex alignItems="center" d={['flex', 'none', 'none']}>
                   <DisplayText isLoading={false} value={post.comments_count} />
                   &nbsp;
                   <CommentIcon />
                 </Flex>
               </Tooltip>
             ) : (
-              ""
+              ''
             )}
           </HStack>
-          <HStack spacing={1} alignItems="center" d={["none", "none", "flex"]}>
+          <HStack spacing={1} alignItems="center" d={['none', 'none', 'flex']}>
             <Tags
               tags={post.tag_list}
               interactive={false}
               tagProps={{
-                padding: "0 3px",
-                size: "sm"
+                padding: '0 3px',
+                size: 'sm',
               }}
             />
           </HStack>
         </HStack>
-        <HStack spacing={1} alignItems="center" d={["flex", "flex", "none"]}>
+        <HStack spacing={1} alignItems="center" d={['flex', 'flex', 'none']}>
           <Tags
             tags={post.tag_list}
             interactive={false}
             tagProps={{
-              padding: "0 3px",
-              size: "sm"
+              padding: '0 3px',
+              size: 'sm',
             }}
           />
         </HStack>
@@ -145,7 +159,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
         </Text>
       </VStack>
     </CardTransition>
-  );
-};
+  )
+}
 
-export default PostCard;
+export default PostCard
