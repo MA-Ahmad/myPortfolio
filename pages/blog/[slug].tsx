@@ -37,7 +37,7 @@ import { usePostData } from 'lib/usePostData'
 import { LikeButton } from 'components/shared/LikeButton'
 import { useLinkColor } from 'components/theme'
 import { getDevtoPosts } from 'lib/fetchPosts'
-import { HeartIcon, CommentIcon, EyeIcon } from 'components/shared/icons/Icons'
+import { HeartIcon, CommentIcon, EyeIcon } from 'components/shared/icons'
 import DisplayText from 'components/shared/icons/DisplayText'
 
 dayjs.extend(localizedFormat)

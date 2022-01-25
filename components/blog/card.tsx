@@ -15,7 +15,7 @@ import { BlogPost } from '../../interfaces/interface'
 import moment from 'moment'
 import { useLinkColor } from 'components/theme'
 import { Tags } from 'components/shared/Tags'
-import { HeartIcon, CommentIcon } from 'components/shared/icons/Icons'
+import { HeartIcon, CommentIcon } from 'components/shared/icons'
 import DisplayText from 'components/shared/icons/DisplayText'
 
 interface IProps {
