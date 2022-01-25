@@ -11,7 +11,6 @@
 ## Overview
 
 - `components/*` - Contains all components related to pages (blog, projects, about, etc).
-
   - `shared/*` - All reusable components like header, footer etc.
   - `layouts/*` - The different page layouts.
   -  `theme/*` - Manage theme of site. 
@@ -31,7 +30,7 @@ cd myPortfolio && yarn install
 yarn dev
 ```
 
-The above command will start the application on [http://localhost:3000/](http://localhost:3000)
+The above commands will start the application on [http://localhost:3000/](http://localhost:3000)
 
 
 <!-- ## Screens
@@ -42,4 +41,4 @@ The above command will start the application on [http://localhost:3000/](http://
 
 ## Cloning / Forking
 
-Please review the [LICENSE](LICENSE) and remove all of my personal information (blog posts, images, etc)
+Please review the [LICENSE](LICENSE) and remove all of my personal information (projects, blog posts, images, etc)
