@@ -1,6 +1,6 @@
-import React from "react"
-import { useDebounce } from "react-use"
-import useSWR from "swr"
+import React from 'react'
+import { useDebounce } from 'react-use'
+import useSWR from 'swr'
 
 const API_URL = '/api/posts/'
 
@@ -21,8 +21,8 @@ async function updatePostLikes(
   type: string
 ): Promise<LikesPayload> {
   const res = await fetch(API_URL + id, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ count, type }),
   })
   return res.json()
@@ -34,8 +34,8 @@ async function updatePostViews(
   type: string
 ): Promise<LikesPayload> {
   const res = await fetch(API_URL + id, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ count, type }),
   })
   return res.json()
@@ -60,9 +60,9 @@ export const usePostData = (id: string) => {
       {
         totalPostLikes: data.totalPostLikes + 1,
         currentUserLikes: data.currentUserLikes + 1,
-        totalPostViews: data.totalPostViews
+        totalPostViews: data.totalPostViews,
       },
-      false,
+      false
     )
 
     // use local state and debounce to batch updates
@@ -70,6 +70,8 @@ export const usePostData = (id: string) => {
   }
 
   const incrementViews = () => {
+    mutate(updatePostViews(id, viewsCount, 'views'))
+
     if (!data) {
       return
     }
@@ -81,12 +83,10 @@ export const usePostData = (id: string) => {
       {
         totalPostLikes: data.totalPostLikes,
         currentUserLikes: data.currentUserLikes,
-        totalPostViews: data.totalPostViews + 1
+        totalPostViews: data.totalPostViews + 1,
       },
-      false,
+      false
     )
-
-    mutate(updatePostViews(id, viewsCount, 'views'))
   }
 
   useDebounce(
@@ -99,7 +99,7 @@ export const usePostData = (id: string) => {
       setBatchedLikes(0)
     },
     1000,
-    [batchedLikes],
+    [batchedLikes]
   )
 
   return {
@@ -109,6 +109,6 @@ export const usePostData = (id: string) => {
     isLoading: !error && !data,
     isError: error,
     incrementLikes,
-    incrementViews
+    incrementViews,
   }
 }

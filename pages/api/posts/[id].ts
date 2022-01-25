@@ -1,34 +1,33 @@
-import prisma from "lib/prisma"
-import { createHash } from "crypto"
-import type { NextApiRequest, NextApiResponse } from "next"
-import { z } from "zod"
+import prisma from 'lib/prisma'
+import { createHash } from 'crypto'
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { z } from 'zod'
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse,
+  res: NextApiResponse
 ) {
   try {
     const ipAddress =
-      req.headers["x-forwarded-for"] ||
+      req.headers['x-forwarded-for'] ||
       // Fallback for localhost or non Vercel deployments
-      "0.0.0.0"
+      '0.0.0.0'
 
     const postId = req.query.id as string
-
     const currentUserId =
       // Since a users IP address is part of the sessionId in our database, we
       // hash it to protect their privacy. By combining it with a salt, we get
       // get a unique id we can refer to, but we won't know what their ip
       // address was.
-      createHash("md5")
-        .update(ipAddress + process.env.IP_ADDRESS_HASH, "utf8")
-        .digest("hex")
+      createHash('md5')
+        .update(ipAddress + process.env.IP_ADDRESS_HASH, 'utf8')
+        .digest('hex')
 
     // Identify a specific users interactions with a specific post
-    const sessionId = postId + "___" + currentUserId
+    const sessionId = postId + '___' + currentUserId
 
     switch (req.method) {
-      case "GET": {
+      case 'GET': {
         const [post, user] = await Promise.all([
           // get the number of likes this post has
           prisma.post.findUnique({
@@ -49,11 +48,10 @@ export default async function handler(
         return
       }
 
-      case "POST": {
+      case 'POST': {
         const count = z.number().min(1).max(3).parse(req.body.count)
 
         if (req.body.type === 'views') {
-
           // increment the number of times everyone has viewed this post
           const post = await prisma.post.upsert({
             where: { slug: postId },
@@ -72,7 +70,6 @@ export default async function handler(
             totalPostLikes: post?.likes || 0,
             totalPostViews: post?.views || 0,
           })
-
         } else {
           // Upsert: if a row exists, update it by incrementing likes. If it
           // doesn't exist, create a new row with the number of likes this api

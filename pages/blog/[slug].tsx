@@ -56,7 +56,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   const { totalPostLikes, totalPostViews, isLoading, incrementViews } =
     usePostData(blogDetails?.slug)
   const [showLikeButton, setShowLikeButton] = useState(false)
-  const textColor = useColorModeValue('gray.500', 'gray.200')
   const borderColor = useColorModeValue('transparent', 'gray.700')
   const linkColor = useLinkColor()
 
