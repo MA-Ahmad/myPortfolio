@@ -8,40 +8,37 @@
 - **ORM**: [prisma](https://www.prisma.io/)
 - **Deployment**: [Vercel](https://vercel.com)
 
-## Requirements
+## Overview
 
-1. [Node.js](https://nodejs.org/)
-2. [npm](https://www.npmjs.com/)
+- `components/*` - Contains all components related to pages (blog, projects, about, etc).
+  - `shared/*` - All reusable components like header, footer etc.
+  - `layouts/*` - The different page layouts.
+  -  `theme/*` - Manage theme of site. 
+- `data/*` - Data that used for blog posts, projects etc.
+- `lib/*` - Collection of helpful utilities or code for external services like devto api.
+- `pages/api/*` - [API routes](https://nextjs.org/docs/api-routes/introduction).
+- `pages/blog/*` - Static pre-rendered blog pages using MDX.
+- `pages/*` - All other static pages.
+- `prisma/*` - My Prisma schema, which uses a Postgresql database.
+- `public/*` - Static assets including audios, fonts and images.
 
-## Installation
-
-### 1. **Clone the application**
+## Running Locally
 
 ```sh
 git clone https://github.com/MA-Ahmad/myPortfolio
-```
-
-### 2. **Install necessary dependencies for the application**
-
-```sh
 cd myPortfolio && yarn install
-```
-
-### 3. **Start the application**
-
-```sh
 yarn dev
 ```
 
-The above command will start the application on [http://localhost:3000/](http://localhost:3000).
+The above command will start the application on [http://localhost:3000/](http://localhost:3000)
 
 
-## Screens
+<!-- ## Screens
 ### Home 
 ![Home Screen](/public/assets/images/screens/home_page.png)
 ### Blog
-![Skills Screen](/public/assets/images/screens/blog_page.png)
+![Skills Screen](/public/assets/images/screens/blog_page.png) -->
 
-## License
+## Cloning / Forking
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Please review the [LICENSE](LICENSE) and remove all of my personal information (blog posts, images, etc)
