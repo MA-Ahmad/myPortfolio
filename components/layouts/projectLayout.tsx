@@ -43,7 +43,12 @@ const ProjectLayoutMed = ({ project }) => {
           _hover={{ opacity: 1 }}
           zIndex={5}
         >
-          <Image src={project.imageLight} layout="fill" quality="100" />
+          <Image
+            src={project.imageLight}
+            layout="fill"
+            quality="100"
+            alt="Project image"
+          />
         </Box>
         <Box
           width={'full'}
@@ -77,7 +82,7 @@ const ProjectLayoutMed = ({ project }) => {
             <Box width="full">
               <MotionText
                 variants={fadeInUp}
-                bg={useColorModeValue('gray.100', 'gray.700')}
+                bg={useColorModeValue('gray.200', 'gray.700')}
                 rounded="lg"
                 align="left"
                 p="4"
@@ -169,7 +174,12 @@ const LeftProjectLayoutLarge = ({ project }) => {
             _hover={{ opacity: 1 }}
             zIndex={5}
           >
-            <Image src={project.imageLight} layout="fill" quality="100" />
+            <Image
+              src={project.imageLight}
+              layout="fill"
+              quality="100"
+              alt="Project image"
+            />
           </Box>
         </a>
       </MotionBox>
@@ -202,7 +212,7 @@ const LeftProjectLayoutLarge = ({ project }) => {
           <Box width="full">
             <MotionText
               variants={fadeInUp}
-              bg={useColorModeValue('gray.100', 'gray.700')}
+              bg={useColorModeValue('gray.200', 'gray.700')}
               rounded="lg"
               align="right"
               p="4"
@@ -283,7 +293,7 @@ const RightProjectLayoutLarge = ({ project }) => {
           <Box width="full">
             <MotionText
               variants={fadeInUp}
-              bg={useColorModeValue('gray.100', 'gray.700')}
+              bg={useColorModeValue('gray.200', 'gray.700')}
               rounded="lg"
               align="left"
               p="4"
@@ -368,7 +378,12 @@ const RightProjectLayoutLarge = ({ project }) => {
             _hover={{ opacity: 1 }}
             zIndex={5}
           >
-            <Image src={project.imageLight} layout="fill" quality="100" />
+            <Image
+              src={project.imageLight}
+              layout="fill"
+              quality="100"
+              alt="Project image"
+            />
           </Box>
         </a>
       </MotionBox>
