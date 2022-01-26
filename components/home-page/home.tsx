@@ -58,9 +58,9 @@ const Home: React.FC<BlogPostProps> = (props) => {
           <MotionBox whileHover={{ scale: 1.2 }} rounded="full" shadow="lg">
             <Avatar
               size={'2xl'}
-              // src={UserIcon}
               showBorder={true}
               borderColor={linkColor}
+              alt="Avatar icon"
               src={'https://avatars2.githubusercontent.com/u/37842853?v=4'}
             />
           </MotionBox>

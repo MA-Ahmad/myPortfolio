@@ -166,6 +166,7 @@ export default function TopNav() {
                   size={'sm'}
                   showBorder={true}
                   borderColor={linkColor}
+                  alt="Avatar icon"
                   src={'https://avatars2.githubusercontent.com/u/37842853?v=4'}
                 />
               </NextLink>
