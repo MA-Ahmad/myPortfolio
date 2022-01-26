@@ -4,7 +4,6 @@ import {
   PageSlideFade,
   StaggerChildren,
 } from '../shared/animations/page-transitions'
-// import { repositories } from "../../data/repositories";
 import RepositoryCard from './offline-data-card'
 import { MotionBox } from '../shared/animations/motion'
 
@@ -16,7 +15,6 @@ const OfflineData = ({ repositories }) => {
           {repositories.map((repo, index) => (
             <MotionBox whileHover={{ y: -5 }} key={index}>
               <RepositoryCard
-                key={index}
                 title={repo.title}
                 description={repo.description}
                 cover={repo.cover}
