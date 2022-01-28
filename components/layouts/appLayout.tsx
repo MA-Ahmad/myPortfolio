@@ -33,7 +33,7 @@ function DottedSvgs() {
       width="100%"
       overflow="hidden"
       display={['none', 'none', 'block']}
-      zIndex={0}
+      zIndex={-1}
     >
       <Box position="relative" height="full" mx="auto" maxW="940px">
         <Box position="absolute" left="100%">
