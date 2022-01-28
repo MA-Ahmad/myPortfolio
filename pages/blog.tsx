@@ -132,16 +132,14 @@ export const getServerSideProps: GetServerSideProps = async () => {
       title: frontmatter.title,
       description: frontmatter.description,
       published_at: frontmatter.published_at,
-      comments_count: frontmatter.comments_count
-        ? frontmatter.comments_count
-        : devPost?.comments_count
-        ? devPost?.comments_count
-        : 0,
-      public_reactions_count: frontmatter.public_reactions_count
-        ? frontmatter.public_reactions_count
-        : devPost?.public_reactions_count
-        ? devPost?.public_reactions_count
-        : 0,
+      comments_count:
+        (frontmatter.comments_count
+          ? frontmatter.comments_count
+          : devPost?.comments_count) || 0,
+      public_reactions_count:
+        (frontmatter.public_reactions_count
+          ? frontmatter.public_reactions_count
+          : devPost?.public_reactions_count) || 0,
       tag_list: frontmatter.tags,
     })
   })
