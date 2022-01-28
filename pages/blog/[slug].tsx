@@ -75,6 +75,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
       title={blogDetails?.title}
       description={blogDetails?.description}
       image={blogDetails?.cover_image}
+      keywords={blogDetails?.tags.join(', ')}
     >
       <Collapse in={showLikeButton} animateOpacity>
         <Box

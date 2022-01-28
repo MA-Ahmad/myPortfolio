@@ -1,13 +1,13 @@
-import Head from "next/head";
+import Head from 'next/head'
 
 type Props = {
-    title: string;
-    description?: string;
-    keywords?: string;
-    image?: string;
-  };
+  title: string
+  description?: string
+  keywords?: string
+  image?: string
+}
 
-const Meta = ({ title, keywords, description, image } : Props): JSX.Element => {
+const Meta = ({ title, keywords, description, image }: Props): JSX.Element => {
   title = title.includes('Ahmad') ? title : title.concat(' | Muhammad Ahmad')
   return (
     <Head>
@@ -16,16 +16,16 @@ const Meta = ({ title, keywords, description, image } : Props): JSX.Element => {
       <meta name="keywords" content={keywords} />
       <meta name="description" content={description} />
       <meta property="og:title" content={title} />
-      <meta property="og:image" content={image ? image : "/logo512.png"} />
+      <meta property="og:image" content={image ? image : '/logo512.png'} />
       <title>{title}</title>
     </Head>
-  );
-};
+  )
+}
 
 Meta.defaultProps = {
-  title: "Muhammad Ahmad - Full Stack Developer",
-  keywords: "web development, programming, web design",
-  description: "Software Engineer. Lover of web and opensource."
-};
+  title: 'Muhammad Ahmad - Full Stack Developer',
+  keywords: 'web development, programming, web design, react js, chakra ui',
+  description: 'Software Engineer. Lover of web and opensource.',
+}
 
-export default Meta;
+export default Meta
