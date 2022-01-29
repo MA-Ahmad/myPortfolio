@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { BlogPostProps } from 'interfaces/interface'
 import {
   VStack,
@@ -26,23 +26,9 @@ const ORANGE = '#ff9400'
 
 const PopularArticles: React.FC<BlogPostProps> = (props) => {
   const { posts } = props
-  const [postsList, setPostsList] = useState([])
   const { dbPosts, isLoading } = getDbPosts()
   const linkColor = useLinkColor()
   const textColor = useColorModeValue('gray.500', 'gray.200')
-
-  useEffect(() => {
-    posts &&
-      posts.map((post) => {
-        const foundPost = dbPosts?.filter((p) => p.title === post.title)[0]
-        if (foundPost) {
-          post.public_reactions_count = post.positive_reactions_count =
-            Number(post.positive_reactions_count) + foundPost.likes
-          post.slug = foundPost.slug
-        }
-      })
-    setPostsList(posts)
-  }, [dbPosts])
 
   const compare = (
     a: { public_reactions_count: number },
@@ -60,14 +46,19 @@ const PopularArticles: React.FC<BlogPostProps> = (props) => {
     return comparison
   }
 
+  const getPostLikes = (slug) => {
+    const p = dbPosts?.filter((p) => p.slug === slug)[0]
+    return p?.likes || 0
+  }
+
   return (
     <VStack align="start" spacing={8} width="100%">
       <Header underlineColor={ORANGE} mt={0} mb={0}>
         Popular Articles
       </Header>
       <SimpleGrid columns={1} spacing={4} mt={5} w="100%">
-        {postsList &&
-          postsList
+        {posts &&
+          posts
             ?.sort(compare)
             .slice(0, 3)
             .map(
@@ -112,8 +103,8 @@ const PopularArticles: React.FC<BlogPostProps> = (props) => {
                               <DisplayText
                                 isLoading={isLoading}
                                 value={
-                                  Number(positive_reactions_count)
-                                  // getPostLikes(slug)
+                                  Number(positive_reactions_count) +
+                                  getPostLikes(slug)
                                 }
                               />
                               &nbsp;
@@ -155,8 +146,8 @@ const PopularArticles: React.FC<BlogPostProps> = (props) => {
                               <DisplayText
                                 isLoading={isLoading}
                                 value={
-                                  Number(positive_reactions_count)
-                                  // getPostLikes(slug)
+                                  Number(positive_reactions_count) +
+                                  getPostLikes(slug)
                                 }
                               />
                               &nbsp;
