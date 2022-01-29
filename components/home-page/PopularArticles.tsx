@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { BlogPostProps } from 'interfaces/interface'
 import {
   VStack,
@@ -26,15 +26,28 @@ const ORANGE = '#ff9400'
 
 const PopularArticles: React.FC<BlogPostProps> = (props) => {
   const { posts } = props
+  const [postsList, setPostsList] = useState([])
   const { dbPosts, isLoading } = getDbPosts()
-
   const linkColor = useLinkColor()
   const textColor = useColorModeValue('gray.500', 'gray.200')
 
-  function compare(
+  useEffect(() => {
+    posts &&
+      posts.map((post) => {
+        const foundPost = dbPosts?.filter((p) => p.title === post.title)[0]
+        if (foundPost) {
+          post.public_reactions_count = post.positive_reactions_count =
+            Number(post.positive_reactions_count) + foundPost.likes
+          post.slug = foundPost.slug
+        }
+      })
+    setPostsList(posts)
+  }, [dbPosts])
+
+  const compare = (
     a: { public_reactions_count: number },
     b: { public_reactions_count: number }
-  ) {
+  ) => {
     const countA = a.public_reactions_count
     const countB = b.public_reactions_count
 
@@ -47,139 +60,143 @@ const PopularArticles: React.FC<BlogPostProps> = (props) => {
     return comparison
   }
 
-  const mostLikedData = posts.sort(compare).slice(0, 3)
-
-  const getPostLikes = (slug) => {
-    const p = dbPosts?.filter((p) => p.slug === slug)[0]
-    return p?.likes || 0
-  }
-
   return (
     <VStack align="start" spacing={8} width="100%">
       <Header underlineColor={ORANGE} mt={0} mb={0}>
         Popular Articles
       </Header>
       <SimpleGrid columns={1} spacing={4} mt={5} w="100%">
-        {posts &&
-          mostLikedData.map(
-            (
-              {
-                description,
-                title,
-                slug,
-                positive_reactions_count,
-                comments_count,
-                published_at,
-              },
-              i
-            ) => (
-              <MotionBox whileHover={{ y: -5 }} key={i}>
-                <CardTransition>
-                  <VStack
-                    spacing={1}
-                    p={4}
-                    _hover={{ shadow: 'md', textDecoration: 'none' }}
-                    borderWidth="1px"
-                    position="relative"
-                    rounded="md"
-                    bg={useColorModeValue('white', 'gray.800')}
-                    align="left"
-                  >
-                    <HStack justifyContent="space-between" isInline>
-                      <Heading fontSize="lg" align="left" mt={0}>
-                        <NextLink href={`/blog/${slug}`} passHref>
-                          <Text as={Link} color={linkColor}>
-                            {title}
+        {postsList &&
+          postsList
+            ?.sort(compare)
+            .slice(0, 3)
+            .map(
+              (
+                {
+                  description,
+                  title,
+                  slug,
+                  positive_reactions_count,
+                  comments_count,
+                  published_at,
+                },
+                i
+              ) => (
+                <MotionBox whileHover={{ y: -5 }} key={i}>
+                  <CardTransition>
+                    <VStack
+                      spacing={1}
+                      p={4}
+                      _hover={{ shadow: 'md', textDecoration: 'none' }}
+                      borderWidth="1px"
+                      position="relative"
+                      rounded="md"
+                      bg={useColorModeValue('white', 'gray.800')}
+                      align="left"
+                    >
+                      <HStack justifyContent="space-between" isInline>
+                        <Heading fontSize="lg" align="left" mt={0}>
+                          <NextLink href={`/blog/${slug}`} passHref>
+                            <Text as={Link} color={linkColor}>
+                              {title}
+                            </Text>
+                          </NextLink>
+                        </Heading>
+                        <HStack
+                          spacing={2}
+                          isInline
+                          d={['none', 'flex', 'flex']}
+                        >
+                          {positive_reactions_count ? (
+                            <Flex alignItems="center">
+                              <DisplayText
+                                isLoading={isLoading}
+                                value={
+                                  Number(positive_reactions_count)
+                                  // getPostLikes(slug)
+                                }
+                              />
+                              &nbsp;
+                              <HeartIcon />
+                            </Flex>
+                          ) : (
+                            ''
+                          )}
+                          {comments_count ? (
+                            <Flex alignItems="center">
+                              <DisplayText
+                                isLoading={false}
+                                value={comments_count}
+                              />
+                              &nbsp;
+                              <CommentIcon />
+                            </Flex>
+                          ) : (
+                            ''
+                          )}
+                        </HStack>
+                      </HStack>
+                      <HStack spacing={2} isInline>
+                        <Tooltip hasArrow label="Published" placement="top">
+                          <Text
+                            fontSize="sm"
+                            fontWeight="600"
+                            color={textColor}
+                          >
+                            {moment(published_at).format('Do MMMM YYYY')}
                           </Text>
-                        </NextLink>
-                      </Heading>
-                      <HStack spacing={2} isInline d={['none', 'flex', 'flex']}>
+                        </Tooltip>
                         {positive_reactions_count ? (
-                          <Flex alignItems="center">
-                            <DisplayText
-                              isLoading={isLoading}
-                              value={
-                                Number(positive_reactions_count) +
-                                getPostLikes(slug)
-                              }
-                            />
-                            &nbsp;
-                            <HeartIcon />
-                          </Flex>
+                          <Tooltip hasArrow label="Reactions" placement="top">
+                            <Flex
+                              alignItems="center"
+                              d={['flex', 'none', 'none']}
+                            >
+                              <DisplayText
+                                isLoading={isLoading}
+                                value={
+                                  Number(positive_reactions_count)
+                                  // getPostLikes(slug)
+                                }
+                              />
+                              &nbsp;
+                              <HeartIcon />
+                            </Flex>
+                          </Tooltip>
                         ) : (
                           ''
                         )}
                         {comments_count ? (
-                          <Flex alignItems="center">
-                            <DisplayText
-                              isLoading={false}
-                              value={comments_count}
-                            />
-                            &nbsp;
-                            <CommentIcon />
-                          </Flex>
+                          <Tooltip hasArrow label="Comments" placement="top">
+                            <Flex
+                              alignItems="center"
+                              d={['flex', 'none', 'none']}
+                            >
+                              <DisplayText
+                                isLoading={false}
+                                value={comments_count}
+                              />
+                              &nbsp;
+                              <CommentIcon />
+                            </Flex>
+                          </Tooltip>
                         ) : (
                           ''
                         )}
                       </HStack>
-                    </HStack>
-                    <HStack spacing={2} isInline>
-                      <Tooltip hasArrow label="Published" placement="top">
-                        <Text fontSize="sm" fontWeight="600" color={textColor}>
-                          {moment(published_at).format('Do MMMM YYYY')}
-                        </Text>
-                      </Tooltip>
-                      {positive_reactions_count ? (
-                        <Tooltip hasArrow label="Reactions" placement="top">
-                          <Flex
-                            alignItems="center"
-                            d={['flex', 'none', 'none']}
-                          >
-                            <DisplayText
-                              isLoading={isLoading}
-                              value={
-                                Number(positive_reactions_count) +
-                                getPostLikes(slug)
-                              }
-                            />
-                            &nbsp;
-                            <HeartIcon />
-                          </Flex>
-                        </Tooltip>
-                      ) : (
-                        ''
-                      )}
-                      {comments_count ? (
-                        <Tooltip hasArrow label="Comments" placement="top">
-                          <Flex
-                            alignItems="center"
-                            d={['flex', 'none', 'none']}
-                          >
-                            <DisplayText
-                              isLoading={false}
-                              value={comments_count}
-                            />
-                            &nbsp;
-                            <CommentIcon />
-                          </Flex>
-                        </Tooltip>
-                      ) : (
-                        ''
-                      )}
-                    </HStack>
-                    <Text
-                      align="left"
-                      fontSize="md"
-                      noOfLines={1}
-                      color={textColor}
-                    >
-                      {description}
-                    </Text>
-                  </VStack>
-                </CardTransition>
-              </MotionBox>
-            )
-          )}
+                      <Text
+                        align="left"
+                        fontSize="md"
+                        noOfLines={1}
+                        color={textColor}
+                      >
+                        {description}
+                      </Text>
+                    </VStack>
+                  </CardTransition>
+                </MotionBox>
+              )
+            )}
       </SimpleGrid>
       <HStack justifyContent="center" width="100%">
         <NextLink href="/blog" passHref>
