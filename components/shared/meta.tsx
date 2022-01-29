@@ -17,6 +17,12 @@ const Meta = ({ title, keywords, description, image }: Props): JSX.Element => {
       <meta name="description" content={description} />
       <meta property="og:title" content={title} />
       <meta property="og:image" content={image ? image : '/logo512.png'} />
+      <meta property="og:description" content={description} />
+      <meta property="og:site_name" content={title} />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={image ? image : '/logo512.png'} />
+      <meta name="twitter:card" content="summary_large_image" />
       <title>{title}</title>
     </Head>
   )
