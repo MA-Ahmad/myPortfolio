@@ -6,6 +6,7 @@ const API_URL = '/api/posts/'
 type PostProps = {
   id: string
   slug: string
+  title: string
   likes: number
   views: number
   createdAt: Date
