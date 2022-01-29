@@ -50,6 +50,7 @@ export default async function handler(
 
       case 'POST': {
         const count = z.number().min(1).max(3).parse(req.body.count)
+        const title = req.body.title
 
         if (req.body.type === 'views') {
           // increment the number of times everyone has viewed this post
@@ -58,6 +59,7 @@ export default async function handler(
             create: {
               slug: postId,
               views: count,
+              title: title,
             },
             update: {
               views: {
@@ -80,6 +82,7 @@ export default async function handler(
               where: { slug: postId },
               create: {
                 slug: postId,
+                title: title,
                 likes: count,
               },
               update: {

@@ -18,12 +18,13 @@ async function getPostData(id: string): Promise<LikesPayload> {
 async function updatePostLikes(
   id: string,
   count: number,
-  type: string
+  type: string,
+  title: string
 ): Promise<LikesPayload> {
   const res = await fetch(API_URL + id, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ count, type }),
+    body: JSON.stringify({ count, type, title }),
   })
   return res.json()
 }
@@ -31,18 +32,19 @@ async function updatePostLikes(
 async function updatePostViews(
   id: string,
   count: number,
-  type: string
+  type: string,
+  title: string
 ): Promise<LikesPayload> {
   const res = await fetch(API_URL + id, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ count, type }),
+    body: JSON.stringify({ count, type, title }),
   })
   return res.json()
 }
 
 // A custom hook to abstract away fetching and updating a user's likes
-export const usePostData = (id: string) => {
+export const usePostData = (id: string, title: string) => {
   const { data, error, mutate } = useSWR(id, getPostData)
   const [batchedLikes, setBatchedLikes] = React.useState(0)
   const viewsCount = 1
@@ -70,7 +72,7 @@ export const usePostData = (id: string) => {
   }
 
   const incrementViews = () => {
-    mutate(updatePostViews(id, viewsCount, 'views'))
+    mutate(updatePostViews(id, viewsCount, 'views', title))
 
     if (!data) {
       return
@@ -95,7 +97,7 @@ export const usePostData = (id: string) => {
 
       // update the database and use the data updatePostLikes returns to update
       // the local cache with database data
-      mutate(updatePostLikes(id, batchedLikes, 'likes'))
+      mutate(updatePostLikes(id, batchedLikes, 'likes', title))
       setBatchedLikes(0)
     },
     1000,

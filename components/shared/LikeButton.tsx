@@ -11,13 +11,15 @@ export const LikeButton = ({
   id,
   devToLikes,
   linkColor,
+  title,
 }: {
   id: string
   devToLikes: number
   linkColor: string
+  title: string
 }) => {
   const { currentUserLikes, totalPostLikes, isLoading, incrementLikes } =
-    usePostData(id)
+    usePostData(id, title)
 
   return (
     <HStack alignItems="center" spacing={2} mb={2}>

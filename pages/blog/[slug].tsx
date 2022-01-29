@@ -54,7 +54,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
   blogDetails,
 }) => {
   const { totalPostLikes, totalPostViews, isLoading, incrementViews } =
-    usePostData(blogDetails?.slug)
+    usePostData(blogDetails?.slug, blogDetails?.title)
   const [showLikeButton, setShowLikeButton] = useState(false)
   const borderColor = useColorModeValue('transparent', 'gray.700')
   const linkColor = useLinkColor()
@@ -86,6 +86,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({
         >
           <LikeButton
             id={blogDetails?.slug}
+            title={blogDetails?.title}
             devToLikes={blogDetails?.public_reactions_count}
             linkColor={linkColor}
           />
