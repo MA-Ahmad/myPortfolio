@@ -8,7 +8,6 @@ type Props = {
 }
 
 const Meta = ({ title, keywords, description, image }: Props): JSX.Element => {
-  title = title.includes('Ahmad') ? title : title.concat(' | Muhammad Ahmad')
   return (
     <Head>
       <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,7 +22,9 @@ const Meta = ({ title, keywords, description, image }: Props): JSX.Element => {
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image ? image : '/logo512.png'} />
       <meta name="twitter:card" content="summary_large_image" />
-      <title>{title}</title>
+      <title>
+        {title.includes('Ahmad') ? title : title.concat(' | Muhammad Ahmad')}
+      </title>
     </Head>
   )
 }
