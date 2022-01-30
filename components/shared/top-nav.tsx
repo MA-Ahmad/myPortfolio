@@ -21,6 +21,7 @@ import { AiOutlineClose } from 'react-icons/ai'
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher'
 import { AiTwotoneThunderbolt } from 'react-icons/ai'
 import { BiChevronDown } from 'react-icons/bi'
+import { CgArrowsExchange } from 'react-icons/cg'
 import { BsCheckCircle } from 'react-icons/bs'
 import { MdTimeline } from 'react-icons/md'
 import { BsBook } from 'react-icons/bs'
@@ -42,6 +43,7 @@ const mobileLinks = [
   { name: 'Blog', path: '/blog' },
   { name: 'Tech Stack', path: '/tech-stack' },
   { name: 'Achievements', path: '/achievements' },
+  { name: 'Changelog', path: '/changelog' },
 ]
 
 const dropdownLinks = [
@@ -49,6 +51,7 @@ const dropdownLinks = [
   { name: 'Tech Stack', path: '/tech-stack' },
   { name: 'Open Source', path: '/open-source' },
   { name: 'Achievements', path: '/achievements' },
+  { name: 'Changelog', path: '/changelog' },
   // { name: "Developer Story", path: "/developer-story" }
 ]
 
@@ -104,6 +107,7 @@ const MenuLink = (props: MenuLinkProps) => {
     '/open-source': <Icon as={BsBook} size={18} color={props.color} />,
     '/achievements': <Icon as={BsCheckCircle} size={18} color={props.color} />,
     '/projects': <Icon as={MdTimeline} size={18} color={props.color} />,
+    '/changelog': <Icon as={CgArrowsExchange} size={18} color={props.color} />,
   }
 
   return (
