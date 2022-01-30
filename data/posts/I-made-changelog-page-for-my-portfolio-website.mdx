@@ -1,0 +1,57 @@
+---
+published_at: '2022-01-31'
+title: 'I made changelog page for my portfolio website'
+category: 'web-dev'
+tags: ['nextjs', 'showdev', 'webdev', 'javascript']
+description: 'A Changelog page for any website is a good way to keep your audience up to date with new and meaningful changes.'
+cover_image: 'https://dev-to-uploads.s3.amazonaws.com/uploads/articles/ddn762snhraxmvnd9bdd.png'
+---
+
+A Changelog page for any website is a good way to keep your audience up to date with new and meaningful changes.
+In my previous post, I mentioned that I'll create changelog page for my portfolio website. I got free time on the weekend and worked on it.
+
+<br />
+<br />
+
+#### Page link: [ma-ahmad/changelog](https://mahmad.me/changelog)
+
+#### Github repo: [https://github.com/MA-Ahmad/myPortfolio](https://github.com/MA-Ahmad/myPortfolio)
+
+<br />I used [Github Api](https://api.github.com) to fetch PR's of my portfolio
+website. You can play with Github Api according to your requirements.
+
+### <u>Packages:</u>
+
+- [remark](https://www.npmjs.com/package/remark)
+- [remark-html](https://www.npmjs.com/package/remark-html)
+- [react-html-parser](https://www.npmjs.com/package/react-html-parser)
+
+> **Note:** I used above mentioned packages for mdx content processing.
+
+<br />
+Here is a chunk of code where I'm processing mdx content after fetching PR's list
+of my portfolio website.
+
+```ts
+//Imports
+import remark from 'remark'
+import html from 'remark-html'
+
+//Component code
+const [prDataState, setPrDataState] = useState(null)
+const processPrBody = async () => {
+  await prData?.map(async (obj) => {
+    if (obj.body) {
+      const htmlBody = await remark().use(html).process(obj.body)
+      obj['body_html'] = String(htmlBody)
+    }
+  })
+  setPrDataState(prData)
+}
+```
+
+[Complete File code](https://github.com/MA-Ahmad/myPortfolio/blob/main/pages/changelog.tsx)
+
+### Page Image
+
+![page Imag](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/fett1s0a4uuqi8yyai49.png)
