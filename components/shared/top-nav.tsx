@@ -15,36 +15,33 @@ import {
   MenuItem,
   Stack,
   Icon,
-} from '@chakra-ui/react'
-import { GiHamburgerMenu } from 'react-icons/gi'
-import { AiOutlineClose } from 'react-icons/ai'
-import { ColorModeSwitcher } from '../theme/ColorModeSwitcher'
-import { AiTwotoneThunderbolt } from 'react-icons/ai'
-import { BiChevronDown } from 'react-icons/bi'
-import { CgArrowsExchange } from 'react-icons/cg'
-import { BsCheckCircle } from 'react-icons/bs'
-import { MdTimeline } from 'react-icons/md'
-import { BsBook } from 'react-icons/bs'
-import NextLink from 'next/link'
-import { useRouter } from 'next/router'
-import { AccentPicker } from 'components/theme/Accent'
-import { useLinkColor } from 'components/theme'
-import { MotionBox } from 'components/shared/animations/motion'
+} from '@chakra-ui/react';
+import { GiHamburgerMenu } from 'react-icons/gi';
+import { AiOutlineClose } from 'react-icons/ai';
+import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
+import { AiTwotoneThunderbolt } from 'react-icons/ai';
+import { BiChevronDown } from 'react-icons/bi';
+import { CgArrowsExchange } from 'react-icons/cg';
+import { BsCheckCircle } from 'react-icons/bs';
+import { MdTimeline } from 'react-icons/md';
+import { BsBook } from 'react-icons/bs';
+import NextLink from 'next/link';
+import { useRouter } from 'next/router';
+import { AccentPicker } from 'components/theme/Accent';
+import { useLinkColor } from 'components/theme';
+import { MotionBox } from 'components/shared/animations/motion';
 
 const webLinks = [
   { name: 'About', path: '/about' },
   { name: 'Blog', path: '/blog' },
-]
+];
 
 const mobileLinks = [
-  { name: 'About', path: '/about' },
   { name: 'Projects', path: '/projects' },
   { name: 'Open Source', path: '/open-source' },
   { name: 'Blog', path: '/blog' },
-  { name: 'Tech Stack', path: '/tech-stack' },
-  { name: 'Achievements', path: '/achievements' },
   { name: 'Changelog', path: '/changelog' },
-]
+];
 
 const dropdownLinks = [
   { name: 'Projects', path: '/projects' },
@@ -53,22 +50,22 @@ const dropdownLinks = [
   { name: 'Achievements', path: '/achievements' },
   { name: 'Changelog', path: '/changelog' },
   // { name: "Developer Story", path: "/developer-story" }
-]
+];
 
 interface NavLinkProps {
-  index?: number
-  name: string
-  path: string
-  linkColor: string
-  onClose: () => void
+  index?: number;
+  name: string;
+  path: string;
+  linkColor: string;
+  onClose: () => void;
 }
 
 const NavLink = (props: NavLinkProps) => {
-  const router = useRouter()
+  const router = useRouter();
   const link = {
     bg: useColorModeValue('gray.200', 'gray.900'),
     color: useColorModeValue('blue.500', 'blue.200'),
-  }
+  };
 
   return (
     <NextLink href={props.path} passHref>
@@ -87,28 +84,26 @@ const NavLink = (props: NavLinkProps) => {
         {props.name}
       </Link>
     </NextLink>
-  )
-}
+  );
+};
 
 interface MenuLinkProps {
-  name: string
-  path: string
-  color: string
-  bg: string
-  rPath: string
-  onClose: () => void
+  name: string;
+  path: string;
+  color: string;
+  bg: string;
+  rPath: string;
+  onClose: () => void;
 }
 
 const MenuLink = (props: MenuLinkProps) => {
   const iconsObj = {
-    '/tech-stack': (
-      <Icon as={AiTwotoneThunderbolt} size={18} color={props.color} />
-    ),
+    '/tech-stack': <Icon as={AiTwotoneThunderbolt} size={18} color={props.color} />,
     '/open-source': <Icon as={BsBook} size={18} color={props.color} />,
     '/achievements': <Icon as={BsCheckCircle} size={18} color={props.color} />,
     '/projects': <Icon as={MdTimeline} size={18} color={props.color} />,
     '/changelog': <Icon as={CgArrowsExchange} size={18} color={props.color} />,
-  }
+  };
 
   return (
     <NextLink href={props.path} passHref>
@@ -124,18 +119,18 @@ const MenuLink = (props: MenuLinkProps) => {
         </MenuItem>
       </Link>
     </NextLink>
-  )
-}
+  );
+};
 
 export default function TopNav() {
-  const linkColor = useLinkColor()
-  const router = useRouter()
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const linkColor = useLinkColor();
+  const router = useRouter();
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const menuProps = {
     bg: useColorModeValue('gray.200', 'gray.900'),
     color: useColorModeValue('blue.500', 'blue.200'),
-  }
+  };
 
   return (
     <>
@@ -174,11 +169,7 @@ export default function TopNav() {
                 />
               </NextLink>
             </MotionBox>
-            <HStack
-              as={'nav'}
-              spacing={4}
-              display={{ base: 'none', md: 'flex' }}
-            >
+            <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
               {webLinks.map((link, index) => (
                 <NavLink
                   key={index}
@@ -258,5 +249,5 @@ export default function TopNav() {
         ) : null}
       </Box>
     </>
-  )
+  );
 }
