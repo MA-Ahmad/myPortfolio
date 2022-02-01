@@ -7,7 +7,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '88',
+    stars: '94',
     fork: '18',
   },
   {
@@ -23,8 +23,7 @@ export const repositories = [
   },
   {
     title: 'Dev.to clone',
-    description:
-      'This portfolio built by using Next.js, ChakraUi and Typescript.',
+    description: 'This portfolio built by using Next.js, ChakraUi and Typescript.',
     cover: '/assets/images/repositories/devto.png',
     technologies: ['Nextjs', 'chakraUi'],
     url: 'https://github.com/MA-Ahmad/dev.to-clone',
@@ -35,8 +34,7 @@ export const repositories = [
   },
   {
     title: 'Notebook',
-    description:
-      'This is a notebook app which will help you to crate notes for your daily work.',
+    description: 'This is a notebook app which will help you to crate notes for your daily work.',
     cover: '/assets/images/repositories/notebook_app.png',
     technologies: ['react', 'typescript', 'chakraUI'],
     url: 'https://github.com/MA-Ahmad/notebook',
@@ -69,8 +67,7 @@ export const repositories = [
   },
   {
     title: 'Blog App',
-    description:
-      'A React Blog App built by using libraries like ChakraUI, Formik.',
+    description: 'A React Blog App built by using libraries like ChakraUI, Formik.',
     technologies: ['react', 'chakraUi', 'formik'],
     cover: '/assets/images/repositories/blog_1.png',
     url: 'https://github.com/MA-Ahmad/reactBlog',
@@ -147,4 +144,4 @@ export const repositories = [
   //   blurHash: "L4S~x5xb~q$*~WR6MykCx^Vt4TtP",
   //   stars: "2"
   // }
-]
+];
