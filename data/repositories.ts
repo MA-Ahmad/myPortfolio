@@ -7,8 +7,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '94',
-    fork: '18',
+    stars: '95',
+    fork: '21'
   },
   {
     title: 'Portfolio2',
@@ -19,7 +19,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '67',
-    fork: '13',
+    fork: '13'
   },
   {
     title: 'Dev.to clone',
@@ -30,7 +30,7 @@ export const repositories = [
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
     stars: '52',
-    fork: '4',
+    fork: '4'
   },
   {
     title: 'Notebook',
@@ -41,7 +41,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/notebook',
     blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
     stars: '18',
-    fork: '7',
+    fork: '7'
   },
   {
     title: 'Portfolio3',
@@ -52,7 +52,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
     stars: '15',
-    fork: '5',
+    fork: '5'
   },
   {
     title: 'Card portfolio',
@@ -63,7 +63,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/card-portfolio',
     blurHash: 'L15#hiax00og^Uf65Nj]oPfkWRf6',
     stars: '10',
-    fork: '3',
+    fork: '3'
   },
   {
     title: 'Blog App',
@@ -74,7 +74,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/reactBlog',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
     stars: '14',
-    fork: '2',
+    fork: '2'
   },
   {
     title: 'Blog App (front-end)',
@@ -85,7 +85,7 @@ export const repositories = [
     live: 'https://blog-frontend-react.herokuapp.com',
     blurHash: 'LSN1AcH?~Wtl00={M{NG0eIoj]xa',
     stars: '12',
-    fork: '2',
+    fork: '2'
   },
   {
     title: 'Rails template',
@@ -95,7 +95,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/quickstart-rails-tailwind',
     live: 'https://quickstart-rails-tailwind.herokuapp.com',
     blurHash: 'LLPGmg?wRPS~D%D%ozxa00?G-;R%',
-    stars: '8',
+    stars: '8'
   },
   {
     title: 'Image Gallery',
@@ -105,7 +105,7 @@ export const repositories = [
     technologies: ['react', 'tailwindCss'],
     url: 'https://github.com/MA-Ahmad/react-image-gallery',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '3',
+    stars: '3'
   },
   {
     title: 'Blogify',
@@ -115,8 +115,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/react_rails_blog',
     live: 'https://react-on-rails-blog.herokuapp.com',
     blurHash: 'L6O;6=00M|og00_4_4s:E9-oxVoL',
-    stars: '4',
-  },
+    stars: '4'
+  }
 
   // {
   //   title: "Video-to-text",
