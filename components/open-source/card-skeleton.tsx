@@ -1,29 +1,16 @@
-import * as React from "react";
-import {
-  Box,
-  Stack,
-  Skeleton,
-  VStack,
-  HStack,
-  useColorModeValue
-} from "@chakra-ui/react";
+import * as React from 'react';
+import { Box, Stack, Skeleton, VStack, HStack, useColorModeValue } from '@chakra-ui/react';
 
 const CardSkeleton = () => {
-  const bgColor = useColorModeValue("white", "gray.900");
-  const cards:number[] = [1, 2, 3, 4, 5, 6, 7, 8]
-
+  const bgColor = useColorModeValue('white', 'gray.900');
+  const cards: number[] = [1, 2, 3, 4, 5, 6, 7, 8];
+  // --downlevelIteration
+  // [...Array(10).keys()]
   return (
     <>
-      {cards.map(id => {
+      {cards.map((id) => {
         return (
-          <Box
-            key={id}
-            size="xl"
-            py={2}
-            rounded="xl"
-            borderWidth="1px"
-            bg={bgColor}
-          >
+          <Box key={id} size="xl" py={2} rounded="xl" borderWidth="1px" bg={bgColor}>
             <Stack isInline justifyContent="space-between" py={2} px={[2, 3]}>
               <Box width="100%">
                 <HStack isInline justifyContent="space-between">
