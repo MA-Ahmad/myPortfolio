@@ -29,8 +29,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/dev.to-clone',
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '52',
-    fork: '4'
+    stars: '54',
+    fork: '5'
   },
   {
     title: 'Notebook',
@@ -40,8 +40,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/notebook',
     live: 'https://ma-ahmad.github.io/notebook',
     blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
-    stars: '18',
-    fork: '7'
+    stars: '19',
+    fork: '8'
   },
   {
     title: 'Portfolio3',
@@ -51,8 +51,30 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
+    stars: '18',
+    fork: '6'
+  },
+  {
+    title: 'Blog App',
+    description: 'A React Blog App built by using libraries like ChakraUI, Formik.',
+    technologies: ['react', 'chakraUi', 'formik'],
+    cover: '/assets/images/repositories/blog_1.png',
+    url: 'https://github.com/MA-Ahmad/reactBlog',
+    live: 'https://ma-ahmad.github.io/reactBlog',
+    blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
     stars: '15',
-    fork: '5'
+    fork: '2'
+  },
+  {
+    title: 'Blog App (front-end)',
+    description: 'React frontend of a blog app with rails on backend.',
+    cover: '/assets/images/repositories/blog_2.png',
+    technologies: ['react', 'rails', 'chakraUi'],
+    url: 'https://github.com/MA-Ahmad/blog-app-react-frontend',
+    live: 'https://blog-frontend-react.herokuapp.com',
+    blurHash: 'LSN1AcH?~Wtl00={M{NG0eIoj]xa',
+    stars: '15',
+    fork: '4'
   },
   {
     title: 'Card portfolio',
@@ -66,28 +88,6 @@ export const repositories = [
     fork: '3'
   },
   {
-    title: 'Blog App',
-    description: 'A React Blog App built by using libraries like ChakraUI, Formik.',
-    technologies: ['react', 'chakraUi', 'formik'],
-    cover: '/assets/images/repositories/blog_1.png',
-    url: 'https://github.com/MA-Ahmad/reactBlog',
-    live: 'https://ma-ahmad.github.io/reactBlog',
-    blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '14',
-    fork: '2'
-  },
-  {
-    title: 'Blog App (front-end)',
-    description: 'React frontend of a blog app with rails on backend.',
-    cover: '/assets/images/repositories/blog_2.png',
-    technologies: ['react', 'rails', 'chakraUi'],
-    url: 'https://github.com/MA-Ahmad/blog-app-react-frontend',
-    live: 'https://blog-frontend-react.herokuapp.com',
-    blurHash: 'LSN1AcH?~Wtl00={M{NG0eIoj]xa',
-    stars: '12',
-    fork: '2'
-  },
-  {
     title: 'Rails template',
     description: 'A rails app template built with tailwindcss.',
     cover: '/assets/images/repositories/quickstart.jpeg',
@@ -95,17 +95,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/quickstart-rails-tailwind',
     live: 'https://quickstart-rails-tailwind.herokuapp.com',
     blurHash: 'LLPGmg?wRPS~D%D%ozxa00?G-;R%',
-    stars: '8'
-  },
-  {
-    title: 'Image Gallery',
-    description:
-      'Simple gallery with images from the pixabay API. Tailwind css is built into workflow with postcss and autoprefixer.',
-    cover: '/assets/images/repositories/image_gallery.png',
-    technologies: ['react', 'tailwindCss'],
-    url: 'https://github.com/MA-Ahmad/react-image-gallery',
-    blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '3'
+    stars: '8',
+    fork: '1'
   },
   {
     title: 'Blogify',
@@ -115,6 +106,16 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/react_rails_blog',
     live: 'https://react-on-rails-blog.herokuapp.com',
     blurHash: 'L6O;6=00M|og00_4_4s:E9-oxVoL',
+    stars: '5'
+  },
+  {
+    title: 'Image Gallery',
+    description:
+      'Simple gallery with images from the pixabay API. Tailwind css is built into workflow with postcss and autoprefixer.',
+    cover: '/assets/images/repositories/image_gallery.png',
+    technologies: ['react', 'tailwindCss'],
+    url: 'https://github.com/MA-Ahmad/react-image-gallery',
+    blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
     stars: '4'
   }
 
