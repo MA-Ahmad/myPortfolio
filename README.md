@@ -7,6 +7,9 @@
 - **Markdown Processor**: [remark](https://remark.js.org/)
 - **ORM**: [prisma](https://www.prisma.io/)
 - **Deployment**: [Vercel](https://vercel.com)
+- **Api's**:
+  - [Dev.to](https://dev.to/api)
+  - [Github](https://api.github.com)
 
 ## Overview
 
