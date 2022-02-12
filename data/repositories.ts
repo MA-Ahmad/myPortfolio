@@ -8,7 +8,7 @@ export const repositories = [
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '96',
-    fork: '21'
+    fork: '22'
   },
   {
     title: 'Portfolio2',
