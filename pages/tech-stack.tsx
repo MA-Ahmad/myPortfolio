@@ -1,5 +1,5 @@
-import * as React from 'react'
-import { useState } from 'react'
+import * as React from 'react';
+import { useState } from 'react';
 import {
   Icon,
   VStack,
@@ -11,39 +11,60 @@ import {
   Tab,
   TabPanel,
   useColorModeValue,
-  SimpleGrid,
-} from '@chakra-ui/react'
-import Section from 'components/skills/section'
-import { AiTwotoneThunderbolt, AiOutlineCloudServer } from 'react-icons/ai'
-import { BiDesktop } from 'react-icons/bi'
-import { GiSpiderWeb } from 'react-icons/gi'
-import SkillCard from 'components/skills/skill-card'
-import { skillsArray } from 'data/data'
-import Header from 'components/shared/header'
-import { MotionBox } from 'components/shared/animations/motion'
-import {
-  container,
-  PageSlideFade,
-} from 'components/shared/animations/page-transitions'
-import PageLayout from '../components/layouts/pageLayout'
+  SimpleGrid
+} from '@chakra-ui/react';
+import { GetStaticProps, NextPage } from 'next';
+import Section from 'components/skills/section';
+import { AiTwotoneThunderbolt, AiOutlineCloudServer } from 'react-icons/ai';
+import { BiDesktop } from 'react-icons/bi';
+import { GiSpiderWeb } from 'react-icons/gi';
+import SkillCard from 'components/skills/skill-card';
+import { skillsArray } from 'data/data';
+import Header from 'components/shared/header';
+import { MotionBox } from 'components/shared/animations/motion';
+import { container, PageSlideFade } from 'components/shared/animations/page-transitions';
+import PageLayout from '../components/layouts/pageLayout';
+import { useLinkColor } from 'components/theme';
+import { SkillProps } from 'interfaces/interface';
 
-const TechStack = ({ skills }) => {
-  const [skillsList, setSkillsList] = useState([])
+const tabList = [
+  {
+    name: 'All',
+    filterName: '',
+    icon: AiTwotoneThunderbolt
+  },
+  {
+    name: 'Web Development',
+    filterName: 'development',
+    icon: BiDesktop
+  },
+  {
+    name: 'Web Design',
+    filterName: 'design',
+    icon: GiSpiderWeb
+  },
+  {
+    name: 'Devops',
+    filterName: 'devops',
+    icon: AiOutlineCloudServer
+  }
+];
+
+const TechStack: NextPage<SkillProps> = ({ skills }) => {
+  const bgColor = useLinkColor();
+  const [skillsList, setSkillsList] = useState([]);
 
   React.useEffect(() => {
-    setSkillsList(skills)
-  }, [])
+    setSkillsList(skills);
+  }, []);
 
   const filterSkills = (tab) => {
-    if (tab.length) setSkillsList(skills.filter((skill) => skill.type === tab))
-    else setSkillsList(skills)
-  }
+    if (tab.length) setSkillsList(skills.filter((skill) => skill.type === tab));
+    else setSkillsList(skills);
+  };
 
   return (
-    <PageLayout
-      title="Skills"
-      keywords="rails, ruby, react, javascript, typescript"
-    >
+    <PageLayout title="Skills" keywords="rails, ruby, react, javascript, typescript">
       <PageSlideFade>
         <VStack spacing={8}>
           <Section>
@@ -57,91 +78,36 @@ const TechStack = ({ skills }) => {
                 maxW="lg"
                 textAlign="center"
               >
-                A list of my favorite tools and technologies that I use on a
-                regular basis.
+                A list of my favorite tools and technologies that I use on a regular basis.
               </Text>
             </VStack>
           </Section>
           <Section zIndex={5}>
-            <Tabs
-              variant="soft-rounded"
-              colorScheme="blue"
-              align="center"
-              w="100%"
-            >
+            <Tabs variant="soft-rounded" colorScheme="blue" align="center" w="100%">
               <TabList display="flex" flexWrap="wrap">
-                <Tab
-                  bg={useColorModeValue('gray.100', 'gray.800')}
-                  color={useColorModeValue('gray.600', 'gray.500')}
-                  _selected={{
-                    color: 'green.800',
-                    bg: 'green.100',
-                  }}
-                  mr={2}
-                  mt={2}
-                  onClick={() => filterSkills('')}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={AiTwotoneThunderbolt} />
-                    <Text>All</Text>
-                  </HStack>
-                </Tab>
-                <Tab
-                  bg={useColorModeValue('gray.100', 'gray.800')}
-                  color={useColorModeValue('gray.500', 'gray.500')}
-                  _selected={{
-                    color: useColorModeValue('gray.100', 'gray.800'),
-                    bg: useColorModeValue('gray.900', 'gray.100'),
-                  }}
-                  mr={2}
-                  mt={2}
-                  onClick={() => filterSkills('development')}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={BiDesktop} />
-                    <Text>Web Development</Text>
-                  </HStack>
-                </Tab>
-                <Tab
-                  bg={useColorModeValue('gray.100', 'gray.800')}
-                  color={useColorModeValue('gray.600', 'gray.500')}
-                  _selected={{
-                    color: 'green.800',
-                    bg: 'green.100',
-                  }}
-                  mr={2}
-                  mt={2}
-                  onClick={() => filterSkills('design')}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={GiSpiderWeb} />
-                    <Text>Web Design</Text>
-                  </HStack>
-                </Tab>
-                <Tab
-                  bg={useColorModeValue('gray.100', 'gray.800')}
-                  color={useColorModeValue('gray.600', 'gray.500')}
-                  _selected={{
-                    color: 'red.800',
-                    bg: 'red.100',
-                  }}
-                  mr={2}
-                  mt={2}
-                  onClick={() => filterSkills('devops')}
-                >
-                  <HStack spacing={1}>
-                    <Icon as={AiOutlineCloudServer} />
-                    <Text>Devops</Text>
-                  </HStack>
-                </Tab>
+                {tabList.map((tab, index) => (
+                  <Tab
+                    bg={useColorModeValue('gray.100', 'gray.800')}
+                    color={useColorModeValue('gray.600', 'gray.500')}
+                    _selected={{
+                      color: 'white',
+                      bg: bgColor
+                    }}
+                    mr={2}
+                    mt={2}
+                    onClick={() => filterSkills(tab.filterName)}
+                    key={index}
+                  >
+                    <HStack spacing={1}>
+                      <Icon as={tab.icon} />
+                      <Text>{tab.name}</Text>
+                    </HStack>
+                  </Tab>
+                ))}
               </TabList>
               <TabPanels minHeight={'45vh'}>
                 <TabPanel px={0}>
-                  <MotionBox
-                    variants={container}
-                    initial="hidden"
-                    animate="visible"
-                  >
+                  <MotionBox variants={container} initial="hidden" animate="visible">
                     <SimpleGrid columns={[1, 1, 2]} spacing={4} mt={8}>
                       {skillsList.map((tool, index) => (
                         <SkillCard
@@ -157,11 +123,7 @@ const TechStack = ({ skills }) => {
                   </MotionBox>
                 </TabPanel>
                 <TabPanel px={0}>
-                  <MotionBox
-                    variants={container}
-                    initial="hidden"
-                    animate="visible"
-                  >
+                  <MotionBox variants={container} initial="hidden" animate="visible">
                     <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
                       {skillsList.map((tool, index) => (
                         <SkillCard
@@ -177,11 +139,7 @@ const TechStack = ({ skills }) => {
                   </MotionBox>
                 </TabPanel>
                 <TabPanel px={0}>
-                  <MotionBox
-                    variants={container}
-                    initial="hidden"
-                    animate="visible"
-                  >
+                  <MotionBox variants={container} initial="hidden" animate="visible">
                     <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
                       {skillsList.map((tool, index) => (
                         <SkillCard
@@ -197,11 +155,7 @@ const TechStack = ({ skills }) => {
                   </MotionBox>
                 </TabPanel>
                 <TabPanel px={0}>
-                  <MotionBox
-                    variants={container}
-                    initial="hidden"
-                    animate="visible"
-                  >
+                  <MotionBox variants={container} initial="hidden" animate="visible">
                     <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
                       {skillsList.map((tool, index) => (
                         <SkillCard
@@ -222,15 +176,15 @@ const TechStack = ({ skills }) => {
         </VStack>
       </PageSlideFade>
     </PageLayout>
-  )
-}
+  );
+};
 
-export function getStaticProps() {
+export const getStaticProps: GetStaticProps<SkillProps> = () => {
   return {
     props: {
-      skills: skillsArray,
-    },
-  }
-}
+      skills: skillsArray
+    }
+  };
+};
 
-export default TechStack
+export default TechStack;
