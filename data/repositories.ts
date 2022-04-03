@@ -7,8 +7,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '103',
-    fork: '24'
+    stars: '110',
+    fork: '25'
   },
   {
     title: 'Portfolio2',
@@ -18,8 +18,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '67',
-    fork: '14'
+    stars: '70',
+    fork: '11'
   },
   {
     title: 'Dev.to clone',
@@ -29,8 +29,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/dev.to-clone',
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '54',
-    fork: '5'
+    stars: '55',
+    fork: '6'
   },
   {
     title: 'Notebook',
