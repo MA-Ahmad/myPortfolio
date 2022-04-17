@@ -1,5 +1,10 @@
-# [Mahmad.me](https://mahmad.me)
+<div align="center">
+  <h1><a href="https://mahmad.me" target="_blank">Mahmad.me</a></h1>
+  My personal portfolio website to show my skills, experience, and articles I published
+</div>
 
+
+## Built with
 - **Framework**: [Next.js](https://nextjs.org/)
 - **Styling**: [Chakra UI](https://chakra-ui.com/)
 - **Animations**: [Framer Motion](https://www.framer.com/motion/)
