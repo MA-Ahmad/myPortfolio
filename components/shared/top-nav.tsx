@@ -63,19 +63,21 @@ interface NavLinkProps {
 const NavLink = (props: NavLinkProps) => {
   const router = useRouter();
   const link = {
-    bg: useColorModeValue('gray.200', 'gray.900'),
+    bg: useColorModeValue('gray.200', 'gray.700'),
     color: useColorModeValue('blue.500', 'blue.200')
   };
 
   return (
     <NextLink href={props.path} passHref>
       <Link
-        px={2}
+        px={3}
         py={1}
+        lineHeight="inherit"
         rounded={'md'}
         _hover={{
           textDecoration: 'none',
-          bg: link.bg
+          bg: link.bg,
+          color: props.linkColor
         }}
         bg={router.pathname === props.path ? link.bg : 'transparent'}
         color={router.pathname === props.path ? props.linkColor : 'inherit'}
@@ -111,7 +113,7 @@ const MenuLink = (props: MenuLinkProps) => {
         <MenuItem
           color={props.rPath === props.path && props.color}
           bg={props.rPath === props.path && props.bg}
-          _hover={{ bg: props.bg }}
+          _hover={{ color: props.color, bg: props.bg }}
         >
           <HStack>
             {iconsObj[props.path]}
@@ -129,7 +131,7 @@ export default function TopNav() {
   const { isOpen, onOpen, onClose } = useDisclosure();
 
   const menuProps = {
-    bg: useColorModeValue('gray.200', 'gray.900'),
+    bg: useColorModeValue('gray.200', 'gray.700'),
     color: useColorModeValue('blue.500', 'blue.200')
   };
 
@@ -173,7 +175,7 @@ export default function TopNav() {
                 />
               </NextLink>
             </MotionBox>
-            <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
+            <HStack as={'nav'} spacing={3} display={{ base: 'none', md: 'flex' }}>
               {webLinks.map((link, index) => (
                 <NavLink
                   key={index}
@@ -190,13 +192,14 @@ export default function TopNav() {
                       as={Button}
                       variant="ghost"
                       size="sm"
-                      px={2}
-                      py={1.5}
+                      px={3}
+                      py={1}
+                      lineHeight="inherit"
                       fontSize={'1em'}
                       rounded={'md'}
                       height={'auto '}
                       _focus={{ boxShadow: 'none' }}
-                      _hover={{ bg: menuProps.bg }}
+                      _hover={{ color: linkColor, bg: menuProps.bg }}
                       _active={{ bg: menuProps.bg }}
                     >
                       Links
