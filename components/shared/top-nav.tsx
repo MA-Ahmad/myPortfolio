@@ -14,7 +14,7 @@ import {
   MenuList,
   MenuItem,
   Stack,
-  Icon,
+  Icon
 } from '@chakra-ui/react';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { AiOutlineClose } from 'react-icons/ai';
@@ -33,14 +33,14 @@ import { MotionBox } from 'components/shared/animations/motion';
 
 const webLinks = [
   { name: 'About', path: '/about' },
-  { name: 'Blog', path: '/blog' },
+  { name: 'Blog', path: '/blog' }
 ];
 
 const mobileLinks = [
   { name: 'Projects', path: '/projects' },
   { name: 'Open Source', path: '/open-source' },
   { name: 'Blog', path: '/blog' },
-  { name: 'Changelog', path: '/changelog' },
+  { name: 'Changelog', path: '/changelog' }
 ];
 
 const dropdownLinks = [
@@ -48,7 +48,7 @@ const dropdownLinks = [
   { name: 'Tech Stack', path: '/tech-stack' },
   { name: 'Open Source', path: '/open-source' },
   { name: 'Achievements', path: '/achievements' },
-  { name: 'Changelog', path: '/changelog' },
+  { name: 'Changelog', path: '/changelog' }
   // { name: "Developer Story", path: "/developer-story" }
 ];
 
@@ -64,7 +64,7 @@ const NavLink = (props: NavLinkProps) => {
   const router = useRouter();
   const link = {
     bg: useColorModeValue('gray.200', 'gray.900'),
-    color: useColorModeValue('blue.500', 'blue.200'),
+    color: useColorModeValue('blue.500', 'blue.200')
   };
 
   return (
@@ -75,7 +75,7 @@ const NavLink = (props: NavLinkProps) => {
         rounded={'md'}
         _hover={{
           textDecoration: 'none',
-          bg: link.bg,
+          bg: link.bg
         }}
         bg={router.pathname === props.path ? link.bg : 'transparent'}
         color={router.pathname === props.path ? props.linkColor : 'inherit'}
@@ -102,7 +102,7 @@ const MenuLink = (props: MenuLinkProps) => {
     '/open-source': <Icon as={BsBook} size={18} color={props.color} />,
     '/achievements': <Icon as={BsCheckCircle} size={18} color={props.color} />,
     '/projects': <Icon as={MdTimeline} size={18} color={props.color} />,
-    '/changelog': <Icon as={CgArrowsExchange} size={18} color={props.color} />,
+    '/changelog': <Icon as={CgArrowsExchange} size={18} color={props.color} />
   };
 
   return (
@@ -111,6 +111,7 @@ const MenuLink = (props: MenuLinkProps) => {
         <MenuItem
           color={props.rPath === props.path && props.color}
           bg={props.rPath === props.path && props.bg}
+          _hover={{ bg: props.bg }}
         >
           <HStack>
             {iconsObj[props.path]}
@@ -129,18 +130,21 @@ export default function TopNav() {
 
   const menuProps = {
     bg: useColorModeValue('gray.200', 'gray.900'),
-    color: useColorModeValue('blue.500', 'blue.200'),
+    color: useColorModeValue('blue.500', 'blue.200')
   };
 
   return (
     <>
       <Box
-        bg={useColorModeValue('white', 'gray.700')}
         px={4}
         boxShadow={'lg'}
         position="fixed"
         width="100%"
         zIndex="55"
+        css={{
+          backdropFilter: 'saturate(180%) blur(5px)',
+          backgroundColor: useColorModeValue('rgba(255, 255, 255, 0.8)', 'rgba(26, 32, 44, 0.8)')
+        }}
       >
         <Flex
           h={16}
@@ -192,11 +196,28 @@ export default function TopNav() {
                       rounded={'md'}
                       height={'auto '}
                       _focus={{ boxShadow: 'none' }}
-                      rightIcon={<BiChevronDown size={18} />}
+                      _hover={{ bg: menuProps.bg }}
+                      _active={{ bg: menuProps.bg }}
                     >
                       Links
+                      <Icon
+                        as={BiChevronDown}
+                        h={5}
+                        w={5}
+                        ml={1}
+                        transition={'all .25s ease-in-out'}
+                        transform={isOpen ? 'rotate(180deg)' : ''}
+                      />
                     </MenuButton>
-                    <MenuList zIndex={5}>
+                    <MenuList
+                      zIndex={5}
+                      bg={useColorModeValue('rgb(255, 255, 255)', 'rgb(26, 32, 44)')}
+                      border="none"
+                      boxShadow={useColorModeValue(
+                        '2px 4px 6px 2px rgba(160, 174, 192, 0.6)',
+                        '2px 4px 6px 2px rgba(9, 17, 28, 0.6)'
+                      )}
+                    >
                       {dropdownLinks.map((link, index) => (
                         <MenuLink
                           key={index}
