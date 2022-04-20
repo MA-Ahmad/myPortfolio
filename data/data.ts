@@ -195,8 +195,8 @@ export const skillsArray = [
 
 export const newContent = [
   {
-    link: '/blog/templateskart-responsive-chakra-ui-projects-and-components-list',
-    text: 'TemplatesKart | Responsive Chakra UI Projects and Components list',
+    link: '/blog/templateskart-free-chakra-ui-components-and-projects',
+    text: 'TemplatesKart | Free Chakra UI Components and Projects',
     showNewTag: true
   },
   {
