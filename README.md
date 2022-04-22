@@ -29,7 +29,7 @@
 - `prisma/*` - My Prisma schema, which uses a Postgresql database.
 - `public/*` - Static assets including audios, fonts and images.
 
-## View components and Copy code of your favourite components
+## View and copy code of your favourite components
 [TemplatesKart website](https://templateskart.com/projects/my-website)
 
 ## Running Locally
