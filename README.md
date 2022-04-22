@@ -3,7 +3,6 @@
   My personal portfolio website to show my skills, experience, and articles I published
 </div>
 
-
 ## Built with
 - **Framework**: [Next.js](https://nextjs.org/)
 - **Styling**: [Chakra UI](https://chakra-ui.com/)
@@ -29,6 +28,9 @@
 - `pages/*` - All other static pages.
 - `prisma/*` - My Prisma schema, which uses a Postgresql database.
 - `public/*` - Static assets including audios, fonts and images.
+
+## View components and Copy code of your favourite components
+[TemplatesKart website](https://templateskart.com/projects/my-website)
 
 ## Running Locally
 
