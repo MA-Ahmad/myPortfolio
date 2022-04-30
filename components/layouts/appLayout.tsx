@@ -1,28 +1,22 @@
-import { Fragment } from 'react'
-import { Box } from '@chakra-ui/react'
-import TopNav from '../shared/top-nav'
-import Footer from '../shared/footer'
-import styles from './appLayout.module.css'
+import { Fragment } from 'react';
+import { Box } from '@chakra-ui/react';
+import TopNav from '../shared/top-nav';
+import Footer from '../shared/footer';
+import styles from './appLayout.module.css';
 
 function AppLayout(props) {
   return (
     <Fragment>
       <TopNav />
       <DottedSvgs />
-      <Box
-        textAlign="center"
-        fontSize="xl"
-        w={['90%', '85%', '80%']}
-        maxW={800}
-        mx="auto"
-      >
+      <Box textAlign="center" fontSize="xl" w={['90%', '85%', '80%']} maxW={800} mx="auto">
         <Box pt={'7rem'} pb={10}>
           {props.children}
         </Box>
       </Box>
       <Footer />
     </Fragment>
-  )
+  );
 }
 
 function DottedSvgs() {
@@ -39,6 +33,7 @@ function DottedSvgs() {
         <Box position="absolute" left="100%">
           <svg
             className={`${styles.dottedRightTransform} ${styles.dottedColor}`}
+            color="rgba(55,65,81, 1)"
             width="404"
             height="784"
             fill="none"
@@ -53,26 +48,16 @@ function DottedSvgs() {
                 height="20"
                 patternUnits="userSpaceOnUse"
               >
-                <rect
-                  x="0"
-                  y="0"
-                  width="4"
-                  height="4"
-                  className="text-gray-700"
-                  fill="currentColor"
-                ></rect>
+                <rect x="0" y="0" width="4" height="4" fill="currentColor"></rect>
               </pattern>
             </defs>
-            <rect
-              width="404"
-              height="784"
-              fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"
-            ></rect>
+            <rect width="404" height="784" fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"></rect>
           </svg>
         </Box>
         <Box position="absolute" right="100%">
           <svg
-            className={`${styles.dottedLeftTransform} ${styles.dottedColor}`}
+            className={`${styles.dottedLeftTransform}`}
+            color="rgba(55,65,81, 1)"
             width="404"
             height="784"
             fill="none"
@@ -87,26 +72,15 @@ function DottedSvgs() {
                 height="20"
                 patternUnits="userSpaceOnUse"
               >
-                <rect
-                  x="0"
-                  y="0"
-                  width="4"
-                  height="4"
-                  className="text-gray-700"
-                  fill="currentColor"
-                ></rect>
+                <rect x="0" y="0" width="4" height="4" fill="currentColor"></rect>
               </pattern>
             </defs>
-            <rect
-              width="404"
-              height="784"
-              fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"
-            ></rect>
+            <rect width="404" height="784" fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"></rect>
           </svg>
         </Box>
       </Box>
     </Box>
-  )
+  );
 }
 
-export default AppLayout
+export default AppLayout;
