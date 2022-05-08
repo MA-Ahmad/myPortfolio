@@ -1,6 +1,6 @@
-import React from 'react'
-import { motion } from 'framer-motion'
-import { stagger, fadeInUp } from '../shared/animations/framerAnimations'
+import React from 'react';
+import { motion } from 'framer-motion';
+import { stagger, fadeInUp } from '../shared/animations/framerAnimations';
 import {
   useColorModeValue,
   IconButton,
@@ -10,14 +10,11 @@ import {
   AspectRatio,
   Image,
   Skeleton,
-} from '@chakra-ui/react'
-import { HiOutlineExternalLink } from 'react-icons/hi'
-import {
-  MotionBox,
-  MotionFlex,
-  MotionList,
-  MotionText,
-} from 'components/shared/animations/motion'
+  Link
+} from '@chakra-ui/react';
+import { HiOutlineExternalLink } from 'react-icons/hi';
+import { AiOutlineGithub } from 'react-icons/ai';
+import { MotionBox, MotionFlex, MotionList, MotionText } from 'components/shared/animations/motion';
 
 const ProjectLayoutMed = ({ project }) => {
   return (
@@ -110,17 +107,18 @@ const ProjectLayoutMed = ({ project }) => {
             </Box>
           </a>
           <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="start">
-            {/* {project.gitHub && (
-              <a
-                className="mr-5"
-                href={project.gitHub}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github />
-              </a>
-            )} */}
-            <a href={project.site} target="_blank" rel="noopener noreferrer">
+            {project.gitHub && (
+              <Link mr={2} href={project.gitHub} isExternal>
+                <IconButton
+                  colorScheme="gray"
+                  rounded="full"
+                  size="md"
+                  aria-label="medal"
+                  icon={<AiOutlineGithub />}
+                />
+              </Link>
+            )}
+            <Link href={project.site} isExternal>
               <IconButton
                 colorScheme="gray"
                 rounded="full"
@@ -128,13 +126,13 @@ const ProjectLayoutMed = ({ project }) => {
                 aria-label="medal"
                 icon={<HiOutlineExternalLink />}
               />
-            </a>
+            </Link>
           </MotionFlex>
         </MotionBox>
       </MotionBox>
     </Flex>
-  )
-}
+  );
+};
 
 const LeftProjectLayoutLarge = ({ project }) => {
   return (
@@ -148,8 +146,8 @@ const LeftProjectLayoutLarge = ({ project }) => {
           opacity: 1,
           transition: {
             duration: 0.5,
-            ease: 'easeInOut',
-          },
+            ease: 'easeInOut'
+          }
         }}
         rounded="xl"
         borderWidth="1px"
@@ -192,12 +190,7 @@ const LeftProjectLayoutLarge = ({ project }) => {
         align="right"
       >
         <motion.div variants={stagger}>
-          <a
-            href={project.site}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-right"
-          >
+          <a href={project.site} target="_blank" rel="noopener noreferrer" className="text-right">
             <MotionText
               variants={fadeInUp}
               fontSize="3xl"
@@ -238,17 +231,18 @@ const LeftProjectLayoutLarge = ({ project }) => {
           </Box>
 
           <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="end">
-            {/* {project.gitHub && (
-              <a
-                className="mr-5"
-                href={project.gitHub}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github />
-              </a>
-            )} */}
-            <a href={project.site} target="_blank" rel="noopener noreferrer">
+            {project.gitHub && (
+              <Link mr={2} href={project.gitHub} isExternal>
+                <IconButton
+                  colorScheme="gray"
+                  rounded="full"
+                  size="md"
+                  aria-label="medal"
+                  icon={<AiOutlineGithub />}
+                />
+              </Link>
+            )}
+            <Link href={project.site} isExternal>
               <IconButton
                 colorScheme="gray"
                 rounded="full"
@@ -256,13 +250,13 @@ const LeftProjectLayoutLarge = ({ project }) => {
                 aria-label="medal"
                 icon={<HiOutlineExternalLink />}
               />
-            </a>
+            </Link>
           </MotionFlex>
         </motion.div>
       </MotionBox>
     </Flex>
-  )
-}
+  );
+};
 
 const RightProjectLayoutLarge = ({ project }) => {
   return (
@@ -319,17 +313,18 @@ const RightProjectLayoutLarge = ({ project }) => {
           </Box>
 
           <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="start">
-            {/* {project.gitHub && (
-              <a
-                className="mr-5"
-                href={project.gitHub}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Github />
-              </a>
-            )} */}
-            <a href={project.site} target="_blank" rel="noopener noreferrer">
+            {project.gitHub && (
+              <Link mr={2} href={project.gitHub} isExternal>
+                <IconButton
+                  colorScheme="gray"
+                  rounded="full"
+                  size="md"
+                  aria-label="medal"
+                  icon={<AiOutlineGithub />}
+                />
+              </Link>
+            )}
+            <Link href={project.site} isExternal>
               <IconButton
                 colorScheme="gray"
                 rounded="full"
@@ -337,7 +332,7 @@ const RightProjectLayoutLarge = ({ project }) => {
                 aria-label="medal"
                 icon={<HiOutlineExternalLink />}
               />
-            </a>
+            </Link>
           </MotionFlex>
         </motion.div>
       </MotionBox>
@@ -350,8 +345,8 @@ const RightProjectLayoutLarge = ({ project }) => {
           opacity: 1,
           transition: {
             duration: 0.5,
-            ease: 'easeInOut',
-          },
+            ease: 'easeInOut'
+          }
         }}
         rounded="xl"
         borderWidth="1px"
@@ -384,7 +379,7 @@ const RightProjectLayoutLarge = ({ project }) => {
         </a>
       </MotionBox>
     </Flex>
-  )
-}
+  );
+};
 
-export { LeftProjectLayoutLarge, RightProjectLayoutLarge, ProjectLayoutMed }
+export { LeftProjectLayoutLarge, RightProjectLayoutLarge, ProjectLayoutMed };
