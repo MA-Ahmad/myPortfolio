@@ -195,8 +195,8 @@ export const skillsArray = [
 
 export const newContent = [
   {
-    link: '/blog/free-10-new-chakra-ui-components-templateskart',
-    text: 'Free 10 new Chakra UI components - TemplatesKart',
+    link: '/blog/free-12-new-chakra-ui-components-templateskart',
+    text: 'Free 12 new Chakra UI components - TemplatesKart',
     showNewTag: true
   },
   {
