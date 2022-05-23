@@ -7,8 +7,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '114',
-    fork: '25'
+    stars: '123',
+    fork: '28'
   },
   {
     title: 'Portfolio2',
@@ -18,8 +18,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '71',
-    fork: '12'
+    stars: '76',
+    fork: '13'
   },
   {
     title: 'Dev.to clone',
@@ -29,7 +29,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/dev.to-clone',
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '57',
+    stars: '61',
     fork: '6'
   },
   {
@@ -51,8 +51,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
-    stars: '21',
-    fork: '6'
+    stars: '22',
+    fork: '7'
   },
   {
     title: 'Blog App',
