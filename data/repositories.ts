@@ -8,7 +8,7 @@ export const repositories = [
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '123',
-    fork: '28'
+    fork: '27'
   },
   {
     title: 'Portfolio2',
@@ -62,7 +62,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/reactBlog',
     live: 'https://ma-ahmad.github.io/reactBlog',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '16',
+    stars: '17',
     fork: '2'
   },
   {
@@ -73,7 +73,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/blog-app-react-frontend',
     live: 'https://blog-frontend-react.herokuapp.com',
     blurHash: 'LSN1AcH?~Wtl00={M{NG0eIoj]xa',
-    stars: '16',
+    stars: '17',
     fork: '4'
   },
   {
@@ -84,7 +84,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/card-portfolio',
     live: 'https://ma-ahmad.github.io/card-portfolio',
     blurHash: 'L15#hiax00og^Uf65Nj]oPfkWRf6',
-    stars: '11',
+    stars: '12',
     fork: '3'
   },
   {
@@ -95,7 +95,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/quickstart-rails-tailwind',
     live: 'https://quickstart-rails-tailwind.herokuapp.com',
     blurHash: 'LLPGmg?wRPS~D%D%ozxa00?G-;R%',
-    stars: '9',
+    stars: '10',
     fork: '1'
   },
   {
@@ -106,7 +106,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/react_rails_blog',
     live: 'https://react-on-rails-blog.herokuapp.com',
     blurHash: 'L6O;6=00M|og00_4_4s:E9-oxVoL',
-    stars: '6'
+    stars: '8'
   },
   {
     title: 'Image Gallery',
@@ -116,7 +116,7 @@ export const repositories = [
     technologies: ['react', 'tailwindCss'],
     url: 'https://github.com/MA-Ahmad/react-image-gallery',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '4'
+    stars: '5'
   }
 
   // {
