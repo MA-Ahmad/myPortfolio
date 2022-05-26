@@ -95,7 +95,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/quickstart-rails-tailwind',
     live: 'https://quickstart-rails-tailwind.herokuapp.com',
     blurHash: 'LLPGmg?wRPS~D%D%ozxa00?G-;R%',
-    stars: '10',
+    stars: '11',
     fork: '1'
   },
   {
