@@ -51,8 +51,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
-    stars: '23',
-    fork: '7'
+    stars: '24',
+    fork: '8'
   },
   {
     title: 'Blog App',
