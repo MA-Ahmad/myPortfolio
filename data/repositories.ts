@@ -33,17 +33,6 @@ export const repositories = [
     fork: '7'
   },
   {
-    title: 'Notebook',
-    description: 'This is a notebook app which will help you to crate notes for your daily work.',
-    cover: '/assets/images/repositories/notebook_app.png',
-    technologies: ['react', 'typescript', 'chakraUI'],
-    url: 'https://github.com/MA-Ahmad/notebook',
-    live: 'https://ma-ahmad.github.io/notebook',
-    blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
-    stars: '20',
-    fork: '8'
-  },
-  {
     title: 'Portfolio3',
     description: 'Personal portfolio app to show my skills and experience.',
     cover: '/assets/images/repositories/portfolio.png',
@@ -55,6 +44,17 @@ export const repositories = [
     fork: '8'
   },
   {
+    title: 'Notebook',
+    description: 'This is a notebook app which will help you to crate notes for your daily work.',
+    cover: '/assets/images/repositories/notebook_app.png',
+    technologies: ['react', 'typescript', 'chakraUI'],
+    url: 'https://github.com/MA-Ahmad/notebook',
+    live: 'https://ma-ahmad.github.io/notebook',
+    blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
+    stars: '20',
+    fork: '8'
+  },
+  {
     title: 'TemplatesKart',
     description:
       'A powerful set of fully responsive and accessible ChakraUI React components and projects list.',
@@ -63,7 +63,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/templatesKart',
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '19',
+    stars: '20',
     fork: '4'
   },
   {
