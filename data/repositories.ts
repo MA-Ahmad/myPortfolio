@@ -44,17 +44,6 @@ export const repositories = [
     fork: '8'
   },
   {
-    title: 'Notebook',
-    description: 'This is a notebook app which will help you to crate notes for your daily work.',
-    cover: '/assets/images/repositories/notebook_app.png',
-    technologies: ['react', 'typescript', 'chakraUI'],
-    url: 'https://github.com/MA-Ahmad/notebook',
-    live: 'https://ma-ahmad.github.io/notebook',
-    blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
-    stars: '20',
-    fork: '8'
-  },
-  {
     title: 'TemplatesKart',
     description:
       'A powerful set of fully responsive and accessible ChakraUI React components and projects list.',
@@ -65,6 +54,17 @@ export const repositories = [
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
     stars: '23',
     fork: '4'
+  },
+  {
+    title: 'Notebook',
+    description: 'This is a notebook app which will help you to crate notes for your daily work.',
+    cover: '/assets/images/repositories/notebook_app.png',
+    technologies: ['react', 'typescript', 'chakraUI'],
+    url: 'https://github.com/MA-Ahmad/notebook',
+    live: 'https://ma-ahmad.github.io/notebook',
+    blurHash: 'L4S~x5xb~q$*~WR6MykCx^Vt4TtP',
+    stars: '21',
+    fork: '8'
   },
   {
     title: 'Blog App',
