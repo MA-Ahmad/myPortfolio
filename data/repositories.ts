@@ -33,17 +33,6 @@ export const repositories = [
     fork: '7'
   },
   {
-    title: 'Portfolio3',
-    description: 'Personal portfolio app to show my skills and experience.',
-    cover: '/assets/images/repositories/portfolio.png',
-    technologies: ['react', 'chakraUi'],
-    url: 'https://github.com/MA-Ahmad/portfolio',
-    live: 'https://ma-ahmad.github.io/portfolio2',
-    blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
-    stars: '24',
-    fork: '8'
-  },
-  {
     title: 'TemplatesKart',
     description:
       'A powerful set of fully responsive and accessible ChakraUI React components and projects list.',
@@ -54,6 +43,17 @@ export const repositories = [
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
     stars: '25',
     fork: '4'
+  },
+  {
+    title: 'Portfolio3',
+    description: 'Personal portfolio app to show my skills and experience.',
+    cover: '/assets/images/repositories/portfolio.png',
+    technologies: ['react', 'chakraUi'],
+    url: 'https://github.com/MA-Ahmad/portfolio',
+    live: 'https://ma-ahmad.github.io/portfolio2',
+    blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
+    stars: '24',
+    fork: '8'
   },
   {
     title: 'Notebook',
