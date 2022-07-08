@@ -29,7 +29,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/dev.to-clone',
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '63',
+    stars: '64',
     fork: '7'
   },
   {
@@ -41,8 +41,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/templatesKart',
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '26',
-    fork: '4'
+    stars: '28',
+    fork: '5'
   },
   {
     title: 'Portfolio3',
