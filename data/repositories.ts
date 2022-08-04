@@ -7,7 +7,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '134',
+    stars: '135',
     fork: '30'
   },
   {
@@ -19,7 +19,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '81',
-    fork: '13'
+    fork: '14'
   },
   {
     title: 'Dev.to clone',
@@ -41,7 +41,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/templatesKart',
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '31',
+    stars: '32',
     fork: '6'
   },
   {
