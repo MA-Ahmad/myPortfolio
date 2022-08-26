@@ -8,7 +8,7 @@ export const repositories = [
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '136',
-    fork: '32'
+    fork: '31'
   },
   {
     title: 'Portfolio2',
@@ -30,7 +30,7 @@ export const repositories = [
     live: 'https://dev-to-clone-ma.vercel.app',
     blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
     stars: '65',
-    fork: '7'
+    fork: '8'
   },
   {
     title: 'TemplatesKart',
@@ -53,7 +53,7 @@ export const repositories = [
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
     stars: '25',
-    fork: '9'
+    fork: '8'
   },
   {
     title: 'Notebook',
