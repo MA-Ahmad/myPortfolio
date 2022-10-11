@@ -42,7 +42,7 @@ export const repositories = [
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
     stars: '47',
-    fork: '8'
+    fork: '9'
   },
   {
     title: 'Portfolio3',
