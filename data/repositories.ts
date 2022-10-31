@@ -49,10 +49,10 @@ export const repositories = [
     description: 'Personal portfolio app to show my skills and experience.',
     cover: '/assets/images/repositories/portfolio.png',
     technologies: ['react', 'chakraUi'],
-    url: 'https://github.com/MA-Ahmad/portfolio',
+    url: 'https://github.com/MA-Ahmad/portfolio2',
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
-    stars: '25',
+    stars: '26',
     fork: '8'
   },
   {
