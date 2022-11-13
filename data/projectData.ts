@@ -1,15 +1,5 @@
 export const projectsList = [
   {
-    title: 'TemplatesKart',
-    imageLight: '/assets/images/projects/cover/templateskart.png',
-    blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
-    site: 'https://templateskart.com',
-    gitHub: 'https://github.com/MA-Ahmad/templatesKart',
-    description:
-      'TemplatesKart provides the best Chakra UI templates. Production-ready hand crafted Projects and Components built on top of ChakraUI.',
-    techStack: ['React', 'Nextjs', 'ChakraUI']
-  },
-  {
     title: 'Smata',
     imageLight: '/assets/images/projects/cover/smata.png',
     blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
@@ -26,6 +16,16 @@ export const projectsList = [
     description:
       'Peterpitch is a tool that takes the fun in your company seriously and turns your meetings into real performance boosters.',
     techStack: ['Rails', 'React', 'Javascript']
+  },
+  {
+    title: 'TemplatesKart',
+    imageLight: '/assets/images/projects/cover/templateskart.png',
+    blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
+    site: 'https://templateskart.com',
+    gitHub: 'https://github.com/MA-Ahmad/templatesKart',
+    description:
+      'TemplatesKart provides the best Chakra UI templates. Production-ready hand crafted Projects and Components built on top of ChakraUI.',
+    techStack: ['React', 'Nextjs', 'ChakraUI']
   },
   {
     title: 'Notch',
@@ -61,5 +61,13 @@ export const projectsList = [
     site: 'https://gosavehq.com/',
     description: `The GoSave app let's you send allowances, assign chores, and approve spending all from your smartphone.`,
     techStack: ['Rails']
+  },
+  {
+    title: 'Hiredroid',
+    imageLight: '/assets/images/projects/cover/hiredroid.png',
+    blurHash: 'L09sWSxdH;s?%6axWAfk00V?%jax',
+    site: 'https://hiredroid.com',
+    description: `Hiredroid help professionals reach the very pinnacle and stay there. For professionals who aspire perfection, we have made it easy for you by introducing skill-based hiring system, to help you attract the best talent from around the world.`,
+    techStack: ['React', 'Nodejs']
   }
 ];
