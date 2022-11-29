@@ -18,7 +18,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '83',
+    stars: '84',
     fork: '14'
   },
   {
@@ -41,7 +41,7 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/templatesKart',
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '50',
+    stars: '49',
     fork: '9'
   },
   {
