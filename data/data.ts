@@ -1,10 +1,26 @@
 export const companies = [
   {
+    title: 'Nalikes Studio',
+    alt: 'NS image',
+    role: 'Senior Software Engineer',
+    skills: ['web3', 'nextjs', 'rails', 'typescript', 'react', 'aws', 'heroku'],
+    period: '2023 - Present',
+    logo: '/assets/images/logos/nalikes-studio.png'
+  },
+  {
+    title: 'Big Wolf Games',
+    alt: 'BW image',
+    role: 'Senior Software Engineer',
+    skills: ['ruby', 'rails', 'typescript', 'react', 'pixi', 'aws', 'heroku', 'serverless'],
+    period: '2021 - 2023',
+    logo: '/assets/images/logos/bigwolf.png'
+  },
+  {
     title: 'Phaedra Solutions',
     alt: 'PS image',
     role: 'Senior Software Engineer',
     skills: ['ruby', 'rails', 'typescript', 'javascript', 'react', 'aws'],
-    period: '2019 - Present',
+    period: '2019 - 2021',
     logo: '/assets/images/logos/phaedra.jpeg'
   },
   {
