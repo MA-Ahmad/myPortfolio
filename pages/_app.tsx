@@ -31,7 +31,8 @@ function MyApp({ Component, pageProps }: AppProps) {
       <Analytics />
       <AppLayout>
         <AnimatePresence
-          exitBeforeEnter
+          // exitBeforeEnter
+          mode='wait'
           initial={false}
           onExitComplete={() => window.scrollTo(0, 0)}
         >

@@ -1,9 +1,5 @@
-import {
-  ThemeOverride,
-  useColorModeValue,
-  theme as defaultTheme,
-} from '@chakra-ui/react'
-import { transparentize } from '@chakra-ui/theme-tools'
+import { ThemeOverride, useColorModeValue, theme as defaultTheme } from '@chakra-ui/react';
+import { transparentize } from '@chakra-ui/theme-tools';
 
 export const linkColors = {
   light: 'accent.400',
@@ -11,36 +7,31 @@ export const linkColors = {
   lhover: 'accent.200',
   dhover: 'accent.700',
   visitedLight: 'accent.300',
-  visitedDark: 'accent.600',
-}
+  visitedDark: 'accent.600'
+};
 
 export function useLinkColor() {
-  return useColorModeValue(linkColors.dark, linkColors.light)
+  return useColorModeValue(linkColors.dark, linkColors.light);
 }
 
 export function useHoverLinkColor() {
-  return useColorModeValue(linkColors.dhover, linkColors.lhover)
+  return useColorModeValue(linkColors.dhover, linkColors.lhover);
 }
 
 export function useVisitedLinkColor() {
-  return useColorModeValue(linkColors.visitedLight, linkColors.visitedDark)
+  return useColorModeValue(linkColors.visitedLight, linkColors.visitedDark);
 }
 
-export function getTagBackgroundDark(
-  accentKey: ColorKeys,
-  theme: ThemeOverride
-) {
-  return (
-    accentKey &&
-    transparentize((theme.colors as any)[accentKey][200], 0.1)(theme)
-  )
+export function getTagBackgroundDark(accentKey: ColorKeys, theme: ThemeOverride) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return accentKey && transparentize((theme.colors as any)[accentKey][200], 0.1)(theme);
 }
 
 export const colors = {
   ...defaultTheme.colors,
   gray: {
     ...defaultTheme.colors.gray,
-    1000: '#121721',
+    1000: '#121721'
   },
   defaultAccent: {
     50: '#e3f2fc',
@@ -52,7 +43,7 @@ export const colors = {
     600: '#0053b4',
     700: '#003b82',
     800: '#002451',
-    900: '#000d21',
+    900: '#000d21'
   },
   accent: {
     // See src/components/Accent.tsx for CSS variable definition
@@ -65,11 +56,11 @@ export const colors = {
     600: 'var(--colors-accent-600)',
     700: 'var(--colors-accent-700)',
     800: 'var(--colors-accent-800)',
-    900: 'var(--colors-accent-900)',
-  },
-}
+    900: 'var(--colors-accent-900)'
+  }
+};
 
-export type ColorKeys = keyof typeof colors
+export type ColorKeys = keyof typeof colors;
 
 export const accentKeys: ColorKeys[] = [
   'defaultAccent',
@@ -80,5 +71,5 @@ export const accentKeys: ColorKeys[] = [
   'pink',
   'teal',
   'purple',
-  'red',
-]
+  'red'
+];

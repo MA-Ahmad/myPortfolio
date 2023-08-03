@@ -61,14 +61,14 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
         )}
 
         <HStack justifyContent="space-between" isInline>
-          <Heading fontSize="lg" align="left" mt={0}>
+          <Heading fontSize="lg" textAlign="left" mt={0}>
             <NextLink href={`/blog/${post.slug}`} passHref>
               <Text as={Link} color={linkColor}>
                 {post.title}
               </Text>
             </NextLink>
           </Heading>
-          <HStack spacing={2} isInline d={['none', 'flex', 'flex']}>
+          <HStack spacing={2} isInline display={['none', 'flex', 'flex']}>
             {post.public_reactions_count || postDbLikes ? (
               <Flex alignItems="center">
                 <DisplayText
@@ -107,7 +107,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
           <HStack spacing={2}>
             {post.public_reactions_count || postDbLikes ? (
               <Tooltip hasArrow label="Reactions" placement="top">
-                <Flex alignItems="center" d={['flex', 'none', 'none']}>
+                <Flex alignItems="center" display={['flex', 'none', 'none']}>
                   <DisplayText
                     isLoading={isLoading}
                     value={
@@ -123,7 +123,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
             )}
             {post.comments_count ? (
               <Tooltip hasArrow label="Comments" placement="top">
-                <Flex alignItems="center" d={['flex', 'none', 'none']}>
+                <Flex alignItems="center" display={['flex', 'none', 'none']}>
                   <DisplayText isLoading={false} value={post.comments_count} />
                   &nbsp;
                   <CommentIcon />
@@ -133,7 +133,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
               ''
             )}
           </HStack>
-          <HStack spacing={1} alignItems="center" d={['none', 'none', 'flex']}>
+          <HStack spacing={1} alignItems="center" display={['none', 'none', 'flex']}>
             <Tags
               tags={post.tag_list}
               interactive={false}
@@ -144,7 +144,7 @@ const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
             />
           </HStack>
         </HStack>
-        <HStack spacing={1} alignItems="center" d={['flex', 'flex', 'none']}>
+        <HStack spacing={1} alignItems="center" display={['flex', 'flex', 'none']}>
           <Tags
             tags={post.tag_list}
             interactive={false}

@@ -1,17 +1,17 @@
-import * as React from 'react'
-import { HStack, VStack, Text, useColorModeValue, Link } from '@chakra-ui/react'
-import { motion, AnimatePresence } from 'framer-motion'
-import LazyImage from 'components/shared/lazy-image'
-import { useLinkColor } from 'components/theme'
-import { Tag } from 'components/shared/Tags'
+import * as React from 'react';
+import { HStack, VStack, Text, useColorModeValue, Link } from '@chakra-ui/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import LazyImage from 'components/shared/lazy-image';
+import { useLinkColor } from 'components/theme';
+import { Tag } from 'components/shared/Tags';
 
 interface ProjectCardProps {
-  title: string
-  description: string
-  logo: string
-  blurHash: string
-  link: string
-  technologies: string[]
+  title: string;
+  description: string;
+  logo: string;
+  blurHash: string;
+  link: string;
+  technologies: string[];
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -20,12 +20,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   logo,
   blurHash,
   link,
-  technologies,
+  technologies
 }) => {
-  const linkColor = useLinkColor()
-  const textColor = useColorModeValue('gray.500', 'gray.200')
-  const [isOpen, setIsOpen] = React.useState(false)
-  const toggleOpen = () => setIsOpen(!isOpen)
+  const linkColor = useLinkColor();
+  const textColor = useColorModeValue('gray.500', 'gray.200');
+  const [isOpen, setIsOpen] = React.useState(false);
+  const toggleOpen = () => setIsOpen(!isOpen);
 
   return (
     <motion.div layout onClick={toggleOpen}>
@@ -70,7 +70,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 </Text>
                 <HStack spacing="1">
                   {technologies.map((tech, index) => (
-                    <Tag name={tech} mt="1px" interactive={false} mr="auto" />
+                    <Tag key={index} name={tech} mt="1px" interactive={false} mr="auto" />
                   ))}
                 </HStack>
               </HStack>
@@ -113,7 +113,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
         </VStack>
       </HStack>
     </motion.div>
-  )
-}
+  );
+};
 
-export default ProjectCard
+export default ProjectCard;

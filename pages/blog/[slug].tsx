@@ -18,7 +18,7 @@ import {
   AspectRatio,
   Skeleton
 } from '@chakra-ui/react';
-import remark from 'remark';
+import { remark } from 'remark';
 import prism from 'remark-prism';
 import { getTagColor } from '../../components/theme';
 import dayjs from 'dayjs';
@@ -91,7 +91,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
                 <Image
                   src={blogDetails?.cover_image}
                   fallback={<Skeleton />}
-                  size="lg"
                   width={'full'}
                   height={'full'}
                   position="absolute"

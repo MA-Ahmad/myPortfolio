@@ -36,7 +36,7 @@ const Projects: NextPage<ProjectProps> = (props) => {
               {subtitle}
             </Text>
           </VStack>
-          <VStack spacing={8} mt={['7', '7', '0']}>
+          <VStack spacing={8} mt={['7', '7', '8']}>
             {projects.map((project, index) => (
               <Fragment key={index}>
                 <ProjectLayoutMed project={project} />

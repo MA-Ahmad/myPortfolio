@@ -56,7 +56,7 @@ const PrList = ({ prList }) => {
               <ListItem>
                 <MotionBox whileHover={{ x: 10 }} key={index} align="left">
                   <CardTransition>
-                    <Heading fontSize="lg" align="left" mt={0} mb={1}>
+                    <Heading fontSize="lg" textAlign="left" mt={0} mb={1}>
                       {pr.state === 'closed' && pr.merged_at ? (
                         <ListIcon as={AiFillCheckCircle} color="green.500" />
                       ) : (
@@ -72,7 +72,7 @@ const PrList = ({ prList }) => {
                       <Text fontSize="sm" fontWeight="600" color={textColor}>
                         {moment(pr.created_at).format('Do MMMM YYYY')}
                       </Text>
-                      <HStack spacing={1} alignItems="center" d={['none', 'none', 'flex']}>
+                      <HStack spacing={1} alignItems="center" display={['none', 'none', 'flex']}>
                         <Flex alignItems="center" flexWrap="wrap" m="-2px">
                           {pr.labels.map((label) => (
                             <Tag

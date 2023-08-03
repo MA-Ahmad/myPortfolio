@@ -37,7 +37,6 @@ const ProjectLayoutMed = ({ project }) => {
           <Image
             src={project.imageLight}
             fallback={<Skeleton />}
-            size="lg"
             width={'full'}
             height={'full'}
             position="absolute"
@@ -167,7 +166,6 @@ const LeftProjectLayoutLarge = ({ project }) => {
             <Image
               src={project.imageLight}
               fallback={<Skeleton />}
-              size="lg"
               width={'full'}
               height={'full'}
               position="absolute"
@@ -366,7 +364,6 @@ const RightProjectLayoutLarge = ({ project }) => {
             <Image
               src={project.imageLight}
               fallback={<Skeleton />}
-              size="lg"
               width={'full'}
               height={'full'}
               position="absolute"

@@ -201,6 +201,8 @@ const ContentBox = ({ linkColor }) => {
         fontWeight="bold"
         fontSize={['md', 'lg']}
         variant="gradient"
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         fromcolor="blue.400"
         tocolor="red.500"
       >
