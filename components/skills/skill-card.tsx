@@ -1,4 +1,4 @@
-import React from 'react'
+import React from 'react';
 import {
   HStack,
   VStack,
@@ -7,17 +7,17 @@ import {
   Box,
   Link,
   Image,
-  Skeleton,
-} from '@chakra-ui/react'
-import { usePalette } from 'react-palette'
-import { MotionBox } from '../shared/animations/motion'
-import { item } from '../shared/animations/page-transitions'
-import NextLink from 'next/link'
-import { useLinkColor } from 'components/theme'
+  Skeleton
+} from '@chakra-ui/react';
+import { usePalette } from 'react-palette';
+import { MotionBox } from '../shared/animations/motion';
+import { item } from '../shared/animations/page-transitions';
+import NextLink from 'next/link';
+import { useLinkColor } from 'components/theme';
 
 const SkillCard = ({ name, image, link, description }) => {
-  const linkColor = useLinkColor()
-  const { data, loading } = usePalette(image)
+  const linkColor = useLinkColor();
+  const { data, loading } = usePalette(image);
 
   return (
     <MotionBox variants={item}>
@@ -60,31 +60,17 @@ const SkillCard = ({ name, image, link, description }) => {
                     src={image}
                     height={26}
                     width={26}
-                    layout="fixed"
+                    // layout="fixed"
                     rounded="md"
                   />
                 )}
               </Box>
-              <VStack
-                align="start"
-                justify="flex-start"
-                spacing={1}
-                maxW="lg"
-                h="100%"
-              >
+              <VStack align="start" justify="flex-start" spacing={1} maxW="lg" h="100%">
                 <VStack spacing={0} align="start" flexGrow={1}>
-                  <Text
-                    fontWeight="bold"
-                    fontSize="md"
-                    noOfLines={2}
-                    color={linkColor}
-                  >
+                  <Text fontWeight="bold" fontSize="md" noOfLines={2} color={linkColor}>
                     {name}
                   </Text>
-                  <Text
-                    fontSize="sm"
-                    color={useColorModeValue('gray.500', 'gray.200')}
-                  >
+                  <Text fontSize="sm" color={useColorModeValue('gray.500', 'gray.200')}>
                     {description}
                   </Text>
                 </VStack>
@@ -94,7 +80,7 @@ const SkillCard = ({ name, image, link, description }) => {
         </NextLink>
       </MotionBox>
     </MotionBox>
-  )
-}
+  );
+};
 
-export default SkillCard
+export default SkillCard;

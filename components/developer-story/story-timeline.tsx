@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   Box,
   BoxProps,
@@ -10,12 +10,12 @@ import {
   PopoverArrow,
   PopoverContent,
   PopoverBody
-} from "@chakra-ui/react";
-import { FiCheckCircle } from "react-icons/fi";
+} from '@chakra-ui/react';
+import { FiCheckCircle } from 'react-icons/fi';
+import { IconType } from 'react-icons';
 
 export interface StoryTimelineProps extends BoxProps {
-  icon?: any;
-  boxProps?: BoxProps;
+  icon?: IconType;
   skipTrail?: boolean;
   index: number;
   year?: string;
@@ -23,7 +23,6 @@ export interface StoryTimelineProps extends BoxProps {
 
 export const StoryTimeline: React.FC<StoryTimelineProps> = ({
   icon = FiCheckCircle,
-  boxProps = {},
   index,
   year,
   skipTrail = false,
@@ -33,16 +32,16 @@ export const StoryTimeline: React.FC<StoryTimelineProps> = ({
   const [isOpen, setIsOpen] = React.useState(true);
   const open = () => setIsOpen(!isOpen);
   const close = () => setIsOpen(false);
-  const color = useColorModeValue("gray.700", "gray.200");
+  const color = useColorModeValue('gray.700', 'gray.200');
 
   return (
     <Flex minH={20} {...props}>
-      <Flex flexDir="column" alignItems={"center"} minHeight={"8rem"} mr={4}>
+      <Flex flexDir="column" alignItems={'center'} minHeight={'8rem'} mr={4}>
         <Popover
           returnFocusOnClose={false}
           isOpen={isOpen}
           onClose={close}
-          placement={index % 2 === 0 ? "right" : "left"}
+          placement={index % 2 === 0 ? 'right' : 'left'}
           closeOnBlur={false}
           // variant="responsive"
           // width={["9.3rem", "13rem", "15rem", "100%"]}
@@ -51,14 +50,14 @@ export const StoryTimeline: React.FC<StoryTimelineProps> = ({
             <Box onClick={open} position="relative">
               <Circle
                 size={12}
-                bg={useColorModeValue("gray.600", "gray.500")}
+                bg={useColorModeValue('gray.600', 'gray.500')}
                 opacity={useColorModeValue(0.07, 0.15)}
                 sx={{}}
               />
               {year ? (
                 <Box
                   fontSize={15}
-                  fontWeight={"bold"}
+                  fontWeight={'bold'}
                   color={color}
                   pos="absolute"
                   left="0.5rem"
@@ -80,7 +79,7 @@ export const StoryTimeline: React.FC<StoryTimelineProps> = ({
           </PopoverTrigger>
           <Box fontSize={15}>
             {!year && (
-              <PopoverContent padding={["0.2rem", "0.2rem", "0.7rem"]}>
+              <PopoverContent padding={['0.2rem', '0.2rem', '0.7rem']}>
                 <PopoverArrow />
                 {/* <PopoverCloseButton /> */}
                 <PopoverBody>

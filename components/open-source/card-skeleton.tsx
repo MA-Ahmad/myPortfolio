@@ -10,7 +10,7 @@ const CardSkeleton = () => {
     <>
       {cards.map((id) => {
         return (
-          <Box key={id} size="xl" py={2} rounded="xl" borderWidth="1px" bg={bgColor}>
+          <Box key={id} py={2} rounded="xl" borderWidth="1px" bg={bgColor}>
             <Stack isInline justifyContent="space-between" py={2} px={[2, 3]}>
               <Box width="100%">
                 <HStack isInline justifyContent="space-between">

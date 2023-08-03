@@ -1,4 +1,4 @@
-import * as React from 'react'
+import * as React from 'react';
 import {
   Box,
   Image,
@@ -16,46 +16,43 @@ import {
   ModalBody,
   Center,
   Flex,
-  Tooltip,
-} from '@chakra-ui/react'
-import { MotionBox } from '../shared/animations/motion'
-import { getTagColor, useLinkColor } from '../theme'
-import { AiOutlineStar } from 'react-icons/ai'
-import { FiGithub } from 'react-icons/fi'
-import { CardTransition } from '../shared/animations/page-transitions'
-import LazyImage from '../shared/lazy-image'
+  Tooltip
+} from '@chakra-ui/react';
+import { MotionBox } from '../shared/animations/motion';
+import { getTagColor, useLinkColor } from '../theme';
+import { AiOutlineStar } from 'react-icons/ai';
+import { FiGithub } from 'react-icons/fi';
+import { CardTransition } from '../shared/animations/page-transitions';
+import LazyImage from '../shared/lazy-image';
 
 interface RepositoryCardProps {
-  title: string
-  description: string
-  cover: string
-  blurHash: string
-  technologies: string[]
-  url: string
-  live: string
-  stars: string
-  fork: string
-  created?: string
+  title: string;
+  description: string;
+  cover: string;
+  blurHash: string;
+  technologies: string[];
+  url: string;
+  live: string;
+  stars: string;
+  fork: string;
+  created?: string;
 }
 
 const RepositoryCard = (props: RepositoryCardProps) => {
-  const { title, cover, blurHash, technologies, url, stars } = props
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const linkColor = useLinkColor()
+  const { title, cover, blurHash, technologies, url, stars } = props;
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const linkColor = useLinkColor();
 
   const handleClick = () => {
-    onOpen()
-  }
+    onOpen();
+  };
 
-  const handleLinkClick = (
-    e: React.MouseEvent<HTMLParagraphElement, MouseEvent>,
-    link: string
-  ) => {
-    window.open(link)
-    e.stopPropagation()
-  }
+  const handleLinkClick = (e: React.MouseEvent<HTMLParagraphElement, MouseEvent>, link: string) => {
+    window.open(link);
+    e.stopPropagation();
+  };
 
-  const transition = { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] }
+  const transition = { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] };
 
   const thumbnailVariants = {
     initial: { scale: 0.9, opacity: 0 },
@@ -63,17 +60,17 @@ const RepositoryCard = (props: RepositoryCardProps) => {
     exit: {
       scale: 0.5,
       opacity: 0,
-      transition: { duration: 1.5, ...transition },
-    },
-  }
+      transition: { duration: 1.5, ...transition }
+    }
+  };
 
   const imageVariants = {
-    hover: { scale: 1.1 },
-  }
+    hover: { scale: 1.1 }
+  };
 
   return (
     <CardTransition>
-      <Box onClick={handleClick} cursor="pointer" size="xl">
+      <Box onClick={handleClick} cursor="pointer">
         <VStack
           rounded="xl"
           borderWidth="1px"
@@ -81,7 +78,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
           borderColor={useColorModeValue('gray.100', 'gray.700')}
           _hover={{
             shadow: 'lg',
-            textDecoration: 'none',
+            textDecoration: 'none'
           }}
           overflow="hidden"
           align="start"
@@ -89,11 +86,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
         >
           <Box position="relative" w="100%">
             <MotionBox variants={thumbnailVariants}>
-              <MotionBox
-                whileHover="hover"
-                variants={imageVariants}
-                transition={transition}
-              >
+              <MotionBox whileHover="hover" variants={imageVariants} transition={transition}>
                 <AspectRatio
                   ratio={1.85 / 1}
                   maxW="400px"
@@ -136,9 +129,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
                 <HStack spacing="1">
                   {technologies.map((tech, index) => (
                     <Tag key={index} size="sm" colorScheme={getTagColor(tech)}>
-                      <Text fontSize={['0.55rem', 'inherit', 'inherit']}>
-                        {tech}
-                      </Text>
+                      <Text fontSize={['0.55rem', 'inherit', 'inherit']}>{tech}</Text>
                     </Tag>
                   ))}
                 </HStack>
@@ -158,7 +149,7 @@ const RepositoryCard = (props: RepositoryCardProps) => {
         </Modal>
       </Box>
     </CardTransition>
-  )
-}
+  );
+};
 
-export default RepositoryCard
+export default RepositoryCard;

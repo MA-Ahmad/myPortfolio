@@ -5,7 +5,7 @@ import { MotionBox } from '../shared/animations/motion';
 
 type ColorModeSwitcherProps = Omit<IconButtonProps, 'aria-label'>;
 
-export const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = (props) => {
+export const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = () => {
   const { toggleColorMode } = useColorMode();
   const mode = useColorModeValue('dark', 'light');
 
@@ -23,7 +23,7 @@ export const ColorModeSwitcher: React.FC<ColorModeSwitcherProps> = (props) => {
   };
 
   return (
-    <AnimatePresence exitBeforeEnter initial={false}>
+    <AnimatePresence mode="wait" initial={false}>
       <MotionBox
         onClick={handleClick}
         key={mode === 'dark' ? 'dark-icon' : 'light-icon'}

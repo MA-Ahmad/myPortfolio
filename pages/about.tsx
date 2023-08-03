@@ -7,35 +7,35 @@ import {
   Text,
   Image,
   useColorMode,
-  useColorModeValue,
-} from '@chakra-ui/react'
-import { FaGraduationCap } from 'react-icons/fa'
-import { BsFillBriefcaseFill } from 'react-icons/bs'
+  useColorModeValue
+} from '@chakra-ui/react';
+import { FaGraduationCap } from 'react-icons/fa';
+import { BsFillBriefcaseFill } from 'react-icons/bs';
 import {
   PageSlideFade,
   StaggerChildren,
-  CardTransition,
-} from 'components/shared/animations/page-transitions'
-import { MotionBox } from 'components/shared/animations/motion'
-import { companies, institutes } from 'data/data'
-import Header from 'components/shared/header'
-import PageLayout from 'components/layouts/pageLayout'
-import { Tags } from 'components/shared/Tags'
+  CardTransition
+} from 'components/shared/animations/page-transitions';
+import { MotionBox } from 'components/shared/animations/motion';
+import { companies, institutes } from 'data/data';
+import Header from 'components/shared/header';
+import PageLayout from 'components/layouts/pageLayout';
+import { Tags } from 'components/shared/Tags';
 
 interface CardProps {
-  title: string
-  role: string
-  skills: string[]
-  period: string
-  logo: string
-  colorMode: string
-  alt?: string
+  title: string;
+  role: string;
+  skills: string[];
+  period: string;
+  logo: string;
+  colorMode: string;
+  alt?: string;
 }
 
-const TURQUOISE = '#06b6d4'
+const TURQUOISE = '#06b6d4';
 
 const Card = (props: CardProps) => {
-  const { title, role, skills, period, logo, colorMode, alt } = props
+  const { title, role, skills, period, logo, colorMode, alt } = props;
   return (
     <CardTransition>
       <Box
@@ -59,18 +59,10 @@ const Card = (props: CardProps) => {
               alt={alt}
             />
             <Stack spacing={2} pl={3} align="left">
-              <Heading
-                align="left"
-                fontSize="xl"
-                color={`mode.${colorMode}.career.text`}
-              >
+              <Heading textAlign="left" fontSize="xl" color={`mode.${colorMode}.career.text`}>
                 {title}
               </Heading>
-              <Heading
-                align="left"
-                fontSize="sm"
-                color={`mode.${colorMode}.career.subtext`}
-              >
+              <Heading textAlign="left" fontSize="sm" color={`mode.${colorMode}.career.subtext`}>
                 {role}
               </Heading>
               <Stack
@@ -86,7 +78,7 @@ const Card = (props: CardProps) => {
                   tagProps={{
                     colorScheme: 'gray',
                     padding: '0 3px',
-                    size: 'sm',
+                    size: 'sm'
                   }}
                 />
               </Stack>
@@ -111,23 +103,20 @@ const Card = (props: CardProps) => {
             tagProps={{
               colorScheme: 'gray',
               padding: '0 3px',
-              size: 'sm',
+              size: 'sm'
             }}
           />
         </Stack>
       </Box>
     </CardTransition>
-  )
-}
+  );
+};
 
 const About = ({ companies, institutes }) => {
-  const { colorMode } = useColorMode()
+  const { colorMode } = useColorMode();
 
   return (
-    <PageLayout
-      title="About"
-      description="My educational and professional journey so far"
-    >
+    <PageLayout title="About" description="My educational and professional journey so far">
       <PageSlideFade>
         <StaggerChildren>
           <MotionBox>
@@ -142,13 +131,7 @@ const About = ({ companies, institutes }) => {
               </Flex>
             </Heading>
           </MotionBox>
-          <VStack
-            spacing={4}
-            marginBottom={6}
-            align="left"
-            mx={[0, 0, 6]}
-            mt={12}
-          >
+          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
             {companies.map((company, index) => (
               <MotionBox whileHover={{ y: -5 }} key={index}>
                 <Card
@@ -173,13 +156,7 @@ const About = ({ companies, institutes }) => {
               </Stack>
             </Flex>
           </Heading>
-          <VStack
-            spacing={4}
-            marginBottom={6}
-            align="left"
-            mx={[0, 0, 6]}
-            mt={12}
-          >
+          <VStack spacing={4} marginBottom={6} align="left" mx={[0, 0, 6]} mt={12}>
             {institutes.map((institute, index) => (
               <MotionBox whileHover={{ y: -5 }} key={index}>
                 <Card
@@ -197,16 +174,16 @@ const About = ({ companies, institutes }) => {
         </StaggerChildren>
       </PageSlideFade>
     </PageLayout>
-  )
-}
+  );
+};
 
 export function getStaticProps() {
   return {
     props: {
       companies,
-      institutes,
-    },
-  }
+      institutes
+    }
+  };
 }
 
-export default About
+export default About;
