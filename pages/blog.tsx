@@ -1,4 +1,4 @@
-import { Fragment, useState } from 'react';
+import { useState } from 'react';
 import {
   Stack,
   Input,
@@ -39,7 +39,7 @@ const Posts = ({ posts }) => {
   };
 
   return (
-    <Fragment>
+    <>
       <PageLayout title="Blog" description="A list of all articles and posts!">
         <PageSlideFade>
           <Header underlineColor={TURQUOISE} mt={0} mb={6}>
@@ -97,7 +97,7 @@ const Posts = ({ posts }) => {
           </StaggerChildren>
         </PageSlideFade>
       </PageLayout>
-    </Fragment>
+    </>
   );
 };
 
