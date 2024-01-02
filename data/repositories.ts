@@ -7,8 +7,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '172',
-    fork: '34'
+    stars: '202',
+    fork: '38'
   },
   {
     title: 'Portfolio2',
@@ -18,19 +18,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio',
     live: 'https://ma-ahmad.github.io/portfolio',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '85',
-    fork: '16'
-  },
-  {
-    title: 'Dev.to clone',
-    description: 'This portfolio built by using Next.js, ChakraUi and Typescript.',
-    cover: '/assets/images/repositories/devto.png',
-    technologies: ['Nextjs', 'chakraUi'],
-    url: 'https://github.com/MA-Ahmad/dev.to-clone',
-    live: 'https://dev-to-clone-ma.vercel.app',
-    blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
-    stars: '65',
-    fork: '9'
+    stars: '92',
+    fork: '13'
   },
   {
     title: 'TemplatesKart',
@@ -41,7 +30,18 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/templatesKart',
     live: 'https://templateskart.com',
     blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '58',
+    stars: '91',
+    fork: '17'
+  },
+  {
+    title: 'Dev.to clone',
+    description: 'This portfolio built by using Next.js, ChakraUi and Typescript.',
+    cover: '/assets/images/repositories/devto.png',
+    technologies: ['Nextjs', 'chakraUi'],
+    url: 'https://github.com/MA-Ahmad/dev.to-clone',
+    live: 'https://dev-to-clone-ma.vercel.app',
+    blurHash: 'LMOWg4wIS$WBH?sAkCR*?^bcnNoy',
+    stars: '73',
     fork: '9'
   },
   {
@@ -52,8 +52,8 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/portfolio2',
     live: 'https://ma-ahmad.github.io/portfolio2',
     blurHash: 'L35O{d~XeoMyDhRPxv%Ms=xunmRQ',
-    stars: '28',
-    fork: '9'
+    stars: '33',
+    fork: '8'
   },
   {
     title: 'Notebook',
