@@ -7,8 +7,20 @@ export const repositories = [
     url: 'https://github.com/MA-Ahmad/myPortfolio',
     live: 'https://mahmad.me',
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
-    stars: '202',
+    stars: '207',
     fork: '38'
+  },
+  {
+    title: 'TemplatesKart',
+    description:
+      'A powerful set of fully responsive and accessible ChakraUI React components and projects list.',
+    technologies: ['react', 'chakraUi', 'Nextjs'],
+    cover: '/assets/images/repositories/templateskart.png',
+    url: 'https://github.com/MA-Ahmad/templatesKart',
+    live: 'https://templateskart.com',
+    blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
+    stars: '94',
+    fork: '18'
   },
   {
     title: 'Portfolio2',
@@ -20,18 +32,6 @@ export const repositories = [
     blurHash: 'L25#he^nryxc^-w$V{V_56bqx[M{',
     stars: '92',
     fork: '13'
-  },
-  {
-    title: 'TemplatesKart',
-    description:
-      'A powerful set of fully responsive and accessible ChakraUI React components and projects list.',
-    technologies: ['react', 'chakraUi', 'Nextjs'],
-    cover: '/assets/images/repositories/templateskart.png',
-    url: 'https://github.com/MA-Ahmad/templatesKart',
-    live: 'https://templateskart.com',
-    blurHash: 'LMMaw^IV~pxu00%LRjNGAIIVadt6',
-    stars: '91',
-    fork: '17'
   },
   {
     title: 'Dev.to clone',
