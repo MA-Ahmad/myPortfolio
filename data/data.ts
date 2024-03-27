@@ -55,9 +55,9 @@ export const institutes = [
     title: 'National University of Computer and Emerging Sciences',
     alt: 'Nuces image',
     role: "Bachelor's Degree in Computer Science",
-    skills: ['project management', 'web development', 'data structures'],
-    period: '2013 - 2017',
-    startingYear: '2013',
+    skills: ['project management', 'web development', 'data structures', 'usuability engineering', 'game development'],
+    period: '2018 - 2022',
+    startingYear: '2018',
     logo: '/assets/images/logos/fast.png',
     awards: [
       {
