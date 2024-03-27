@@ -82,11 +82,11 @@ export const institutes = [
 
 export const skillsArray = [
   {
-    name: 'Ruby on Rails',
+    name: 'NodeJs',
     description: 'Web development',
-    link: 'https://rubyonrails.org/',
+    link: 'https://nodejs.org/en',
     type: 'development',
-    image: '/assets/images/skills/rails.png'
+    image: '/assets/images/skills/nodeJs.png'
   },
   {
     name: 'React',
@@ -94,13 +94,6 @@ export const skillsArray = [
     link: 'https://reactjs.org/',
     type: 'development',
     image: '/assets/images/skills/react.png'
-  },
-  {
-    name: 'Ruby',
-    description: 'Web development, scrapping',
-    link: 'https://www.ruby-lang.org/en/',
-    type: 'development',
-    image: '/assets/images/skills/ruby.png'
   },
   {
     name: 'Python',
@@ -138,11 +131,25 @@ export const skillsArray = [
     image: '/assets/images/skills/css3.png'
   },
   {
+    name: 'Tailwind Css',
+    description: 'Web design',
+    link: 'https://tailwindcss.com/',
+    type: 'design',
+    image: '/assets/images/skills/tailwind.png'
+  },
+  {
     name: 'Bootstrap',
     description: 'Web design',
     link: 'https://getbootstrap.com/',
     type: 'design',
     image: '/assets/images/skills/bootstrap.png'
+  },
+  {
+    name: 'Material UI',
+    description: 'Web design',
+    link: 'https://mui.com/material-ui/',
+    type: 'design',
+    image: '/assets/images/skills/css3.png'
   },
   {
     name: 'Postgres',
@@ -164,6 +171,13 @@ export const skillsArray = [
     link: 'https://redis.io/',
     type: 'database',
     image: '/assets/images/skills/redis.png'
+  },
+  {
+    name: 'Docker',
+    description: 'Devops',
+    link: 'https://www.docker.com/',
+    type: 'devops',
+    image: '/assets/images/skills/docker.png'
   },
   {
     name: 'Heroku',
