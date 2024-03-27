@@ -1,52 +1,36 @@
 export const companies = [
   {
-    title: 'Nalikes Studio',
-    alt: 'NS image',
-    role: 'Senior Software Engineer',
-    skills: ['web3', 'nextjs', 'rails', 'typescript', 'react', 'aws', 'heroku'],
-    period: '2023 - Present',
-    logo: '/assets/images/logos/nalikes-studio.png'
-  },
-  {
-    title: 'Big Wolf Games',
+    title: 'Qbatch',
     alt: 'BW image',
-    role: 'Senior Software Engineer',
-    skills: ['ruby', 'rails', 'typescript', 'react', 'pixi', 'aws', 'heroku', 'serverless'],
-    period: '2021 - 2023',
-    logo: '/assets/images/logos/bigwolf.png'
+    role: 'Software Engineer',
+    skills: ['MERN', 'node', 'aws', 'nginx', 'next', 'react', 'nest', 'electron', 'typescript', 'javascript'],
+    period: 'Jul 2022 - Present',
+    logo: '/assets/images/logos/qbatch.png'
   },
   {
-    title: 'Phaedra Solutions',
+    title: 'WeTeck',
     alt: 'PS image',
-    role: 'Senior Software Engineer',
-    skills: ['ruby', 'rails', 'typescript', 'javascript', 'react', 'aws'],
-    period: '2019 - 2021',
-    logo: '/assets/images/logos/phaedra.jpeg'
+    role: 'Software Engineer (Part Time)',
+    skills: ['golang', 'node', 'aws', 'nginx', 'next', 'react', 'typescript', 'javascript' ],
+    period: 'Mar 2023 - Sep 2023',
+    logo: '/assets/images/logos/weteck.png'
   },
   {
-    title: 'Brainx Technologies',
+    title: 'Netixsol',
+    alt: 'Netixsol image',
+    role: 'Blockchain Intern',
+    skills: ['javascript', 'react', 'solidity', 'ethereum','node'],
+    period: 'Jan 2022 - Feb 2022',
+    logo: '/assets/images/logos/netixsol.png'
+  },
+  {
+    title: 'Mindstorm Studios',
     alt: 'BT image',
-    role: 'Software Engineer',
-    skills: ['ruby', 'rails', 'javascript', 'python'],
-    period: '2018 - 2019',
-    logo: '/assets/images/logos/brainxtech.png'
+    role: 'Game Developer Intern',
+    skills: ['unity3D', 'hyper casual games', 'story making', 'designing'],
+    period: 'Aug 2021 - Sep 2021',
+    logo: '/assets/images/logos/mindstorm.jpeg'
   },
-  // {
-  //   title: "Codenya Studio",
-  //   alt: "CS image",
-  //   role: "Co-founder, CTO",
-  //   skills: ["ruby", "rails", "python", "typescript", "react", "aws"],
-  //   period: "2018 - Present",
-  //   logo: '/assets/images/logos/codenya.png'
-  // },
-  {
-    title: 'Brainplow',
-    alt: 'Brainplow image',
-    role: 'Software Engineer',
-    skills: ['javascript', 'python', 'angular'],
-    period: '2017 - 2018',
-    logo: '/assets/images/logos/brainplow.jpg'
-  }
 ];
 
 export const institutes = [
