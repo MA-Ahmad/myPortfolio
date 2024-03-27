@@ -165,8 +165,8 @@ const Home: React.FC<BlogPostProps> = (props) => {
         zIndex={1}
       >
         <Box mt={10}>
-          <ContentBox linkColor={linkColor} />
-          <PopularArticles posts={posts} />
+          {/* <ContentBox linkColor={linkColor} /> */}
+          {/* <PopularArticles posts={posts} /> */}
         </Box>
       </MotionBox>
     </Flex>
