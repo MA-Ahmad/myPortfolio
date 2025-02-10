@@ -89,6 +89,13 @@ export const skillsArray = [
     image: '/assets/images/skills/rails.png'
   },
   {
+    name: 'Nextjs',
+    description: 'Web development',
+    link: 'https://nextjs.org/',
+    type: 'development',
+    image: '/assets/images/skills/nextjs.png'
+  },
+  {
     name: 'React',
     description: 'Web development',
     link: 'https://reactjs.org/',
