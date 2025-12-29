@@ -304,7 +304,7 @@ export const projectsList: Project[] = [
     title: 'Mana Ads Manager',
     imageLight: '/assets/images/Mana/5.PNG',
     blurHash: 'L2M5%%0000EN00I:-oIp00kC?^sl',
-    site: 'https://widget.dev.switchboardcloud.com.au/widgetTest.html?hostingProviderId=e5dd5414-4b7e-46e[%E2%80%A6]companyName=DevMustafa123&managedConfiguration=true',
+    site: '#',
     description:
   'Built Mana, an AI powered advertising platform that enables businesses to create, launch, and manage high converting Meta ad campaigns from a single dashboard without complex ad managers.',
     techStack: ['Next.js', 'Tailwind Css','Supabase'],
