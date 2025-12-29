@@ -298,4 +298,36 @@ export const projectsList: Project[] = [
       role: 'Frontend',
     },
   },
+    {
+    id: 11,
+    slug: 'Mana Ads Manager',
+    title: 'Mana Ads Manager',
+    imageLight: '/assets/images/Mana/5.PNG',
+    blurHash: 'L2M5%%0000EN00I:-oIp00kC?^sl',
+    site: 'https://widget.dev.switchboardcloud.com.au/widgetTest.html?hostingProviderId=e5dd5414-4b7e-46e[%E2%80%A6]companyName=DevMustafa123&managedConfiguration=true',
+    description:
+  'Built Mana, an AI powered advertising platform that enables businesses to create, launch, and manage high converting Meta ad campaigns from a single dashboard without complex ad managers.',
+    techStack: ['Next.js', 'Tailwind Css','Supabase'],
+    caseStudy: {
+      images: [
+        '/assets/images/Mana/1.PNG',
+        '/assets/images/Mana/2.PNG',
+        '/assets/images/Mana/3.PNG',  
+        '/assets/images/Mana/4.PNG',
+        '/assets/images/Mana/5.PNG',
+        '/assets/images/Mana/6.PNG',  
+      ],
+
+longDescription: [
+  'Mana is an AI driven advertising platform built using Next.js, Supabase, and modern frontend architecture, designed to simplify ad creation and lead generation for businesses.',
+  'The platform leverages React for a fast, responsive UI and Supabase for authentication, database management, and real time data handling.',
+  'Previously, users had to manage audiences, offers, ad copy, budgets, and analytics across multiple tools, making campaign setup slow and technical.',
+  'Mana introduces a guided step by step workflow where users select an audience, generate offers, configure budgets, and launch campaigns in minutes.',
+  'AI powered audience insights and content generation are used to create targeted ad copy and creatives, all fully editable before publishing.',
+  'Mana integrates directly with Meta Ads and provides real time dashboards for leads, ad spend, and cost per lead tracking, allowing businesses to monitor performance in one place.',
+],
+
+      role: 'Fullstack',
+    },
+  },
 ];
