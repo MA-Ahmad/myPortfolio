@@ -1,71 +1,36 @@
-import { Fragment } from 'react';
-import { NextPage } from 'next';
-import { VStack, Text, useColorModeValue, Divider } from '@chakra-ui/react';
-import { projectsList } from '../data/projectData';
-import PageLayout from 'components/layouts/pageLayout';
-import { PageSlideFade } from 'components/shared/animations/page-transitions';
-import Header from 'components/shared/header';
-import {
-  LeftProjectLayoutLarge,
-  ProjectLayoutMed,
-  RightProjectLayoutLarge
-} from 'components/layouts/projectLayout';
-import { ProjectProps } from 'interfaces/interface';
-import { useLinkColor } from 'components/theme';
-import SwitchboardOnboardingWidget from 'components/Switchboard/SwitchboardOnboardingWidget';
+"use client";
 
-const title = 'Projects 📚';
-const subtitle =
-  "A selection of projects I've worked on, during my career as a software developer.";
+import React from "react";
+import { Box, Button, Heading, VStack } from "@chakra-ui/react";
 
-const TURQUOISE = '#06b6d4';
-
-const Projects: NextPage<ProjectProps> = (props) => {
-  const { projects } = props;
-  const linkcolor = useLinkColor();
-
+export default function SwitchboardOnboardingWidget() {
   return (
-    <Fragment>
-      <PageLayout title={title} description={subtitle}>
-        <PageSlideFade>
-          <VStack align="start">
-            <Header underlineColor={TURQUOISE} mt={0} mb={2} color={linkcolor}>
-              Projects
-            </Header>
+    <VStack align="start" spacing={4}>
+      <Heading size="md">Customer Onboarding Widget</Heading>
 
-            <Text color={useColorModeValue('gray.500', 'gray.200')} textAlign="left">
-              {subtitle}
-            </Text>
-          </VStack>
+      <Box display="flex" flexWrap="wrap">
+        <Box id="button1" m="10px" />
+      </Box>
 
-          <Divider my={8} />
-
-          <SwitchboardOnboardingWidget />
-
-          <VStack spacing={8} mt={['7', '7', '8']}>
-            {projects.map((project, index) => (
-              <Fragment key={index}>
-                <ProjectLayoutMed project={project} />
-                {index % 2 === 0 ? (
-                  <LeftProjectLayoutLarge project={project} />
-                ) : (
-                  <RightProjectLayoutLarge project={project} />
-                )}
-              </Fragment>
-            ))}
-          </VStack>
-        </PageSlideFade>
-      </PageLayout>
-    </Fragment>
+      <Box
+        id="switchboard_openSystemsButtonContainer_widget"
+        display="flex"
+        justifyContent="center"
+        mt="20px"
+        w="full"
+      >
+        <Button
+          id="switchboard_openSystemsButton_widget"
+          bg="rgb(0, 51, 102)"
+          color="white"
+          px={6}
+          py={6}
+          w="300px"
+          borderRadius="8px"
+        >
+          Select your system to integrate
+        </Button>
+      </Box>
+    </VStack>
   );
-};
-
-export function getStaticProps() {
-  return {
-    props: {
-      projects: projectsList
-    }
-  };
 }
-
-export default Projects;
