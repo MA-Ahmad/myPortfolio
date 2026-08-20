@@ -1,0 +1,4 @@
+{
+  "_comment": "Cursor contribution data. Add { date: 'YYYY-MM-DD', count: number } entries to the contributions array. This file is loaded by the Cursor contribution graph component. If you have access to a Cursor API, set NEXT_PUBLIC_CURSOR_API_URL in your environment.",
+  "contributions": []
+}
