@@ -23,15 +23,16 @@ function MyApp({ Component, pageProps }: AppProps) {
     };
   }, [router.events]);
 
+  const isHomePage = router.pathname === '/';
+
   return (
     <ChakraProvider theme={theme} resetCSS={true}>
       <FontsGlobal />
       <AccentGlobal />
       <PrismGlobal />
       <Analytics />
-      <AppLayout>
+      {isHomePage ? (
         <AnimatePresence
-          // exitBeforeEnter
           mode='wait'
           initial={false}
           onExitComplete={() => window.scrollTo(0, 0)}
@@ -40,7 +41,19 @@ function MyApp({ Component, pageProps }: AppProps) {
             <Component {...pageProps} />
           </Box>
         </AnimatePresence>
-      </AppLayout>
+      ) : (
+        <AppLayout>
+          <AnimatePresence
+            mode='wait'
+            initial={false}
+            onExitComplete={() => window.scrollTo(0, 0)}
+          >
+            <Box key={router.route}>
+              <Component {...pageProps} />
+            </Box>
+          </AnimatePresence>
+        </AppLayout>
+      )}
     </ChakraProvider>
   );
 }
