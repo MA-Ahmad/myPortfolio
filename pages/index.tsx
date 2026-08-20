@@ -1,31 +1,18 @@
-import Home from 'components/home-page/home'
-import { GetStaticProps, NextPage } from 'next'
-import { BlogPostProps } from 'interfaces/interface'
-import PageLayout from 'components/layouts/pageLayout'
-import { getDevtoPosts } from 'lib/fetchPosts'
+import { NextPage } from 'next'
+import OnePageHome from 'components/home-page/one-page-home'
+import Meta from 'components/shared/meta'
 
-const Index: NextPage<BlogPostProps> = (props) => {
-  const { posts } = props
+const Index: NextPage = () => {
   return (
-    <PageLayout title="Muhammad Ahmad - Full Stack Developer">
-      <Home posts={posts} />
-    </PageLayout>
+    <>
+      <Meta
+        title="Muhammad Ahmad - Senior Software Engineer"
+        description="Senior software engineer from Pakistan. Full-stack developer specializing in Ruby on Rails and React, passionate about open-source."
+        keywords="Muhammad Ahmad, Software Engineer, Full Stack Developer, Ruby on Rails, React, Pakistan"
+      />
+      <OnePageHome />
+    </>
   )
-}
-
-export const getStaticProps: GetStaticProps = async () => {
-  const posts = await getDevtoPosts()
-
-  if (!posts) {
-    return {
-      notFound: true,
-    }
-  }
-
-  return {
-    props: { posts },
-    revalidate: 1,
-  }
 }
 
 export default Index
