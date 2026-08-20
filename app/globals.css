@@ -1,0 +1,231 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #09090b;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --line: #f0f0f2;
+  --accent: #f4f4f5;
+  --accent-muted: rgba(244, 244, 245, 0.5);
+  --accent-foreground: #18181b;
+  --link: #1d4ed8;
+}
+
+.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --border: #27272a;
+  --line: #1f1f23;
+  --accent: #27272a;
+  --accent-muted: rgba(39, 39, 42, 0.2);
+  --accent-foreground: #fafafa;
+  --link: #3b82f6;
+}
+
+@layer base {
+  *,
+  ::after,
+  ::before {
+    border-color: var(--border);
+  }
+
+  ::selection {
+    background-color: var(--foreground);
+    color: var(--background);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-synthesis-weight: none;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 5px;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  [id] {
+    scroll-margin-top: 4.5rem;
+  }
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: var(--background);
+  }
+
+  .bg-foreground {
+    background-color: var(--foreground);
+  }
+
+  .bg-muted {
+    background-color: var(--muted);
+  }
+
+  .bg-accent {
+    background-color: var(--accent);
+  }
+
+  .bg-accent-muted {
+    background-color: var(--accent-muted);
+  }
+
+  .bg-line {
+    background-color: var(--line);
+  }
+
+  .text-foreground {
+    color: var(--foreground);
+  }
+
+  .text-muted-foreground {
+    color: var(--muted-foreground);
+  }
+
+  .text-accent-foreground {
+    color: var(--accent-foreground);
+  }
+
+  .text-link {
+    color: var(--link);
+  }
+
+  .border-border {
+    border-color: var(--border);
+  }
+
+  .border-line {
+    border-color: var(--line);
+  }
+
+  .ring-border {
+    --tw-ring-color: var(--border);
+  }
+
+  .ring-offset-background {
+    --tw-ring-offset-color: var(--background);
+  }
+
+  .fill-muted-foreground {
+    fill: var(--muted-foreground);
+  }
+
+  .screen-line-top {
+    position: relative;
+  }
+
+  .screen-line-top::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100vw;
+    z-index: -10;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--line);
+  }
+
+  .screen-line-bottom {
+    position: relative;
+  }
+
+  .screen-line-bottom::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: -100vw;
+    z-index: -10;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--line);
+  }
+
+  .screen-line-top-none::before {
+    content: none;
+  }
+
+  .screen-line-bottom-none::after {
+    content: none;
+  }
+
+  .diagonal-stripes {
+    background: repeating-linear-gradient(
+      315deg,
+      rgba(113, 113, 122, 0.08) 0,
+      rgba(113, 113, 122, 0.08) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
+  }
+
+  .link {
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+  }
+
+  .link:hover {
+    text-decoration: underline;
+  }
+
+  .link-underline {
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    text-decoration-color: rgba(113, 113, 122, 0.3);
+    transition: text-decoration-color 150ms;
+  }
+
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+@layer components {
+  .activity-cell[data-level="0"] {
+    fill: rgba(113, 113, 122, 0.1);
+  }
+
+  .activity-cell[data-level="1"] {
+    fill: rgba(113, 113, 122, 0.2);
+  }
+
+  .activity-cell[data-level="2"] {
+    fill: rgba(113, 113, 122, 0.4);
+  }
+
+  .activity-cell[data-level="3"] {
+    fill: rgba(113, 113, 122, 0.6);
+  }
+
+  .activity-cell[data-level="4"] {
+    fill: rgba(113, 113, 122, 0.8);
+  }
+}

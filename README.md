@@ -1,54 +1,104 @@
-<div align="center">
-  <h1><a href="https://mahmad.me" target="_blank">Mahmad.me</a></h1>
-  My personal portfolio website to show my skills, experience, and articles I published
-</div>
+# Muhammad Ahmad — Portfolio
 
-## Built with
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Styling**: [Chakra UI](https://chakra-ui.com/)
-- **Animations**: [Framer Motion](https://www.framer.com/motion/)
-- **Highlight Blog Content**: [prismjs](https://prismjs.com/)
-- **Markdown Processor**: [remark](https://remark.js.org/)
-- **ORM**: [prisma](https://www.prisma.io/)
-- **Deployment**: [Vercel](https://vercel.com)
-- **Api's**:
-  - [Dev.to](https://dev.to/api)
-  - [Github](https://api.github.com)
+A modern, agent-friendly portfolio built with **Next.js 14 (App Router)** and **Tailwind CSS**. Visual design inspired by [chanhdai.com](https://chanhdai.com/).
 
-## Overview
+## Quick Start
 
-- `components/*` - Contains all components related to pages (blog, projects, about, etc).
-  - `shared/*` - All reusable components like header, footer etc.
-  - `layouts/*` - The different page layouts.
-  -  `theme/*` - Manage theme of site. 
-- `data/*` - Data that used for blog posts, projects etc.
-- `lib/*` - Collection of helpful utilities or code for external services like devto api.
-- `pages/api/*` - [API routes](https://nextjs.org/docs/api-routes/introduction).
-- `pages/blog/*` - Static pre-rendered blog pages using MDX.
-- `pages/*` - All other static pages.
-- `prisma/*` - My Prisma schema, which uses a Postgresql database.
-- `public/*` - Static assets including audios, fonts and images.
-
-## View and copy code of your favourite components
-[TemplatesKart website](https://templateskart.com/projects/my-website)
-
-## Running Locally
-
-```sh
-git clone https://github.com/MA-Ahmad/myPortfolio
-cd myPortfolio && yarn install
-yarn dev
+```bash
+npm install
+npm run dev
 ```
 
-The above commands will start the application on [http://localhost:3000/](http://localhost:3000)
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## How to Edit Content
 
-<!-- ## Screens
-### Home 
-![Home Screen](/public/assets/images/screens/home_page.png)
-### Blog
-![Skills Screen](/public/assets/images/screens/blog_page.png) -->
+All content lives in **one file**: [`content/site.ts`](./content/site.ts).
 
-## Cloning / Forking
+### Update Personal Info
 
-Please review the [LICENSE](LICENSE) and remove all of my personal information (projects, blog posts, images, etc)
+Edit the `siteConfig` object:
+
+```ts
+export const siteConfig = {
+  name: "Your Name",
+  role: "Your Role",
+  location: "Your Location",
+  bio: "Your bio here...",
+  avatarUrl: "https://...", // or local path like "/avatar.jpg"
+  socials: [...],
+  github: { username: "your-github-username" },
+};
+```
+
+### Update Work History
+
+Edit the `workHistory` array. Each job has:
+
+- `company` — Company name
+- `role` — Your job title
+- `period` — e.g., "2023 – Present"
+- `skills` — Array of technologies
+- `logo` — Optional path to logo in `/public/assets/images/logos/`
+
+### Update Projects
+
+Edit the `projects` array. Each project has:
+
+- `title` — Project name
+- `description` — One-line description
+- `techStack` — Array of technologies
+- `site` — URL to live project
+- `github` — Optional GitHub repo URL
+- `image` — Optional cover image path in `/public/assets/images/projects/cover/`
+
+## Contribution Graphs
+
+### GitHub Graph
+
+Fetches live data from the GitHub contributions API for the username in `siteConfig.github.username`. Data is cached and revalidated daily.
+
+No API token required for public profiles. If you need authenticated access, set `GITHUB_TOKEN` in your environment.
+
+### Cursor Graph
+
+The Cursor contribution graph uses the same visual component but sources data from [`content/cursor-contributions.json`](./content/cursor-contributions.json).
+
+To populate it, add entries to the `contributions` array:
+
+```json
+{
+  "contributions": [
+    { "date": "2024-01-15", "count": 5 },
+    { "date": "2024-01-16", "count": 12 }
+  ]
+}
+```
+
+If you have access to a Cursor API endpoint in the future, you can set `NEXT_PUBLIC_CURSOR_API_URL` and modify the data fetcher.
+
+## Project Structure
+
+```
+├── app/                  # Next.js App Router
+│   ├── layout.tsx        # Root layout with fonts/providers
+│   ├── page.tsx          # Homepage
+│   └── globals.css       # Tailwind + design tokens
+├── components/           # React components
+├── content/              # Content data (edit this!)
+│   ├── site.ts           # All site content
+│   └── cursor-contributions.json
+├── lib/                  # Utilities
+└── public/               # Static assets
+```
+
+## Tech Stack
+
+- **Framework**: Next.js 14 (App Router)
+- **Styling**: Tailwind CSS
+- **Fonts**: Geist Sans, Geist Mono, Caveat (handwritten)
+- **Theme**: Light/dark mode via next-themes
+
+## License
+
+MIT
