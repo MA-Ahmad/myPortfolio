@@ -44,14 +44,14 @@ export function ProfileHeader() {
       </div>
 
       <div className="flex flex-col">
-        <div className="mt-auto screen-line-top">
-          <div className="relative z-[1] flex -translate-x-px items-center gap-2 pl-4">
+        <div className="z-[1] mt-auto border-t border-line">
+          <div className="flex -translate-x-px items-center gap-2 pl-4">
             <h1 className="-translate-y-px text-[2rem] leading-none font-medium tracking-tight">
               {PROFILE.displayName}
             </h1>
           </div>
 
-          <FlipSentences className="relative z-[1] h-12 border-t border-line py-1 pl-4 sm:h-9">
+          <FlipSentences className="h-12 border-t border-line py-1 pl-4 sm:h-9">
             {PROFILE.flipSentences}
           </FlipSentences>
         </div>
