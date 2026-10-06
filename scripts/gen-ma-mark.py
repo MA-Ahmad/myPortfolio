@@ -1,151 +1,118 @@
 #!/usr/bin/env python3
-"""
-Upright laid-down M only. Stems along screen-vertical (i+j),
-V arms on the iso layout axes. Shifted up so it sits inside the box.
-"""
+"""Bake isometric_m_stencil_a_sleek.html at the attached view: tilt 8°, depth 35."""
 
+from math import tan, pi, ceil
 from pathlib import Path
 import json
 
-UX, UY = 55.425, 32.0
-OX, OY = 0.5, 256.58
-KT, KB = 9.45, 8.45
+S, GAP, AXS = 1.5, 22, 1.3
+ANG, D = 8.0, 35.0
+PRESS = 16.0
+W, PAD = 680.0, 36.0
 
-A = 2.05
-STEM = 3.25
-W = 1.52
-IV, JV = 5.55, 0.42
-
-
-DX, DY = -236.0, -43.0
-
-
-def iso(i, j, k):
-    return (
-        round(OX + UX * (i - j) + DX, 2),
-        round(OY + UY * (i + j - k) + DY, 2),
-    )
-
-
-S = STEM
-pts = [
-    (IV - A - W, JV),
-    (IV - A, JV),
-    (IV, JV),
-    (IV, JV - A),
-    (IV, JV - A - W),
-    (IV + S, JV - A - W + S),
-    (IV + S, JV - A + S),
-    (IV + W, JV - A + W),
-    (IV + W, JV + W),
-    (IV - A + W, JV + W),
-    (IV - A + S, JV + S),
-    (IV - A - W + S, JV + S),
+M = [
+    [0, 140],
+    [0, 0],
+    [40, 0],
+    [115, 78],
+    [190, 0],
+    [230, 0],
+    [230, 140],
+    [190, 140],
+    [190, 52],
+    [115, 130],
+    [40, 52],
+    [40, 140],
 ]
+A_RAW = [
+    [[0, 140], [38, 0], [62, 0], [24, 140]],
+    [[70, 0], [100, 140], [76, 140], [56, 58]],
+    [[40, 104], [62, 104], [66, 120], [36, 120]],
+]
+AX = 230 + GAP
+SOLIDS = [M] + [[[AX + p[0] * AXS, p[1]] for p in ring] for ring in A_RAW]
+
+T = tan(ANG * pi / 180)
 
 
-def fmt(p):
-    return f"{p[0]:.2f} {p[1]:.2f}"
-
-
-def poly(points, close=True):
-    s = "".join(("M" if n == 0 else "L") + fmt(p) for n, p in enumerate(points))
-    return s + ("Z" if close else "")
-
-
-def ring(k):
-    return [iso(i, j, k) for i, j in pts]
-
-
-def sides_at(kt):
-    quads = []
-    n = len(pts)
-    for a in range(n):
-        b = (a + 1) % n
-        ia, ja = pts[a]
-        ib, jb = pts[b]
-        quads.append(
-            [
-                iso(ia, ja, kt),
-                iso(ib, jb, kt),
-                iso(ib, jb, KB),
-                iso(ia, ja, KB),
-            ]
-        )
-    return quads
-
-
-# Bottom edges the front-facing rule skips but that are visible:
-# 2-3 right V underside, 3-4 right peak underside, 10-11 left foot.
-EXTRA_BOTTOMS = {(2, 3), (3, 4), (8, 9), (10, 11)}
-
-
-def strokes_at(kt):
-    top, bot = ring(kt), ring(KB)
-    segs = [poly(top, close=False) + f"L{fmt(top[0])}"]
-    n = len(pts)
-    for a in range(n):
-        segs.append(f"M{fmt(top[a])}L{fmt(bot[a])}")
-        ia, ja = pts[a]
-        ib, jb = pts[(a + 1) % n]
-        nxt = (a + 1) % n
-        if (ib - ia) + (jb - ja) > 0.02 or (a, nxt) in EXTRA_BOTTOMS:
-            segs.append(f"M{fmt(bot[a])}L{fmt(bot[nxt])}")
-    return "".join(segs)
-
-
-def extend_line(p0, p1, span=1800):
-    dx, dy = p1[0] - p0[0], p1[1] - p0[1]
-    length = (dx * dx + dy * dy) ** 0.5 or 1
-    ux, uy = dx / length, dy / length
-    a = (p0[0] - ux * span, p0[1] - uy * span)
-    b = (p0[0] + ux * span, p0[1] + uy * span)
-    return f"M{a[0]:.2f} {a[1]:.2f}L{b[0]:.2f} {b[1]:.2f}"
+def shear(p):
+    return [p[0] * S, p[1] * S + p[0] * S * T]
 
 
 xs, ys = [], []
-for k in (KT, KB):
-    for i, j in pts:
-        x, y = iso(i, j, k)
-        xs.append(x)
-        ys.append(y)
-print(f"bounds x[{min(xs):.1f},{max(xs):.1f}] y[{min(ys):.1f},{max(ys):.1f}]")
+for ring in SOLIDS:
+    for p in ring:
+        q = shear(p)
+        xs += [q[0]]
+        ys += [q[1], q[1] + D]
+minx, maxx, miny, maxy = min(xs), max(xs), min(ys), max(ys)
+H = ceil(maxy - miny + PAD * 2)
+OX = (W - (maxx - minx)) / 2 - minx
+OY = PAD - miny
 
-top = ring(KT)
-guides = [
-    extend_line(top[0], top[2]),
-    extend_line(top[2], top[4]),
-    extend_line(top[8], top[7]),
-]
 
-faces = [poly(top)]
-sides_n = sides_at(KT)
-sides_p = sides_at(KT - 0.5)
-stroke_n = strokes_at(KT)
-stroke_p = strokes_at(KT - 0.5)
+def pt(p, dy=0):
+    q = shear(p)
+    return (round(q[0] + OX, 1), round(q[1] + OY + dy, 1))
 
-svg = f'''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 556 354" width="1112" height="708">
-  <rect width="556" height="354" fill="#09090b"/>
-  <rect x="0.5" y="0.5" width="555" height="353" fill="none" stroke="#333"/>
-  <g stroke="#444" stroke-width="1" stroke-dasharray="4 2" fill="none">
-    {"".join(f'<path d="{g}"/>' for g in guides)}
-  </g>
-  <path fill="#0c0c0c" d="{''.join(poly(s) for s in sides_n)}"/>
-  <path fill="#161616" d="{faces[0]}"/>
-  <path fill="none" stroke="#d0d0d0" stroke-width="1.15" d="{stroke_n}"/>
-</svg>'''
-Path("/tmp/m-only.svg").write_text(svg)
-Path("/tmp/m-paths.json").write_text(
-    json.dumps(
-        {
-            "faces": faces,
-            "sides_normal": [poly(s) for s in sides_n],
-            "sides_pressed": [poly(s) for s in sides_p],
-            "stroke_normal": stroke_n,
-            "stroke_pressed": stroke_p,
-            "guides": guides,
-        },
-        indent=2,
-    )
+
+def fmt(p):
+    return f"{p[0]:.1f} {p[1]:.1f}"
+
+
+def poly(points):
+    return "".join(("M" if n == 0 else "L") + fmt(p) for n, p in enumerate(points)) + "Z"
+
+
+faces, sides_n, sides_p, stroke_n, stroke_p = [], [], [], [], []
+for ring in SOLIDS:
+    front_n = [pt(p) for p in ring]
+    front_p = [pt(p, PRESS) for p in ring]
+    faces.append(poly(front_n))
+    stroke_n.append(poly(front_n))
+    stroke_p.append(poly(front_p))
+
+    area = 0.0
+    n = len(ring)
+    for k in range(n):
+        a, b = pt(ring[k]), pt(ring[(k + 1) % n])
+        area += a[0] * b[1] - b[0] * a[1]
+    sgn = 1 if area > 0 else -1
+    for k in range(n):
+        a, b = pt(ring[k]), pt(ring[(k + 1) % n])
+        ny = -(b[0] - a[0]) * sgn
+        if ny <= 0.01:
+            continue
+        a2, b2 = (a[0], a[1] + D), (b[0], b[1] + D)
+        ap, bp = (a[0], a[1] + PRESS), (b[0], b[1] + PRESS)
+        sides_n.append(poly([a, b, b2, a2]))
+        sides_p.append(poly([ap, bp, b2, a2]))
+        stroke_n.append(poly([a, b, b2, a2]))
+        stroke_p.append(poly([ap, bp, b2, a2]))
+
+print(f"viewBox 0 0 {W:.0f} {H}")
+print(f"faces {len(faces)} sides {len(sides_n)}")
+
+
+def ts_list(vals):
+    return "[\n" + ",\n".join(f"  '{v}'" for v in vals) + "\n]"
+
+
+def ts_pairs(pairs):
+    chunks = [f"  [\n    '{a}',\n    '{b}'\n  ]" for a, b in pairs]
+    return "[\n" + ",\n".join(chunks) + "\n]"
+
+
+tsx = (
+    f"const VIEW_W = {W:.0f};\n"
+    f"const VIEW_H = {H};\n\n"
+    f"const FACE_FILLS = {ts_list(faces)};\n\n"
+    f"const SIDES: Array<[string, string]> = {ts_pairs(list(zip(sides_n, sides_p)))};\n\n"
+    f"const STROKE_NORMAL =\n  '{''.join(stroke_n)}';\n\n"
+    f"const STROKE_PRESSED =\n  '{''.join(stroke_p)}';\n"
 )
-print("ok")
+Path("/tmp/ma-consts.ts").write_text(tsx)
+Path("/tmp/ma-paths.json").write_text(
+    json.dumps({"view": [W, H], "faces": faces, "sides": len(sides_n)}, indent=2)
+)
+print("wrote /tmp/ma-consts.ts")

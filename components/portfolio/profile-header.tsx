@@ -7,7 +7,9 @@ export function ProfileHeader() {
   return (
     <div className="screen-line-bottom grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line screen-line-bottom-border after:z-[1]">
       <figure className="relative col-span-2 p-2 sm:col-span-1 sm:col-start-2 sm:p-4">
-        <MarkIsometric />
+        <div className="sm:-translate-x-16">
+          <MarkIsometric />
+        </div>
 
         <HandwrittenNote
           className="bottom-20 left-full hidden w-36 flex-col items-start xl:flex"
@@ -42,14 +44,14 @@ export function ProfileHeader() {
       </div>
 
       <div className="flex flex-col">
-        <div className="z-[1] mt-auto border-t border-line">
-          <div className="flex -translate-x-px items-center gap-2 pl-4">
+        <div className="mt-auto screen-line-top">
+          <div className="relative z-[1] flex -translate-x-px items-center gap-2 pl-4">
             <h1 className="-translate-y-px text-[2rem] leading-none font-medium tracking-tight">
               {PROFILE.displayName}
             </h1>
           </div>
 
-          <FlipSentences className="h-12 border-t border-line py-1 pl-4 sm:h-9">
+          <FlipSentences className="relative z-[1] h-12 border-t border-line py-1 pl-4 sm:h-9">
             {PROFILE.flipSentences}
           </FlipSentences>
         </div>
