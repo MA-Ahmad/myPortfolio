@@ -1,0 +1,73 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'Virgil';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/FG_Virgil.woff2') format('woff2'),
+    url('/assets/fonts/FG_Virgil.woff') format('woff');
+}
+
+@font-face {
+  font-family: 'Cascadia';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/Cascadia.woff2') format('woff2'),
+    url('/assets/fonts/Cascadia.woff') format('woff');
+}
+
+:root {
+  --colors-accent-50: #e3f2fc;
+  --colors-accent-100: #ddf2ff;
+  --colors-accent-200: #abd2fc;
+  --colors-accent-300: #5daafc;
+  --colors-accent-400: #1a85ff;
+  --colors-accent-500: #006be6;
+  --colors-accent-600: #0053b4;
+  --colors-accent-700: #003b82;
+  --colors-accent-800: #002451;
+  --colors-accent-900: #000d21;
+  --colors-accent-tag-bg-dark: rgba(171, 210, 252, 0.1);
+  --link-color: var(--colors-accent-500);
+  --link-hover-color: var(--colors-accent-700);
+  --link-visited-color: var(--colors-accent-300);
+}
+
+.dark {
+  --link-color: var(--colors-accent-400);
+  --link-hover-color: var(--colors-accent-200);
+  --link-visited-color: var(--colors-accent-600);
+}
+
+body {
+  @apply bg-gray-50 font-sans text-body text-gray-700;
+  word-spacing: normal;
+}
+
+.dark body {
+  @apply bg-gray-900 text-white/90;
+}
+
+a {
+  color: var(--link-color);
+  font-weight: 500;
+  transition: color 0.15s ease-out;
+}
+
+a:hover {
+  color: var(--link-hover-color);
+}
+
+.deleted {
+  color: #ff8383 !important;
+  font-style: normal !important;
+}
+
+.inserted {
+  color: #b5f4a5 !important;
+  font-style: normal !important;
+}

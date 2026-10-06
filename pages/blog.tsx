@@ -1,13 +1,4 @@
 import { useState } from 'react';
-import {
-  Stack,
-  Input,
-  InputGroup,
-  InputRightElement,
-  Icon,
-  Heading,
-  useColorModeValue
-} from '@chakra-ui/react';
 import PostCard from 'components/blog/card';
 import { PageSlideFade, StaggerChildren } from 'components/shared/animations/page-transitions';
 import Header from 'components/shared/header';
@@ -42,27 +33,21 @@ const Posts = ({ posts }) => {
     <>
       <PageLayout title="Blog" description="A list of all articles and posts!">
         <PageSlideFade>
-          <Header underlineColor={TURQUOISE} mt={0} mb={6}>
+          <Header underlineColor={TURQUOISE} className="mb-6 mt-0">
             Featured Articles
           </Header>
-          <InputGroup maxW="30rem">
-            <Input
+          <div className="relative max-w-md">
+            <input
               placeholder="Search articles"
               onChange={(e) => setSearchValue(e.target.value)}
-              background={useColorModeValue('gray.100', '#1e2533')}
+              className="w-full rounded-md bg-gray-100 px-3 py-2 pr-10 outline-none dark:bg-[#1e2533]"
             />
-            <InputRightElement>
-              <Icon as={BiSearch} w={6} h={6} />
-            </InputRightElement>
-          </InputGroup>
+            <BiSearch className="absolute right-3 top-1/2 h-6 w-6 -translate-y-1/2" />
+          </div>
           <StaggerChildren>
-            <Stack spacing={4} mt={6}>
+            <div className="mt-6 flex flex-col gap-4">
               <AnimatePresence>
-                {!filteredBlogPosts.length && (
-                  <Heading as="h1" pt={10} pb={10}>
-                    No articles found
-                  </Heading>
-                )}
+                {!filteredBlogPosts.length && <h1 className="py-10 text-3xl font-bold">No articles found</h1>}
                 {filteredBlogPosts.map((post, i) => (
                   <motion.div
                     initial="hidden"
@@ -84,16 +69,12 @@ const Posts = ({ posts }) => {
                     key={post.slug}
                   >
                     <MotionBox whileHover={{ y: -5 }} key={i}>
-                      <PostCard
-                        post={post}
-                        postDbLikes={getPostLikes(post)}
-                        isLoading={isLoading}
-                      />
+                      <PostCard post={post} postDbLikes={getPostLikes(post)} isLoading={isLoading} />
                     </MotionBox>
                   </motion.div>
                 ))}
               </AnimatePresence>
-            </Stack>
+            </div>
           </StaggerChildren>
         </PageSlideFade>
       </PageLayout>

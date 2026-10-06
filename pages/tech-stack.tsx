@@ -1,18 +1,6 @@
 import * as React from 'react';
 import { useState } from 'react';
-import {
-  Icon,
-  VStack,
-  HStack,
-  Text,
-  Tabs,
-  TabList,
-  TabPanels,
-  Tab,
-  TabPanel,
-  useColorModeValue,
-  SimpleGrid
-} from '@chakra-ui/react';
+import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react';
 import { GetStaticProps, NextPage } from 'next';
 import Section from 'components/skills/section';
 import { AiTwotoneThunderbolt, AiOutlineCloudServer } from 'react-icons/ai';
@@ -24,8 +12,8 @@ import Header from 'components/shared/header';
 import { MotionBox } from 'components/shared/animations/motion';
 import { container, PageSlideFade } from 'components/shared/animations/page-transitions';
 import PageLayout from '../components/layouts/pageLayout';
-import { useLinkColor } from 'components/theme';
 import { SkillProps } from 'interfaces/interface';
+import { cn } from 'lib/cn';
 
 const tabList = [
   {
@@ -51,7 +39,6 @@ const tabList = [
 ];
 
 const TechStack: NextPage<SkillProps> = ({ skills }) => {
-  const bgColor = useLinkColor();
   const [skillsList, setSkillsList] = useState([]);
 
   React.useEffect(() => {
@@ -66,114 +53,60 @@ const TechStack: NextPage<SkillProps> = ({ skills }) => {
   return (
     <PageLayout title="Skills" keywords="rails, ruby, react, javascript, typescript">
       <PageSlideFade>
-        <VStack spacing={8}>
+        <div className="flex flex-col gap-8">
           <Section>
-            <VStack>
-              <Header mt={0} mb={1}>
-                Tech Stack
-              </Header>
-              <Text
-                fontSize={'xl'}
-                color={useColorModeValue('gray.500', 'gray.200')}
-                maxW="lg"
-                textAlign="center"
-              >
+            <div className="flex flex-col items-center">
+              <Header className="mb-1 mt-0">Tech Stack</Header>
+              <p className="max-w-lg text-center text-xl text-gray-500 dark:text-gray-200">
                 A list of my favorite tools and technologies that I use on a regular basis.
-              </Text>
-            </VStack>
+              </p>
+            </div>
           </Section>
-          <Section zIndex={5}>
-            <Tabs variant="soft-rounded" colorScheme="blue" align="center" w="100%">
-              <TabList display="flex" flexWrap="wrap">
+          <Section className="z-[5]">
+            <TabGroup>
+              <TabList className="flex flex-wrap justify-center">
                 {tabList.map((tab, index) => (
                   <Tab
-                    bg={useColorModeValue('gray.100', 'gray.800')}
-                    color={useColorModeValue('gray.600', 'gray.500')}
-                    _selected={{
-                      color: 'white',
-                      bg: bgColor
-                    }}
-                    mr={2}
-                    mt={2}
-                    onClick={() => filterSkills(tab.filterName)}
                     key={index}
+                    onClick={() => filterSkills(tab.filterName)}
+                    className={({ selected }) =>
+                      cn(
+                        'mr-2 mt-2 rounded-full px-4 py-2 outline-none',
+                        selected
+                          ? 'bg-[var(--link-color)] text-white'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-500'
+                      )
+                    }
                   >
-                    <HStack spacing={1}>
-                      <Icon as={tab.icon} />
-                      <Text>{tab.name}</Text>
-                    </HStack>
+                    <span className="flex items-center gap-1">
+                      <tab.icon />
+                      <span>{tab.name}</span>
+                    </span>
                   </Tab>
                 ))}
               </TabList>
-              <TabPanels minHeight={'45vh'}>
-                <TabPanel px={0}>
-                  <MotionBox variants={container} initial="hidden" animate="visible">
-                    <SimpleGrid columns={[1, 1, 2]} spacing={4} mt={8}>
-                      {skillsList.map((tool, index) => (
-                        <SkillCard
-                          key={index}
-                          name={tool.name}
-                          description={tool.description}
-                          image={tool.image}
-                          // platform={"web"}
-                          link={tool.link}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </MotionBox>
-                </TabPanel>
-                <TabPanel px={0}>
-                  <MotionBox variants={container} initial="hidden" animate="visible">
-                    <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
-                      {skillsList.map((tool, index) => (
-                        <SkillCard
-                          key={index}
-                          name={tool.name}
-                          description={tool.description}
-                          image={tool.image}
-                          // platform={"web"}
-                          link={tool.link}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </MotionBox>
-                </TabPanel>
-                <TabPanel px={0}>
-                  <MotionBox variants={container} initial="hidden" animate="visible">
-                    <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
-                      {skillsList.map((tool, index) => (
-                        <SkillCard
-                          key={index}
-                          name={tool.name}
-                          description={tool.description}
-                          image={tool.image}
-                          // platform={"web"}
-                          link={tool.link}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </MotionBox>
-                </TabPanel>
-                <TabPanel px={0}>
-                  <MotionBox variants={container} initial="hidden" animate="visible">
-                    <SimpleGrid columns={[1, 2]} spacing={4} mt={8}>
-                      {skillsList.map((tool, index) => (
-                        <SkillCard
-                          key={index}
-                          name={tool.name}
-                          description={tool.description}
-                          image={tool.image}
-                          // platform={"web"}
-                          link={tool.link}
-                        />
-                      ))}
-                    </SimpleGrid>
-                  </MotionBox>
-                </TabPanel>
+              <TabPanels className="min-h-[45vh]">
+                {tabList.map((tab) => (
+                  <TabPanel key={tab.name} className="px-0">
+                    <MotionBox variants={container} initial="hidden" animate="visible">
+                      <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {skillsList.map((tool, index) => (
+                          <SkillCard
+                            key={index}
+                            name={tool.name}
+                            description={tool.description}
+                            image={tool.image}
+                            link={tool.link}
+                          />
+                        ))}
+                      </div>
+                    </MotionBox>
+                  </TabPanel>
+                ))}
               </TabPanels>
-            </Tabs>
+            </TabGroup>
           </Section>
-        </VStack>
+        </div>
       </PageSlideFade>
     </PageLayout>
   );

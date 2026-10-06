@@ -1,7 +1,14 @@
 import * as React from 'react';
 import ProgressiveImage from 'react-progressive-image';
 import { BlurhashCanvas } from 'react-blurhash';
-import { Image } from '@chakra-ui/react';
+import { cn } from 'lib/cn';
+
+const Progressive = ProgressiveImage as unknown as React.FC<{
+  delay?: number;
+  src: string;
+  placeholder: string;
+  children: (src: string, loading: boolean) => React.ReactNode;
+}>;
 
 type LazyImageProps = {
   src: string;
@@ -16,33 +23,39 @@ type LazyImageProps = {
 const LazyImage = (props: LazyImageProps) => {
   const { src, blurHash, width, height, rounded } = props;
   const placeholder = '/assets/images/placeholder.png';
+  const fill = !width && !height;
 
   return (
-    <ProgressiveImage delay={500} src={src} placeholder={placeholder}>
-      {(src, loading) => {
+    <Progressive delay={500} src={src} placeholder={placeholder}>
+      {(loadedSrc, loading) => {
         return loading ? (
           <BlurhashCanvas
             hash={blurHash}
-            width={width}
-            height={height}
+            width={width || 400}
+            height={height || 216}
             punch={1}
-            style={{ borderRadius: rounded ? '5px' : '' }}
+            className={cn(fill && 'block h-full w-full')}
+            style={{
+              borderRadius: rounded ? '5px' : '',
+              width: fill ? '100%' : width,
+              height: fill ? '100%' : height
+            }}
           />
         ) : (
-          <Image
-            src={src}
-            objectFit="cover"
+          <img
+            src={loadedSrc}
             alt="cover image"
             width={width}
             height={height}
-            // size={size}
-            // layout={layout}
-            rounded={rounded}
-            fallbackSrc={placeholder}
+            className={cn('object-cover', fill && 'block h-full w-full')}
+            style={{ borderRadius: rounded ? '5px' : undefined }}
+            onError={(event) => {
+              event.currentTarget.src = placeholder;
+            }}
           />
         );
       }}
-    </ProgressiveImage>
+    </Progressive>
   );
 };
 

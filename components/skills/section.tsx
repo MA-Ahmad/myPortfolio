@@ -1,13 +1,13 @@
-import React from "react";
-import { Center } from "@chakra-ui/react";
-import Container from "./container";
+import React from 'react';
+import Container from './container';
+import { cn } from 'lib/cn';
 
 const Section = (props) => {
-  const { full, children, ...rest } = props;
+  const { full, children, className, ...rest } = props;
   return (
-    <Center as="section" {...rest} w="100%">
+    <section className={cn('flex w-full justify-center', className)} {...rest}>
       {full ? children : <Container>{children}</Container>}
-    </Center>
+    </section>
   );
 };
 

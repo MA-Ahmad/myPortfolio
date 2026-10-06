@@ -1,102 +1,80 @@
-import * as React from 'react'
-import {
-  VStack,
-  Text,
-  useColorModeValue,
-  HStack,
-  IconButton,
-  Tooltip,
-} from '@chakra-ui/react'
-import { PageSlideFade } from 'components/shared/animations/page-transitions'
-import Header from 'components/shared/header'
-import { RiSignalTowerLine, RiWifiOffLine } from 'react-icons/ri'
-import OfflineData from 'components/open-source/offline-data'
-import LiveData from 'components/open-source/live-data'
-import { repositories } from 'data/repositories'
-import useSound from 'use-sound'
-import PageLayout from 'components/layouts/pageLayout'
+import * as React from 'react';
+import { PageSlideFade } from 'components/shared/animations/page-transitions';
+import Header from 'components/shared/header';
+import { RiSignalTowerLine, RiWifiOffLine } from 'react-icons/ri';
+import OfflineData from 'components/open-source/offline-data';
+import LiveData from 'components/open-source/live-data';
+import { repositories } from 'data/repositories';
+import { useSwitchSound } from 'lib/use-switch-sound';
+import PageLayout from 'components/layouts/pageLayout';
+import { Tooltip } from 'components/shared/tooltip';
+import { cn } from 'lib/cn';
 
-const TURQUOISE = '#06b6d4'
-
-const iconProps = {
-  variant: 'ghost',
-  size: 'md',
-  isRound: true,
-}
+const TURQUOISE = '#06b6d4';
 
 const RepositoriesList = ({ repositories }) => {
-  const [activeTab, setActiveTab] = React.useState('live')
+  const [activeTab, setActiveTab] = React.useState('live');
 
-  const [play] = useSound('/assets/audios/lightswitch.mp3', {
-    volume: 0.05,
-    sprite: {
-      on: [0, 300],
-      off: [500, 300],
-    },
-  })
+  const play = useSwitchSound();
 
   const handleClick = (type) => {
-    activeTab === 'live' ? play({ id: 'on' }) : play({ id: 'off' })
-    setActiveTab(type)
-  }
+    activeTab === 'live' ? play('on') : play('off');
+    setActiveTab(type);
+  };
 
   return (
     <PageLayout title="Open-source" keywords="A list of open source projects">
       <PageSlideFade>
-        <VStack align="start" spacing={3}>
-          <HStack justifyContent={'space-between'} width={'100%'}>
-            <Header underlineColor={TURQUOISE} mt={0} mb={0}>
+        <div className="flex flex-col items-start gap-3">
+          <div className="flex w-full items-center justify-between">
+            <Header underlineColor={TURQUOISE} className="mb-0 mt-0">
               Open Source
             </Header>
-            <HStack>
-              <Tooltip hasArrow label="Live github repos" placement="top">
-                <IconButton
-                  aria-label={'live'}
-                  size="md"
-                  colorScheme={'linkedin'}
-                  icon={<RiSignalTowerLine />}
-                  isActive={activeTab === 'live'}
+            <div className="flex items-center gap-2">
+              <Tooltip label="Live github repos" placement="top">
+                <button
+                  type="button"
+                  aria-label="live"
                   onClick={() => handleClick('live')}
-                  {...iconProps}
-                />
+                  className={cn(
+                    'inline-flex h-10 w-10 items-center justify-center rounded-full text-[#0077B5]',
+                    activeTab === 'live' && 'bg-gray-200 dark:bg-gray-700'
+                  )}
+                >
+                  <RiSignalTowerLine />
+                </button>
               </Tooltip>
-              <Tooltip hasArrow label="Local github repos" placement="top">
-                <IconButton
-                  aria-label={'live'}
-                  size="md"
-                  colorScheme={'linkedin'}
-                  icon={<RiWifiOffLine />}
-                  isActive={activeTab === 'offline'}
+              <Tooltip label="Local github repos" placement="top">
+                <button
+                  type="button"
+                  aria-label="offline"
                   onClick={() => handleClick('offline')}
-                  {...iconProps}
-                />
+                  className={cn(
+                    'inline-flex h-10 w-10 items-center justify-center rounded-full text-[#0077B5]',
+                    activeTab === 'offline' && 'bg-gray-200 dark:bg-gray-700'
+                  )}
+                >
+                  <RiWifiOffLine />
+                </button>
               </Tooltip>
-            </HStack>
-          </HStack>
-          <Text
-            color={useColorModeValue('gray.500', 'gray.200')}
-            textAlign="left"
-          >
-            This page lists some of the open source repositories I have
-            published or contributed to.
-          </Text>
-        </VStack>
-        {activeTab === 'live' ? (
-          <LiveData />
-        ) : (
-          <OfflineData repositories={repositories} />
-        )}
+            </div>
+          </div>
+          <p className="text-left text-gray-500 dark:text-gray-200">
+            This page lists some of the open source repositories I have published or contributed to.
+          </p>
+        </div>
+        {activeTab === 'live' ? <LiveData /> : <OfflineData repositories={repositories} />}
       </PageSlideFade>
     </PageLayout>
-  )
-}
+  );
+};
 
 export function getStaticProps() {
   return {
     props: {
-      repositories,
-    },
-  }
+      repositories
+    }
+  };
 }
 
-export default RepositoriesList
+export default RepositoriesList;

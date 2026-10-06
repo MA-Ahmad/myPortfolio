@@ -1,19 +1,9 @@
 import * as React from 'react';
-import {
-  Box,
-  useColorModeValue,
-  VStack,
-  Text,
-  HStack,
-  Tag,
-  Icon,
-  Flex,
-  Tooltip
-} from '@chakra-ui/react';
 import { MotionBox } from '../shared/animations/motion';
-import { getTagColor, useLinkColor } from '../theme';
+import { getTagClasses, useLinkColor } from '../theme';
 import { BiGitRepoForked, BiStar } from 'react-icons/bi';
 import { FiGithub } from 'react-icons/fi';
+import { Tooltip } from 'components/shared/tooltip';
 
 interface RepositoryCardProps {
   title: string;
@@ -34,77 +24,42 @@ const RepositoryCard = (props: RepositoryCardProps) => {
 
   return (
     <MotionBox whileHover={{ y: -5 }}>
-      <Box
-        py={2}
-        px={[2, 4]}
-        mt={2}
-        rounded="xl"
-        borderWidth="1px"
-        bg={useColorModeValue('white', 'gray.800')}
-        borderColor={useColorModeValue('gray.100', 'gray.700')}
-        _hover={{
-          shadow: 'lg',
-          textDecoration: 'none'
-        }}
-      >
-        <VStack overflow="hidden" align="start" spacing={1}>
-          <VStack spacing={1} align="start" w="100%">
-            <Flex
-              justifyContent={'space-between'}
-              width="100%"
-              onClick={(e) => handleLinkClick(e, url)}
-            >
-              <Tooltip hasArrow label="Github link" placement="top">
-                <HStack cursor={'pointer'}>
-                  <Icon as={FiGithub} boxSize="0.9em" mt={'1px'} />
-                  <Text
-                    fontSize="sm"
-                    noOfLines={1}
-                    fontWeight="600"
-                    align="left"
-                    // color={"blue.500"}
-                    color={linkColor}
-                  >
+      <div className="mt-2 rounded-xl border border-gray-100 bg-white px-2 py-2 hover:shadow-lg dark:border-gray-700 dark:bg-gray-800 sm:px-4">
+        <div className="flex flex-col items-start gap-1 overflow-hidden">
+          <div className="flex w-full flex-col items-start gap-1">
+            <div className="flex w-full justify-between" onClick={(e) => handleLinkClick(e, url)}>
+              <Tooltip label="Github link" placement="top">
+                <div className="flex cursor-pointer items-center gap-2">
+                  <FiGithub className="mt-px h-[0.9em] w-[0.9em]" />
+                  <p className="truncate text-left text-sm font-semibold" style={{ color: linkColor }}>
                     {title}
-                  </Text>
-                </HStack>
+                  </p>
+                </div>
               </Tooltip>
-              <HStack cursor={'pointer'} onClick={(e) => handleLinkClick(e, url)}>
-                {forks_count && (
-                  <Box _hover={{ color: 'blue.500' }}>
-                    <Icon as={BiGitRepoForked} boxSize="0.9em" mt={'1px'} />
-                    <Box as="span" ml="1" fontSize="sm">
-                      {forks_count}
-                    </Box>
-                  </Box>
-                )}
-                <Box _hover={{ color: 'blue.500' }}>
-                  <Icon as={BiStar} boxSize="0.9em" mt={'1px'} />
-                  <Box as="span" ml="1" fontSize="sm">
-                    {stargazers_count}
-                  </Box>
-                </Box>
-              </HStack>
-            </Flex>
+              <div className="flex cursor-pointer items-center gap-2" onClick={(e) => handleLinkClick(e, url)}>
+                {forks_count ? (
+                  <div className="hover:text-blue-500">
+                    <BiGitRepoForked className="mt-px inline h-[0.9em] w-[0.9em]" />
+                    <span className="ml-1 text-sm">{forks_count}</span>
+                  </div>
+                ) : null}
+                <div className="hover:text-blue-500">
+                  <BiStar className="mt-px inline h-[0.9em] w-[0.9em]" />
+                  <span className="ml-1 text-sm">{stargazers_count}</span>
+                </div>
+              </div>
+            </div>
             {language && (
-              <Flex justifyContent={'space-between'} width="100%">
-                <Box>
-                  <HStack spacing="1">
-                    <Tag size="sm" colorScheme={getTagColor(language)}>
-                      <Text fontSize={['0.55rem', 'inherit', 'inherit']}>{language}</Text>
-                    </Tag>
-                  </HStack>
-                </Box>
-              </Flex>
+              <div className="flex w-full justify-between">
+                <span className={`${getTagClasses(language)} rounded-lg px-2 py-0.5 text-[0.55rem] sm:text-sm`}>
+                  {language}
+                </span>
+              </div>
             )}
-          </VStack>
-          <Box>
-            <Text color="gray.500" fontSize="sm" noOfLines={2} textAlign="left">
-              {description}
-            </Text>
-          </Box>{' '}
-        </VStack>
-      </Box>
+          </div>
+          <p className="line-clamp-2 text-left text-sm text-gray-500">{description}</p>
+        </div>
+      </div>
     </MotionBox>
   );
 };

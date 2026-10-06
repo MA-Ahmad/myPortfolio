@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { IconButton, Box, Flex } from '@chakra-ui/react';
 import { BiLeftArrowAlt, BiRightArrowAlt } from 'react-icons/bi';
 import { AnimatePresence } from 'framer-motion';
 import { IconType } from 'react-icons/lib/cjs';
@@ -32,8 +31,7 @@ const swipePower = (offset: number, velocity: number) => {
 };
 
 interface BtnProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  icon: any;
+  icon: React.ReactNode;
   as: IconType;
   isRight: boolean;
   right?: string;
@@ -41,36 +39,21 @@ interface BtnProps {
   handleImageDir: (newDirection: number) => void;
 }
 
-const Btn = ({ icon, as, left, right, isRight, handleImageDir }: BtnProps) => {
+const Btn = ({ icon, left, right, isRight, handleImageDir }: BtnProps) => {
   return (
-    <Box
-      top={'calc(50% - 20px)'}
-      right={right}
-      left={left}
-      position={'absolute'}
-      borderRadius={'30px'}
-      width={'40px'}
-      height={'40px'}
-      display={'flex'}
-      justifyContent={'center'}
-      alignItems={'center'}
-      cursor={'pointer'}
-      fontWeight={'bold'}
-      fontSize={'18px'}
-      zIndex={'2'}
+    <div
+      className="absolute z-[2] flex h-10 w-10 cursor-pointer items-center justify-center rounded-full text-lg font-bold"
+      style={{ top: 'calc(50% - 20px)', right, left }}
       onClick={() => (isRight ? handleImageDir(1) : handleImageDir(-1))}
     >
-      <IconButton
+      <button
+        type="button"
         aria-label="icon button"
-        icon={icon}
-        cursor="pointer"
-        as={as}
-        size="md"
-        colorScheme="teal"
-        borderRadius="full"
-        rounded="full"
-      />
-    </Box>
+        className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-teal-500 text-white"
+      >
+        {icon}
+      </button>
+    </div>
   );
 };
 
@@ -78,17 +61,13 @@ export interface CarouselProps {
   images: string[];
 }
 
-const Carousel: React.SFC<CarouselProps> = ({ images }) => {
+const Carousel = ({ images }: CarouselProps) => {
   const [[page, direction], setPage] = React.useState([0, 0]);
   const [imageIndex, setImageIndex] = React.useState<number>(0);
 
   const paginate = (newDirection: number) => {
     setPage([page + newDirection, newDirection]);
   };
-
-  // React.useEffect(() => {
-  //   setImageIndex(repoId);
-  // }, [repoId]);
 
   const nextImage = (newDirection: number) => {
     paginate(newDirection);
@@ -101,19 +80,10 @@ const Carousel: React.SFC<CarouselProps> = ({ images }) => {
   };
 
   return (
-    <Flex
-      width={'100%'}
-      height={'100%'}
-      position={'relative'}
-      justify-content={'center'}
-      align-items={'center'}
-    >
+    <div className="relative flex h-full w-full items-center justify-center">
       <AnimatePresence initial={false} custom={direction}>
         <MotionImage
-          position="absolute"
-          width="100%"
-          height="100%"
-          borderRadius="5px"
+          className="absolute h-full w-full rounded-[5px] object-cover"
           key={page}
           src={images[imageIndex]}
           custom={direction}
@@ -153,7 +123,7 @@ const Carousel: React.SFC<CarouselProps> = ({ images }) => {
         isRight={false}
         handleImageDir={prevImage}
       />
-    </Flex>
+    </div>
   );
 };
 

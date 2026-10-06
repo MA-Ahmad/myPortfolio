@@ -1,4 +1,3 @@
-import { VStack, Text, useColorModeValue } from '@chakra-ui/react';
 import { PageSlideFade, StaggerChildren } from 'components/shared/animations/page-transitions';
 import { MotionBox } from 'components/shared/animations/motion';
 import Header from 'components/shared/header';
@@ -39,14 +38,12 @@ const ChangeLog = () => {
         <PageSlideFade>
           <StaggerChildren>
             <MotionBox>
-              <VStack align="start">
-                <Header underlineColor={TURQUOISE} mt={0} mb={2}>
+              <div className="flex flex-col items-start">
+                <Header underlineColor={TURQUOISE} className="mb-2 mt-0">
                   {title}
                 </Header>
-                <Text color={useColorModeValue('gray.500', 'gray.200')} textAlign="left">
-                  {subtitle}
-                </Text>
-              </VStack>
+                <p className="text-left text-gray-500 dark:text-gray-200">{subtitle}</p>
+              </div>
             </MotionBox>
             {prDataState ? <PrList prList={prDataState} /> : <ListSkeleton />}
           </StaggerChildren>

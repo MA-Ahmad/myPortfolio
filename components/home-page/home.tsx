@@ -1,16 +1,4 @@
-import { useEffect, useState } from 'react';
-import {
-  Flex,
-  Avatar,
-  Box,
-  Text,
-  Badge,
-  Stack,
-  Link,
-  UnorderedList,
-  ListItem,
-  useColorModeValue
-} from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
 import { MotionBox, MotionFlex } from 'components/shared/animations/motion';
 import Header from 'components/shared/header';
 import NextLink from 'next/link';
@@ -37,10 +25,10 @@ const Home: React.FC<BlogPostProps> = (props) => {
   }, [emojiCounter]);
 
   return (
-    <Flex direction="column" align="center">
-      <Flex direction={['column', 'column', 'row']}>
+    <div className="flex flex-col items-center">
+      <div className="flex flex-col lg:flex-row">
         <MotionBox
-          opacity="0"
+          className="mx-auto mb-16 lg:mb-auto"
           initial={{
             translateX: -150,
             opacity: 0
@@ -52,27 +40,18 @@ const Home: React.FC<BlogPostProps> = (props) => {
               duration: ANIMATION_DURATION
             }
           }}
-          m="auto"
-          mb={[16, 16, 'auto']}
         >
-          <MotionBox whileHover={{ scale: 1.2 }} rounded="full" shadow="lg">
-            <Avatar
-              size={'2xl'}
-              showBorder={true}
-              borderColor={linkColor}
-              src={'https://avatars2.githubusercontent.com/u/37842853?v=4'}
+          <MotionBox whileHover={{ scale: 1.2 }} className="rounded-full shadow-lg">
+            <img
+              className="h-32 w-32 rounded-full border-2 object-cover"
+              style={{ borderColor: linkColor }}
+              src="https://avatars2.githubusercontent.com/u/37842853?v=4"
+              alt=""
             />
           </MotionBox>
         </MotionBox>
         <MotionFlex
-          position="relative"
-          ml={['auto', 'auto', 16]}
-          m={['auto', 'initial']}
-          w={['90%', '85%', '80%']}
-          maxW="800px"
-          opacity="0"
-          justify="center"
-          direction="column"
+          className="relative mx-auto w-[90%] max-w-[800px] flex-col justify-center sm:w-[85%] lg:ml-16 lg:w-[80%]"
           initial={{
             opacity: 0,
             translateX: 150
@@ -85,14 +64,13 @@ const Home: React.FC<BlogPostProps> = (props) => {
             }
           }}
         >
-          <Box position="relative">
-            <Box position="absolute" width="full" fontSize="2xl" textAlign="center">
+          <div className="relative">
+            <div className="absolute w-full text-center text-2xl">
               {emojis.map((item, index) => {
                 return (
                   <MotionBox
                     key={index}
-                    position="absolute"
-                    right="80%"
+                    className="absolute right-[80%]"
                     animate={showEmogi && emojiCounter === index ? 'show' : 'hide'}
                     variants={{
                       hide: { translateY: -80, opacity: 0 },
@@ -107,52 +85,38 @@ const Home: React.FC<BlogPostProps> = (props) => {
                   </MotionBox>
                 );
               })}
-            </Box>
-            <MotionBox whileHover={{ translateY: -5 }} width="max-content">
-              <Header
-                underlineColor={ORANGE}
-                emoji="👋"
-                mt={0}
-                cursor="pointer"
-                width="max-content"
-                onClick={() => {
-                  setEmojiCounter((prevCounter) => prevCounter + 1);
-                  setShowEmoji(true);
-                }}
-              >
+            </div>
+            <MotionBox
+              whileHover={{ translateY: -5 }}
+              className="w-max cursor-pointer"
+              onClick={() => {
+                setEmojiCounter((prevCounter) => prevCounter + 1);
+                setShowEmoji(true);
+              }}
+            >
+              <Header underlineColor={ORANGE} emoji="👋" className="mt-0 w-max">
                 Hey!
               </Header>
             </MotionBox>
-          </Box>
-          <Box as="h2" fontSize="2xl" fontWeight="400" textAlign="left">
-            My name is{' '}
-            <Box as="strong" fontWeight="600">
-              Ahmad
-            </Box>{' '}
-            and I&apos;m a{' '}
-            <Box as="span" whiteSpace="nowrap">
-              Full Stack Developer and
-            </Box>{' '}
-            <Box as="span" whiteSpace="nowrap">
-              an open source lover&nbsp;
-            </Box>
-            from{' '}
-            <Box as="span" whiteSpace="nowrap">
-              Pakistan 🇵🇰
-            </Box>
-          </Box>
-          <Box as="h2" fontSize="2xl" fontWeight="400" mt={5} textAlign="left">
+          </div>
+          <h2 className="text-left text-2xl font-normal">
+            My name is <strong className="font-semibold">Ahmad</strong> and I&apos;m a{' '}
+            <span className="whitespace-nowrap">Full Stack Developer and</span>{' '}
+            <span className="whitespace-nowrap">an open source lover&nbsp;</span>
+            from <span className="whitespace-nowrap">Pakistan 🇵🇰</span>
+          </h2>
+          <h2 className="mt-5 text-left text-2xl font-normal">
             This is my digital garden, where I write about the things I&apos;m working on and share
             what I&apos;ve learned. 😊
-          </Box>
+          </h2>
         </MotionFlex>
-      </Flex>
+      </div>
 
       <MotionBox
-        w="100%"
-        opacity="0"
+        className="z-[1] w-full"
         initial={{
-          translateY: 80
+          translateY: 80,
+          opacity: 0
         }}
         animate={{
           translateY: 0,
@@ -162,62 +126,38 @@ const Home: React.FC<BlogPostProps> = (props) => {
             duration: ANIMATION_DURATION
           }
         }}
-        zIndex={1}
       >
-        <Box mt={10}>
+        <div className="mt-10">
           <ContentBox linkColor={linkColor} />
           <PopularArticles posts={posts} />
-        </Box>
+        </div>
       </MotionBox>
-    </Flex>
+    </div>
   );
 };
 
 const ContentBox = ({ linkColor }) => {
   return (
-    <Stack
-      mb={10}
-      mx={[0, 0, 10]}
-      padding={4}
-      align="start"
-      borderLeft="4px solid"
-      borderColor={linkColor}
-      color={'whatsapp'}
-      _hover={{ shadow: 'lg' }}
-      backgroundColor={useColorModeValue('gray.100', '#1e2533')}
-      rounded="sm"
-      fontSize="md"
+    <div
+      className="mb-10 flex flex-col items-start rounded-sm bg-gray-100 p-4 text-base hover:shadow-lg dark:bg-[#1e2533] lg:mx-10"
+      style={{ borderLeft: `4px solid ${linkColor}` }}
     >
-      <Text
-        textAlign="center"
-        color="#53c8c4"
-        fontWeight="bold"
-        fontSize={['md', 'lg']}
-        variant="gradient"
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        fromcolor="blue.400"
-        tocolor="red.500"
-      >
-        Content:
-      </Text>
-      <UnorderedList textAlign="left" paddingLeft={5} m={0}>
+      <p className="text-center text-base font-bold text-[#53c8c4] sm:text-lg">Content:</p>
+      <ul className="m-0 pl-5 text-left">
         {newContent.map((content, index) => (
-          <ListItem key={index}>
-            <NextLink href={content.link} passHref>
-              <Link color={linkColor}>
-                {content.text}
-                {content.showNewTag && (
-                  <Badge ml="1" colorScheme="green">
-                    New
-                  </Badge>
-                )}
-              </Link>
+          <li key={index}>
+            <NextLink href={content.link} style={{ color: linkColor }}>
+
+              {content.text}
+              {content.showNewTag && (
+                <span className="ml-1 rounded bg-green-100 px-1 text-xs text-green-800">New</span>
+              )}
+
             </NextLink>
-          </ListItem>
+          </li>
         ))}
-      </UnorderedList>
-    </Stack>
+      </ul>
+    </div>
   );
 };
 

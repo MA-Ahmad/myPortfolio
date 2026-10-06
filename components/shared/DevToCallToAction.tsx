@@ -1,21 +1,18 @@
-import { Flex, Link, Text, Icon, Box } from "@chakra-ui/react";
-import { FaDev } from "react-icons/fa";
+import { FaDev } from 'react-icons/fa';
 
 interface IProps {
   href: string;
 }
 
 const DevToCallToAction = ({ href }: IProps): JSX.Element => (
-  <Flex justifyContent="center" marginTop="7">
-    <Box>
-      <Text marginBottom="2" fontSize="2xl" fontWeight="400">
-        React, comment and follow on
-      </Text>
-      <Link href={href} isExternal>
-        <Icon as={FaDev} w={12} h={12} />
-      </Link>
-    </Box>
-  </Flex>
+  <div className="mt-7 flex justify-center">
+    <div>
+      <p className="mb-2 text-2xl font-normal">React, comment and follow on</p>
+      <a href={href} target="_blank" rel="noopener noreferrer">
+        <FaDev className="h-12 w-12" />
+      </a>
+    </div>
+  </div>
 );
 
 export default DevToCallToAction;

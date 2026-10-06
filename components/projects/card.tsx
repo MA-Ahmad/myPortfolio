@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { HStack, VStack, Text, useColorModeValue, Link } from '@chakra-ui/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import LazyImage from 'components/shared/lazy-image';
 import { useLinkColor } from 'components/theme';
@@ -23,26 +22,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
   technologies
 }) => {
   const linkColor = useLinkColor();
-  const textColor = useColorModeValue('gray.500', 'gray.200');
   const [isOpen, setIsOpen] = React.useState(false);
   const toggleOpen = () => setIsOpen(!isOpen);
 
   return (
     <motion.div layout onClick={toggleOpen}>
-      <HStack
-        p={4}
-        bg={useColorModeValue('white', 'gray.800')}
-        rounded="xl"
-        borderWidth="1px"
-        borderColor={useColorModeValue('gray.100', 'gray.700')}
-        w="100%"
-        h="100%"
-        textAlign="left"
-        align="start"
-        spacing={4}
-        cursor="pointer"
-        _hover={{ shadow: 'lg' }}
-      >
+      <div className="flex h-full w-full cursor-pointer items-start gap-4 rounded-xl border border-gray-100 bg-white p-4 text-left hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
         <LazyImage
           src={logo}
           blurHash={blurHash}
@@ -52,28 +37,26 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
           layout="fixed"
           rounded="md"
         />
-        <VStack align="start" justify="flex-start">
-          <VStack spacing={0} align="start">
+        <div className="flex flex-col items-start justify-start">
+          <div className="flex flex-col items-start gap-0">
             <motion.div layout>
-              <HStack>
-                <Text
-                  as={Link}
+              <div className="flex items-center gap-2">
+                <a
                   href={link}
-                  fontWeight="bold"
-                  fontSize="md"
-                  noOfLines={1}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="truncate text-base font-bold"
                   onClick={(e) => e.stopPropagation()}
-                  color={linkColor}
-                  isExternal
+                  style={{ color: linkColor }}
                 >
                   {title}
-                </Text>
-                <HStack spacing="1">
+                </a>
+                <div className="flex gap-1">
                   {technologies.map((tech, index) => (
-                    <Tag key={index} name={tech} mt="1px" interactive={false} mr="auto" />
+                    <Tag key={index} name={tech} interactive={false} />
                   ))}
-                </HStack>
-              </HStack>
+                </div>
+              </div>
             </motion.div>
             <AnimatePresence>
               <motion.div
@@ -83,9 +66,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 exit={{ opacity: 1 }}
               >
                 {!isOpen && (
-                  <Text fontSize="sm" color={textColor} noOfLines={{ base: 2 }}>
-                    {description}
-                  </Text>
+                  <p className="line-clamp-2 text-sm text-gray-500 dark:text-gray-200">{description}</p>
                 )}
               </motion.div>
             </AnimatePresence>
@@ -98,20 +79,12 @@ const ProjectCard: React.FC<ProjectCardProps> = ({
                 exit={{ opacity: 0 }}
                 variants={{ exit: { transition: { staggerChildren: 0.1 } } }}
               >
-                {isOpen && (
-                  <Text
-                    fontSize="sm"
-                    color={textColor}
-                    // noOfLines={{ base: isOpen ? 5 : 2 }}
-                  >
-                    {description}
-                  </Text>
-                )}
+                {isOpen && <p className="text-sm text-gray-500 dark:text-gray-200">{description}</p>}
               </motion.div>
             </AnimatePresence>
-          </VStack>
-        </VStack>
-      </HStack>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 };

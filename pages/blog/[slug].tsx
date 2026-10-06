@@ -4,23 +4,9 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import html from 'remark-html';
-import {
-  Box,
-  Heading,
-  VStack,
-  Text,
-  HStack,
-  Flex,
-  Tag,
-  useColorModeValue,
-  Collapse,
-  Image,
-  AspectRatio,
-  Skeleton
-} from '@chakra-ui/react';
 import { remark } from 'remark';
 import prism from 'remark-prism';
-import { getTagColor } from '../../components/theme';
+import { getTagClasses } from '../../components/theme';
 import dayjs from 'dayjs';
 import localizedFormat from 'dayjs/plugin/localizedFormat';
 import { BlogPost } from '../../interfaces/interface';
@@ -29,7 +15,7 @@ import PageLayout from 'components/layouts/pageLayout';
 import { MotionBox } from 'components/shared/animations/motion';
 import DevToCallToAction from 'components/shared/DevToCallToAction';
 import { fadeInUp, stagger } from 'components/shared/animations/page-transitions';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { usePostData } from 'lib/usePostData';
 import { LikeButton } from 'components/shared/LikeButton';
 import { useLinkColor } from 'components/theme';
@@ -52,7 +38,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
     blogDetails?.title
   );
   const [showLikeButton, setShowLikeButton] = useState(false);
-  const borderColor = useColorModeValue('transparent', 'gray.700');
+  const [coverFailed, setCoverFailed] = useState(false);
   const linkColor = useLinkColor();
 
   useEffect(() => {
@@ -73,106 +59,98 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
       image={blogDetails?.cover_image}
       keywords={blogDetails?.tags.join(', ')}
     >
-      <Collapse in={showLikeButton} animateOpacity>
-        <Box position="fixed" right="10%" top="50%" display={['none', 'none', 'none', 'block']}>
-          <LikeButton
-            id={blogDetails?.slug}
-            title={blogDetails?.title}
-            devToLikes={blogDetails?.public_reactions_count}
-            linkColor={linkColor}
-          />
-        </Box>
-      </Collapse>
+      <AnimatePresence>
+        {showLikeButton && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed right-[10%] top-1/2 hidden xl:block"
+          >
+            <LikeButton
+              id={blogDetails?.slug}
+              title={blogDetails?.title}
+              devToLikes={blogDetails?.public_reactions_count}
+              linkColor={linkColor}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
       <motion.div initial="initial" animate="animate" variants={stagger}>
-        <VStack marginBottom="5" alignItems="left" textAlign="left">
+        <div className="mb-5 flex flex-col items-start text-left">
           {blogDetails?.cover_image && (
             <MotionBox whileHover={{ scale: 1.02 }}>
-              <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
-                <Image
-                  src={blogDetails?.cover_image}
-                  fallback={<Skeleton />}
-                  width={'full'}
-                  height={'full'}
-                  position="absolute"
-                  border="2px solid"
-                  borderColor={borderColor}
-                  rounded="xl"
-                  objectFit="cover"
-                />
-              </AspectRatio>
-              <Box
-                width={'full'}
-                height={'full'}
-                bg={useColorModeValue('gray.100', 'gray.900')}
-                opacity={useColorModeValue('0.5', '1')}
-              ></Box>
+              <div className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: '1.85 / 1' }}>
+                {coverFailed ? (
+                  <div className="h-full w-full animate-pulse bg-gray-200 dark:bg-gray-700" />
+                ) : (
+                  <img
+                    src={blogDetails?.cover_image}
+                    alt=""
+                    className="absolute h-full w-full rounded-xl border-2 border-transparent object-cover dark:border-gray-700"
+                    onError={() => setCoverFailed(true)}
+                  />
+                )}
+              </div>
             </MotionBox>
           )}
           <motion.div variants={fadeInUp}>
-            <Heading as="h1" size="xl" mt="2" mb="2">
-              {blogDetails?.title}
-            </Heading>
+            <h1 className="mb-2 mt-2 text-3xl font-bold">{blogDetails?.title}</h1>
           </motion.div>
           <motion.div variants={fadeInUp}>
-            <HStack
-              justifyContent="space-between"
-              isInline
-              flexDirection={['column', 'row', 'row']}
-            >
-              <HStack spacing={1} alignItems="center">
+            <div className="flex flex-col justify-between sm:flex-row">
+              <div className="flex flex-wrap items-center gap-1">
                 {blogDetails?.tags.map((tag) => (
-                  <Tag size={'md'} padding="0 3px" key={tag} colorScheme={getTagColor(tag)}>
+                  <span key={tag} className={`${getTagClasses(tag)} rounded-lg px-1 py-0.5 text-sm`}>
                     {tag}
-                  </Tag>
+                  </span>
                 ))}
-              </HStack>
-              <HStack spacing={2} isInline pt={['0.5rem', '0', '0']}>
+              </div>
+              <div className="flex items-center gap-2 pt-2 sm:pt-0">
                 {blogDetails?.public_reactions_count || totalPostLikes ? (
-                  <Flex alignItems="center">
+                  <div className="flex items-center">
                     <DisplayText
                       isLoading={isLoading}
                       value={(Number(blogDetails.public_reactions_count) || 0) + totalPostLikes}
                     />
                     &nbsp;
                     <HeartIcon />
-                  </Flex>
+                  </div>
                 ) : (
                   ''
                 )}
                 {blogDetails?.comments_count ? (
-                  <Flex alignItems="center">
+                  <div className="flex items-center">
                     <DisplayText isLoading={false} value={blogDetails.comments_count} />
                     &nbsp;
                     <CommentIcon />
-                  </Flex>
+                  </div>
                 ) : (
                   ''
                 )}
                 {blogDetails && totalPostViews > POST_VIEW_LIMIT ? (
-                  <Flex alignItems="center">
+                  <div className="flex items-center">
                     <DisplayText isLoading={isLoading} value={totalPostViews} />
                     &nbsp;
                     <EyeIcon />
-                  </Flex>
+                  </div>
                 ) : (
                   ''
                 )}
-              </HStack>
-            </HStack>
+              </div>
+            </div>
           </motion.div>
           <motion.div variants={fadeInUp}>
-            <HStack spacing={2} alignItems="left" justifyContent={['center', 'left', 'left']}>
-              <Text fontSize="xs">Published on</Text>
-              <Text fontSize="xs" fontWeight="bold">
-                {dayjs(blogDetails?.published_at).format('LL')}
-              </Text>
-            </HStack>
+            <div className="flex items-center justify-center gap-2 sm:justify-start">
+              <span className="text-xs">Published on</span>
+              <span className="text-xs font-bold">{dayjs(blogDetails?.published_at).format('LL')}</span>
+            </div>
           </motion.div>
-        </VStack>
+        </div>
         <motion.div variants={fadeInUp}>
-          <Box className="article">
+          <div className="article">
             <div dangerouslySetInnerHTML={{ __html: articleContent }} />
-          </Box>
+          </div>
         </motion.div>
         {blogDetails?.url ? <DevToCallToAction href={blogDetails.url} /> : ''}
       </motion.div>
@@ -236,7 +214,6 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     }
     blogObj = frontmatter;
 
-    // If slug not existed in blogObj
     if (params?.slug) {
       blogObj.slug = params?.slug;
     }

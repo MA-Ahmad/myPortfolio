@@ -1,37 +1,27 @@
-import { Text, useColorModeValue, Spinner } from '@chakra-ui/react'
-import { useLinkColor } from 'components/theme'
+import { useLinkColor } from 'components/theme';
 
 interface DisplayTextProps {
-  isLoading: boolean
-  value: number
+  isLoading: boolean;
+  value: number;
 }
 
-const DisplayText: React.SFC<DisplayTextProps> = ({ isLoading, value }) => {
-  const linkColor = useLinkColor()
-  const textColor = useColorModeValue('gray.500', 'gray.200')
+const DisplayText = ({ isLoading, value }: DisplayTextProps) => {
+  const linkColor = useLinkColor();
 
   return (
     <>
       {isLoading ? (
-        <Spinner
-          size="xs"
-          speed="0.65s"
-          emptyColor="gray.200"
-          color={linkColor}
+        <span
+          className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-gray-200 border-t-current"
+          style={{ borderTopColor: linkColor }}
         />
       ) : (
-        <Text
-          fontSize="sm"
-          noOfLines={1}
-          fontWeight="400"
-          align="left"
-          color={textColor}
-        >
+        <span className="truncate text-left text-sm font-normal text-gray-500 dark:text-gray-200">
           {value}
-        </Text>
+        </span>
       )}
     </>
-  )
-}
+  );
+};
 
-export default DisplayText
+export default DisplayText;

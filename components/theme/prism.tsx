@@ -1,7 +1,48 @@
 import { css, Global } from '@emotion/react'
-import { useColorMode } from '@chakra-ui/react'
-import { theme } from '@chakra-ui/react'
-// import { theme } from "./theme";
+import { useTheme } from 'next-themes'
+
+const theme = {
+  colors: {
+    gray: {
+      50: '#F7FAFC',
+      100: '#EDF2F7',
+      200: '#E2E8F0',
+      500: '#718096',
+      700: '#2D3748',
+      800: '#1A202C'
+    },
+    blue: {
+      300: '#63b3ed',
+      600: '#2b6cb0'
+    },
+    purple: {
+      300: '#B794F4'
+    }
+  },
+  space: {
+    2: '0.5rem',
+    4: '1rem',
+    6: '1.5rem'
+  },
+  fontSizes: {
+    sm: '0.875rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem'
+  },
+  fontWeights: {
+    bold: 700
+  },
+  lineHeights: {
+    tall: 1.625
+  },
+  radii: {
+    md: '0.375rem'
+  },
+  fonts: {
+    mono: 'Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+  }
+}
 
 const prismBaseTheme = css`
   .article {
@@ -451,8 +492,8 @@ export const prismDarkTheme = css`
 `
 
 export const PrismGlobal = () => {
-  const { colorMode } = useColorMode()
+  const { resolvedTheme } = useTheme()
   return (
-    <Global styles={colorMode === 'light' ? prismLightTheme : prismDarkTheme} />
+    <Global styles={resolvedTheme === 'dark' ? prismDarkTheme : prismLightTheme} />
   )
 }

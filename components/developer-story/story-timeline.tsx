@@ -1,96 +1,48 @@
-import React from 'react';
-import {
-  Box,
-  BoxProps,
-  Circle,
-  Flex,
-  useColorModeValue,
-  Popover,
-  PopoverTrigger,
-  PopoverArrow,
-  PopoverContent,
-  PopoverBody
-} from '@chakra-ui/react';
+import React, { ReactNode } from 'react';
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react';
 import { FiCheckCircle } from 'react-icons/fi';
 import { IconType } from 'react-icons';
 
-export interface StoryTimelineProps extends BoxProps {
+export interface StoryTimelineProps {
   icon?: IconType;
   skipTrail?: boolean;
   index: number;
   year?: string;
+  children?: ReactNode;
 }
 
 export const StoryTimeline: React.FC<StoryTimelineProps> = ({
-  icon = FiCheckCircle,
+  icon: Icon = FiCheckCircle,
   index,
   year,
   skipTrail = false,
-  children,
-  ...props
+  children
 }) => {
-  const [isOpen, setIsOpen] = React.useState(true);
-  const open = () => setIsOpen(!isOpen);
-  const close = () => setIsOpen(false);
-  const color = useColorModeValue('gray.700', 'gray.200');
-
   return (
-    <Flex minH={20} {...props}>
-      <Flex flexDir="column" alignItems={'center'} minHeight={'8rem'} mr={4}>
-        <Popover
-          returnFocusOnClose={false}
-          isOpen={isOpen}
-          onClose={close}
-          placement={index % 2 === 0 ? 'right' : 'left'}
-          closeOnBlur={false}
-          // variant="responsive"
-          // width={["9.3rem", "13rem", "15rem", "100%"]}
-        >
-          <PopoverTrigger>
-            <Box onClick={open} position="relative">
-              <Circle
-                size={12}
-                bg={useColorModeValue('gray.600', 'gray.500')}
-                opacity={useColorModeValue(0.07, 0.15)}
-                sx={{}}
-              />
-              {year ? (
-                <Box
-                  fontSize={15}
-                  fontWeight={'bold'}
-                  color={color}
-                  pos="absolute"
-                  left="0.5rem"
-                  top="0.875rem"
-                >
-                  {year}
-                </Box>
-              ) : (
-                <Box
-                  as={icon}
-                  size="1.25rem"
-                  color={color}
-                  pos="absolute"
-                  left="0.875rem"
-                  top="0.875rem"
-                />
-              )}
-            </Box>
-          </PopoverTrigger>
-          <Box fontSize={15}>
-            {!year && (
-              <PopoverContent padding={['0.2rem', '0.2rem', '0.7rem']}>
-                <PopoverArrow />
-                {/* <PopoverCloseButton /> */}
-                <PopoverBody>
-                  <Box overflow="scroll">{children}</Box>
-                </PopoverBody>
-              </PopoverContent>
+    <div className="flex min-h-20">
+      <div className="mr-4 flex min-h-[8rem] flex-col items-center">
+        <Popover className="relative">
+          <PopoverButton className="relative outline-none">
+            <div className="h-12 w-12 rounded-full bg-gray-600 opacity-[0.07] dark:bg-gray-500 dark:opacity-[0.15]" />
+            {year ? (
+              <div className="absolute left-2 top-[0.875rem] text-[15px] font-bold text-gray-700 dark:text-gray-200">
+                {year}
+              </div>
+            ) : (
+              <Icon className="absolute left-[0.875rem] top-[0.875rem] text-gray-700 dark:text-gray-200" size="1.25rem" />
             )}
-          </Box>
+          </PopoverButton>
+          {!year && (
+            <PopoverPanel
+              anchor={index % 2 === 0 ? 'right' : 'left'}
+              className="z-10 rounded-md bg-white p-1 shadow-lg dark:bg-gray-800 sm:p-3"
+            >
+              <div className="overflow-scroll">{children}</div>
+            </PopoverPanel>
+          )}
         </Popover>
-        {!skipTrail && <Box w="1px" flex={1} bg={color} />}
-      </Flex>
-    </Flex>
+        {!skipTrail && <div className="w-px flex-1 bg-gray-700 dark:bg-gray-200" />}
+      </div>
+    </div>
   );
 };

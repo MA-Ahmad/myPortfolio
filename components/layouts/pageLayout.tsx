@@ -35,7 +35,7 @@ const PageLayout = ({
       animate="enter"
       exit="exit"
       variants={variants}
-      transition={{ type: 'linear' }}
+      transition={{ type: 'tween', ease: 'linear' }}
     >
       {children}
     </motion.main>

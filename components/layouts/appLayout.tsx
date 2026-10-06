@@ -1,5 +1,4 @@
 import { Fragment } from 'react';
-import { Box } from '@chakra-ui/react';
 import TopNav from '../shared/top-nav';
 import Footer from '../shared/footer';
 import styles from './appLayout.module.css';
@@ -9,11 +8,9 @@ function AppLayout(props) {
     <Fragment>
       <TopNav />
       <DottedSvgs />
-      <Box textAlign="center" fontSize="xl" w={['90%', '85%', '80%']} maxW={800} mx="auto">
-        <Box pt={'7rem'} pb={10}>
-          {props.children}
-        </Box>
-      </Box>
+      <div className="mx-auto w-[90%] min-w-0 max-w-[800px] text-center text-xl sm:w-[85%] lg:w-[80%]">
+        <div className="pb-10 pt-28">{props.children}</div>
+      </div>
       <Footer />
     </Fragment>
   );
@@ -21,16 +18,9 @@ function AppLayout(props) {
 
 function DottedSvgs() {
   return (
-    <Box
-      position="absolute"
-      height="50rem"
-      width="100%"
-      overflow="hidden"
-      display={['none', 'none', 'block']}
-      zIndex={-1}
-    >
-      <Box position="relative" height="full" mx="auto" maxW="940px">
-        <Box position="absolute" left="100%">
+    <div className="absolute z-[-1] hidden h-[50rem] w-full overflow-hidden lg:block">
+      <div className="relative mx-auto h-full max-w-[940px]">
+        <div className="absolute left-full">
           <svg
             className={`${styles.dottedRightTransform} ${styles.dottedColor}`}
             color="rgba(55,65,81, 1)"
@@ -53,8 +43,8 @@ function DottedSvgs() {
             </defs>
             <rect width="404" height="784" fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"></rect>
           </svg>
-        </Box>
-        <Box position="absolute" right="100%">
+        </div>
+        <div className="absolute right-full">
           <svg
             className={`${styles.dottedLeftTransform}`}
             color="rgba(55,65,81, 1)"
@@ -65,7 +55,7 @@ function DottedSvgs() {
           >
             <defs>
               <pattern
-                id="5d0dd344-b041-4d26-bec4-8d33ea57ec9b"
+                id="5d0dd344-b041-4d26-bec4-8d33ea57ec9c"
                 x="0"
                 y="0"
                 width="20"
@@ -75,11 +65,11 @@ function DottedSvgs() {
                 <rect x="0" y="0" width="4" height="4" fill="currentColor"></rect>
               </pattern>
             </defs>
-            <rect width="404" height="784" fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9b)"></rect>
+            <rect width="404" height="784" fill="url(#5d0dd344-b041-4d26-bec4-8d33ea57ec9c)"></rect>
           </svg>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }
 

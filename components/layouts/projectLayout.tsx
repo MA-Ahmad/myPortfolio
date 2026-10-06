@@ -1,141 +1,88 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { stagger, fadeInUp } from '../shared/animations/framerAnimations';
-import {
-  useColorModeValue,
-  IconButton,
-  Flex,
-  Box,
-  ListItem,
-  AspectRatio,
-  Image,
-  Skeleton,
-  Link
-} from '@chakra-ui/react';
 import { HiOutlineExternalLink } from 'react-icons/hi';
 import { AiOutlineGithub } from 'react-icons/ai';
 import { MotionBox, MotionFlex, MotionList, MotionText } from 'components/shared/animations/motion';
 
+const ProjectImage = ({ src, className = '' }: { src: string; className?: string }) => {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <div className={`animate-pulse rounded-xl bg-gray-200 dark:bg-gray-700 ${className}`} />;
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      className={`absolute h-full w-full rounded-xl object-cover opacity-50 hover:opacity-100 ${className}`}
+      onError={() => setFailed(true)}
+    />
+  );
+};
+
 const ProjectLayoutMed = ({ project }) => {
   return (
-    <Flex
-      display={['flex', 'flex', 'none']}
-      rounded="xl"
-      borderWidth="1px"
-      borderColor={useColorModeValue('gray.600', 'gray.700')}
-      w="full"
-      h="20rem"
-      textAlign="left"
-      align="start"
-      shadow="md"
-      _hover={{ border: 'md', shadow: 'lg' }}
-      overflow="hidden"
-      position="relative"
-    >
-      <a href={project.site} target="_blank" rel="noopener noreferrer">
-        <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
-          <Image
-            src={project.imageLight}
-            fallback={<Skeleton />}
-            width={'full'}
-            height={'full'}
-            position="absolute"
-            rounded="xl"
-            objectFit="cover"
-            opacity={0.5}
-            _hover={{ opacity: 1 }}
-          />
-        </AspectRatio>
-        <Box
-          width={'full'}
-          height={'full'}
-          position="absolute"
-          bg={useColorModeValue('gray.100', 'gray.900')}
-          opacity={useColorModeValue('0.5', '1')}
-        ></Box>
+    <div className="relative flex h-80 w-full items-start overflow-hidden rounded-xl border border-gray-600 text-left shadow-md hover:shadow-lg dark:border-gray-700 lg:hidden">
+      <a href={project.site} target="_blank" rel="noopener noreferrer" className="absolute inset-0">
+        <div className="relative h-full w-full overflow-hidden rounded-xl" style={{ aspectRatio: '1.85 / 1' }}>
+          <ProjectImage src={project.imageLight} />
+        </div>
+        <div className="absolute h-full w-full bg-gray-100 opacity-50 dark:bg-gray-900 dark:opacity-100" />
       </a>
       <MotionBox
         initial="initial"
         animate="animate"
-        width={['full', '70%']}
-        rounded="lg"
-        my="auto"
-        px="6"
-        py="3"
-        position="relative"
-        zIndex="10"
+        className="relative z-10 my-auto w-full rounded-lg px-6 py-3 sm:w-[70%]"
       >
         <MotionBox variants={stagger}>
           <a href={project.site} target="_blank" rel="noopener noreferrer">
-            <MotionText
-              variants={fadeInUp}
-              fontSize="2xl"
-              fontWeight="bold"
-              color={useColorModeValue('gray.900', 'gray.100')}
-            >
+            <MotionText variants={fadeInUp} className="text-2xl font-bold text-gray-900 dark:text-gray-100">
               {project.title}
             </MotionText>
-            <Box width="full">
+            <div className="w-full">
               <MotionText
                 variants={fadeInUp}
-                bg={useColorModeValue('gray.200', 'gray.700')}
-                rounded="lg"
-                align="left"
-                p="4"
-                fontSize="sm"
+                className="rounded-lg bg-gray-200 p-4 text-left text-sm dark:bg-gray-700"
               >
                 {project.description}
               </MotionText>
               {project.techStack && (
                 <MotionList
                   variants={fadeInUp}
-                  display="flex"
-                  fontSize="xs"
-                  justifyContent="start"
-                  mt="3"
-                  color={useColorModeValue('gray.900', 'gray.100')}
-                  fontWeight="bold"
+                  className="mt-3 flex justify-start text-xs font-bold text-gray-900 dark:text-gray-100"
                 >
                   {project.techStack.map((s, index) => (
-                    <ListItem key={index} mr="2">
+                    <li key={index} className="mr-2">
                       <i>{s}</i>
-                    </ListItem>
+                    </li>
                   ))}
                 </MotionList>
               )}
-            </Box>
+            </div>
           </a>
-          <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="start">
+          <MotionFlex variants={fadeInUp} className="mt-1 flex justify-start pt-2">
             {project.gitHub && (
-              <Link mr={2} href={project.gitHub} isExternal>
-                <IconButton
-                  colorScheme="gray"
-                  rounded="full"
-                  size="md"
-                  aria-label="medal"
-                  icon={<AiOutlineGithub />}
-                />
-              </Link>
+              <a className="mr-2" href={project.gitHub} target="_blank" rel="noopener noreferrer">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                  <AiOutlineGithub />
+                </span>
+              </a>
             )}
-            <Link href={project.site} isExternal>
-              <IconButton
-                colorScheme="gray"
-                rounded="full"
-                size="md"
-                aria-label="medal"
-                icon={<HiOutlineExternalLink />}
-              />
-            </Link>
+            <a href={project.site} target="_blank" rel="noopener noreferrer">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                <HiOutlineExternalLink />
+              </span>
+            </a>
           </MotionFlex>
         </MotionBox>
       </MotionBox>
-    </Flex>
+    </div>
   );
 };
 
 const LeftProjectLayoutLarge = ({ project }) => {
   return (
-    <Flex width="full" display={['none', 'none', 'flex']}>
+    <div className="hidden w-full lg:flex">
       <MotionBox
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
@@ -148,189 +95,114 @@ const LeftProjectLayoutLarge = ({ project }) => {
             ease: 'easeInOut'
           }
         }}
-        rounded="xl"
-        borderWidth="1px"
-        borderColor={useColorModeValue('gray.600', 'gray.700')}
-        w="80%"
-        h="24rem"
-        textAlign="left"
-        align="start"
-        spacing={4}
-        shadow="md"
-        _hover={{ border: 'md', shadow: 'lg' }}
-        overflow="hidden"
-        position="relative"
+        className="relative h-96 w-4/5 overflow-hidden rounded-xl border border-gray-600 text-left shadow-md hover:shadow-lg dark:border-gray-700"
       >
         <a href={project.site} target="_blank" rel="noopener noreferrer">
-          <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
-            <Image
-              src={project.imageLight}
-              fallback={<Skeleton />}
-              width={'full'}
-              height={'full'}
-              position="absolute"
-              rounded="xl"
-              objectFit="cover"
-              opacity={0.5}
-              _hover={{ opacity: 1 }}
-            />
-          </AspectRatio>
+          <div className="relative h-full w-full overflow-hidden rounded-xl" style={{ aspectRatio: '1.85 / 1' }}>
+            <ProjectImage src={project.imageLight} />
+          </div>
         </a>
       </MotionBox>
       <MotionBox
         initial="initial"
         animate="animate"
-        width="40%"
-        rounded="lg"
-        my="auto"
-        zIndex="10"
-        ml="-6rem"
-        align="right"
+        className="z-10 my-auto -ml-24 w-2/5 rounded-lg text-right"
       >
         <motion.div variants={stagger}>
           <a href={project.site} target="_blank" rel="noopener noreferrer" className="text-right">
-            <MotionText
-              variants={fadeInUp}
-              fontSize="3xl"
-              fontWeight="bold"
-              color={useColorModeValue('gray.900', 'gray.100')}
-            >
+            <MotionText variants={fadeInUp} className="text-3xl font-bold text-gray-900 dark:text-gray-100">
               {project.title}
             </MotionText>
           </a>
-          <Box width="full">
+          <div className="w-full">
             <MotionText
               variants={fadeInUp}
-              bg={useColorModeValue('gray.200', 'gray.700')}
-              rounded="lg"
-              align="right"
-              p="4"
-              fontSize="md"
+              className="rounded-lg bg-gray-200 p-4 text-right text-base dark:bg-gray-700"
             >
               {project.description}
             </MotionText>
             {project.techStack && (
               <MotionList
                 variants={fadeInUp}
-                display="flex"
-                fontSize="sm"
-                justifyContent="end"
-                mt="3"
-                color={useColorModeValue('gray.900', 'gray.100')}
-                fontWeight="bold"
+                className="mt-3 flex justify-end text-sm font-bold text-gray-900 dark:text-gray-100"
               >
                 {project.techStack.map((s, index) => (
-                  <ListItem key={index} mr="3">
+                  <li key={index} className="mr-3">
                     <i>{s}</i>
-                  </ListItem>
+                  </li>
                 ))}
               </MotionList>
             )}
-          </Box>
+          </div>
 
-          <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="end">
+          <MotionFlex variants={fadeInUp} className="mt-1 flex justify-end pt-2">
             {project.gitHub && (
-              <Link mr={2} href={project.gitHub} isExternal>
-                <IconButton
-                  colorScheme="gray"
-                  rounded="full"
-                  size="md"
-                  aria-label="medal"
-                  icon={<AiOutlineGithub />}
-                />
-              </Link>
+              <a className="mr-2" href={project.gitHub} target="_blank" rel="noopener noreferrer">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                  <AiOutlineGithub />
+                </span>
+              </a>
             )}
-            <Link href={project.site} isExternal>
-              <IconButton
-                colorScheme="gray"
-                rounded="full"
-                size="md"
-                aria-label="medal"
-                icon={<HiOutlineExternalLink />}
-              />
-            </Link>
+            <a href={project.site} target="_blank" rel="noopener noreferrer">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                <HiOutlineExternalLink />
+              </span>
+            </a>
           </MotionFlex>
         </motion.div>
       </MotionBox>
-    </Flex>
+    </div>
   );
 };
 
 const RightProjectLayoutLarge = ({ project }) => {
   return (
-    <Flex width="full" display={['none', 'none', 'flex']}>
+    <div className="hidden w-full lg:flex">
       <MotionBox
         initial="initial"
         animate="animate"
-        width="40%"
-        rounded="lg"
-        my="auto"
-        zIndex="10"
-        mr="-6rem"
-        align="left"
+        className="z-10 my-auto -mr-24 w-2/5 rounded-lg text-left"
       >
         <motion.div variants={stagger}>
           <a href={project.site} target="_blank" rel="noopener noreferrer">
-            <MotionText
-              variants={fadeInUp}
-              fontSize="3xl"
-              fontWeight="bold"
-              color={useColorModeValue('gray.900', 'gray.100')}
-            >
+            <MotionText variants={fadeInUp} className="text-3xl font-bold text-gray-900 dark:text-gray-100">
               {project.title}
             </MotionText>
           </a>
-          <Box width="full">
+          <div className="w-full">
             <MotionText
               variants={fadeInUp}
-              bg={useColorModeValue('gray.200', 'gray.700')}
-              rounded="lg"
-              align="left"
-              p="4"
-              fontSize="md"
+              className="rounded-lg bg-gray-200 p-4 text-left text-base dark:bg-gray-700"
             >
               {project.description}
             </MotionText>
             {project.techStack && (
               <MotionList
                 variants={fadeInUp}
-                display="flex"
-                fontSize="sm"
-                justifyContent="start"
-                mt="3"
-                color={useColorModeValue('gray.900', 'gray.100')}
-                fontWeight="bold"
+                className="mt-3 flex justify-start text-sm font-bold text-gray-900 dark:text-gray-100"
               >
                 {project.techStack.map((s, index) => (
-                  <ListItem key={index} mr="3">
+                  <li key={index} className="mr-3">
                     <i>{s}</i>
-                  </ListItem>
+                  </li>
                 ))}
               </MotionList>
             )}
-          </Box>
+          </div>
 
-          <MotionFlex variants={fadeInUp} pt={2} mt={1} justifyContent="start">
+          <MotionFlex variants={fadeInUp} className="mt-1 flex justify-start pt-2">
             {project.gitHub && (
-              <Link mr={2} href={project.gitHub} isExternal>
-                <IconButton
-                  colorScheme="gray"
-                  rounded="full"
-                  size="md"
-                  aria-label="medal"
-                  icon={<AiOutlineGithub />}
-                />
-              </Link>
+              <a className="mr-2" href={project.gitHub} target="_blank" rel="noopener noreferrer">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                  <AiOutlineGithub />
+                </span>
+              </a>
             )}
-            <Link href={project.site} isExternal>
-              <IconButton
-                colorScheme="gray"
-                rounded="full"
-                size="md"
-                aria-label="medal"
-                icon={<HiOutlineExternalLink />}
-              />
-            </Link>
+            <a href={project.site} target="_blank" rel="noopener noreferrer">
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700">
+                <HiOutlineExternalLink />
+              </span>
+            </a>
           </MotionFlex>
         </motion.div>
       </MotionBox>
@@ -346,36 +218,15 @@ const RightProjectLayoutLarge = ({ project }) => {
             ease: 'easeInOut'
           }
         }}
-        rounded="xl"
-        borderWidth="1px"
-        borderColor={useColorModeValue('gray.600', 'gray.700')}
-        w="80%"
-        h="24rem"
-        textAlign="left"
-        align="start"
-        spacing={4}
-        shadow="md"
-        _hover={{ border: 'md', shadow: 'lg' }}
-        overflow="hidden"
-        position="relative"
+        className="relative h-96 w-4/5 overflow-hidden rounded-xl border border-gray-600 text-left shadow-md hover:shadow-lg dark:border-gray-700"
       >
         <a href={project.site} target="_blank" rel="noopener noreferrer">
-          <AspectRatio ratio={1.85 / 1} w="100%" h="100%" rounded="xl">
-            <Image
-              src={project.imageLight}
-              fallback={<Skeleton />}
-              width={'full'}
-              height={'full'}
-              position="absolute"
-              rounded="xl"
-              objectFit="cover"
-              opacity={0.5}
-              _hover={{ opacity: 1 }}
-            />
-          </AspectRatio>
+          <div className="relative h-full w-full overflow-hidden rounded-xl" style={{ aspectRatio: '1.85 / 1' }}>
+            <ProjectImage src={project.imageLight} />
+          </div>
         </a>
       </MotionBox>
-    </Flex>
+    </div>
   );
 };
 

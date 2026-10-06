@@ -1,29 +1,13 @@
 import * as React from 'react';
-import {
-  Box,
-  Image,
-  useColorModeValue,
-  VStack,
-  Text,
-  AspectRatio,
-  HStack,
-  Tag,
-  Icon,
-  useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalBody,
-  Center,
-  Flex,
-  Tooltip
-} from '@chakra-ui/react';
+import { useState } from 'react';
+import { Dialog, DialogPanel, DialogBackdrop } from '@headlessui/react';
 import { MotionBox } from '../shared/animations/motion';
-import { getTagColor, useLinkColor } from '../theme';
+import { getTagClasses, useLinkColor } from '../theme';
 import { AiOutlineStar } from 'react-icons/ai';
 import { FiGithub } from 'react-icons/fi';
 import { CardTransition } from '../shared/animations/page-transitions';
 import LazyImage from '../shared/lazy-image';
+import { Tooltip } from 'components/shared/tooltip';
 
 interface RepositoryCardProps {
   title: string;
@@ -40,19 +24,15 @@ interface RepositoryCardProps {
 
 const RepositoryCard = (props: RepositoryCardProps) => {
   const { title, cover, blurHash, technologies, url, stars } = props;
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [isOpen, setIsOpen] = useState(false);
   const linkColor = useLinkColor();
-
-  const handleClick = () => {
-    onOpen();
-  };
 
   const handleLinkClick = (e: React.MouseEvent<HTMLParagraphElement, MouseEvent>, link: string) => {
     window.open(link);
     e.stopPropagation();
   };
 
-  const transition = { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] };
+  const transition = { duration: 0.5, ease: [0.43, 0.13, 0.23, 0.96] as const };
 
   const thumbnailVariants = {
     initial: { scale: 0.9, opacity: 0 },
@@ -70,84 +50,64 @@ const RepositoryCard = (props: RepositoryCardProps) => {
 
   return (
     <CardTransition>
-      <Box onClick={handleClick} cursor="pointer">
-        <VStack
-          rounded="xl"
-          borderWidth="1px"
-          bg={useColorModeValue('white', 'gray.800')}
-          borderColor={useColorModeValue('gray.100', 'gray.700')}
-          _hover={{
-            shadow: 'lg',
-            textDecoration: 'none'
-          }}
-          overflow="hidden"
-          align="start"
-          spacing={0}
-        >
-          <Box position="relative" w="100%">
+      <div onClick={() => setIsOpen(true)} className="cursor-pointer">
+        <div className="flex flex-col items-start overflow-hidden rounded-xl border border-gray-100 bg-white hover:shadow-lg dark:border-gray-700 dark:bg-gray-800">
+          <div className="relative w-full">
             <MotionBox variants={thumbnailVariants}>
               <MotionBox whileHover="hover" variants={imageVariants} transition={transition}>
-                <AspectRatio
-                  ratio={1.85 / 1}
-                  maxW="400px"
-                  w="100%"
-                  borderBottomWidth="1px"
-                  borderColor={useColorModeValue('gray.100', 'gray.700')}
-                >
-                  <LazyImage src={cover} blurHash={blurHash} />
-                </AspectRatio>
+                <div className="relative w-full overflow-hidden border-b border-gray-100 aspect-[1.85/1] dark:border-gray-700">
+                  <div className="absolute inset-0 [&>*]:h-full [&>*]:w-full">
+                    <LazyImage src={cover} blurHash={blurHash} />
+                  </div>
+                </div>
               </MotionBox>
             </MotionBox>
-          </Box>
+          </div>
 
-          <VStack py={2} px={[2, 4]} spacing={1} align="start" w="100%">
-            <Flex justifyContent={'space-between'} width="100%">
-              <Tooltip hasArrow label="Github link" placement="top">
-                <HStack>
-                  <Icon as={FiGithub} boxSize="0.9em" mt={'1px'} />
-                  <Text
-                    fontSize="sm"
-                    noOfLines={1}
-                    fontWeight="600"
-                    align="left"
+          <div className="flex w-full flex-col items-start gap-1 px-2 py-2 sm:px-4">
+            <div className="flex w-full justify-between">
+              <Tooltip label="Github link" placement="top">
+                <div className="flex items-center gap-2">
+                  <FiGithub className="mt-px h-[0.9em] w-[0.9em]" />
+                  <p
+                    className="truncate text-left text-sm font-semibold"
                     onClick={(e) => handleLinkClick(e, url)}
-                    color={linkColor}
+                    style={{ color: linkColor }}
                   >
                     {title}
-                  </Text>
-                </HStack>
+                  </p>
+                </div>
               </Tooltip>
-              <Flex>
-                <Icon as={AiOutlineStar} boxSize="0.9em" mt={'1px'} />
-                <Box as="span" ml="1" fontSize="sm">
-                  {stars}
-                </Box>
-              </Flex>
-            </Flex>
-            <Flex justifyContent={'space-between'} width="100%">
-              <Box>
-                <HStack spacing="1">
-                  {technologies.map((tech, index) => (
-                    <Tag key={index} size="sm" colorScheme={getTagColor(tech)}>
-                      <Text fontSize={['0.55rem', 'inherit', 'inherit']}>{tech}</Text>
-                    </Tag>
-                  ))}
-                </HStack>
-              </Box>
-            </Flex>
-          </VStack>
-        </VStack>
-        <Modal isOpen={isOpen} onClose={onClose} isCentered allowPinchZoom>
-          <ModalOverlay />
-          <ModalContent bg="none" maxW={'28rem'} w="auto">
-            <ModalBody p={0} rounded="lg" overflow="hidden" bg="none">
-              <Center>
-                <Image src={cover} rounded="lg" alt="Repo image" />
-              </Center>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
-      </Box>
+              <div className="flex items-center">
+                <AiOutlineStar className="mt-px h-[0.9em] w-[0.9em]" />
+                <span className="ml-1 text-sm">{stars}</span>
+              </div>
+            </div>
+            <div className="flex w-full justify-between">
+              <div className="flex flex-wrap gap-1">
+                {technologies.map((tech, index) => (
+                  <span
+                    key={index}
+                    className={`${getTagClasses(tech)} rounded-lg px-2 py-0.5 text-[0.55rem] sm:text-sm`}
+                  >
+                    {tech}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+        <Dialog open={isOpen} onClose={() => setIsOpen(false)} className="relative z-[1400]">
+          <DialogBackdrop className="fixed inset-0 bg-black/50" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="w-auto max-w-md overflow-hidden rounded-lg bg-transparent p-0">
+              <div className="flex justify-center">
+                <img src={cover} className="rounded-lg" alt="Repo image" />
+              </div>
+            </DialogPanel>
+          </div>
+        </Dialog>
+      </div>
     </CardTransition>
   );
 };

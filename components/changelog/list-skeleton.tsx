@@ -1,35 +1,34 @@
-import * as React from 'react'
-import { Box, Stack, Skeleton, VStack, HStack, Divider } from '@chakra-ui/react'
+import * as React from 'react';
 
 const ListSkeleton = () => {
-  const list: number[] = [1, 2, 3, 4, 5]
+  const list: number[] = [1, 2, 3, 4, 5];
 
   return (
     <>
       {list.map((id) => {
         return (
-          <VStack spacing={4} align="left" mx={[0, 0, 6]} mt={8} key={id}>
-            <Stack isInline justifyContent="space-between" py={2} px={[2, 3]}>
-              <Box width="100%">
-                <HStack isInline justifyContent="space-between">
-                  <Skeleton height="14px" width="55%" />
-                </HStack>
-                <VStack align="start" marginTop={2}>
-                  <Skeleton height="8px" width="35%" />
-                </VStack>
-                <VStack marginTop={2} ml={7} align="left" spacing={2}>
-                  <Skeleton height="8px" width="40%" />
-                  <Skeleton height="8px" width="40%" />
-                  <Skeleton height="8px" width="40%" />
-                </VStack>
-              </Box>
-            </Stack>
-            <Divider />
-          </VStack>
-        )
+          <div className="mt-8 flex flex-col items-start gap-4 lg:mx-6" key={id}>
+            <div className="flex justify-between px-2 py-2 sm:px-3">
+              <div className="w-full">
+                <div className="flex justify-between">
+                  <div className="h-3.5 w-[55%] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="mt-2 flex flex-col items-start">
+                  <div className="h-2 w-[35%] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+                <div className="ml-7 mt-2 flex flex-col items-start gap-2">
+                  <div className="h-2 w-[40%] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-2 w-[40%] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                  <div className="h-2 w-[40%] animate-pulse rounded bg-gray-200 dark:bg-gray-700" />
+                </div>
+              </div>
+            </div>
+            <hr className="w-full border-gray-200 dark:border-gray-700" />
+          </div>
+        );
       })}
     </>
-  )
-}
+  );
+};
 
-export default ListSkeleton
+export default ListSkeleton;

@@ -1,165 +1,125 @@
-import {
-  VStack,
-  HStack,
-  Heading,
-  Text,
-  Link,
-  Tooltip,
-  useColorModeValue,
-  Flex,
-  Image,
-} from '@chakra-ui/react'
-import NextLink from 'next/link'
-import { CardTransition } from '../shared/animations/page-transitions'
-import { BlogPost } from '../../interfaces/interface'
-import moment from 'moment'
-import { useLinkColor } from 'components/theme'
-import { Tags } from 'components/shared/Tags'
-import { HeartIcon, CommentIcon } from 'components/shared/icons'
-import DisplayText from 'components/shared/icons/DisplayText'
+import NextLink from 'next/link';
+import { CardTransition } from '../shared/animations/page-transitions';
+import { BlogPost } from '../../interfaces/interface';
+import moment from 'moment';
+import { useLinkColor } from 'components/theme';
+import { Tags } from 'components/shared/Tags';
+import { HeartIcon, CommentIcon } from 'components/shared/icons';
+import DisplayText from 'components/shared/icons/DisplayText';
+import { Tooltip } from 'components/shared/tooltip';
 
 interface IProps {
-  post: BlogPost
-  isLoading: boolean
-  postDbLikes: number
+  post: BlogPost;
+  isLoading: boolean;
+  postDbLikes: number;
 }
 
-const PostCard: React.SFC<IProps> = ({ post, isLoading, postDbLikes }) => {
-  const linkColor = useLinkColor()
-  const textColor = useColorModeValue('gray.500', 'gray.200')
-  const devIcon = useColorModeValue(
-    '/assets/images/logos/dev.png',
-    '/assets/images/logos/dev_white.png'
-  )
+const PostCard = ({ post, isLoading, postDbLikes }: IProps) => {
+  const linkColor = useLinkColor();
+  const devIcon = '/assets/images/logos/dev.png';
 
   return (
     <CardTransition>
-      <VStack
-        spacing={1}
-        p={4}
-        _hover={{ shadow: 'md', textDecoration: 'none' }}
-        borderWidth="1px"
-        position="relative"
-        rounded="md"
-        bg={useColorModeValue('white', 'gray.800')}
-        align="left"
-      >
+      <div className="relative flex w-full min-w-0 flex-col items-start gap-2 rounded-md border border-gray-100 bg-white p-4 hover:shadow-md dark:border-gray-700 dark:bg-gray-800">
         {post.url ? (
-          <Tooltip hasArrow label="Dev.to" placement="top">
-            <Image
+          <Tooltip label="Dev.to" placement="top">
+            <img
               src={devIcon}
-              width="2rem"
-              height="2rem"
-              position="absolute"
-              color="#cbd5e0"
-              right="0.5rem"
-              top="-14px"
+              width="32"
+              height="32"
+              alt=""
+              className="absolute right-2 top-[-14px] dark:hidden"
             />
           </Tooltip>
         ) : (
           ''
         )}
+        {post.url ? (
+          <img
+            src="/assets/images/logos/dev_white.png"
+            width="32"
+            height="32"
+            alt=""
+            className="absolute right-2 top-[-14px] hidden dark:block"
+          />
+        ) : null}
 
-        <HStack justifyContent="space-between" isInline>
-          <Heading fontSize="lg" textAlign="left" mt={0}>
-            <NextLink href={`/blog/${post.slug}`} passHref>
-              <Text as={Link} color={linkColor}>
-                {post.title}
-              </Text>
+        <div className="flex w-full min-w-0 items-start justify-between gap-3">
+          <h3 className="mt-0 min-w-0 flex-1 text-left text-lg font-semibold leading-snug">
+            <NextLink href={`/blog/${post.slug}`} style={{ color: linkColor }}>
+              {post.title}
             </NextLink>
-          </Heading>
-          <HStack spacing={2} isInline display={['none', 'flex', 'flex']}>
+          </h3>
+          <div className="hidden shrink-0 items-center gap-2 sm:flex">
             {post.public_reactions_count || postDbLikes ? (
-              <Flex alignItems="center">
+              <div className="flex items-center">
                 <DisplayText
                   isLoading={isLoading}
-                  value={
-                    (Number(post.public_reactions_count) || 0) + postDbLikes
-                  }
+                  value={(Number(post.public_reactions_count) || 0) + postDbLikes}
                 />
                 &nbsp;
                 <HeartIcon />
-              </Flex>
+              </div>
             ) : (
               ''
             )}
             {post.comments_count ? (
-              <Flex alignItems="center">
+              <div className="flex items-center">
                 <DisplayText isLoading={false} value={post.comments_count} />
                 &nbsp;
                 <CommentIcon />
-              </Flex>
+              </div>
             ) : (
               ''
             )}
-          </HStack>
-        </HStack>
-        <HStack
-          spacing={2}
-          isInline
-          justifyContent={['space-between', 'flex-start']}
-        >
-          <Tooltip hasArrow label="Published" placement="top">
-            <Text fontSize="sm" fontWeight="600" color={textColor}>
+          </div>
+        </div>
+        <div className="flex w-full min-w-0 flex-wrap items-center gap-2">
+          <Tooltip label="Published" placement="top">
+            <span className="shrink-0 text-sm font-semibold text-gray-500 dark:text-gray-200">
               {moment(post.published_at).format('Do MMMM YYYY')}
-            </Text>
+            </span>
           </Tooltip>
-          <HStack spacing={2}>
+          <div className="flex gap-2">
             {post.public_reactions_count || postDbLikes ? (
-              <Tooltip hasArrow label="Reactions" placement="top">
-                <Flex alignItems="center" display={['flex', 'none', 'none']}>
+              <Tooltip label="Reactions" placement="top">
+                <div className="flex items-center sm:hidden">
                   <DisplayText
                     isLoading={isLoading}
-                    value={
-                      (Number(post.public_reactions_count) || 0) + postDbLikes
-                    }
+                    value={(Number(post.public_reactions_count) || 0) + postDbLikes}
                   />
                   &nbsp;
                   <HeartIcon />
-                </Flex>
+                </div>
               </Tooltip>
             ) : (
               ''
             )}
             {post.comments_count ? (
-              <Tooltip hasArrow label="Comments" placement="top">
-                <Flex alignItems="center" display={['flex', 'none', 'none']}>
+              <Tooltip label="Comments" placement="top">
+                <div className="flex items-center sm:hidden">
                   <DisplayText isLoading={false} value={post.comments_count} />
                   &nbsp;
                   <CommentIcon />
-                </Flex>
+                </div>
               </Tooltip>
             ) : (
               ''
             )}
-          </HStack>
-          <HStack spacing={1} alignItems="center" display={['none', 'none', 'flex']}>
-            <Tags
-              tags={post.tag_list}
-              interactive={false}
-              tagProps={{
-                padding: '0 3px',
-                size: 'sm',
-              }}
-            />
-          </HStack>
-        </HStack>
-        <HStack spacing={1} alignItems="center" display={['flex', 'flex', 'none']}>
-          <Tags
-            tags={post.tag_list}
-            interactive={false}
-            tagProps={{
-              padding: '0 3px',
-              size: 'sm',
-            }}
-          />
-        </HStack>
-        <Text align="left" fontSize="md" noOfLines={1} color={textColor}>
+          </div>
+          <div className="hidden items-center gap-1 lg:flex">
+            <Tags tags={post.tag_list} interactive={false} />
+          </div>
+        </div>
+        <div className="flex items-center gap-1 lg:hidden">
+          <Tags tags={post.tag_list} interactive={false} />
+        </div>
+        <p className="w-full min-w-0 truncate text-left text-base text-gray-500 dark:text-gray-200">
           {post.description}
-        </Text>
-      </VStack>
+        </p>
+      </div>
     </CardTransition>
-  )
-}
+  );
+};
 
-export default PostCard
+export default PostCard;

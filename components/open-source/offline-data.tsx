@@ -1,17 +1,13 @@
-import * as React from 'react'
-import { SimpleGrid } from '@chakra-ui/react'
-import {
-  PageSlideFade,
-  StaggerChildren,
-} from '../shared/animations/page-transitions'
-import RepositoryCard from './offline-data-card'
-import { MotionBox } from '../shared/animations/motion'
+import * as React from 'react';
+import { PageSlideFade, StaggerChildren } from '../shared/animations/page-transitions';
+import RepositoryCard from './offline-data-card';
+import { MotionBox } from '../shared/animations/motion';
 
 const OfflineData = ({ repositories }) => {
   return (
     <PageSlideFade>
       <StaggerChildren>
-        <SimpleGrid columns={[2, 2, 3]} spacing={4} mt={12}>
+        <div className="mt-12 grid grid-cols-2 gap-4 lg:grid-cols-3">
           {repositories.map((repo, index) => (
             <MotionBox whileHover={{ y: -5 }} key={index}>
               <RepositoryCard
@@ -27,10 +23,10 @@ const OfflineData = ({ repositories }) => {
               />
             </MotionBox>
           ))}
-        </SimpleGrid>
+        </div>
       </StaggerChildren>
     </PageSlideFade>
-  )
-}
+  );
+};
 
-export default OfflineData
+export default OfflineData;

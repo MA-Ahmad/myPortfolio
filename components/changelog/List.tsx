@@ -1,19 +1,4 @@
 import * as React from 'react';
-import {
-  Box,
-  VStack,
-  Heading,
-  Flex,
-  Text,
-  Link,
-  HStack,
-  ListItem,
-  UnorderedList,
-  useColorModeValue,
-  ListIcon,
-  Divider,
-  List
-} from '@chakra-ui/react';
 import NextLink from 'next/link';
 import { CardTransition } from 'components/shared/animations/page-transitions';
 import { MotionBox } from 'components/shared/animations/motion';
@@ -27,11 +12,10 @@ import { useLinkColor } from 'components/theme';
 
 const PrList = ({ prList }) => {
   const linkColor = useLinkColor();
-  const textColor = useColorModeValue('gray.500', 'gray.200');
 
   return (
     <AnimatePresence>
-      <List>
+      <ul>
         {prList?.map((pr, index) => (
           <motion.div
             initial="hidden"
@@ -52,51 +36,49 @@ const PrList = ({ prList }) => {
             custom={index}
             key={pr.html_url}
           >
-            <VStack spacing={4} align="left" mx={[0, 0, 6]} mt={8}>
-              <ListItem>
-                <MotionBox whileHover={{ x: 10 }} key={index} align="left">
+            <div className="mt-8 flex flex-col items-start gap-4 lg:mx-6">
+              <li>
+                <MotionBox whileHover={{ x: 10 }} className="text-left">
                   <CardTransition>
-                    <Heading fontSize="lg" textAlign="left" mt={0} mb={1}>
+                    <h3 className="mb-1 mt-0 text-left text-lg font-semibold">
                       {pr.state === 'closed' && pr.merged_at ? (
-                        <ListIcon as={AiFillCheckCircle} color="green.500" />
+                        <AiFillCheckCircle className="mr-2 inline text-green-500" />
                       ) : (
-                        <ListIcon as={GoIssueReopened} color="gray.500" />
+                        <GoIssueReopened className="mr-2 inline text-gray-500" />
                       )}
-                      <NextLink href={pr.html_url} passHref>
-                        <Text as={Link} color={linkColor} target="_blank">
-                          {pr.title}
-                        </Text>
+                      <NextLink
+                        href={pr.html_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: linkColor }}>
+
+                        {pr.title}
+
                       </NextLink>
-                    </Heading>
-                    <HStack spacing={2} isInline ml={[0, 0, 6]}>
-                      <Text fontSize="sm" fontWeight="600" color={textColor}>
+                    </h3>
+                    <div className="flex items-center gap-2 lg:ml-6">
+                      <span className="text-sm font-semibold text-gray-500 dark:text-gray-200">
                         {moment(pr.created_at).format('Do MMMM YYYY')}
-                      </Text>
-                      <HStack spacing={1} alignItems="center" display={['none', 'none', 'flex']}>
-                        <Flex alignItems="center" flexWrap="wrap" m="-2px">
+                      </span>
+                      <div className="hidden items-center gap-1 lg:flex">
+                        <div className="-m-0.5 flex flex-wrap items-center">
                           {pr.labels.map((label) => (
-                            <Tag
-                              key={label.name}
-                              name={label.name}
-                              m="2px"
-                              padding="0 3px"
-                              size="sm"
-                            />
+                            <Tag key={label.name} name={label.name} />
                           ))}
-                        </Flex>
-                      </HStack>
-                    </HStack>
-                    <Box ml={6} mt={2} className="article">
-                      {pr.body && <UnorderedList>{ReactHtmlParser(pr.body_html)}</UnorderedList>}
-                    </Box>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="article ml-6 mt-2">
+                      {pr.body && <ul>{ReactHtmlParser(pr.body_html)}</ul>}
+                    </div>
                   </CardTransition>
                 </MotionBox>
-              </ListItem>
-              {prList.length - 1 !== index && <Divider />}
-            </VStack>
+              </li>
+              {prList.length - 1 !== index && <hr className="w-full border-gray-200 dark:border-gray-700" />}
+            </div>
           </motion.div>
         ))}
-      </List>
+      </ul>
     </AnimatePresence>
   );
 };

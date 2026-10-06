@@ -1,13 +1,12 @@
-import React from "react";
-import { Box } from "@chakra-ui/react";
+import React from 'react';
+import { cn } from 'lib/cn';
 
-export const Container = props => (
-  <Box
-    textAlign="center"
-    fontSize="xl"
-    w={["90%", "85%", "80%"]}
-    maxW={800}
-    mx="auto"
+export const Container = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn(
+      'mx-auto w-[90%] max-w-[800px] text-center text-xl sm:w-[85%] lg:w-[80%]',
+      className
+    )}
     {...props}
   />
 );

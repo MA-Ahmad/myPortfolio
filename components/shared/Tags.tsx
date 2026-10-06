@@ -1,87 +1,68 @@
-import React from 'react'
-import {
-  Flex,
-  FlexProps,
-  Tag as ChakraTag,
-  TagProps as ChakraTagProps,
-  useColorModeValue,
-  useTheme,
-} from '@chakra-ui/react'
-import { ColorKeys, getTagBackgroundDark } from '../theme/colors'
+import React from 'react';
+import { ColorKeys, getTagBackgroundDark } from '../theme/colors';
+import { cn } from 'lib/cn';
 
-export interface TagProps extends ChakraTagProps {
-  name: string
-  interactive?: boolean
-  colorScheme?: ColorKeys
+export interface TagProps {
+  name: string;
+  interactive?: boolean;
+  colorScheme?: ColorKeys | 'accent';
+  className?: string;
 }
 
-export function useTagStyles(colorScheme: ColorKeys = 'accent') {
-  const theme = useTheme()
-  return {
-    bg: useColorModeValue(
-      `${colorScheme}.100`,
-      colorScheme === 'accent'
-        ? 'var(--colors-accent-tag-bg-dark)'
-        : getTagBackgroundDark(colorScheme, theme)
-    ),
-    color: useColorModeValue(`${colorScheme}.800`, `${colorScheme}.200`),
+export function useTagStyles(colorScheme: ColorKeys | 'accent' = 'accent') {
+  if (colorScheme === 'accent') {
+    return {
+      backgroundColor: 'var(--colors-accent-100)',
+      color: 'var(--colors-accent-800)'
+    };
   }
+
+  return {
+    backgroundColor: getTagBackgroundDark(colorScheme),
+    color: undefined
+  };
 }
 
 export const Tag: React.FC<TagProps> = ({
   colorScheme = 'accent',
   name,
-  interactive = true,
-  ...props
+  className
 }) => {
-  const propsOverride = {
-    size: 'sm',
-    verticalAlign: 'middle',
-    ...useTagStyles(colorScheme),
-  }
-  if (!interactive) {
-    return (
-      <ChakraTag {...props} {...propsOverride}>
-        {name}
-      </ChakraTag>
-    )
-  }
-
   return (
-    // <RouteLink to={`/posts?tag=${name}`}>
-    <ChakraTag {...props} {...propsOverride}>
+    <span
+      className={cn(
+        'm-0.5 inline-flex items-center rounded-lg px-2 py-0.5 align-middle text-sm dark:text-[var(--colors-accent-200)]',
+        colorScheme === 'accent' &&
+          'bg-[var(--colors-accent-100)] text-[var(--colors-accent-800)] dark:bg-[var(--colors-accent-tag-bg-dark)]',
+        className
+      )}
+    >
       {name}
-    </ChakraTag>
-    // </RouteLink>
-  )
-}
+    </span>
+  );
+};
 
-export interface TagsProps extends FlexProps {
-  interactive?: boolean
-  tags?: string[]
-  tagProps?: Partial<TagProps>
+export interface TagsProps {
+  interactive?: boolean;
+  tags?: string[];
+  tagProps?: Partial<TagProps>;
+  className?: string;
 }
 
 export const Tags: React.FC<TagsProps> = ({
   tags,
   interactive = true,
   tagProps = {},
-  ...props
+  className
 }) => {
   if (!tags || tags.length === 0) {
-    return null
+    return null;
   }
   return (
-    <Flex alignItems="center" flexWrap="wrap" m="-2px" {...props}>
+    <div className={cn('-m-0.5 flex flex-wrap items-center', className)}>
       {tags.map((tag) => (
-        <Tag
-          key={tag}
-          name={tag}
-          interactive={interactive}
-          m="2px"
-          {...tagProps}
-        />
+        <Tag key={tag} name={tag} interactive={interactive} {...tagProps} />
       ))}
-    </Flex>
-  )
-}
+    </div>
+  );
+};

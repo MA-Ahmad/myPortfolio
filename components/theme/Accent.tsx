@@ -1,64 +1,54 @@
-import React from 'react'
-import { IconButton, IconButtonProps, Icon } from '@chakra-ui/react'
-import { theme, ColorKeys, useLinkColor, accentKeys } from 'components/theme'
-import { useLocalSetting } from 'components/hooks/useLocalSetting'
-import { css, Global } from '@emotion/react'
-import { getTagBackgroundDark } from 'components/theme/colors'
+import React from 'react';
+import { ColorKeys, accentKeys } from 'components/theme';
+import { useLocalSetting } from 'components/hooks/useLocalSetting';
+import { colorScales, getTagBackgroundDark } from 'components/theme/colors';
 
-export const AccentPickerIcon = ({ ...props }) => {
-  const color = useLinkColor()
+export const AccentPickerIcon = ({ className = '' }: { className?: string }) => {
   return (
-    <Icon viewBox="0 0 200 200" boxSize="1.3em" color={color} {...props}>
+    <svg viewBox="0 0 200 200" className={`h-[1.3em] w-[1.3em] ${className}`} aria-hidden>
       <path
         fill="currentColor"
         d="M 100, 100 m -75, 0 a 75,75 0 1,0 150,0 a 75,75 0 1,0 -150,0"
       />
-    </Icon>
-  )
-}
+    </svg>
+  );
+};
 
-export const AccentPicker: React.FC<IconButtonProps> = ({ ...props }) => {
-  const [key, setAccentKey] = useLocalSetting<ColorKeys>(
-    'accent',
-    'defaultAccent'
-  )
+export const AccentPicker = ({
+  className = '',
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+  const [key, setAccentKey] = useLocalSetting<ColorKeys>('accent', 'defaultAccent');
 
   const update = React.useCallback(() => {
-    let index = accentKeys.indexOf(key)
-    index = (index + 1) % accentKeys.length
-    setAccentKey(accentKeys[index])
-  }, [key])
+    let index = accentKeys.indexOf(key);
+    index = (index + 1) % accentKeys.length;
+    setAccentKey(accentKeys[index]);
+  }, [key, setAccentKey]);
 
   return (
-    <IconButton
-      icon={<AccentPickerIcon />}
-      isRound
+    <button
+      type="button"
+      className={`inline-flex items-center justify-center rounded-full p-1 text-[var(--link-color)] ${className}`}
       onMouseDown={update}
       {...props}
-    />
-  )
-}
+    >
+      <AccentPickerIcon />
+    </button>
+  );
+};
 
 export const AccentGlobal: React.FC = () => {
-  const [accentKey] = useLocalSetting<ColorKeys>('accent', 'defaultAccent')
-  const accent = theme.colors[accentKey]
-  const styles = React.useMemo(
-    () => css`
-      :root {
-        --colors-accent-50: ${accent[50]};
-        --colors-accent-100: ${accent[100]};
-        --colors-accent-200: ${accent[200]};
-        --colors-accent-300: ${accent[300]};
-        --colors-accent-400: ${accent[400]};
-        --colors-accent-500: ${accent[500]};
-        --colors-accent-600: ${accent[600]};
-        --colors-accent-700: ${accent[700]};
-        --colors-accent-800: ${accent[800]};
-        --colors-accent-900: ${accent[900]};
-        --colors-accent-tag-bg-dark: ${getTagBackgroundDark(accentKey, theme)};
-      }
-    `,
-    [accentKey]
-  )
-  return <Global styles={styles} />
-}
+  const [accentKey] = useLocalSetting<ColorKeys>('accent', 'defaultAccent');
+
+  React.useEffect(() => {
+    const accent = colorScales[accentKey] || colorScales.defaultAccent;
+    const root = document.documentElement;
+    ([50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const).forEach((step) => {
+      root.style.setProperty(`--colors-accent-${step}`, accent[step]);
+    });
+    root.style.setProperty('--colors-accent-tag-bg-dark', getTagBackgroundDark(accentKey));
+  }, [accentKey]);
+
+  return null;
+};

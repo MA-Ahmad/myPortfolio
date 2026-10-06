@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { ReactNode } from 'react';
-import { SlideFade } from '@chakra-ui/react';
 import { MotionBox } from './motion';
 
 const staggerVariants = {
@@ -38,7 +37,7 @@ const variants = {
   }
 };
 
-export const easing = [0.6, -0.05, 0.01, 0.99];
+export const easing = [0.6, -0.05, 0.01, 0.99] as const;
 
 export const stagger = {
   animate: {
@@ -86,13 +85,23 @@ export const item = {
 
 interface Props {
   children: ReactNode;
+  className?: string;
 }
 
-export const PageSlideFade = ({ children }: Props) => {
-  return <SlideFade in>{children}</SlideFade>;
+export const PageSlideFade = ({ children, className }: Props) => {
+  return (
+    <MotionBox
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className={className}
+    >
+      {children}
+    </MotionBox>
+  );
 };
 
-export const StaggerChildren = ({ children }: Props) => {
+export const StaggerChildren = ({ children, className }: Props) => {
   return (
     <MotionBox
       animate={{
@@ -100,12 +109,17 @@ export const StaggerChildren = ({ children }: Props) => {
         translateY: 0
       }}
       variants={staggerVariants}
+      className={className}
     >
       {children}
     </MotionBox>
   );
 };
 
-export const CardTransition = ({ children }: Props) => {
-  return <MotionBox variants={variants}>{children}</MotionBox>;
+export const CardTransition = ({ children, className }: Props) => {
+  return (
+    <MotionBox variants={variants} className={className}>
+      {children}
+    </MotionBox>
+  );
 };

@@ -1,37 +1,29 @@
-import React from 'react';
-import { Box, BoxProps, Circle, Flex, useColorModeValue } from '@chakra-ui/react';
+import React, { ReactNode } from 'react';
 import { FiCheckCircle } from 'react-icons/fi';
 import { IconType } from 'react-icons';
+import { cn } from 'lib/cn';
 
-export interface TimelineItemProps extends BoxProps {
+export interface TimelineItemProps {
   icon?: IconType;
-  boxProps?: BoxProps;
   skipTrail?: boolean;
+  children?: ReactNode;
+  className?: string;
 }
 
 export const TimelineItem: React.FC<TimelineItemProps> = ({
-  icon = FiCheckCircle,
-  boxProps = {},
+  icon: Icon = FiCheckCircle,
   skipTrail = false,
   children,
-  ...props
+  className
 }) => {
-  const color = useColorModeValue('gray.700', 'gray.500');
   return (
-    <Flex minH={20} {...props}>
-      <Flex flexDir="column" alignItems="center" mr={4} pos="relative">
-        <Circle
-          size={12}
-          bg={useColorModeValue('gray.600', 'gray.500')}
-          opacity={useColorModeValue(0.07, 0.15)}
-          sx={{}}
-        />
-        <Box as={icon} size="1.25rem" color={color} pos="absolute" left="0.875rem" top="0.875rem" />
-        {!skipTrail && <Box w="1px" flex={1} bg={color} my={1} />}
-      </Flex>
-      <Box pt={3} {...boxProps}>
-        {children}
-      </Box>
-    </Flex>
+    <div className={cn('flex min-h-20', className)}>
+      <div className="relative mr-4 flex flex-col items-center">
+        <div className="h-12 w-12 rounded-full bg-gray-600 opacity-[0.07] dark:bg-gray-500 dark:opacity-[0.15]" />
+        <Icon className="absolute left-[0.875rem] top-[0.875rem] text-gray-700 dark:text-gray-500" size="1.25rem" />
+        {!skipTrail && <div className="my-1 w-px flex-1 bg-gray-700 dark:bg-gray-500" />}
+      </div>
+      <div className="pt-3">{children}</div>
+    </div>
   );
 };
