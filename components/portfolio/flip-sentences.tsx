@@ -21,7 +21,7 @@ export function FlipSentences({
   return (
     <div
       className={cn(
-        'flex items-center font-mono text-sm text-muted-foreground',
+        'flex items-center font-mono text-sm text-balance text-muted-foreground',
         className
       )}
       {...props}

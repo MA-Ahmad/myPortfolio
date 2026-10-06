@@ -12,7 +12,7 @@ export function ProfileHeader() {
         </div>
 
         <HandwrittenNote
-          className="bottom-20 left-full hidden w-36 flex-col items-start xl:flex"
+          className="bottom-20 left-full hidden w-36 flex-col items-start [@media(pointer:fine)_and_(min-width:1280px)]:flex"
           aria-hidden
         >
           <HandwrittenArrow className="-scale-y-100 -rotate-6" />
@@ -31,7 +31,7 @@ export function ProfileHeader() {
       <div className="flex flex-col sm:row-span-2 sm:row-start-1">
         <div className="screen-line-top mt-auto shrink-0 border-r border-line">
           <div className="mx-0.5 my-[3px] flex outline-none">
-            <div className="relative size-32 rounded-full sm:size-40">
+            <div className="relative size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">
               <img
                 className="block size-full rounded-[inherit] object-cover select-none"
                 src={PROFILE.avatar}
@@ -51,7 +51,7 @@ export function ProfileHeader() {
             </h1>
           </div>
 
-          <FlipSentences className="h-12 border-t border-line py-1 pl-4 sm:h-9">
+          <FlipSentences className="h-[3.125rem] border-t border-line py-1 pl-4 sm:h-9">
             {PROFILE.flipSentences}
           </FlipSentences>
         </div>
