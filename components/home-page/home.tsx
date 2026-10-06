@@ -6,6 +6,7 @@ import { GitHubContributions } from 'components/portfolio/github-contributions';
 import { Experiences } from 'components/portfolio/experiences';
 import { Education } from 'components/portfolio/education';
 import { Projects } from 'components/portfolio/projects';
+import { TechStack } from 'components/portfolio/tech-stack';
 import { StripeSeparator } from 'components/portfolio/separator';
 
 export default function Home({
@@ -21,6 +22,8 @@ export default function Home({
         <SocialLinks />
         <Overview />
         <GitHubContributions contributions={contributions} />
+        <StripeSeparator />
+        <TechStack />
         <StripeSeparator />
         <Experiences />
         <StripeSeparator />

@@ -1,6 +1,6 @@
 import { companies, institutes } from 'data/data';
 import { projectsList } from 'data/projectData';
-import { GITHUB_USERNAME } from 'data/constants';
+import { GITHUB_USERNAME, SITE_URL } from 'data/constants';
 
 export const PROFILE = {
   displayName: 'Muhammad Ahmad',
@@ -12,6 +12,7 @@ export const PROFILE = {
     'This is my digital garden.'
   ],
   address: 'Pakistan',
+  website: SITE_URL,
   email: 'muhammad.ahmad8043@gmail.com',
   timeZone: 'Asia/Karachi',
   githubUsername: GITHUB_USERNAME,

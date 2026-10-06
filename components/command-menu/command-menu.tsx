@@ -5,9 +5,11 @@ import { Command } from 'cmdk';
 import {
   BookOpenIcon,
   BriefcaseBusinessIcon,
+  FileTextIcon,
   FolderGit2Icon,
   GraduationCapIcon,
   HomeIcon,
+  LayersIcon,
   MonitorIcon,
   MoonStarIcon,
   SearchIcon,
@@ -29,6 +31,7 @@ const PAGE_LINKS = [
 ];
 
 const SECTION_LINKS = [
+  { title: 'Stack', href: '/#stack', icon: LayersIcon },
   { title: 'Experience', href: '/#experience', icon: BriefcaseBusinessIcon },
   { title: 'Education', href: '/#education', icon: GraduationCapIcon },
   { title: 'Projects', href: '/#projects', icon: FolderGit2Icon }
@@ -155,6 +158,13 @@ export function CommandMenu() {
                       <span>{item.title}</span>
                     </CommandItem>
                   ))}
+                </Command.Group>
+
+                <Command.Group heading="Other" className="mb-2">
+                  <CommandItem onSelect={() => go('/llms.txt', true)}>
+                    <FileTextIcon className="size-4 text-muted-foreground" />
+                    <span>llms.txt</span>
+                  </CommandItem>
                 </Command.Group>
 
                 <Command.Group heading="Theme">

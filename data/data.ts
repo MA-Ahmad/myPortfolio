@@ -184,7 +184,7 @@ export const skillsArray = [
     description: 'Devops',
     link: 'https://aws.amazon.com/',
     type: 'devops',
-    image: 'assets/images/skills/aws.png'
+    image: '/assets/images/skills/aws.png'
   },
   {
     name: 'Digital Ocean',

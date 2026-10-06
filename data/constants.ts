@@ -9,4 +9,5 @@ export const DEVTO_API_URL = 'https://dev.to/api';
 /**
  * SEO constants
  */
-export const SEO_IMAGE = 'https://mahmad.me/logo.png';
+export const SITE_URL = 'https://mahmad.me';
+export const SEO_IMAGE = `${SITE_URL}/logo.png`;
