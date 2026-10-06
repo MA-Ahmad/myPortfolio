@@ -1,31 +1,27 @@
-import Home from 'components/home-page/home'
-import { GetStaticProps, NextPage } from 'next'
-import { BlogPostProps } from 'interfaces/interface'
-import PageLayout from 'components/layouts/pageLayout'
-import { getDevtoPosts } from 'lib/fetchPosts'
+import Home from 'components/home-page/home';
+import { GetStaticProps, NextPage } from 'next';
+import PageLayout from 'components/layouts/pageLayout';
+import { Activity, fetchGitHubContributions } from 'lib/github-contributions';
 
-const Index: NextPage<BlogPostProps> = (props) => {
-  const { posts } = props
+type HomePageProps = {
+  contributions: Activity[];
+};
+
+const Index: NextPage<HomePageProps> = ({ contributions }) => {
   return (
     <PageLayout title="Muhammad Ahmad - Full Stack Developer">
-      <Home posts={posts} />
+      <Home contributions={contributions} />
     </PageLayout>
-  )
-}
+  );
+};
 
-export const getStaticProps: GetStaticProps = async () => {
-  const posts = await getDevtoPosts()
-
-  if (!posts) {
-    return {
-      notFound: true
-    }
-  }
+export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
+  const contributions = await fetchGitHubContributions();
 
   return {
-    props: { posts },
-    revalidate: 1
-  }
-}
+    props: { contributions },
+    revalidate: 86400
+  };
+};
 
-export default Index
+export default Index;

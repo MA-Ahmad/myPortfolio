@@ -33,3 +33,6 @@ yarn-error.log*
 
 # vercel
 .vercel
+
+# local reference clone — do not commit
+/chanhdai.com

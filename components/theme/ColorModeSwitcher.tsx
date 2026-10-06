@@ -31,7 +31,7 @@ export const ColorModeSwitcher = () => {
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 20, opacity: 0 }}
         transition={{ duration: 0.2 }}
-        className="cursor-pointer text-2xl sm:text-3xl"
+        className="cursor-pointer text-xl"
         role="button"
         aria-label="Toggle color mode"
         tabIndex={0}

@@ -18,6 +18,19 @@ module.exports = {
     },
     extend: {
       colors: {
+        background: 'var(--background)',
+        foreground: 'var(--foreground)',
+        border: 'var(--border)',
+        line: 'var(--line)',
+        muted: {
+          DEFAULT: 'var(--muted)',
+          foreground: 'var(--muted-foreground)'
+        },
+        popover: {
+          DEFAULT: 'var(--popover)',
+          foreground: 'var(--popover-foreground)'
+        },
+        info: 'var(--info)',
         gray: {
           50: '#F7FAFC',
           100: '#EDF2F7',
@@ -70,6 +83,8 @@ module.exports = {
           '"Segoe UI Emoji"',
           '"Segoe UI Symbol"',
         ],
+        handwritten: ['Virgil', 'cursive'],
+        mono: ['Cascadia', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'monospace'],
       },
       fontSize: {
         body: ['1.125rem', { lineHeight: '1.75rem' }],

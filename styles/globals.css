@@ -35,21 +35,36 @@
   --link-color: var(--colors-accent-500);
   --link-hover-color: var(--colors-accent-700);
   --link-visited-color: var(--colors-accent-300);
+  --background: #ffffff;
+  --foreground: #18181b;
+  --border: #e4e4e7;
+  --line: color-mix(in oklab, var(--border) 64%, var(--background));
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --info: #38bdf8;
+  --header-height: 3.5rem;
+  --separator-height: 2rem;
 }
 
 .dark {
   --link-color: var(--colors-accent-400);
   --link-hover-color: var(--colors-accent-200);
   --link-visited-color: var(--colors-accent-600);
+  --background: #09090b;
+  --foreground: #fafafa;
+  --border: #27272a;
+  --line: color-mix(in oklab, var(--border) 64%, var(--background));
+  --muted: #27272a;
+  --muted-foreground: #a1a1aa;
+  --popover: #18181b;
+  --popover-foreground: #fafafa;
 }
 
 body {
-  @apply bg-gray-50 font-sans text-body text-gray-700;
+  @apply bg-background font-sans text-body text-foreground antialiased;
   word-spacing: normal;
-}
-
-.dark body {
-  @apply bg-gray-900 text-white/90;
 }
 
 a {
@@ -70,4 +85,128 @@ a:hover {
 .inserted {
   color: #b5f4a5 !important;
   font-style: normal !important;
+}
+
+@layer utilities {
+  .link {
+    @apply underline-offset-[3px] hover:underline;
+  }
+
+  .link-underline {
+    @apply underline underline-offset-[3px] transition-colors;
+    text-decoration-color: color-mix(in oklab, currentColor 30%, transparent);
+  }
+
+  .link-underline:hover {
+    text-decoration-color: currentColor;
+  }
+
+  .screen-line-top {
+    @apply relative;
+  }
+
+  .screen-line-top::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100vw;
+    z-index: -1;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--line);
+  }
+
+  .screen-line-bottom {
+    @apply relative;
+  }
+
+  .screen-line-bottom::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: -100vw;
+    z-index: -1;
+    height: 1px;
+    width: 200vw;
+    background-color: var(--line);
+  }
+
+  .screen-line-top-border::before {
+    background-color: var(--border);
+  }
+
+  .screen-line-bottom-border::after {
+    background-color: var(--border);
+  }
+
+  .screen-dashed-line-top::before {
+    background-color: transparent;
+    background-image: linear-gradient(to right, var(--line) 4px, transparent 2px);
+    background-size: 6px 1px;
+    background-repeat: repeat-x;
+  }
+
+  .screen-dashed-line-bottom::after {
+    background-color: transparent;
+    background-image: linear-gradient(to right, var(--line) 4px, transparent 2px);
+    background-size: 6px 1px;
+    background-repeat: repeat-x;
+  }
+
+  .screen-line-top-none::before {
+    content: none;
+  }
+
+  .screen-line-bottom-none::after {
+    content: none;
+  }
+
+  .diagonal-stripes {
+    background-image: repeating-linear-gradient(
+      315deg,
+      color-mix(in oklab, var(--line) 56%, transparent) 0,
+      color-mix(in oklab, var(--line) 56%, transparent) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
+  }
+
+  .stripe-divider {
+    @apply relative h-8;
+  }
+
+  .stripe-divider::before {
+    content: '';
+    position: absolute;
+    left: -100vw;
+    z-index: -1;
+    height: 100%;
+    width: 200vw;
+    background-image: repeating-linear-gradient(
+      315deg,
+      color-mix(in oklab, var(--line) 56%, transparent) 0,
+      color-mix(in oklab, var(--line) 56%, transparent) 1px,
+      transparent 0,
+      transparent 50%
+    );
+    background-size: 10px 10px;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  [cmdk-group-heading] {
+    @apply px-2 py-1.5 text-xs font-medium text-muted-foreground;
+  }
+
+  [id] {
+    scroll-margin-top: calc(var(--header-height) + 1.5rem);
+  }
 }

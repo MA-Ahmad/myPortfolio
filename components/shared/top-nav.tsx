@@ -11,7 +11,8 @@ import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { AccentPicker } from 'components/theme/Accent';
 import { useLinkColor } from 'components/theme';
-import { MotionBox } from 'components/shared/animations/motion';
+import { CommandMenu } from 'components/command-menu/command-menu';
+import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 
 const webLinks = [
@@ -20,6 +21,7 @@ const webLinks = [
 ];
 
 const mobileLinks = [
+  { name: 'About', path: '/about' },
   { name: 'Projects', path: '/projects' },
   { name: 'Open Source', path: '/open-source' },
   { name: 'Blog', path: '/blog' },
@@ -49,14 +51,13 @@ const NavLink = (props: NavLinkProps) => {
       href={props.path}
       onClick={() => props.onClose()}
       className={cn(
-        'rounded-md px-3 py-1 leading-inherit no-underline hover:bg-gray-200 hover:text-[var(--link-color)] dark:hover:bg-gray-700',
+        'rounded-md px-3 py-1 leading-inherit no-underline hover:bg-muted hover:text-[var(--link-color)]',
         isActive
-          ? 'bg-gray-200 text-[var(--link-color)] dark:bg-gray-700'
+          ? 'bg-muted text-[var(--link-color)]'
           : 'bg-transparent text-inherit'
-      )}>
-
+      )}
+    >
       {props.name}
-
     </NextLink>
   );
 };
@@ -85,13 +86,12 @@ const MenuLink = (props: MenuLinkProps) => {
         href={props.path}
         onClick={() => props.onClose()}
         className={cn(
-          'flex items-center gap-2 px-3 py-2 no-underline hover:bg-gray-200 hover:text-[var(--link-color)] dark:hover:bg-gray-700',
-          isActive && 'bg-gray-200 text-[var(--link-color)] dark:bg-gray-700'
-        )}>
-
+          'flex items-center gap-2 px-3 py-2 no-underline hover:bg-muted hover:text-[var(--link-color)]',
+          isActive && 'bg-muted text-[var(--link-color)]'
+        )}
+      >
         {iconsObj[props.path]}
         <span>{props.name}</span>
-
       </NextLink>
     </MenuItem>
   );
@@ -104,78 +104,74 @@ export default function TopNav() {
   const onClose = () => setIsOpen(false);
 
   return (
-    <div
-      className="fixed z-[55] w-full px-4 shadow-lg backdrop-blur-[5px] backdrop-saturate-150 bg-white/80 dark:bg-[rgba(26,32,44,0.8)]"
-    >
-      <div className="mx-auto flex h-16 w-[90%] max-w-[800px] items-center justify-between sm:w-[85%] lg:w-[80%]">
+    <header className="sticky top-0 z-50 max-w-[100vw] overflow-x-clip bg-background/85 px-2 backdrop-blur-md">
+      <div className="screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] md:max-w-3xl">
         <button
           type="button"
           aria-label="Open Menu"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md md:hidden"
+          className="inline-flex size-8 items-center justify-center rounded-md md:hidden"
           onClick={() => setIsOpen((open) => !open)}
         >
           {isOpen ? <AiOutlineClose /> : <GiHamburgerMenu />}
         </button>
-        <div className="flex items-center gap-8">
-          <MotionBox whileHover={{ scale: 1.2 }} className="rounded-full shadow-md">
-            <NextLink href="/">
 
-              <img
-                alt="Muhammad Ahmad"
-                className="h-8 w-8 rounded-full border-2 object-cover"
-                style={{ borderColor: linkColor }}
-                src="https://avatars2.githubusercontent.com/u/37842853?v=4"
-              />
-
-            </NextLink>
-          </MotionBox>
-          <nav className="hidden items-center gap-3 md:flex">
-            {webLinks.map((link, index) => (
-              <NavLink
-                key={index}
-                name={link.name}
-                path={link.path}
-                onClose={onClose}
-              />
-            ))}
-            <Menu>
-              <MenuButton className="inline-flex items-center rounded-md px-3 py-1 text-[1em] leading-inherit hover:bg-gray-200 hover:text-[var(--link-color)] dark:hover:bg-gray-700">
-                Links
-                <BiChevronDown className="ml-1 h-5 w-5 transition-transform ui-open:rotate-180" />
-              </MenuButton>
-              <MenuItems
-                anchor="bottom start"
-                className="z-[5] mt-2 w-48 rounded-md border-none bg-white shadow-[2px_4px_6px_2px_rgba(160,174,192,0.6)] dark:bg-[rgb(26,32,44)] dark:shadow-[2px_4px_6px_2px_rgba(9,17,28,0.6)]"
-              >
-                {dropdownLinks.map((link, index) => (
-                  <MenuLink
-                    key={index}
-                    path={link.path}
-                    name={link.name}
-                    onClose={onClose}
-                    color={linkColor}
-                    rPath={router.pathname}
-                  />
-                ))}
-              </MenuItems>
-            </Menu>
-          </nav>
-        </div>
-        <div className="flex items-center">
-          <AccentPicker
-            aria-label="Accent Color Picker"
-            className="relative z-[1] mr-2"
+        <NextLink href="/" aria-label="Home" className="shrink-0 no-underline">
+          <img
+            alt={PROFILE.displayName}
+            className="size-8 rounded-full border object-cover"
+            style={{ borderColor: linkColor }}
+            src={PROFILE.avatar}
           />
+        </NextLink>
+
+        <nav className="hidden items-center gap-1 md:flex">
+          {webLinks.map((link) => (
+            <NavLink
+              key={link.path}
+              name={link.name}
+              path={link.path}
+              onClose={onClose}
+            />
+          ))}
+          <Menu>
+            <MenuButton className="inline-flex items-center rounded-md px-3 py-1 text-[1em] leading-inherit hover:bg-muted hover:text-[var(--link-color)]">
+              Links
+              <BiChevronDown className="ml-1 h-5 w-5" />
+            </MenuButton>
+            <MenuItems
+              anchor="bottom start"
+              className="z-[60] mt-2 w-48 rounded-md border border-line bg-popover shadow-lg"
+            >
+              {dropdownLinks.map((link) => (
+                <MenuLink
+                  key={link.path}
+                  path={link.path}
+                  name={link.name}
+                  onClose={onClose}
+                  color={linkColor}
+                  rPath={router.pathname}
+                />
+              ))}
+            </MenuItems>
+          </Menu>
+        </nav>
+
+        <div className="flex-1" />
+
+        <div className="flex items-center gap-1">
+          <CommandMenu />
+          <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
+          <AccentPicker aria-label="Accent Color Picker" className="relative z-[1]" />
           <ColorModeSwitcher />
         </div>
       </div>
 
       {isOpen ? (
-        <div className="block w-full max-w-[800px] pb-4 md:hidden">
-          <nav className="flex flex-col gap-4">
-            {mobileLinks.map((link, index) => (
+        <div className="mx-auto border-x border-line bg-background px-4 pb-4 md:hidden md:max-w-3xl">
+          <nav className="flex flex-col gap-3 pt-3">
+            {mobileLinks.map((link) => (
               <NavLink
-                key={index}
+                key={link.path}
                 name={link.name}
                 path={link.path}
                 onClose={onClose}
@@ -184,6 +180,6 @@ export default function TopNav() {
           </nav>
         </div>
       ) : null}
-    </div>
+    </header>
   );
 }
