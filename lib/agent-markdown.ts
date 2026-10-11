@@ -22,9 +22,7 @@ export function aboutMarkdown() {
   const socials = PROFILE.socials
     .map((item) => `- [${item.title}](${item.href})`)
     .join('\n');
-  const stack = skillsArray
-    .map((item) => `- [${item.name}](${item.link})`)
-    .join('\n');
+  const stack = skillsArray.map((item) => `- ${item.name}`).join('\n');
 
   return `# About
 
@@ -81,7 +79,8 @@ export function projectsMarkdown() {
 ${PROJECTS.map((item) => {
     const skills = `\n\nSkills: ${item.skills.join(', ')}`;
     const description = item.description ? `\n\n${item.description.trim()}` : '';
-    return `## ${item.title}\n\nProject URL: ${item.link}${skills}${description}`;
+    const url = item.link ? `\n\nProject URL: ${item.link}` : '';
+    return `## ${item.title}${url}${skills}${description}`;
   }).join('\n\n')}
 `;
 }

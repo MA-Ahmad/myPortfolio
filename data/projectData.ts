@@ -1,73 +1,44 @@
 export const projectsList = [
   {
+    title: 'Shadow War',
+    site: 'https://shadowwar.com',
+    description:
+      'Twitter-based social engagement reward platform with gamification, missions, and faction leaderboards.',
+    techStack: ['React', 'Ruby on Rails', 'NestJS', 'PostgreSQL', 'Heroku', 'AWS']
+  },
+  {
+    title: 'Spaace',
+    site: 'https://spaace.io',
+    description:
+      'Community-driven NFT marketplace with gamified trading, quests, and real rewards.',
+    techStack: ['React', 'GraphQL', 'NestJS', 'Docker', 'Web3', 'Microservices']
+  },
+  {
+    title: 'Deca Stream',
+    site: 'https://www.deca.stream/',
+    description: 'Cross-chain DeFi swap platform focused on optimal trade routing and execution.',
+    techStack: ['Next.js', 'Node.js', 'Serverless', 'Redis', 'AWS', 'Web3', 'Smart Contracts']
+  },
+  {
+    title: 'RISE Chain',
+    site: 'https://www.riselabs.xyz/',
+    description: 'Layer 1 blockchain explorer and ecosystem tools with live network analytics.',
+    techStack: ['Next.js', 'NestJS', 'PostgreSQL', 'Heroku', 'AWS', 'Blockchain']
+  },
+  {
+    title: 'Alienzone',
+    site: 'https://alienzone-kappa.vercel.app',
+    description:
+      'Gamified DeFi social platform with wallet onboarding, quests, and character progression.',
+    techStack: ['Next.js', 'NestJS', 'Tailwind CSS', 'Privy', 'PostgreSQL', 'Web3', 'AWS']
+  },
+  {
     title: 'Smata',
     imageLight: '/assets/images/projects/cover/smata.png',
     blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
-    site: 'https://smata.com/',
+    site: 'https://www.smata.com/',
     description:
-      'SMATA IS AN ALL-IN-ONE CLOUD-BASED SOLUTION, INTEGRATING MANAGEMENT, COMMUNICATION & ACCOUNTING FUNCTIONS.',
-    techStack: ['Rails', 'React', 'Javascript']
-  },
-  {
-    title: 'Peterpitch',
-    imageLight: '/assets/images/projects/cover/peterpitch.png',
-    blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
-    site: 'https://peterpitch.com/',
-    description:
-      'Peterpitch is a tool that takes the fun in your company seriously and turns your meetings into real performance boosters.',
-    techStack: ['Rails', 'React', 'Javascript']
-  },
-  {
-    title: 'TemplatesKart',
-    imageLight: '/assets/images/projects/cover/templateskart.png',
-    blurHash: 'L4ADc400P*Zi4Tu1y;Qo00pH#YXl',
-    site: 'https://templateskart.com',
-    gitHub: 'https://github.com/MA-Ahmad/templatesKart',
-    description:
-      'TemplatesKart provides the best Chakra UI templates. Production-ready hand crafted Projects and Components built on top of ChakraUI.',
-    techStack: ['React', 'Nextjs', 'ChakraUI']
-  },
-  {
-    title: 'Notch',
-    site: 'https://www.hellonotch.com/',
-    imageLight: '/assets/images/projects/cover/notch.png',
-    blurHash: 'L0Aer?tjH[tPyAayj[j[00ay%xkB',
-    description:
-      'This is a project management website for design and procurement teams. It helps to collaborate and manage all of your floor plans in one place.',
-    techStack: ['Rails', 'Javascript']
-  },
-  {
-    title: 'Workof Ecommerce',
-    imageLight: '/assets/images/projects/cover/workof.png',
-    blurHash: 'L2M5%%0000EN00I:-oIp00kC?^sl',
-    site: 'https://workof.com/',
-    description:
-      'This is an Ecommerce furniture site. It provides a single platform to multiple vendors where they can put their products on sale.',
-    techStack: ['Rails', 'Javascript']
-  },
-  {
-    title: 'Souq of Qatar',
-    imageLight: '/assets/images/projects/cover/souq.png',
-    blurHash: 'L1O^uE0679I00AGT?.H{00y7p2tK',
-    site: 'https://www.souqofqatar.com/',
-    description:
-      'Souq of Qatar is online comparison website. This website is independent of any retailers, it displays the products of all the major stores.',
-    techStack: ['Rails', 'Javascript']
-  },
-  {
-    title: 'GoSave',
-    imageLight: '/assets/images/projects/cover/gosave.png',
-    blurHash: 'L09sWSxdH;s?%6axWAfk00V?%jax',
-    site: 'https://gosavehq.com/',
-    description: `The GoSave app let's you send allowances, assign chores, and approve spending all from your smartphone.`,
-    techStack: ['Rails']
-  },
-  {
-    title: 'Hiredroid',
-    imageLight: '/assets/images/projects/cover/hiredroid.png',
-    blurHash: 'L09sWSxdH;s?%6axWAfk00V?%jax',
-    site: 'https://hiredroid.com',
-    description: `Hiredroid help professionals reach the very pinnacle and stay there. For professionals who aspire perfection, we have made it easy for you by introducing skill-based hiring system, to help you attract the best talent from around the world.`,
-    techStack: ['React', 'Nodejs']
+      'All-in-one strata management software for property, communication, and accounting.',
+    techStack: ['Next.js', 'TypeScript', 'Ruby on Rails']
   }
 ];

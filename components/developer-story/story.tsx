@@ -74,7 +74,6 @@ const MyStory = ({ companies, institutes }) => {
                       <div className="flex flex-col items-start">
                         <h3 className="text-xs font-bold leading-tight sm:text-[13px] lg:text-[15px]">
                           <div>{award.title}</div>
-                          <div className="mt-1">{award.date}</div>
                         </h3>
                       </div>
                     </div>

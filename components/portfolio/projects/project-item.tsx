@@ -23,17 +23,19 @@ export function ProjectItem({ project }: { project: ProjectItemData }) {
             </h3>
           </div>
 
-          <Tooltip label="Open project">
-            <a
-              className="relative z-[1] flex size-6 shrink-0 items-center justify-center text-muted-foreground no-underline hover:text-foreground"
-              href={project.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Open project"
-            >
-              <LinkIcon className="size-4" />
-            </a>
-          </Tooltip>
+          {project.link ? (
+            <Tooltip label="Open project">
+              <a
+                className="relative z-[1] flex size-6 shrink-0 items-center justify-center text-muted-foreground no-underline hover:text-foreground"
+                href={project.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Open project"
+              >
+                <LinkIcon className="size-4" />
+              </a>
+            </Tooltip>
+          ) : null}
 
           <ChevronsUpDownIcon className="size-4 shrink-0 text-muted-foreground" />
         </div>

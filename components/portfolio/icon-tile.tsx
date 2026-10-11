@@ -6,9 +6,10 @@ export function IconTile({ className, ...props }: React.ComponentProps<'div'>) {
       data-slot="icon-tile"
       className={cn(
         'flex size-6 shrink-0 items-center justify-center rounded-md select-none',
-        'border border-muted-foreground/15 bg-muted text-muted-foreground',
-        'ring-1 ring-border/50 ring-offset-1 ring-offset-background',
-        '[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*="size-"])]:size-4',
+        'bg-muted text-muted-foreground',
+        'border border-[color-mix(in_oklab,var(--muted-foreground)_15%,transparent)]',
+        'ring-1 ring-offset-1 ring-[color-mix(in_oklab,var(--border)_50%,transparent)] ring-offset-[var(--background)] dark:ring-[var(--line)]',
+        '[&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0',
         className
       )}
       {...props}

@@ -22,7 +22,10 @@ export function TechStack() {
 
         {Object.entries(groupByCategory(skillsArray)).map(
           ([category, items], index) => {
-            const categoryId = `${ID}-${category}`;
+            const categoryId = `${ID}-${category
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/(^-|-$)/g, '')}`;
 
             return (
               <div
@@ -45,19 +48,14 @@ export function TechStack() {
                 >
                   {items.map((item) => (
                     <li key={item.name} className="flex">
-                      <a
-                        href={item.link}
-                        target="_blank"
-                        rel="noopener"
-                        className="flex h-[var(--badge-height)] items-center justify-center gap-[0.3125rem] rounded-full bg-zinc-50/80 px-2 font-mono text-xs text-foreground ring-1 ring-inset ring-border dark:bg-zinc-900/80"
-                      >
+                      <span className="flex h-[var(--badge-height)] items-center justify-center gap-[0.3125rem] rounded-full bg-zinc-50/80 px-2 font-mono text-xs text-foreground ring-1 ring-inset ring-border dark:bg-zinc-900/80">
                         <img
                           src={item.image}
                           alt=""
                           className="pointer-events-none size-3.5 shrink-0 object-contain"
                         />
                         {item.name}
-                      </a>
+                      </span>
                     </li>
                   ))}
                 </ul>

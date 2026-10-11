@@ -22,19 +22,19 @@ const tabList = [
     icon: AiTwotoneThunderbolt
   },
   {
-    name: 'Web Development',
-    filterName: 'development',
+    name: 'Frontend',
+    filterName: 'Frontend',
     icon: BiDesktop
   },
   {
-    name: 'Web Design',
-    filterName: 'design',
-    icon: GiSpiderWeb
+    name: 'Backend',
+    filterName: 'Backend',
+    icon: AiOutlineCloudServer
   },
   {
-    name: 'Devops',
-    filterName: 'devops',
-    icon: AiOutlineCloudServer
+    name: 'Design',
+    filterName: 'Design',
+    icon: GiSpiderWeb
   }
 ];
 

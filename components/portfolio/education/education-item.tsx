@@ -33,7 +33,7 @@ export function EducationItem({ item }: { item: EducationItemData }) {
             ) : null}
           </div>
 
-          <dl className="flex flex-wrap items-center gap-x-2 pl-9 text-sm text-muted-foreground">
+          <dl className="flex min-w-0 flex-wrap items-center gap-x-2 pl-9 text-sm text-muted-foreground">
             <div>
               <dt className="sr-only">Study period</dt>
               <dd className="flex items-center gap-0.5 tabular-nums">
@@ -49,9 +49,9 @@ export function EducationItem({ item }: { item: EducationItemData }) {
             {item.degree ? (
               <>
                 <VerticalDivider />
-                <div>
+                <div className="min-w-0">
                   <dt className="sr-only">Degree</dt>
-                  <dd>{item.degree}</dd>
+                  <dd className="text-pretty">{item.degree}</dd>
                 </div>
               </>
             ) : null}
@@ -60,7 +60,7 @@ export function EducationItem({ item }: { item: EducationItemData }) {
 
         {item.description ? (
           <DisclosurePanel className="overflow-hidden">
-            <div className="whitespace-pre-wrap pt-3 pb-1 pl-9 text-sm text-muted-foreground">
+            <div className="min-w-0 whitespace-pre-wrap break-words pt-3 pb-1 pl-9 text-sm text-muted-foreground">
               {item.description.replace(/\*\*/g, '')}
             </div>
           </DisclosurePanel>

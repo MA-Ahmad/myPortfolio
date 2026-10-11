@@ -82,7 +82,7 @@ export const EDUCATION: EducationItemData[] = institutes.map((institute) => {
     degree: institute.role,
     period: { start, end },
     description: institute.awards
-      ?.map((award) => `**${award.title}** (${award.date}) — ${award.description}`)
+      ?.map((award) => `**${award.title}** — ${award.description}`)
       .join('\n\n'),
     skills: institute.skills,
     isExpanded: true
@@ -92,7 +92,7 @@ export const EDUCATION: EducationItemData[] = institutes.map((institute) => {
 export type ProjectItemData = {
   id: string;
   title: string;
-  link: string;
+  link?: string;
   skills: string[];
   description?: string;
 };

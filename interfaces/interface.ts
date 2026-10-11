@@ -55,9 +55,9 @@ export interface BlogPostProps {
 
 interface Project {
   title: string;
-  imageLight: string;
-  blurHash: string;
-  site: string;
+  imageLight?: string;
+  blurHash?: string;
+  site?: string;
   description: string;
   techStack: string[];
 }
@@ -69,7 +69,7 @@ export interface ProjectProps {
 interface Skill {
   name: string;
   description: string;
-  link: string;
+  link?: string;
   type: string;
   image: string;
 }

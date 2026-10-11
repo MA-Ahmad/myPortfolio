@@ -61,20 +61,12 @@ export const institutes = [
     logo: '/assets/images/logos/fast.png',
     awards: [
       {
-        title: 'Speed Programming Battle',
-        description: 'Won speed programming battle which held at FAST - NUCES.',
-        date: 'May 1, 2015'
-      },
-      {
         title: 'Silver Medal',
-        description:
-          'This medal was awarded to me by FAST - NUCES for getting a CGPA of 3.9 in 2nd semester.',
-        date: 'May 1, 2014'
+        description: 'This medal was awarded to me by FAST - NUCES for securing 2nd position.'
       },
       {
-        title: 'Speed Programming Battle',
-        description: 'Won speed programming battle which held at FAST - NUCES.',
-        date: 'Nov 1, 2013'
+        title: 'Speed Programming Battles',
+        description: 'Won speed programming battles which held at FAST - NUCES.'
       }
     ]
   }
@@ -82,137 +74,142 @@ export const institutes = [
 
 export const skillsArray = [
   {
-    name: 'Ruby on Rails',
+    name: 'React',
     description: 'Web development',
-    link: 'https://rubyonrails.org/',
-    type: 'development',
-    image: '/assets/images/skills/rails.png'
+    type: 'Frontend',
+    image: '/assets/images/skills/react.png'
   },
   {
     name: 'Nextjs',
     description: 'Web development',
-    link: 'https://nextjs.org/',
-    type: 'development',
+    type: 'Frontend',
     image: '/assets/images/skills/nextjs.png'
   },
   {
-    name: 'React',
+    name: 'Tailwind CSS',
+    description: 'Web design',
+    type: 'Frontend',
+    image: '/assets/images/skills/tailwindcss.svg'
+  },
+  {
+    name: 'shadcn/ui',
+    description: 'UI components',
+    type: 'Frontend',
+    image: '/assets/images/skills/shadcn.svg'
+  },
+  {
+    name: 'Typescript',
     description: 'Web development',
-    link: 'https://reactjs.org/',
-    type: 'development',
-    image: '/assets/images/skills/react.png'
+    type: 'Frontend',
+    image: '/assets/images/skills/typescript.png'
+  },
+  {
+    name: 'Javascript',
+    description: 'Web development',
+    type: 'Frontend',
+    image: '/assets/images/skills/javascript.png'
+  },
+  {
+    name: 'Ruby on Rails',
+    description: 'Web development',
+    type: 'Backend',
+    image: '/assets/images/skills/rails.png'
+  },
+  {
+    name: 'Nestjs',
+    description: 'Backend',
+    type: 'Backend',
+    image: '/assets/images/skills/nestjs.svg'
   },
   {
     name: 'Ruby',
     description: 'Web development, scrapping',
-    link: 'https://www.ruby-lang.org/en/',
-    type: 'development',
+    type: 'Backend',
     image: '/assets/images/skills/ruby.png'
   },
   {
     name: 'Python',
     description: 'Web development, scrapping',
-    link: 'https://www.python.org/',
-    type: 'development',
+    type: 'Backend',
     image: '/assets/images/skills/python.png'
-  },
-  {
-    name: 'Javascript',
-    description: 'Web development',
-    link: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
-    type: 'development',
-    image: '/assets/images/skills/javascript.png'
-  },
-  {
-    name: 'Typescript',
-    description: 'Web development',
-    link: 'https://www.typescriptlang.org/',
-    type: 'development',
-    image: '/assets/images/skills/typescript.png'
-  },
-  {
-    name: 'Html5',
-    description: 'Web layouts',
-    link: 'https://developer.mozilla.org/en-US/docs/Web/Guide/HTML/HTML5',
-    type: 'development',
-    image: '/assets/images/skills/html-5.png'
-  },
-  {
-    name: 'Css3',
-    description: 'Web design',
-    link: 'https://developer.mozilla.org/en-US/docs/Web/CSS',
-    type: 'design',
-    image: '/assets/images/skills/css3.png'
-  },
-  {
-    name: 'Bootstrap',
-    description: 'Web design',
-    link: 'https://getbootstrap.com/',
-    type: 'design',
-    image: '/assets/images/skills/bootstrap.png'
   },
   {
     name: 'Postgres',
     description: 'Database',
-    link: 'https://www.postgresql.org/',
-    type: 'database',
+    type: 'Database',
     image: '/assets/images/skills/postgresql.png'
   },
   {
     name: 'Mysql',
     description: 'Database',
-    link: 'https://www.mysql.com/',
-    type: 'database',
+    type: 'Database',
     image: '/assets/images/skills/mysql.png'
   },
   {
     name: 'Redis',
     description: 'Database',
-    link: 'https://redis.io/',
-    type: 'database',
+    type: 'Database',
     image: '/assets/images/skills/redis.png'
+  },
+  {
+    name: 'Cursor',
+    description: 'AI code editor',
+    type: 'Workflow & AI',
+    image: '/assets/images/skills/cursor.svg'
+  },
+  {
+    name: 'Claude',
+    description: 'AI assistant',
+    type: 'Workflow & AI',
+    image: '/assets/images/skills/claude.svg'
+  },
+  {
+    name: 'ChatGPT',
+    description: 'AI assistant',
+    type: 'Workflow & AI',
+    image: '/assets/images/skills/chatgpt.svg'
+  },
+  {
+    name: 'Vercel',
+    description: 'Deployment',
+    type: 'Workflow & AI',
+    image: '/assets/images/skills/vercel.svg'
+  },
+  {
+    name: 'Figma',
+    description: 'Collaborative Design',
+    type: 'Design',
+    image: '/assets/images/skills/figma.png'
+  },
+  {
+    name: 'Photoshop',
+    description: 'Image editing',
+    type: 'Design',
+    image: '/assets/images/skills/photoshop.svg'
   },
   {
     name: 'Heroku',
     description: 'Devops',
-    link: 'https://www.heroku.com/',
-    type: 'devops',
+    type: 'DevOps',
     image: '/assets/images/skills/heroku.png'
   },
   {
     name: 'AWS',
     description: 'Devops',
-    link: 'https://aws.amazon.com/',
-    type: 'devops',
+    type: 'DevOps',
     image: '/assets/images/skills/aws.png'
   },
   {
     name: 'Digital Ocean',
     description: 'Devops',
-    link: 'https://www.digitalocean.com/',
-    type: 'devops',
+    type: 'DevOps',
     image: '/assets/images/skills/digital-ocean.png'
   },
   {
     name: 'Nginx',
     description: 'Web server',
-    link: 'https://www.nginx.com/',
-    type: 'devops',
+    type: 'DevOps',
     image: '/assets/images/skills/nginx.png'
-  },
-  {
-    name: 'Visual Studio Code',
-    description: 'Code editor of choice',
-    link: 'https://code.visualstudio.com/',
-    type: 'development',
-    image: '/assets/images/skills/vscode.png'
-  },
-  {
-    name: 'Figma',
-    description: 'Collaborative Design',
-    link: 'https://www.figma.com/',
-    type: 'design',
-    image: '/assets/images/skills/figma.png'
   }
 ];
 

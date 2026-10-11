@@ -31,7 +31,7 @@ export function Projects() {
       </ul>
 
       {PROJECTS.length > MAX ? (
-        <div className="screen-line-top flex items-center justify-center py-4">
+        <div className="screen-line-top -mt-px flex items-center justify-center py-4">
           <button
             type="button"
             onClick={() => setOpen((value) => !value)}
