@@ -1,159 +1,91 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
 import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import html from 'remark-html';
 import { remark } from 'remark';
 import prism from 'remark-prism';
-import { getTagClasses } from '../../components/theme';
-import dayjs from 'dayjs';
-import localizedFormat from 'dayjs/plugin/localizedFormat';
+import { format } from 'date-fns';
+import { ArrowLeftIcon } from 'lucide-react';
+import NextLink from 'next/link';
 import { BlogPost } from '../../interfaces/interface';
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
-import { MotionBox } from 'components/shared/animations/motion';
-import DevToCallToAction from 'components/shared/DevToCallToAction';
-import { fadeInUp, stagger } from 'components/shared/animations/page-transitions';
-import { motion, AnimatePresence } from 'framer-motion';
-import { usePostData } from 'lib/usePostData';
-import { LikeButton } from 'components/shared/LikeButton';
-import { useLinkColor } from 'components/theme';
 import { getDevtoPosts } from 'lib/fetchPosts';
-import { HeartIcon, CommentIcon, EyeIcon } from 'components/shared/icons';
-import DisplayText from 'components/shared/icons/DisplayText';
-
-dayjs.extend(localizedFormat);
 
 export interface AllBlogProps {
   blogDetails: BlogPost;
   articleContent: string;
 }
 
-const POST_VIEW_LIMIT = 100;
-
 const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) => {
-  const { totalPostLikes, totalPostViews, isLoading, incrementViews } = usePostData(
-    blogDetails?.slug,
-    blogDetails?.title
-  );
-  const [showLikeButton, setShowLikeButton] = useState(false);
-  const [coverFailed, setCoverFailed] = useState(false);
-  const linkColor = useLinkColor();
+  const [coverFailed, setCoverFailed] = React.useState(false);
 
-  useEffect(() => {
-    incrementViews();
-    window.addEventListener('scroll', listenToScroll);
-    return () => window.removeEventListener('scroll', listenToScroll);
-  }, []);
+  if (!blogDetails) {
+    return null;
+  }
 
-  const listenToScroll = () => {
-    if (window.scrollY > 150) setShowLikeButton(true);
-    else setShowLikeButton(false);
-  };
+  const updatedAt = blogDetails.edited_at || blogDetails.published_at;
 
   return (
     <PageLayout
-      title={blogDetails?.title}
-      description={blogDetails?.description}
-      image={blogDetails?.cover_image}
-      keywords={blogDetails?.tags.join(', ')}
+      title={blogDetails.title}
+      description={blogDetails.description}
+      image={blogDetails.cover_image}
+      keywords={blogDetails.tags?.join(', ')}
+      animate={false}
     >
-      <AnimatePresence>
-        {showLikeButton && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed right-[10%] top-1/2 hidden xl:block"
-          >
-            <LikeButton
-              id={blogDetails?.slug}
-              title={blogDetails?.title}
-              devToLikes={blogDetails?.public_reactions_count}
-              linkColor={linkColor}
+      <div className="h-12" />
+
+      <div className="screen-line-bottom h-px" />
+
+      <div className="flex items-center justify-between p-2 pl-4">
+        <NextLink
+          href="/blog"
+          className="nav-link inline-flex h-7 items-center gap-2 text-sm font-medium tracking-wider text-muted-foreground no-underline hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-4" />
+          Blog
+        </NextLink>
+      </div>
+
+      <div className="screen-line-top screen-line-bottom py-px">
+        <div className="h-4" />
+      </div>
+
+      <h1 className="screen-line-bottom px-4 text-4xl font-medium tracking-tight text-balance">
+        {blogDetails.title}
+      </h1>
+
+      <div className="px-4 pt-8">
+        {blogDetails.description ? (
+          <p className="text-muted-foreground">{blogDetails.description}</p>
+        ) : null}
+
+        {blogDetails.cover_image && !coverFailed ? (
+          <div className="relative my-5 select-none">
+            <img
+              className="aspect-[1200/630] w-full rounded-xl object-cover"
+              src={blogDetails.cover_image}
+              alt={blogDetails.title}
+              onError={() => setCoverFailed(true)}
             />
-          </motion.div>
-        )}
-      </AnimatePresence>
-      <motion.div initial="initial" animate="animate" variants={stagger}>
-        <div className="mb-5 flex flex-col items-start text-left">
-          {blogDetails?.cover_image && (
-            <MotionBox whileHover={{ scale: 1.02 }}>
-              <div className="relative w-full overflow-hidden rounded-xl" style={{ aspectRatio: '1.85 / 1' }}>
-                {coverFailed ? (
-                  <div className="h-full w-full animate-pulse bg-gray-200 dark:bg-gray-700" />
-                ) : (
-                  <img
-                    src={blogDetails?.cover_image}
-                    alt=""
-                    className="absolute h-full w-full rounded-xl border-2 border-transparent object-cover dark:border-gray-700"
-                    onError={() => setCoverFailed(true)}
-                  />
-                )}
-              </div>
-            </MotionBox>
-          )}
-          <motion.div variants={fadeInUp}>
-            <h1 className="mb-2 mt-2 text-3xl font-bold">{blogDetails?.title}</h1>
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <div className="flex flex-col justify-between sm:flex-row">
-              <div className="flex flex-wrap items-center gap-1">
-                {blogDetails?.tags.map((tag) => (
-                  <span key={tag} className={`${getTagClasses(tag)} rounded-lg px-1 py-0.5 text-sm`}>
-                    {tag}
-                  </span>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 pt-2 sm:pt-0">
-                {blogDetails?.public_reactions_count || totalPostLikes ? (
-                  <div className="flex items-center">
-                    <DisplayText
-                      isLoading={isLoading}
-                      value={(Number(blogDetails.public_reactions_count) || 0) + totalPostLikes}
-                    />
-                    &nbsp;
-                    <HeartIcon />
-                  </div>
-                ) : (
-                  ''
-                )}
-                {blogDetails?.comments_count ? (
-                  <div className="flex items-center">
-                    <DisplayText isLoading={false} value={blogDetails.comments_count} />
-                    &nbsp;
-                    <CommentIcon />
-                  </div>
-                ) : (
-                  ''
-                )}
-                {blogDetails && totalPostViews > POST_VIEW_LIMIT ? (
-                  <div className="flex items-center">
-                    <DisplayText isLoading={isLoading} value={totalPostViews} />
-                    &nbsp;
-                    <EyeIcon />
-                  </div>
-                ) : (
-                  ''
-                )}
-              </div>
-            </div>
-          </motion.div>
-          <motion.div variants={fadeInUp}>
-            <div className="flex items-center justify-center gap-2 sm:justify-start">
-              <span className="text-xs">Published on</span>
-              <span className="text-xs font-bold">{dayjs(blogDetails?.published_at).format('LL')}</span>
-            </div>
-          </motion.div>
-        </div>
-        <motion.div variants={fadeInUp}>
-          <div className="article">
-            <div dangerouslySetInnerHTML={{ __html: articleContent }} />
+            <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-black/15 dark:ring-white/15" />
           </div>
-        </motion.div>
-        {blogDetails?.url ? <DevToCallToAction href={blogDetails.url} /> : ''}
-      </motion.div>
+        ) : null}
+
+        <div className="article">
+          <div dangerouslySetInnerHTML={{ __html: articleContent }} />
+        </div>
+
+        {updatedAt ? (
+          <p className="mt-8 text-sm text-muted-foreground">
+            Last updated on {format(new Date(updatedAt), 'MMMM d, yyyy')}
+          </p>
+        ) : null}
+      </div>
+
+      <div className="screen-line-top h-4" />
     </PageLayout>
   );
 };
@@ -211,6 +143,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
       frontmatter['comments_count'] = devtoPost?.comments_count;
       frontmatter['public_reactions_count'] = devtoPost?.public_reactions_count;
       frontmatter['url'] = devtoPost?.url;
+      if (!frontmatter.cover_image) {
+        frontmatter['cover_image'] = devtoPost?.cover_image;
+      }
     }
     blogObj = frontmatter;
 

@@ -26,6 +26,7 @@ module.exports = {
           DEFAULT: 'var(--muted)',
           foreground: 'var(--muted-foreground)'
         },
+        'accent-muted': 'var(--accent-muted)',
         popover: {
           DEFAULT: 'var(--popover)',
           foreground: 'var(--popover-foreground)'

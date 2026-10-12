@@ -8,6 +8,7 @@ type Props = {
   description?: string
   keywords?: string
   image?: string
+  animate?: boolean
 }
 
 const variants = {
@@ -22,6 +23,7 @@ const PageLayout = ({
   description,
   keywords,
   image,
+  animate = true,
 }: Props): JSX.Element => (
   <Fragment>
     <Meta
@@ -30,15 +32,19 @@ const PageLayout = ({
       keywords={keywords}
       image={image}
     />
-    <motion.main
-      initial="hidden"
-      animate="enter"
-      exit="exit"
-      variants={variants}
-      transition={{ type: 'tween', ease: 'linear' }}
-    >
-      {children}
-    </motion.main>
+    {animate ? (
+      <motion.main
+        initial="hidden"
+        animate="enter"
+        exit="exit"
+        variants={variants}
+        transition={{ type: 'tween', ease: 'linear' }}
+      >
+        {children}
+      </motion.main>
+    ) : (
+      <main>{children}</main>
+    )}
   </Fragment>
 )
 

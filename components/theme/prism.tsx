@@ -45,66 +45,6 @@ const theme = {
 }
 
 const prismBaseTheme = css`
-  .article {
-    text-align: left;
-  }
-
-  .article img {
-    border: 2px solid;
-    border-color: ${theme.colors.gray[700]};
-  }
-
-  .article h1 {
-    font-family: 'Noto Serif', serif;
-    padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes['4xl']};
-    font-weight: ${theme.fontWeights.bold};
-  }
-
-  .article h2 {
-    font-family: 'Noto Serif', serif;
-    padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes['3xl']};
-    font-weight: ${theme.fontWeights.bold};
-  }
-
-  .article h3 {
-    font-family: 'Noto Serif', serif;
-    padding: ${theme.space[4]} 0 ${theme.space[2]};
-    font-size: ${theme.fontSizes['2xl']};
-    font-weight: ${theme.fontWeights.bold};
-  }
-
-  .article ul {
-    padding-left: 20px;
-  }
-
-  .article p,
-  .article ul,
-  .article ol {
-    font-family: 'Inter', sans-serif;
-    margin: ${theme.space[4]} 0 ${theme.space[4]};
-    line-height: ${theme.lineHeights.tall};
-    font-size: 1rem;
-  }
-
-  .article p {
-    display: inline;
-  }
-
-  .article a:hover {
-    text-decoration: underline;
-  }
-
-  .article a.chakra-link {
-    text-decoration: none;
-  }
-
-  .article img {
-    border-radius: ${theme.radii.md};
-    margin-top: 15px;
-  }
-
   .article #table-of-contents + ul,
   .article ol {
     list-style-type: decimal;
@@ -120,12 +60,6 @@ const prismBaseTheme = css`
     content: '#';
     margin-right: ${theme.space[2]};
     display: inline-flex;
-  }
-
-  .article blockquote > p {
-    padding: ${theme.space[2]};
-    margin: 0;
-    border-left: 3px solid;
   }
 
   code[class*='language-'],
@@ -374,17 +308,8 @@ export const prismLightTheme = css`
     border: 1px solid ${theme.colors.gray[700]};
   }
 
-  .article a:not(.chakra-link) {
-    color: ${theme.colors.blue[300]};
-  }
-
   :not(pre) > code {
     color: ${theme.colors.purple[300]};
-  }
-
-  .article blockquote > p {
-    line-height: 2;
-    border-color: ${theme.colors.gray[500]};
   }
 `
 
@@ -477,17 +402,8 @@ export const prismDarkTheme = css`
     border: 1px solid ${theme.colors.gray[700]};
   }
 
-  .article a:not(.chakra-link) {
-    color: ${theme.colors.blue[300]};
-  }
-
   :not(pre) > code {
     color: ${theme.colors.purple[300]};
-  }
-
-  .article blockquote > p {
-    line-height: 2;
-    border-color: ${theme.colors.gray[500]};
   }
 `
 

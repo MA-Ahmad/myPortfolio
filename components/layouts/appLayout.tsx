@@ -6,6 +6,8 @@ import { cn } from 'lib/cn';
 function AppLayout(props: { children: React.ReactNode }) {
   const router = useRouter();
   const isHome = router.pathname === '/';
+  const isBlog =
+    router.pathname === '/blog' || router.pathname === '/blog/[slug]';
 
   return (
     <div className="group/layout relative isolate min-h-screen bg-background text-foreground">
@@ -13,6 +15,10 @@ function AppLayout(props: { children: React.ReactNode }) {
       <main className="max-w-[100vw] overflow-x-clip px-2">
         {isHome ? (
           props.children
+        ) : isBlog ? (
+          <div className="mx-auto border-x border-line md:max-w-3xl">
+            {props.children}
+          </div>
         ) : (
           <div className="mx-auto border-x border-line pt-4 md:max-w-3xl">
             <div className="px-4 pb-16 pt-8 text-left">{props.children}</div>

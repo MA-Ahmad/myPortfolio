@@ -10,24 +10,16 @@ import {
   GraduationCapIcon,
   HomeIcon,
   LayersIcon,
-  MonitorIcon,
   MoonStarIcon,
   SearchIcon,
-  SunMediumIcon,
-  UserIcon
+  SunMediumIcon
 } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
-  { title: 'About', href: '/about', shortcut: 'GA', icon: UserIcon },
-  { title: 'Blog', href: '/blog', shortcut: 'GL', icon: BookOpenIcon },
-  { title: 'Projects', href: '/projects', shortcut: 'GP', icon: FolderGit2Icon },
-  { title: 'Open Source', href: '/open-source', icon: FolderGit2Icon },
-  { title: 'Tech Stack', href: '/tech-stack', icon: MonitorIcon },
-  { title: 'Achievements', href: '/achievements', icon: BriefcaseBusinessIcon },
-  { title: 'Changelog', href: '/changelog', icon: BookOpenIcon }
+  { title: 'Blog', href: '/blog', shortcut: 'GL', icon: BookOpenIcon }
 ];
 
 const SECTION_LINKS = [
