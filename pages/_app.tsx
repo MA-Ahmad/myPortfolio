@@ -8,7 +8,6 @@ import { PrismGlobal } from 'components/theme/prism';
 import { useRouter } from 'next/router';
 import * as gtag from 'lib/gtag';
 import { AnimatePresence } from 'framer-motion';
-import { AccentGlobal } from 'components/theme/Accent';
 import { Analytics } from '@vercel/analytics/react';
 import { cn } from 'lib/cn';
 import '../styles/globals.css';
@@ -46,7 +45,6 @@ function MyApp({ Component, pageProps }: AppProps) {
       `}</style>
       <div className={cn(inter.className, inter.variable)}>
         <TooltipProvider delayDuration={200}>
-          <AccentGlobal />
           <PrismGlobal />
           <Analytics />
           <AppLayout>

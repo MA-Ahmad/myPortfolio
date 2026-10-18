@@ -4,7 +4,6 @@ import { AiOutlineClose } from 'react-icons/ai';
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { AccentPicker } from 'components/theme/Accent';
 import { useLinkColor } from 'components/theme';
 import { CommandMenu } from 'components/command-menu/command-menu';
 import { PROFILE } from 'data/profile';
@@ -81,7 +80,6 @@ export default function TopNav() {
         <div className="flex items-center gap-1">
           <CommandMenu />
           <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
-          <AccentPicker aria-label="Accent Color Picker" className="relative z-[1]" />
           <ColorModeSwitcher />
         </div>
       </div>

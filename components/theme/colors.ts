@@ -181,15 +181,3 @@ export const colors = {
 };
 
 export type ColorKeys = keyof typeof colorScales;
-
-export const accentKeys: ColorKeys[] = [
-  'defaultAccent',
-  'green',
-  'cyan',
-  'orange',
-  'blue',
-  'pink',
-  'teal',
-  'purple',
-  'red'
-];

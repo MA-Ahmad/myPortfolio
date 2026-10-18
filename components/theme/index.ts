@@ -1,4 +1,4 @@
-export { useLinkColor, useHoverLinkColor, accentKeys } from './colors'
+export { useLinkColor, useHoverLinkColor } from './colors'
 export type { ColorKeys } from './colors'
 
 export const getTagColor = (type) => {
