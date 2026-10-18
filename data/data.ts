@@ -223,9 +223,5 @@ export const newContent = [
     link: '/blog/templateskart-free-chakra-ui-components-and-projects',
     text: 'TemplatesKart | Free Chakra UI Components and Projects',
     showNewTag: false
-  },
-  {
-    link: '/blog/started-2022-by-updating-portfolio-website-1jde-temp-slug-4553258',
-    text: 'Started 2022 by updating portfolio website'
   }
 ];

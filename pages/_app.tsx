@@ -39,6 +39,11 @@ function MyApp({ Component, pageProps }: AppProps) {
       enableSystem={false}
       storageKey="chakra-ui-color-mode"
     >
+      <style jsx global>{`
+        :root {
+          --font-inter: ${inter.style.fontFamily};
+        }
+      `}</style>
       <div className={cn(inter.className, inter.variable)}>
         <TooltipProvider delayDuration={200}>
           <AccentGlobal />

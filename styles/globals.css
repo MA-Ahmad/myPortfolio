@@ -100,7 +100,7 @@ a.nav-link:hover {
   }
 
   .link-underline {
-    @apply underline underline-offset-[3px] transition-colors;
+    @apply underline decoration-1 underline-offset-[3px] transition-colors;
     text-decoration-color: color-mix(in oklab, currentColor 30%, transparent);
   }
 
@@ -299,4 +299,137 @@ a.nav-link:hover {
   margin: 0;
   border: 0;
   padding: 0;
+}
+
+/* Port of shadcn/tailwind.css `scroll-fade-x` (shadcn 4.12.0, spacing = 0.25rem) */
+@property --scroll-fade-s {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --scroll-fade-e {
+  syntax: '<length-percentage>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --scroll-fade-mask {
+  syntax: '*';
+  inherits: false;
+}
+
+@keyframes scroll-fade-reveal-s {
+  from {
+    --scroll-fade-s: 0px;
+  }
+  to {
+    --scroll-fade-s: var(--_scroll-fade-size-s, var(--scroll-fade-size, min(12%, 2.5rem)));
+  }
+}
+
+@keyframes scroll-fade-reveal-e {
+  from {
+    --scroll-fade-e: var(--_scroll-fade-size-e, var(--scroll-fade-size, min(12%, 2.5rem)));
+  }
+  to {
+    --scroll-fade-e: 0px;
+  }
+}
+
+.scroll-fade-x {
+  --_scroll-fade-size-s: var(--scroll-fade-s-size, var(--scroll-fade-size, min(12%, 2.5rem)));
+  --_scroll-fade-size-e: var(--scroll-fade-e-size, var(--scroll-fade-size, min(12%, 2.5rem)));
+  --scroll-fade-inline: linear-gradient(
+    to right,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+  -webkit-mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  mask-image: var(--scroll-fade-mask, var(--scroll-fade-inline));
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+.scroll-fade-x:where([dir='rtl'], [dir='rtl'] *) {
+  --scroll-fade-inline: linear-gradient(
+    to left,
+    transparent 0,
+    #000 var(--scroll-fade-s, 0px),
+    #000 calc(100% - var(--scroll-fade-e, 0px)),
+    transparent 100%
+  );
+}
+
+@supports (animation-timeline: scroll()) {
+  .scroll-fade-x {
+    animation:
+      scroll-fade-reveal-s 1ms ease-in-out,
+      scroll-fade-reveal-e 1ms ease-in-out;
+    animation-timeline: scroll(self inline), scroll(self inline);
+    animation-range:
+      0 var(--scroll-fade-reveal, 6rem),
+      calc(100% - var(--scroll-fade-reveal, 6rem)) 100%;
+    animation-fill-mode: both;
+  }
+}
+
+@supports not (animation-timeline: scroll()) {
+  .scroll-fade-x {
+    --scroll-fade-s: var(--_scroll-fade-size-s);
+    --scroll-fade-e: var(--_scroll-fade-size-e);
+  }
+}
+
+/* Port of tw-animate-css `enter`/`exit` used by components/ui/tooltip.tsx */
+@keyframes enter {
+  from {
+    opacity: var(--tw-enter-opacity, 1);
+    transform: translate3d(var(--tw-enter-translate-x, 0), var(--tw-enter-translate-y, 0), 0)
+      scale3d(var(--tw-enter-scale, 1), var(--tw-enter-scale, 1), var(--tw-enter-scale, 1));
+  }
+}
+
+@keyframes exit {
+  to {
+    opacity: var(--tw-exit-opacity, 1);
+    transform: translate3d(var(--tw-exit-translate-x, 0), var(--tw-exit-translate-y, 0), 0)
+      scale3d(var(--tw-exit-scale, 1), var(--tw-exit-scale, 1), var(--tw-exit-scale, 1));
+  }
+}
+
+.tooltip-popup[data-side='top'] {
+  --tw-enter-translate-y: 0.5rem;
+}
+
+.tooltip-popup[data-side='bottom'] {
+  --tw-enter-translate-y: -0.5rem;
+}
+
+.tooltip-popup[data-side='left'] {
+  --tw-enter-translate-x: 0.5rem;
+}
+
+.tooltip-popup[data-side='right'] {
+  --tw-enter-translate-x: -0.5rem;
+}
+
+.tooltip-popup[data-open] {
+  --tw-enter-opacity: 0;
+  --tw-enter-scale: 0.95;
+  animation: enter var(--tw-duration, 0.15s) ease;
+}
+
+.tooltip-popup[data-closed] {
+  --tw-exit-opacity: 0;
+  --tw-exit-scale: 0.95;
+  animation: exit var(--tw-duration, 0.15s) ease;
+}
+
+.tooltip-popup[data-instant] {
+  --tw-duration: 0s;
 }

@@ -5,12 +5,12 @@ import matter from 'gray-matter';
 import html from 'remark-html';
 import { remark } from 'remark';
 import prism from 'remark-prism';
-import { format } from 'date-fns';
 import { ArrowLeftIcon } from 'lucide-react';
 import NextLink from 'next/link';
 import { BlogPost } from '../../interfaces/interface';
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
+import { getLatestBlogPosts } from 'lib/blogPosts';
 import { getDevtoPosts } from 'lib/fetchPosts';
 
 export interface AllBlogProps {
@@ -24,8 +24,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
   if (!blogDetails) {
     return null;
   }
-
-  const updatedAt = blogDetails.edited_at || blogDetails.published_at;
 
   return (
     <PageLayout
@@ -77,12 +75,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
         <div className="article">
           <div dangerouslySetInnerHTML={{ __html: articleContent }} />
         </div>
-
-        {updatedAt ? (
-          <p className="mt-8 text-sm text-muted-foreground">
-            Last updated on {format(new Date(updatedAt), 'MMMM d, yyyy')}
-          </p>
-        ) : null}
       </div>
 
       <div className="screen-line-top h-4" />
@@ -92,20 +84,12 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
 
 const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
-  let devData: BlogPost[] = await getDevtoPosts();
-  devData = devData.filter((data) => data.canonical_url.includes('dev.to'));
-  const devtoPaths = devData.map((data) => ({
-    params: { slug: data?.slug }
-  }));
-
-  const localPaths = fs.readdirSync(path.join(root, 'data', 'posts')).map((p) => ({
-    params: {
-      slug: p.replace(/\.mdx/, '')
-    }
-  }));
+  const latestPosts = await getLatestBlogPosts();
 
   return {
-    paths: [...devtoPaths, ...localPaths],
+    paths: latestPosts.map((post) => ({
+      params: { slug: post.slug }
+    })),
     fallback: true
   };
 };
@@ -116,6 +100,15 @@ const markdownToHtml = async (markdown: string) => {
 };
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const latestPosts = await getLatestBlogPosts();
+  const isLatestPost = latestPosts.some((post) => post.slug === params?.slug);
+
+  if (!isLatestPost) {
+    return {
+      notFound: true
+    };
+  }
+
   const devData: BlogPost[] = await getDevtoPosts();
 
   const selectedBlog = devData.filter(

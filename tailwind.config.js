@@ -1,3 +1,10 @@
+// Tailwind v3 can't apply opacity modifiers (e.g. `bg-muted/60`) to plain
+// `var(--x)` colors; emit the same color-mix() that Tailwind v4 generates.
+const cssVar = (name) => ({ opacityValue }) =>
+  opacityValue === undefined
+    ? `var(${name})`
+    : `color-mix(in oklab, var(${name}) calc(${opacityValue} * 100%), transparent)`;
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: 'selector',
@@ -18,20 +25,20 @@ module.exports = {
     },
     extend: {
       colors: {
-        background: 'var(--background)',
-        foreground: 'var(--foreground)',
-        border: 'var(--border)',
-        line: 'var(--line)',
+        background: cssVar('--background'),
+        foreground: cssVar('--foreground'),
+        border: cssVar('--border'),
+        line: cssVar('--line'),
         muted: {
-          DEFAULT: 'var(--muted)',
-          foreground: 'var(--muted-foreground)'
+          DEFAULT: cssVar('--muted'),
+          foreground: cssVar('--muted-foreground')
         },
-        'accent-muted': 'var(--accent-muted)',
+        'accent-muted': cssVar('--accent-muted'),
         popover: {
-          DEFAULT: 'var(--popover)',
-          foreground: 'var(--popover-foreground)'
+          DEFAULT: cssVar('--popover'),
+          foreground: cssVar('--popover-foreground')
         },
-        info: 'var(--info)',
+        info: cssVar('--info'),
         gray: {
           50: '#F7FAFC',
           100: '#EDF2F7',
