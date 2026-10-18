@@ -2,6 +2,7 @@ import { PROFILE } from 'data/profile';
 import { FlipSentences } from './flip-sentences';
 import { HandwrittenArrow, HandwrittenNote } from './handwritten-note';
 import { MarkIsometric } from './mark-isometric';
+import PixelAvatar from './pixel-avatar';
 
 export function ProfileHeader() {
   return (
@@ -28,9 +29,8 @@ export function ProfileHeader() {
         <div className="screen-line-top mt-auto shrink-0 border-r border-line">
           <div className="mx-0.5 my-[3px] flex outline-none">
             <div className="relative size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">
-              <img
-                className="block size-full rounded-[inherit] object-cover select-none"
-                src={PROFILE.avatar}
+              <PixelAvatar
+                src={`${PROFILE.avatar}&s=920`}
                 alt={PROFILE.displayName}
               />
               <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-foreground/30 dark:ring-foreground/10" />
