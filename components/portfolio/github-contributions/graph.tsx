@@ -1,12 +1,7 @@
 import { format, parseISO } from 'date-fns';
 import { Activity } from 'lib/github-contributions';
 import { PROFILE } from 'data/profile';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger
-} from 'components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from 'components/ui/tooltip';
 import {
   ContributionGraph,
   ContributionGraphBlock,
@@ -16,11 +11,7 @@ import {
   ContributionGraphTotalCount
 } from './contribution-graph';
 
-export function GitHubContributionGraph({
-  contributions
-}: {
-  contributions: Activity[];
-}) {
+export function GitHubContributionGraph({ contributions }: { contributions: Activity[] }) {
   if (contributions.length === 0) {
     return null;
   }
@@ -55,8 +46,8 @@ export function GitHubContributionGraph({
                 />
                 <TooltipContent className="font-sans">
                   <p>
-                    {activity.count} contribution{activity.count > 1 ? 's' : null}{' '}
-                    on {format(parseISO(activity.date), 'd MMM yyyy')}
+                    {activity.count} contribution{activity.count > 1 ? 's' : null} on{' '}
+                    {format(parseISO(activity.date), 'd MMM yyyy')}
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -67,9 +58,6 @@ export function GitHubContributionGraph({
             <ContributionGraphTotalCount>
               {({ totalCount }) => (
                 <figcaption className="text-pretty tabular-nums">
-                  <span className="mr-2 tracking-wide text-muted-foreground/80">
-                    Fig. 2.
-                  </span>
                   {totalCount.toLocaleString('en-US')} contributions,{' '}
                   {format(parseISO(contributions[0].date), 'd MMM yyyy')} –{' '}
                   {format(parseISO(contributions[contributions.length - 1].date), 'd MMM yyyy')}.
