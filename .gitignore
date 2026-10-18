@@ -36,6 +36,3 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
-
-# local reference clone — do not commit
-/chanhdai.com
