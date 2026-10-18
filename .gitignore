@@ -34,5 +34,8 @@ yarn-error.log*
 # vercel
 .vercel
 
+# typescript
+*.tsbuildinfo
+
 # local reference clone — do not commit
 /chanhdai.com
