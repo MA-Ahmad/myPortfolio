@@ -363,7 +363,7 @@ export type ContributionGraphCalendarProps = Omit<
 }
 
 export const ContributionGraphCalendar = ({
-  title = "Contribution Graph",
+  title: _title,
   hideMonthLabels = false,
   className,
   children,
@@ -391,7 +391,6 @@ export const ContributionGraphCalendar = ({
         viewBox={`0 0 ${width} ${height}`}
         width={width}
       >
-        <title>{title}</title>
         {!hideMonthLabels && (
           <g
             data-slot="month-labels"

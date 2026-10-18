@@ -38,7 +38,6 @@ export function GitHubContributionGraph({
         >
           <ContributionGraphCalendar
             className="px-4 [&_[data-slot=month-labels]]:text-muted-foreground"
-            title="GitHub Contributions"
             aria-hidden
           >
             {({ activity, dayIndex, weekIndex }) => (
