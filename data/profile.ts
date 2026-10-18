@@ -13,6 +13,7 @@ export const PROFILE = {
   ],
   address: 'Pakistan',
   website: SITE_URL,
+  resumeUrl: 'https://resume.mahmad.me',
   email: 'muhammad.ahmad8043@gmail.com',
   timeZone: 'Asia/Karachi',
   githubUsername: GITHUB_USERNAME,

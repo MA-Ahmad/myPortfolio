@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { AiOutlineClose } from 'react-icons/ai';
+import { FileUserIcon } from 'lucide-react';
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
@@ -9,7 +10,9 @@ import { CommandMenu } from 'components/command-menu/command-menu';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 
-const pageLinks = [{ name: 'Blog', path: '/blog' }];
+const pageLinks: { name: string; path: string }[] = [
+  // { name: 'Blog', path: '/blog' }
+];
 
 interface NavLinkProps {
   name: string;
@@ -46,14 +49,16 @@ export default function TopNav() {
   return (
     <header className="sticky top-0 z-50 max-w-[100vw] overflow-x-clip bg-background px-2">
       <div className="screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] md:max-w-3xl">
-        <button
-          type="button"
-          aria-label="Open Menu"
-          className="inline-flex size-8 items-center justify-center rounded-md md:hidden"
-          onClick={() => setIsOpen((open) => !open)}
-        >
-          {isOpen ? <AiOutlineClose /> : <GiHamburgerMenu />}
-        </button>
+        {pageLinks.length > 0 ? (
+          <button
+            type="button"
+            aria-label="Open Menu"
+            className="inline-flex size-8 items-center justify-center rounded-md md:hidden"
+            onClick={() => setIsOpen((open) => !open)}
+          >
+            {isOpen ? <AiOutlineClose /> : <GiHamburgerMenu />}
+          </button>
+        ) : null}
 
         <NextLink href="/" aria-label="Home" className="shrink-0 no-underline">
           <img
@@ -78,13 +83,23 @@ export default function TopNav() {
         <div className="flex-1" />
 
         <div className="flex items-center gap-1">
+          <a
+            href={PROFILE.resumeUrl}
+            target="_blank"
+            rel="noopener"
+            aria-label="Resume"
+            title="Resume"
+            className="inline-flex size-8 items-center justify-center rounded-full border border-line text-muted-foreground no-underline transition-[color,background-color] hover:bg-muted hover:text-foreground"
+          >
+            <FileUserIcon className="size-3.5" />
+          </a>
           <CommandMenu />
           <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
           <ColorModeSwitcher />
         </div>
       </div>
 
-      {isOpen ? (
+      {isOpen && pageLinks.length > 0 ? (
         <div className="mx-auto border-x border-line bg-background px-4 pb-4 md:hidden md:max-w-3xl">
           <nav className="flex flex-col gap-3 pt-3">
             {pageLinks.map((link) => (

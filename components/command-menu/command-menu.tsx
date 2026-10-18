@@ -6,6 +6,7 @@ import {
   BookOpenIcon,
   BriefcaseBusinessIcon,
   FileTextIcon,
+  FileUserIcon,
   FolderGit2Icon,
   GraduationCapIcon,
   HomeIcon,
@@ -19,7 +20,8 @@ import { cn } from 'lib/cn';
 
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
-  { title: 'Blog', href: '/blog', shortcut: 'GL', icon: BookOpenIcon }
+  { title: 'Blog', href: '/blog', shortcut: 'GL', icon: BookOpenIcon },
+  { title: 'Resume', href: PROFILE.resumeUrl, icon: FileUserIcon, external: true }
 ];
 
 const SECTION_LINKS = [
@@ -118,7 +120,7 @@ export function CommandMenu() {
                   {PAGE_LINKS.map((link) => (
                     <CommandItem
                       key={link.href + link.title}
-                      onSelect={() => go(link.href)}
+                      onSelect={() => go(link.href, link.external)}
                     >
                       <link.icon className="size-4 text-muted-foreground" />
                       <span>{link.title}</span>
