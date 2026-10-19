@@ -51,6 +51,10 @@ type View = { layout: Layout; scale: number; ox: number; oy: number; width: numb
 
 const BAR_H = 56;
 const MOBILE_BREAKPOINT = 768;
+// The connect vibration, glow and burst in canvas.module.css run 300ms; the theme opens when they
+// end, and never later than the cap.
+const CONNECT_ANIMATION = /(shake|traceOnce|burst)$/;
+const CONNECT_MAX_MS = 420;
 const DRAG_THRESHOLD = 3;
 // Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
 // port adds a soft field, and every fresh reach for the port earns a kick that grows each time.
@@ -123,6 +127,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
+  const timerRef = useRef<number | undefined>(undefined);
   const reducedRef = useRef(false);
   const pointerRef = useRef<Point | null>(null);
   const kickRef = useRef<{ vec: Point; start: number } | null>(null);
@@ -164,6 +169,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       cancelAnimationFrame(frameRef.current);
       cancelAnimationFrame(kickFrameRef.current);
       releaseRef.current?.();
+      window.clearTimeout(timerRef.current);
       window.clearTimeout(zapTimerRef.current);
     };
   }, []);
@@ -209,8 +215,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   /**
-   * Plugs the wire in and opens the theme in the same frame, so the snapshot the pixel transition
-   * dissolves already shows the connection and the page opens as fast as from the command menu.
+   * Plugs the wire in at once, lets the cards vibrate and the glow run round the display, then
+   * opens the theme. The page transition freezes whatever is on screen, so it waits for those
+   * animations to actually finish, since they start a frame or two after the release.
    */
   const snap = (from: CardId) => {
     releaseRef.current?.();
@@ -219,7 +226,19 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       setWire({ from, tip: target(from)(), phase: 'snapped' });
       setBurst(Date.now());
     });
-    open(from);
+    if (reducedRef.current) return open(from);
+    let opened = false;
+    const go = () => {
+      if (opened) return;
+      opened = true;
+      window.clearTimeout(timerRef.current);
+      open(from);
+    };
+    const connecting = (stageRef.current?.getAnimations({ subtree: true }) ?? []).filter(
+      (animation) => animation instanceof CSSAnimation && CONNECT_ANIMATION.test(animation.animationName)
+    );
+    Promise.all(connecting.map((animation) => animation.finished)).then(go, go);
+    timerRef.current = window.setTimeout(go, CONNECT_MAX_MS);
   };
 
   const retract = (from: CardId, tip: Point) => {

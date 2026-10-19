@@ -95,6 +95,7 @@
     var(--cv-shadow),
     0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent),
     0 0 36px -10px color-mix(in oklab, var(--accent) 70%, transparent);
+  transition-duration: 200ms;
 }
 
 /* A card pushed away from another: out along --rx/--ry, then settling. Two identical keyframes
@@ -162,8 +163,9 @@
 }
 
 /* `translate` and `rotate` compose with the inline transform that positions the node. */
+/* canvas-stage.tsx opens the page when this, the trace and the burst end. */
 .node[data-shake] {
-  animation: shake 440ms cubic-bezier(0.2, 0, 0, 1);
+  animation: shake 300ms cubic-bezier(0.25, 0, 0.2, 1);
 }
 
 @keyframes shake {
@@ -367,6 +369,7 @@
 
 .display[data-lit]::before {
   opacity: 1;
+  transition-duration: 200ms;
 }
 
 .trace {
@@ -387,8 +390,8 @@
   stroke-dasharray: 18 200;
   stroke-dashoffset: 18;
   opacity: 0;
-  /* Done before the page opens (620ms), so the transition never freezes a streak on the border. */
-  animation: traceOnce 520ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
+  /* The page opens once this ends, so the transition never freezes a streak on the border. */
+  animation: traceOnce 300ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
 }
 
 .traceLine {
@@ -411,13 +414,13 @@
     stroke-dashoffset: 18;
     opacity: 0;
   }
-  10% {
+  8% {
     opacity: 1;
   }
   50% {
     opacity: 1;
   }
-  78% {
+  85% {
     opacity: 0;
   }
   100% {
@@ -550,6 +553,7 @@
 
 .wireGlow[data-lit] {
   opacity: 0.55;
+  transition-duration: 200ms;
 }
 
 .tip {
@@ -634,7 +638,7 @@
   stroke-width: 2;
   transform-box: fill-box;
   transform-origin: center;
-  animation: burst 600ms cubic-bezier(0.2, 0, 0, 1) forwards;
+  animation: burst 300ms cubic-bezier(0.2, 0, 0, 1) forwards;
 }
 
 @keyframes burst {
