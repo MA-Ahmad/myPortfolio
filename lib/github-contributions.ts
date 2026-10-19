@@ -23,15 +23,25 @@ export function fetchGitHubContributions(username = GITHUB_USERNAME): Promise<Ac
   return data;
 }
 
-async function requestContributions(username: string): Promise<Activity[]> {
-  try {
-    const res = await fetch(`${CONTRIBUTIONS_API}/${username}?y=last`);
-    if (!res.ok) {
-      return [];
+async function requestContributions(username: string, attempts = 2): Promise<Activity[]> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const res = await fetch(`${CONTRIBUTIONS_API}/${username}?y=last`);
+      if (res.ok) {
+        const data = (await res.json()) as { contributions?: Activity[] };
+        if (data.contributions?.length) return data.contributions;
+        console.error(`GitHub contributions: empty response (attempt ${attempt})`);
+      } else {
+        console.error(`GitHub contributions: HTTP ${res.status} (attempt ${attempt})`);
+      }
+    } catch (error) {
+      console.error(`GitHub contributions: request failed (attempt ${attempt})`, error);
     }
-    const data = (await res.json()) as { contributions?: Activity[] };
-    return data.contributions ?? [];
-  } catch {
-    return [];
   }
+  return [];
+}
+
+/** Pages built without contributions retry soon instead of staying empty for a day. */
+export function contributionsRevalidate(contributions: Activity[]) {
+  return contributions.length > 0 ? 86400 : 300;
 }

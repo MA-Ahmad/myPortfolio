@@ -1,7 +1,11 @@
 import Home from 'components/home-page/home';
 import { GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
-import { Activity, fetchGitHubContributions } from 'lib/github-contributions';
+import {
+  Activity,
+  contributionsRevalidate,
+  fetchGitHubContributions
+} from 'lib/github-contributions';
 
 type HomePageProps = {
   contributions: Activity[];
@@ -20,7 +24,7 @@ export const getStaticProps: GetStaticProps<HomePageProps> = async () => {
 
   return {
     props: { contributions },
-    revalidate: 86400
+    revalidate: contributionsRevalidate(contributions)
   };
 };
 

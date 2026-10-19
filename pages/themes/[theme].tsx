@@ -5,7 +5,11 @@ import { useRouter } from 'next/router';
 import Meta from 'components/shared/meta';
 import type { BlogListPost } from 'components/blog/post-item';
 import { getLatestBlogPosts } from 'lib/blogPosts';
-import { Activity, fetchGitHubContributions } from 'lib/github-contributions';
+import {
+  Activity,
+  contributionsRevalidate,
+  fetchGitHubContributions
+} from 'lib/github-contributions';
 import { THEMES, THEME_NAMES, ThemeName, isThemeName } from 'themes/registry';
 import type { NextPageWithLayout } from '../_app';
 
@@ -55,7 +59,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
 
   return {
     props: { theme, contributions, posts },
-    revalidate: 86400
+    revalidate: contributionsRevalidate(contributions)
   };
 };
 
