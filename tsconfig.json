@@ -62,8 +62,8 @@
   ],
   "exclude": [
     "node_modules",
-    "chanhdai.com",
     "resume",
+    "*.com",
     "*.me"
   ]
 }
