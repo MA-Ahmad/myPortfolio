@@ -6,7 +6,7 @@ type PixelTransitionOptions = {
   background: string;
 };
 
-const CELL = 24;
+const CELL = 16;
 const DELAY_MS = 0;
 const DURATION_MS = 650;
 const FRAMES = 40;
