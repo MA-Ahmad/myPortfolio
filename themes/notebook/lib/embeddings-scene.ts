@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { onSchemeChange, prefersReducedMotion, readTokens } from './color-tokens';
-import { ANALOGIES, buildSpace, neighbors, position, solve, type Neighbor } from './embedding-space';
+import { ANALOGIES, buildSpace, neighbors, position, solve, tokenize, type Neighbor } from './embedding-space';
 
 type Options = {
   tokenSource: Element;
@@ -43,7 +43,7 @@ const smooth = (a: number, b: number, x: number) => {
   const u = clamp((x - a) / (b - a), 0, 1);
   return u * u * (3 - 2 * u);
 };
-const show = (word: string) => `·${word}`;
+const show = (token: string) => (token.startsWith(' ') ? `·${token.slice(1)}` : token);
 
 const pointVertex = /* glsl */ `
   attribute float aMix;
@@ -79,9 +79,9 @@ export function mountEmbeddings(canvas: HTMLCanvasElement, options: Options) {
 
   const host = options.labelHost;
   const { classes } = options;
-  const passage = options.passage.toLowerCase().split(/\s+/).filter(Boolean);
+  const passage = tokenize(options.passage.toLowerCase());
   const space = buildSpace(passage);
-  const sequence = passage.map((word) => space.index.get(word) ?? 0);
+  const sequence = passage.map((token) => space.index.get(token) ?? 0);
   const N = space.words.length;
   const positions = new Float32Array(N * 3);
   space.vectors.forEach((v, i) => positions.set(position(v), i * 3));
@@ -127,9 +127,9 @@ export function mountEmbeddings(canvas: HTMLCanvasElement, options: Options) {
   const cloudGeometry = new THREE.BufferGeometry();
   const mixes = new Float32Array(N);
   const sizes = new Float32Array(N);
-  space.strong.forEach((isStrong, i) => {
-    mixes[i] = isStrong ? 0.62 : 0.34;
-    sizes[i] = isStrong ? 2.1 : 1.4;
+  space.dust.forEach((isDust, i) => {
+    mixes[i] = isDust ? 0.34 : 0.62;
+    sizes[i] = isDust ? 1.4 : 2.1;
   });
   cloudGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
   cloudGeometry.setAttribute('aMix', new THREE.BufferAttribute(mixes, 1));
@@ -366,12 +366,9 @@ export function mountEmbeddings(canvas: HTMLCanvasElement, options: Options) {
     if (!a.answer) return;
     const fade = smooth(0, 0.8, ph) * (1 - smooth(ANALOGY_PERIOD - 2.5, ANALOGY_PERIOD - 0.5, ph));
     if (fade <= 0) return;
-    // The sum is a - b + c, so b is the corner opposite it: b -> a is the offset and b -> c the
-    // other side, and the same offset from c reaches the sum.
-    const ib = a.ia;
-    const ia = a.ib;
-    const pa = at(ia, va);
-    const pb = at(ib, vb);
+    // a -> b is the offset and a -> c the other side; the same offset from c reaches b - a + c.
+    const pa = at(a.ia, va);
+    const pb = at(a.ib, vb);
     const pc = at(a.ic, vc);
     const pd = at(a.answer.index, vd);
     const g1 = smooth(0.4, 1.6, ph);
@@ -394,16 +391,16 @@ export function mountEmbeddings(canvas: HTMLCanvasElement, options: Options) {
     if (g3 >= 1) box(sq.x, sq.y, 3, 0.8 * fade * g4 + 0.4 * fade * (1 - g4));
     if (!showWords) return;
     const tm = 0.75 * fade;
-    label(space.words[ia], pa, tm);
-    label(space.words[ib], pb, tm * g1);
-    label(space.words[a.ic], pc, tm * g2);
+    label(show(space.words[a.ia]), pa, tm);
+    label(show(space.words[a.ib]), pb, tm * g1);
+    label(show(space.words[a.ic]), pc, tm * g2);
     const score = a.answer.cosine.toFixed(2);
-    const answer = label(space.words[a.answer.index], pd, tm * g4, 0, sizeOf(score).w + 4);
+    const answer = label(show(space.words[a.answer.index]), pd, tm * g4, 0, sizeOf(score).w + 4);
     if (answer) write(score, answer.x + answer.w + 4, answer.y, 0.45 * fade * g4);
     const points = [pa, pb, pc, pd, a.q].map(toScreen);
     const xs = points.map((s) => s.x);
     const bottom = Math.max(...points.map((s) => s.y)) + 20;
-    const caption = `${a.caption} → ${space.words[a.answer.index]}`;
+    const caption = `${a.caption} → ${space.words[a.answer.index].trim()}`;
     const capW = sizeOf(caption).w;
     const outer =
       (Math.min(...xs) + Math.max(...xs)) / 2 > width / 2
@@ -421,7 +418,7 @@ export function mountEmbeddings(canvas: HTMLCanvasElement, options: Options) {
     let bestDistance = HOVER_RADIUS * HOVER_RADIUS;
     const p = new THREE.Vector3();
     for (let i = 0; i < N; i++) {
-      if (space.dust[i]) continue;
+      if (space.dust[i] || space.capitalized[i]) continue;
       const s = toScreen(at(i, p));
       const dx = s.x - pointer.x;
       const dy = s.y - pointer.y;

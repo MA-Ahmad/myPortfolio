@@ -11,5 +11,5 @@ export const NOTEBOOK_CONTENT = {
   ],
   // The backdrop reads this one token at a time.
   passage:
-    'i build web products end to end and ship fast . i love open source , clean code and products that feel fast . i write about react , next and rails on my blog every year .'
+    'I build web products end to end and ship fast. I love open source, clean code and products that feel fast. I write about react, next and rails on my blog every year.'
 };
