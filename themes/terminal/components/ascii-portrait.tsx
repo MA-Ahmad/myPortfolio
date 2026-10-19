@@ -20,6 +20,20 @@ const LOCAL_RADIUS = 3;
 // Extra contrast against nearby skin only, so the nose ridge and the shadow under it stand out.
 const SKIN_DETAIL = 1.5;
 const SKIN_DETAIL_RADIUS = 2;
+// Fill light for the shaded side of the face: every face cell is raised by FACE_FILL times how dark
+// the face skin around it is (averaged over FACE_FILL_RADIUS), so the whole shaded plane shifts up
+// together and keeps its brows, nose, and eye contrast, while the lit side barely changes.
+const FACE_FILL = 0.6;
+const FACE_FILL_RADIUS = 6;
+// Face skin at least this bright uses the densest glyph, like the lit cheek (which is clipped at 1),
+// so the shaded cheek has the same even texture; its shading still shows through color.
+const FACE_SOLID_TONE = 0.6;
+// Face cells this much darker than nearby skin are shading details (the nose line); they skip the
+// fill and solid glyph and are darkened by FACE_SHADOW_DARKEN so the nose stands out. Cells within
+// FACE_EDGE_ROWS above the mustache/beard always use the solid glyph so they blend with the cheek.
+const FACE_SHADOW_DETAIL = 0.04;
+const FACE_SHADOW_DARKEN = 0.7;
+const FACE_EDGE_ROWS = 2;
 const SKIN_MIN_REDNESS = 40;
 const SKIN_MIN_LUMINANCE = 85;
 // Hair, beard, and mustache are much less red (red minus green) than skin and the jacket.
@@ -210,6 +224,7 @@ function buildParticles(
     rows
   );
   const skinNeighborhood = localAverage(normalized, cols, rows, SKIN_DETAIL_RADIUS, skin);
+  const facePlane = localAverage(normalized, cols, rows, FACE_FILL_RADIUS, skin);
 
   const stops = [hexToRgb(palette.dark), hexToRgb(palette.mid), hexToRgb(palette.light)];
   const center = SIZE / 2;
@@ -224,7 +239,13 @@ function buildParticles(
       let detail = clamp(base + LOCAL_CONTRAST * (base - neighborhood[index]));
       if (skin[index]) detail = clamp(detail + SKIN_DETAIL * (base - skinNeighborhood[index]));
       const hair = clamp((HAIR_REDNESS - redness[index]) / HAIR_FADE);
-      const tone = detail ** GAMMA * (1 - (1 - HAIR_DARKEN) * hair);
+      let tone = detail ** GAMMA * (1 - (1 - HAIR_DARKEN) * hair);
+      const aboveEdge = skin[index] && nearFaceBottom(skin, index, cols, rows);
+      const shadowDetail =
+        skin[index] && base - skinNeighborhood[index] < -FACE_SHADOW_DETAIL && !aboveEdge;
+      const flatSkin = skin[index] && !shadowDetail;
+      if (flatSkin) tone = clamp(tone + FACE_FILL * (1 - facePlane[index] ** GAMMA));
+      if (shadowDetail) tone *= FACE_SHADOW_DARKEN;
       const x = col * STEP_X;
       const y = (row + 1) * STEP_Y;
 
@@ -238,7 +259,10 @@ function buildParticles(
       }
 
       particles.push({
-        char: RAMP[Math.round((1 - tone) * (RAMP.length - 1))],
+        char:
+          flatSkin && (tone >= FACE_SOLID_TONE || aboveEdge)
+            ? RAMP[0]
+            : RAMP[Math.round((1 - tone) * (RAMP.length - 1))],
         x: startX,
         y: startY,
         baseX: x,
@@ -330,6 +354,15 @@ function faceArea(skin: boolean[], cols: number, rows: number) {
 
   const face = upperCounts.indexOf(Math.max(...upperCounts));
   return Array.from(area, (id) => id >= 0 && id === face);
+}
+
+/** Whether a non-face cell (mustache, beard, edge) is within FACE_EDGE_ROWS below this cell. */
+function nearFaceBottom(skin: boolean[], index: number, cols: number, rows: number) {
+  const row = Math.floor(index / cols);
+  for (let step = 1; step <= FACE_EDGE_ROWS; step++) {
+    if (row + step >= rows || !skin[index + step * cols]) return true;
+  }
+  return false;
 }
 
 /** Box-blurred average of each cell's foreground neighbors, optionally only those in `mask`. */
