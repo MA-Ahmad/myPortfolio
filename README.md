@@ -36,6 +36,7 @@
 - `/blog/[slug]` - A single post. Only the 10 latest posts are served; other slugs return 404.
 - `/code-snippets` - Standalone page.
 - `/themes/terminal` - The same portfolio as a terminal-style one-page site. `/terminal` redirects here. Open it from the **Themes** group in the command menu.
+- `/canvas` - A node canvas with a card for each version of the site. Drag a wire from a card into the display node (or press its Connect button) to open that version full page. Open it from the **Themes** group in the command menu.
 - `/themes/notebook` - The same portfolio as a lowercase, monospace notebook index: a 3D GitHub contribution skyline and an animated embedding-space backdrop, both drawn with [three.js](https://threejs.org/). Open it from the **Themes** group in the command menu.
 - `/llms.txt`, `/about.md`, `/experience.md`, `/education.md`, `/projects.md` - Plain markdown versions of the profile for AI agents. Requesting `/` with an `Accept: text/markdown` header returns the same content as `/llms.txt`.
 

@@ -15,7 +15,8 @@ import {
   NotebookIcon,
   SearchIcon,
   SunMediumIcon,
-  TerminalIcon
+  TerminalIcon,
+  WorkflowIcon
 } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
@@ -41,6 +42,7 @@ export function CommandMenu() {
   const [isMac, setIsMac] = useState(false);
   const terminalIconRef = useRef<SVGSVGElement>(null);
   const notebookIconRef = useRef<SVGSVGElement>(null);
+  const canvasIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
@@ -50,6 +52,7 @@ export function CommandMenu() {
     if (!open) return;
     router.prefetch('/themes/terminal');
     router.prefetch('/themes/notebook');
+    router.prefetch('/canvas');
   }, [open, router]);
 
   useEffect(() => {
@@ -116,6 +119,20 @@ export function CommandMenu() {
     });
   };
 
+  const openCanvas = () => {
+    const icon = canvasIconRef.current?.getBoundingClientRect();
+    const dark = resolvedTheme === 'dark';
+    setOpen(false);
+    pixelNavigate(router, '/canvas', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --cv-bg in components/canvas/canvas.module.css.
+      edge: getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim(),
+      background: dark ? '#0a0a0b' : '#f6f6f4'
+    });
+  };
+
   return (
     <>
       <button
@@ -179,6 +196,10 @@ export function CommandMenu() {
                   <CommandItem onSelect={openNotebookTheme}>
                     <NotebookIcon ref={notebookIconRef} className="size-4 text-muted-foreground" />
                     <span>Notebook</span>
+                  </CommandItem>
+                  <CommandItem onSelect={openCanvas}>
+                    <WorkflowIcon ref={canvasIconRef} className="size-4 text-muted-foreground" />
+                    <span>Canvas</span>
                   </CommandItem>
                 </Command.Group>
 
