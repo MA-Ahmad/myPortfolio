@@ -14,8 +14,8 @@ export function Projects() {
   return (
     <Section id="projects" command="ls ~/projects" headingClassName="mb-5">
       <div className="space-y-1">
-        {visible.map((project) => (
-          <ProjectRow key={project.id} project={project} />
+        {visible.map((project, index) => (
+          <ProjectRow key={project.id} project={project} defaultOpen={index === 0} />
         ))}
       </div>
 
@@ -35,11 +35,17 @@ export function Projects() {
   );
 }
 
-function ProjectRow({ project }: { project: ProjectItemData }) {
-  const [open, setOpen] = useState(false);
+function ProjectRow({
+  project,
+  defaultOpen = false
+}: {
+  project: ProjectItemData;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <div className="mb-4 last:mb-0">
+    <div>
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
