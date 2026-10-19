@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Activity } from 'lib/github-contributions';
+import { pixelTransitionSettled } from 'lib/pixel-transition';
 import { buildSkylineData, formatCount, shortDate, weeklyTotals } from '../lib/skyline-data';
 import { ContributionBars } from './contribution-bars';
 import styles from '../notebook.module.css';
@@ -28,8 +29,8 @@ export function Skyline({ contributions }: { contributions: Activity[] }) {
       ([entry]) => {
         if (!entry.isIntersecting) return;
         observer.disconnect();
-        scene
-          .then(({ mountSkyline }) => {
+        Promise.all([scene, pixelTransitionSettled()])
+          .then(([{ mountSkyline }]) => {
             if (cancelled) return;
             destroy = mountSkyline(canvas, data, {
               tokenSource: stage,

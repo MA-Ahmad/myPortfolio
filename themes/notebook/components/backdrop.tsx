@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { pixelTransitionSettled } from 'lib/pixel-transition';
 import { NOTEBOOK_CONTENT } from '../content';
 import styles from '../notebook.module.css';
 
@@ -15,8 +16,8 @@ export function Backdrop() {
 
     let cancelled = false;
     let destroy: (() => void) | undefined;
-    import('../lib/embeddings-scene')
-      .then(({ mountEmbeddings }) => {
+    Promise.all([import('../lib/embeddings-scene'), pixelTransitionSettled()])
+      .then(([{ mountEmbeddings }]) => {
         if (cancelled) return;
         destroy = mountEmbeddings(canvas, {
           tokenSource: host,

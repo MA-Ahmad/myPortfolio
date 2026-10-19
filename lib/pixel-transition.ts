@@ -14,6 +14,13 @@ const JITTER = 0.25;
 const EDGE_WIDTH = 0.06;
 
 let running = false;
+let settled: Promise<void> = Promise.resolve();
+
+// The pixel frames are clip paths, which only advance on the main thread, so pages hold heavy
+// mount work until the transition has finished.
+export function pixelTransitionSettled() {
+  return settled;
+}
 
 // The old page stays on screen as a browser snapshot while the new one loads, then its
 // pixels drop away outward from `origin` to reveal the new page underneath.
@@ -31,6 +38,8 @@ export async function pixelNavigate(
   }
 
   running = true;
+  let settle = () => {};
+  settled = new Promise((resolve) => (settle = resolve));
   const root = document.documentElement;
   if (!reduceMotion) {
     root.dataset.pixelTransition = '';
@@ -69,6 +78,7 @@ export async function pixelNavigate(
     root.style.removeProperty('--pixel-transition-old-bg');
     root.style.removeProperty('--pixel-transition-new-bg');
     running = false;
+    settle();
   }
 }
 
