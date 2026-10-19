@@ -3,6 +3,8 @@ import { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Meta from 'components/shared/meta';
+import type { BlogListPost } from 'components/blog/post-item';
+import { getLatestBlogPosts } from 'lib/blogPosts';
 import { Activity, fetchGitHubContributions } from 'lib/github-contributions';
 import { THEMES, THEME_NAMES, ThemeName, isThemeName } from 'themes/registry';
 import type { NextPageWithLayout } from '../_app';
@@ -10,9 +12,10 @@ import type { NextPageWithLayout } from '../_app';
 type Props = {
   theme: ThemeName;
   contributions: Activity[];
+  posts: BlogListPost[];
 };
 
-const ThemePage: NextPageWithLayout<Props> = ({ theme, contributions }) => {
+const ThemePage: NextPageWithLayout<Props> = ({ theme, contributions, posts }) => {
   const { title, Home } = THEMES[theme];
 
   return (
@@ -21,7 +24,7 @@ const ThemePage: NextPageWithLayout<Props> = ({ theme, contributions }) => {
       <Head>
         <meta name="robots" content="noindex" />
       </Head>
-      <Home contributions={contributions} />
+      <Home contributions={contributions} posts={posts} />
     </>
   );
 };
@@ -45,10 +48,13 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
   const theme = params?.theme;
   if (!isThemeName(theme)) return { notFound: true };
 
-  const contributions = await fetchGitHubContributions();
+  const [contributions, posts] = await Promise.all([
+    fetchGitHubContributions(),
+    getLatestBlogPosts().catch(() => [])
+  ]);
 
   return {
-    props: { theme, contributions },
+    props: { theme, contributions, posts },
     revalidate: 86400
   };
 };

@@ -1,9 +1,12 @@
 import type { ComponentType, ReactNode } from 'react';
 import type { Activity } from 'lib/github-contributions';
+import type { BlogListPost } from 'components/blog/post-item';
 import { TerminalHome, TerminalLayout } from './terminal';
+import { NotebookHome, NotebookLayout } from './notebook';
 
 export type ThemeHomeProps = {
   contributions: Activity[];
+  posts: BlogListPost[];
 };
 
 type Theme = {
@@ -18,6 +21,11 @@ export const THEMES = {
     title: 'Muhammad Ahmad - Full Stack Developer',
     Home: TerminalHome,
     Layout: TerminalLayout
+  },
+  notebook: {
+    title: 'Muhammad Ahmad',
+    Home: NotebookHome,
+    Layout: NotebookLayout
   }
 } satisfies Record<string, Theme>;
 

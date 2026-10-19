@@ -1,0 +1,530 @@
+.root {
+  --nb-bg: oklch(98.4% 0.0025 95);
+  --nb-ink: oklch(21% 0.006 70);
+  --nb-body: oklch(40% 0.006 70);
+  --nb-faint: oklch(54% 0.005 70);
+  --nb-rule: oklch(91% 0.004 80);
+  --nb-wash: oklch(95.6% 0.004 85);
+
+  position: relative;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: var(--nb-bg);
+  color: var(--nb-ink);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 14px;
+  line-height: 1.72;
+  text-transform: lowercase;
+  -webkit-font-smoothing: antialiased;
+  scrollbar-gutter: stable;
+}
+
+:global(.dark) .root {
+  --nb-bg: oklch(15.5% 0.004 70);
+  --nb-ink: oklch(94% 0.004 80);
+  --nb-body: oklch(76% 0.004 80);
+  --nb-faint: oklch(60% 0.004 80);
+  --nb-rule: oklch(27% 0.004 70);
+  --nb-wash: oklch(20% 0.004 70);
+}
+
+.root ::selection {
+  background: var(--nb-ink);
+  color: var(--nb-bg);
+}
+
+.root a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.root :focus-visible {
+  outline: 1px solid var(--nb-ink);
+  outline-offset: 3px;
+}
+
+.root code,
+.root kbd,
+.root pre,
+.root samp {
+  text-transform: none;
+}
+
+.cased {
+  text-transform: none;
+}
+
+/* A bg box 1ch wider on each side, so the backdrop never runs through text. */
+.plate {
+  background: var(--nb-bg);
+  margin-inline: -1ch;
+  padding-inline: 1ch;
+}
+
+.plateInline {
+  background: var(--nb-bg);
+  padding: 3px 1ch;
+  margin-inline: -1ch;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+.page {
+  position: relative;
+  z-index: 1;
+  padding: clamp(48px, 11vh, 112px) clamp(20px, 9vw, 160px) 160px;
+}
+
+.column {
+  max-width: 80ch;
+  margin: 0 auto;
+}
+
+.skip {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.skip:focus {
+  width: auto;
+  height: auto;
+  clip-path: none;
+}
+
+.main:focus {
+  outline: none;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 3ch;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 1.5ch;
+}
+
+.back {
+  color: var(--nb-faint);
+  transition: color 150ms ease;
+}
+
+.back:hover {
+  color: var(--nb-ink);
+}
+
+.name {
+  font-family: var(--font-geist-pixel-square), var(--font-geist-mono), monospace;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: none;
+}
+
+.nav {
+  display: flex;
+  gap: 2.5ch;
+}
+
+.navLink {
+  color: var(--nb-faint);
+  transition: color 150ms ease;
+}
+
+.navLink:hover {
+  color: var(--nb-ink);
+}
+
+.lede {
+  margin-top: 40px;
+  max-width: 64ch;
+  color: var(--nb-ink);
+}
+
+.clock {
+  margin-top: 28px;
+  width: fit-content;
+  display: flex;
+  align-items: baseline;
+  gap: 1.5ch;
+}
+
+.clockTime {
+  font-family: var(--font-geist-pixel-square), var(--font-geist-mono), monospace;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.clockLabel {
+  color: var(--nb-faint);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .colon {
+    animation: blink 2s steps(1) infinite;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.15;
+  }
+}
+
+.section {
+  margin-top: 56px;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 3ch;
+  margin-bottom: 8px;
+}
+
+.sectionLabel {
+  color: var(--nb-faint);
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.more {
+  color: var(--nb-faint);
+  transition: color 150ms ease;
+}
+
+.more:hover {
+  color: var(--nb-ink);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: var(--c1, 10ch) minmax(0, max-content) minmax(0, 1fr);
+  column-gap: 3ch;
+  margin: 0 -1ch;
+  padding: 0 1ch;
+}
+
+.lead,
+.main,
+.trail {
+  min-width: 0;
+}
+
+.lead {
+  color: var(--nb-faint);
+}
+
+.mainCell {
+  color: var(--nb-ink);
+}
+
+.trail {
+  color: var(--nb-faint);
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toneInk {
+  color: var(--nb-ink);
+}
+
+.toneBody {
+  color: var(--nb-body);
+}
+
+.toneFaint {
+  color: var(--nb-faint);
+}
+
+.clip {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+a.row:hover,
+a.row:focus-visible {
+  background: var(--nb-ink);
+  outline: none;
+}
+
+a.row:hover > *,
+a.row:focus-visible > * {
+  color: var(--nb-bg);
+}
+
+.arrow {
+  margin-left: 0.5ch;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: var(--c1m, var(--c1, 10ch)) minmax(0, 1fr);
+    column-gap: 2ch;
+  }
+
+  .trail {
+    display: none;
+  }
+
+  .stackTrail .trail {
+    display: block;
+    grid-column: 2;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .clip {
+    white-space: normal;
+  }
+
+  .nav {
+    gap: 2ch;
+  }
+}
+
+/* GitHub skyline */
+
+.stage {
+  position: relative;
+  aspect-ratio: 672 / 300;
+  min-height: 150px;
+  max-height: 300px;
+  width: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+  user-select: none;
+}
+
+.stage:not([data-ready]) .monthLabel {
+  opacity: 0;
+}
+
+.stage[data-ready] {
+  cursor: grab;
+}
+
+.stage[data-dragging] {
+  cursor: grabbing;
+}
+
+.stage canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.stage[data-ready] canvas {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage canvas {
+    transition: none;
+  }
+}
+
+.monthLabel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--nb-faint);
+  pointer-events: none;
+  white-space: nowrap;
+  will-change: transform;
+}
+
+.noScriptBars {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: flex-end;
+}
+
+@media (scripting: none) {
+  .noScriptBars {
+    display: flex;
+  }
+
+  .stats {
+    display: none;
+  }
+}
+
+.bars {
+  --sq: 10px;
+  --gap: 2px;
+  display: flex;
+  align-items: flex-end;
+  gap: var(--gap);
+  height: calc(12 * (var(--sq) + var(--gap)));
+  container-type: inline-size;
+}
+
+.bar {
+  flex: 0 0 var(--sq);
+  width: var(--sq);
+  background: repeating-linear-gradient(
+    to top,
+    var(--nb-ink) 0 var(--sq),
+    transparent var(--sq) calc(var(--sq) + var(--gap))
+  );
+}
+
+.barEmpty {
+  background: var(--nb-rule);
+  height: var(--sq);
+}
+
+@media (max-width: 640px) {
+  .bars {
+    --sq: 4px;
+    --gap: 1px;
+  }
+}
+
+.caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 2ch;
+  margin-top: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.captionNumber {
+  color: var(--nb-ink);
+}
+
+.captionUnit {
+  color: var(--nb-faint);
+}
+
+/* Backdrop */
+
+.backdrop {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 460px;
+  z-index: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+}
+
+.backdrop[data-ready] {
+  opacity: 0.4;
+}
+
+.backdrop canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.backdropLabel,
+.backdropBlock,
+.backdropBox {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform, opacity;
+}
+
+.backdropLabel {
+  font-size: 13px;
+  line-height: 1;
+  color: var(--nb-ink);
+  white-space: pre;
+}
+
+.backdropSmall {
+  font-size: 11px;
+}
+
+.backdropBlock {
+  padding: 6px 8px 4px;
+  background: var(--nb-bg);
+  color: var(--nb-ink);
+  font-size: 11px;
+  line-height: 15px;
+  white-space: pre;
+}
+
+.backdropHead {
+  font-size: 13px;
+  line-height: 16px;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid color-mix(in oklab, var(--nb-ink) 25%, transparent);
+}
+
+.backdropRow {
+  display: grid;
+  grid-template-columns: 5ch auto;
+  column-gap: 1ch;
+}
+
+.backdropRow > span:first-child {
+  opacity: 0.5;
+}
+
+.backdropRow > span:last-child {
+  opacity: 0.8;
+}
+
+.backdropBox {
+  border: 1px solid var(--nb-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .backdrop {
+    transition: none;
+  }
+}
+
+@media print, (forced-colors: active) {
+  .backdrop {
+    display: none;
+  }
+}

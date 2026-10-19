@@ -12,6 +12,7 @@ import {
   HomeIcon,
   LayersIcon,
   MoonStarIcon,
+  NotebookIcon,
   SearchIcon,
   SunMediumIcon,
   TerminalIcon
@@ -35,17 +36,20 @@ const SECTION_LINKS = [
 
 export function CommandMenu() {
   const router = useRouter();
-  const { setTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const terminalIconRef = useRef<SVGSVGElement>(null);
+  const notebookIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
   }, []);
 
   useEffect(() => {
-    if (open) router.prefetch('/themes/terminal');
+    if (!open) return;
+    router.prefetch('/themes/terminal');
+    router.prefetch('/themes/notebook');
   }, [open, router]);
 
   useEffect(() => {
@@ -95,6 +99,20 @@ export function CommandMenu() {
       // Must match --term-accent and --term-bg in themes/terminal/terminal.module.css.
       edge: '#b8c572',
       background: '#0d0e0f'
+    });
+  };
+
+  const openNotebookTheme = () => {
+    const icon = notebookIconRef.current?.getBoundingClientRect();
+    const dark = resolvedTheme === 'dark';
+    setOpen(false);
+    pixelNavigate(router, '/themes/notebook', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --nb-ink and --nb-bg in themes/notebook/notebook.module.css.
+      edge: dark ? 'oklch(94% 0.004 80)' : 'oklch(21% 0.006 70)',
+      background: dark ? 'oklch(15.5% 0.004 70)' : 'oklch(98.4% 0.0025 95)'
     });
   };
 
@@ -157,6 +175,10 @@ export function CommandMenu() {
                   <CommandItem onSelect={openTerminalTheme}>
                     <TerminalIcon ref={terminalIconRef} className="size-4 text-muted-foreground" />
                     <span>Terminal</span>
+                  </CommandItem>
+                  <CommandItem onSelect={openNotebookTheme}>
+                    <NotebookIcon ref={notebookIconRef} className="size-4 text-muted-foreground" />
+                    <span>Notebook</span>
                   </CommandItem>
                 </Command.Group>
 
