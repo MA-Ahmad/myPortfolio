@@ -1,7 +1,7 @@
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { JetBrains_Mono } from 'next/font/google';
-import { ArrowUp } from 'lucide-react';
+import { ArrowLeft, ArrowUp } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { TERMINAL_CONTENT } from '../content';
@@ -38,15 +38,25 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
     >
       <header className="fixed inset-x-0 top-0 z-50 border-b border-term-border/50 bg-term-bg/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
-          <Link
-            href="/themes/terminal"
-            className={cn(
-              styles.glow,
-              'shrink-0 text-sm font-semibold tracking-wider !text-term-accent transition-opacity hover:opacity-80'
-            )}
-          >
-            {TERMINAL_CONTENT.handle}
-          </Link>
+          <div className="flex shrink-0 items-center gap-3">
+            <Link
+              href="/"
+              aria-label="Back to main site"
+              title="Back to main site"
+              className="!text-term-muted transition-colors duration-150 hover:!text-term-fg"
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            <Link
+              href="/themes/terminal"
+              className={cn(
+                styles.glow,
+                'text-sm font-semibold tracking-wider !text-term-accent transition-opacity hover:opacity-80'
+              )}
+            >
+              {TERMINAL_CONTENT.handle}
+            </Link>
+          </div>
           <div
             className={cn(styles.noScrollbar, 'flex items-center gap-2.5 overflow-x-auto sm:gap-4')}
           >
