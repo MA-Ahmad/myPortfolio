@@ -11,6 +11,7 @@ module.exports = {
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
+    './themes/**/*.{js,ts,jsx,tsx}',
   ],
   corePlugins: {
     preflight: true,
@@ -39,6 +40,22 @@ module.exports = {
           foreground: cssVar('--popover-foreground')
         },
         info: cssVar('--info'),
+        // Tokens for the alternate layouts in `themes/*`; values come from each theme's CSS.
+        term: {
+          bg: cssVar('--term-bg'),
+          card: cssVar('--term-card'),
+          fg: cssVar('--term-fg'),
+          muted: cssVar('--term-muted'),
+          dim: cssVar('--term-dim'),
+          border: cssVar('--term-border'),
+          accent: cssVar('--term-accent'),
+          red: cssVar('--term-red'),
+          orange: cssVar('--term-orange'),
+          yellow: cssVar('--term-yellow'),
+          aqua: cssVar('--term-aqua'),
+          blue: cssVar('--term-blue'),
+          purple: cssVar('--term-purple'),
+        },
         gray: {
           50: '#F7FAFC',
           100: '#EDF2F7',

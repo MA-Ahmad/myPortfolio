@@ -43,6 +43,9 @@
       "interfaces/*": [
         "interfaces/*"
       ],
+      "themes/*": [
+        "themes/*"
+      ],
       "public/*": [
         "public/*"
       ]

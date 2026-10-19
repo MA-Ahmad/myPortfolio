@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { ReactElement, ReactNode, useEffect } from 'react';
+import { NextPage } from 'next';
 import { AppProps } from 'next/app';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from 'next-themes';
@@ -19,8 +20,19 @@ const inter = Inter({
   variable: '--font-inter'
 });
 
-function MyApp({ Component, pageProps }: AppProps) {
+export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
+  getLayout?: (page: ReactElement) => ReactNode;
+};
+
+type AppPropsWithLayout = AppProps & {
+  Component: NextPageWithLayout;
+};
+
+const defaultLayout = (page: ReactElement) => <AppLayout>{page}</AppLayout>;
+
+function MyApp({ Component, pageProps }: AppPropsWithLayout) {
   const router = useRouter();
+  const getLayout = Component.getLayout ?? defaultLayout;
   useEffect(() => {
     const handleRouteChange = (url) => {
       gtag.pageview(url);
@@ -47,7 +59,7 @@ function MyApp({ Component, pageProps }: AppProps) {
         <TooltipProvider delayDuration={200}>
           <PrismGlobal />
           <Analytics />
-          <AppLayout>
+          {getLayout(
             <AnimatePresence
               mode="wait"
               initial={false}
@@ -57,7 +69,7 @@ function MyApp({ Component, pageProps }: AppProps) {
                 <Component {...pageProps} />
               </div>
             </AnimatePresence>
-          </AppLayout>
+          )}
         </TooltipProvider>
       </div>
     </ThemeProvider>

@@ -1,0 +1,100 @@
+/*
+ * Palette for the terminal layout. Components only use the `term-*` Tailwind
+ * colors (see tailwind.config.js), so swapping these values re-skins the page.
+ */
+.root {
+  --term-bg: #0d0e0f;
+  --term-card: #131415;
+  --term-fg: #d4be98;
+  --term-muted: #7c6f64;
+  --term-dim: #7a736a;
+  --term-border: #252729;
+  --term-accent: #b8c572;
+  --term-red: #ef7d6e;
+  --term-orange: #f09658;
+  --term-yellow: #e0b05e;
+  --term-aqua: #8fc493;
+  --term-blue: #88bfb3;
+  --term-purple: #d3869b;
+
+  --term-level-0: #1d2021;
+  --term-level-1: #2d4a3e;
+  --term-level-2: #4a7c59;
+  --term-level-3: #7fb069;
+  --term-level-4: #a9b665;
+
+  /* ASCII portrait tones: shadow, base, highlight, and displaced shadow. */
+  --term-portrait-dark: #504945;
+  --term-portrait-mid: #d4be98;
+  --term-portrait-light: #ebdbb2;
+  --term-portrait-moved: #7a736a;
+
+  font-size: 14px;
+  line-height: 1.6;
+  color-scheme: dark;
+}
+
+.root ::selection {
+  background: color-mix(in oklab, var(--term-accent) 30%, transparent);
+  color: var(--term-fg);
+}
+
+.root a,
+.root a:hover {
+  color: inherit;
+  font-weight: inherit;
+}
+
+.glow {
+  text-shadow: 0 0 8px #a9b66533;
+}
+
+.fadeIn {
+  animation: fade-in 0.4s ease-out both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.noScrollbar {
+  scrollbar-width: none;
+}
+
+.noScrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.cell {
+  fill: var(--term-level-0);
+  stroke: rgba(255, 255, 255, 0.04);
+}
+
+.cell[data-level='1'] {
+  fill: var(--term-level-1);
+}
+
+.cell[data-level='2'] {
+  fill: var(--term-level-2);
+}
+
+.cell[data-level='3'] {
+  fill: var(--term-level-3);
+}
+
+.cell[data-level='4'] {
+  fill: var(--term-level-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fadeIn {
+    animation: none;
+  }
+}
