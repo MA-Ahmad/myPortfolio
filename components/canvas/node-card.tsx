@@ -5,7 +5,6 @@ import styles from './canvas.module.css';
 import {
   CARD_FOOTER_H,
   CARD_HEADER_H,
-  CARD_W,
   type CardDef,
   type CardId,
   type Layout,
@@ -28,6 +27,7 @@ type Props = {
   draggable: boolean;
   dragging: boolean;
   lit: boolean;
+  shake: boolean;
   busy: boolean;
   onGrab: (event: PointerEvent) => void;
   onWire: (event: PointerEvent) => void;
@@ -43,6 +43,7 @@ export function NodeCard({
   draggable,
   dragging,
   lit,
+  shake,
   busy,
   onGrab,
   onWire,
@@ -58,11 +59,12 @@ export function NodeCard({
       className={styles.node}
       data-dragging={dragging || undefined}
       data-lit={lit || undefined}
+      data-shake={shake || undefined}
       aria-label={`${card.title} theme`}
       style={
         {
           '--accent': `var(--accent-${card.id})`,
-          width: CARD_W,
+          width: card.width[layout],
           height,
           zIndex: z,
           transform: `translate3d(${at.x}px, ${at.y}px, 0)`

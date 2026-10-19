@@ -22,15 +22,24 @@ export const DISPLAY_INPUT_Y = DISPLAY_HEADER_H + DISPLAY_BODY_PAD + DISPLAY_ROW
 export const NEAR_RADIUS = 64;
 export const SNAP_RADIUS = 18;
 
-const NOTEBOOK_H = CARD_HEADER_H + 446 + CARD_FOOTER_H;
-/** The display is centered on the notebook's height, so the notebook wire runs straight. */
-const DISPLAY_Y = (NOTEBOOK_H - DISPLAY_H) / 2;
+const GAP_X = 120;
+const GAP_Y = 32;
+const SIDE_W = 340;
+const PREVIEW = { home: 207, terminal: 172, notebook: 446 };
+const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_FOOTER_H;
+
+// Desktop is as tall as the right column; the notebook and the display are centered on it, and
+// the notebook port sits level with the display input so its wire runs straight.
+const DESKTOP_H = Math.max(chrome(PREVIEW.notebook), chrome(PREVIEW.home) + GAP_Y + chrome(PREVIEW.terminal));
+const NOTEBOOK_Y = (DESKTOP_H - chrome(PREVIEW.notebook)) / 2;
+const DISPLAY_Y = (DESKTOP_H - DISPLAY_H) / 2;
 
 export type CardDef = {
   id: CardId;
   title: string;
   route: string;
   href: string;
+  width: Record<Layout, number>;
   previewHeight: Record<Layout, number>;
   /** Port height from the card top; defaults to the middle of the footer. */
   portY?: Partial<Record<Layout, number>>;
@@ -44,7 +53,8 @@ export const CARDS: CardDef[] = [
     title: 'Home',
     route: '/',
     href: '/',
-    previewHeight: { desktop: 180, mobile: 168 },
+    width: { desktop: SIDE_W, mobile: CARD_W },
+    previewHeight: { desktop: PREVIEW.home, mobile: 168 },
     portSide: { desktop: 'left' }
   },
   {
@@ -52,7 +62,8 @@ export const CARDS: CardDef[] = [
     title: 'Terminal',
     route: '/themes/terminal',
     href: '/themes/terminal',
-    previewHeight: { desktop: 150, mobile: 150 },
+    width: { desktop: SIDE_W, mobile: CARD_W },
+    previewHeight: { desktop: PREVIEW.terminal, mobile: 150 },
     portY: { desktop: CARD_HEADER_H / 2 },
     portSide: { desktop: 'left' }
   },
@@ -61,20 +72,21 @@ export const CARDS: CardDef[] = [
     title: 'Notebook',
     route: '/themes/notebook',
     href: '/themes/notebook',
-    previewHeight: { desktop: 446, mobile: 240 },
-    portY: { desktop: DISPLAY_Y + DISPLAY_INPUT_Y }
+    width: { desktop: CARD_W, mobile: CARD_W },
+    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 },
+    portY: { desktop: DISPLAY_Y + DISPLAY_INPUT_Y - NOTEBOOK_Y }
   }
 ];
 
 export const cardById = (id: CardId) => CARDS.find((card) => card.id === id)!;
 
-export const cardHeight = (card: CardDef, layout: Layout) =>
-  CARD_HEADER_H + card.previewHeight[layout] + CARD_FOOTER_H;
+export const cardHeight = (card: CardDef, layout: Layout) => chrome(card.previewHeight[layout]);
 
-export const nodeSize = (id: NodeId, layout: Layout) =>
-  id === 'display'
-    ? { w: DISPLAY_W, h: DISPLAY_H }
-    : { w: CARD_W, h: cardHeight(cardById(id), layout) };
+export const nodeSize = (id: NodeId, layout: Layout) => {
+  if (id === 'display') return { w: DISPLAY_W, h: DISPLAY_H };
+  const card = cardById(id);
+  return { w: card.width[layout], h: cardHeight(card, layout) };
+};
 
 export const portSide = (id: CardId, layout: Layout): Side =>
   cardById(id).portSide?.[layout] ?? 'right';
@@ -86,9 +98,6 @@ export const inputSide = (id: CardId, layout: Layout): Side =>
 export const portY = (card: CardDef, layout: Layout) =>
   card.portY?.[layout] ?? cardHeight(card, layout) - CARD_FOOTER_H / 2;
 
-const GAP_X = 120;
-const GAP_Y = 32;
-
 /**
  * Desktop puts the display in the middle: the tall notebook on its left, home above terminal on
  * its right, each port facing the display. Mobile stacks everything in one column.
@@ -97,10 +106,10 @@ export function initialPositions(layout: Layout): Record<NodeId, Point> {
   if (layout === 'desktop') {
     const right = CARD_W + GAP_X * 2 + DISPLAY_W;
     return {
-      notebook: { x: 0, y: 0 },
+      notebook: { x: 0, y: NOTEBOOK_Y },
       display: { x: CARD_W + GAP_X, y: DISPLAY_Y },
       home: { x: right, y: 0 },
-      terminal: { x: right, y: cardHeight(cardById('home'), 'desktop') + GAP_Y }
+      terminal: { x: right, y: chrome(PREVIEW.home) + GAP_Y }
     };
   }
   let y = 0;
@@ -114,7 +123,7 @@ export function initialPositions(layout: Layout): Record<NodeId, Point> {
 }
 
 export const DESIGN = {
-  desktop: { w: CARD_W * 2 + GAP_X * 2 + DISPLAY_W, h: NOTEBOOK_H },
+  desktop: { w: CARD_W + GAP_X * 2 + DISPLAY_W + SIDE_W, h: DESKTOP_H },
   mobile: {
     w: CARD_W,
     h: CARDS.reduce((sum, card) => sum + cardHeight(card, 'mobile') + 24, 0) + 24 + DISPLAY_H
@@ -123,7 +132,7 @@ export const DESIGN = {
 
 export function outputPort(id: CardId, at: Point, layout: Layout): Point {
   const card = cardById(id);
-  const x = portSide(id, layout) === 'left' ? at.x : at.x + CARD_W;
+  const x = portSide(id, layout) === 'left' ? at.x : at.x + card.width[layout];
   return { x, y: at.y + portY(card, layout) };
 }
 

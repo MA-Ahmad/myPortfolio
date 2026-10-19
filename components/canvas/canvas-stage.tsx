@@ -29,7 +29,6 @@ import {
   type Layout,
   NEAR_RADIUS,
   type NodeId,
-  SNAP_RADIUS,
   cardById,
   direction,
   initialPositions,
@@ -52,6 +51,7 @@ type View = { layout: Layout; scale: number; ox: number; oy: number; width: numb
 const BAR_H = 56;
 const MOBILE_BREAKPOINT = 768;
 const OPEN_DELAY_MS = 620;
+const DRAG_THRESHOLD = 3;
 
 function measure(stage: HTMLElement): View {
   const width = stage.clientWidth;
@@ -212,24 +212,42 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     );
   };
 
+  // Only arms the wire; it plugs in on release, never while the pointer is still held.
   const moveTip = (from: CardId, tip: Point) => {
     const gap = distance(tip, target(from)());
-    if (gap < SNAP_RADIUS) return snap(from, tip);
     setWire({ from, tip, phase: gap < NEAR_RADIUS ? 'near' : 'drag' });
   };
 
   const busy = wire !== null && wire.phase !== 'drag' && wire.phase !== 'near';
 
-  const listen = (onMove: (event: globalThis.PointerEvent) => void, onEnd: (cancelled: boolean) => void) => {
-    const move = (event: globalThis.PointerEvent) => onMove(event);
-    const up = () => end(false);
-    const cancel = () => end(true);
-    const key = (event: KeyboardEvent) => event.key === 'Escape' && end(true);
+  /**
+   * Follows one pointer until it is released. The pressed element captures that pointer, so only
+   * its own release ends the drag; anything that takes the pointer away first (a native drag, a
+   * system gesture, Escape) cancels instead.
+   */
+  const listen = (
+    event: PointerEvent,
+    onMove: (event: globalThis.PointerEvent) => void,
+    onEnd: (cancelled: boolean) => void
+  ) => {
+    const { pointerId } = event;
+    const element = event.currentTarget as Element;
+    element.setPointerCapture(pointerId);
+    const ours = (e: globalThis.PointerEvent) => e.pointerId === pointerId;
+    const move = (e: globalThis.PointerEvent) => ours(e) && onMove(e);
+    const up = (e: globalThis.PointerEvent) => ours(e) && end(false);
+    const cancel = (e: globalThis.PointerEvent) => ours(e) && end(true);
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && end(true);
+    const block = (e: Event) => e.preventDefault();
     const release = () => {
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', cancel);
+      element.removeEventListener('lostpointercapture', cancel);
       window.removeEventListener('keydown', key);
+      document.removeEventListener('selectstart', block);
+      document.removeEventListener('dragstart', block);
+      if (element.hasPointerCapture(pointerId)) element.releasePointerCapture(pointerId);
       releaseRef.current = null;
     };
     const end = (cancelled: boolean) => {
@@ -239,19 +257,30 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', cancel);
+    element.addEventListener('lostpointercapture', cancel);
     window.addEventListener('keydown', key);
+    document.addEventListener('selectstart', block);
+    document.addEventListener('dragstart', block);
     releaseRef.current = release;
   };
 
+  // The wire only appears once the pointer actually moves, and plugs in only on release.
   const startWire = (id: CardId) => (event: PointerEvent) => {
     if (event.button !== 0 || wireRef.current) return;
     event.preventDefault();
     event.stopPropagation();
-    moveTip(id, toWorld(event.clientX, event.clientY));
+    const press = { x: event.clientX, y: event.clientY };
+    let dragging = false;
     listen(
+      event,
       (move) => {
+        if (!dragging) {
+          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < DRAG_THRESHOLD) return;
+          dragging = true;
+        }
         const current = wireRef.current;
-        if (current?.phase === 'drag' || current?.phase === 'near') moveTip(id, toWorld(move.clientX, move.clientY));
+        if (!current || current.phase === 'drag' || current.phase === 'near')
+          moveTip(id, toWorld(move.clientX, move.clientY));
       },
       (cancelled) => {
         const current = wireRef.current;
@@ -272,9 +301,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       target(id),
       760,
       easeInOutCubic,
-      (p) => {
-        if (wireRef.current?.phase === 'drag' || wireRef.current?.phase === 'near') moveTip(id, p);
-      }
+      (p) => moveTip(id, p),
+      () => snap(id, target(id)())
     );
   };
 
@@ -287,6 +315,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     setOrder((current) => [...current.filter((node) => node !== id), id]);
     setGrabbed(id);
     listen(
+      event,
       (move) => {
         const { ox, oy, scale, width, height } = viewRef.current!;
         const p = toWorld(move.clientX, move.clientY);
@@ -308,6 +337,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const layout = view?.layout ?? 'desktop';
   const draggable = layout === 'desktop';
+  const source = wire ? outputPort(wire.from, positions[wire.from], layout) : null;
   const port = wire ? inputPort(positions.display, inputSide(wire.from, layout)) : null;
   const inputs = Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout))));
   const plugged = wire?.phase === 'snapped' ? wire.from : null;
@@ -323,8 +353,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageHeight = layout === 'mobile' && view ? view.oy + design.h * view.scale + 40 : undefined;
 
   const previews: Record<CardId, ReactNode> = {
-    home: <HomePreview />,
-    terminal: <TerminalPreview contributions={contributions} />,
+    home: <HomePreview avatar={layout === 'desktop' ? 84 : 68} />,
+    terminal: <TerminalPreview contributions={contributions} weeks={layout === 'desktop' ? 49 : 43} />,
     notebook: <NotebookPreview />
   };
 
@@ -339,19 +369,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           transform: view ? `translate3d(${view.ox}px, ${view.oy}px, 0) scale(${view.scale})` : undefined
         }}
       >
-        <svg className={styles.layer} width={design.w} height={design.h} aria-hidden>
-          {wire && (
-            <Wire
-              source={wire.from}
-              from={outputPort(wire.from, positions[wire.from], layout)}
-              fromDir={direction(portSide(wire.from, layout))}
-              to={wire.phase === 'snapped' && port ? port : wire.tip}
-              toDir={direction(inputSide(wire.from, layout))}
-              lit={wire.phase === 'snapped'}
-            />
-          )}
-        </svg>
-
         {CARDS.map((card) => (
           <NodeCard
             key={card.id}
@@ -362,6 +379,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             draggable={draggable}
             dragging={grabbed === card.id}
             lit={plugged === card.id}
+            shake={plugged === card.id}
             busy={wire !== null}
             onGrab={grab(card.id)}
             onWire={startWire(card.id)}
@@ -384,6 +402,24 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         />
 
         <svg className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
+          {wire && source && (
+            <>
+              <Wire
+                source={wire.from}
+                from={source}
+                fromDir={direction(portSide(wire.from, layout))}
+                to={wire.phase === 'snapped' && port ? port : wire.tip}
+                toDir={direction(inputSide(wire.from, layout))}
+                lit={wire.phase === 'snapped'}
+              />
+              <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
+                <circle className={styles.cap} data-lit={plugged || undefined} cx={source.x} cy={source.y} r={5} />
+                {plugged && port && (
+                  <circle className={styles.cap} data-lit cx={port.x} cy={port.y} r={6} />
+                )}
+              </g>
+            </>
+          )}
           {wire && wire.phase !== 'snapped' && (
             <circle className={styles.tip} cx={wire.tip.x} cy={wire.tip.y} r={4} />
           )}

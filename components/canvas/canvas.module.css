@@ -97,6 +97,42 @@
     0 0 36px -10px color-mix(in oklab, var(--accent) 70%, transparent);
 }
 
+/* `translate` and `rotate` compose with the inline transform that positions the node. */
+.node[data-shake] {
+  animation: shake 440ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes shake {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  14% {
+    translate: -3px 1px;
+    rotate: -0.6deg;
+  }
+  30% {
+    translate: 3px -1px;
+    rotate: 0.5deg;
+  }
+  46% {
+    translate: -2px 1px;
+    rotate: -0.35deg;
+  }
+  62% {
+    translate: 1.5px 0;
+    rotate: 0.2deg;
+  }
+  80% {
+    translate: -0.5px 0;
+    rotate: 0deg;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
 .header {
   display: flex;
   flex: none;
@@ -251,6 +287,7 @@
 }
 
 .input {
+  z-index: 3;
   background: var(--cv-card-raised);
   box-shadow: 0 0 0 1px var(--cv-muted);
 }
@@ -328,6 +365,58 @@
 .display[data-lit]::after {
   opacity: 1;
   transform: scaleY(1);
+}
+
+.trace {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.traceLine,
+.traceGlow {
+  fill: none;
+  stroke: var(--accent);
+  stroke-linecap: round;
+  /* pathLength is 100: an 18-long streak, with a gap longer than the path so it never wraps. */
+  stroke-dasharray: 18 200;
+  stroke-dashoffset: 18;
+  opacity: 0;
+  animation: trace 900ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
+}
+
+.traceLine {
+  stroke-width: 1.5;
+}
+
+.traceGlow {
+  stroke-width: 6;
+  filter: blur(4px);
+}
+
+.trace[data-loop] .traceLine,
+.trace[data-loop] .traceGlow {
+  animation: trace 1400ms cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+@keyframes trace {
+  0% {
+    stroke-dashoffset: 18;
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
 }
 
 .rows {
@@ -441,6 +530,18 @@
 
 .tip {
   fill: var(--cv-wire);
+}
+
+/* The wire is drawn over the nodes, so its ends repeat the port dots on top of it. */
+.cap {
+  fill: var(--cv-wire);
+  stroke: var(--cv-card);
+  stroke-width: 2;
+  transition: fill 250ms ease;
+}
+
+.cap[data-lit] {
+  fill: var(--accent);
 }
 
 .bolt {
@@ -628,6 +729,7 @@
   .ring,
   .burst,
   .caret,
+  .node[data-shake],
   .status[data-state='armed'] .dot {
     animation: none;
   }
@@ -635,6 +737,10 @@
   .ring,
   .burst {
     opacity: 0;
+  }
+
+  .trace {
+    display: none;
   }
 
   .check path {

@@ -11,12 +11,17 @@ export const lerp = (a: Point, b: Point, t: number): Point => ({
  * A wire leaves its output straight out of the port's edge and enters its input the same way,
  * like a node editor: `fromDir` and `toDir` are +1 for a port on a right edge, -1 for a left one.
  * The handles grow with the gap, and more when the input sits behind the output, so the wire
- * loops back instead of folding over itself.
+ * loops back instead of folding over itself. They never outgrow the distance between the ends,
+ * so a short wire is a short line toward the pointer rather than a sideways hook, and a wire
+ * pulled behind its port bends only slightly that way.
  */
 export function wirePath(from: Point, fromDir: number, to: Point, toDir: number) {
   const ahead = (to.x - from.x) * fromDir;
-  const reach =
-    ahead >= 0 ? Math.max(36, ahead * 0.5) : Math.max(80, -ahead * 0.6 + Math.abs(to.y - from.y) * 0.2);
+  const length = Math.hypot(to.x - from.x, to.y - from.y);
+  const reach = Math.min(
+    ahead >= 0 ? Math.max(36, ahead * 0.5) : Math.max(80, -ahead * 0.6 + Math.abs(to.y - from.y) * 0.2),
+    length * (ahead >= 0 ? 0.5 : 0.25)
+  );
   return `M${from.x} ${from.y} C${from.x + reach * fromDir} ${from.y} ${to.x + reach * toDir} ${to.y} ${to.x} ${to.y}`;
 }
 

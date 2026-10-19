@@ -14,12 +14,11 @@ const mono = JetBrains_Mono({
 });
 
 const COMMAND = 'whoami';
-const WEEKS = 43;
 const TYPE_MS = 90;
 const HOLD_MS = 5200;
 
-/** `whoami` typed into the prompt on a loop, the answer, and the last ten months of commits. */
-export function TerminalPreview({ contributions }: { contributions: Activity[] }) {
+/** `whoami` typed into the prompt on a loop, the answer, and the last `weeks` of commits. */
+export function TerminalPreview({ contributions, weeks }: { contributions: Activity[]; weeks: number }) {
   const [typed, setTyped] = useState(COMMAND.length);
 
   useEffect(() => {
@@ -35,8 +34,8 @@ export function TerminalPreview({ contributions }: { contributions: Activity[] }
   }, []);
 
   const done = typed >= COMMAND.length;
-  const days = contributions.slice(-WEEKS * 7);
-  const cells = days.length ? days : Array.from({ length: WEEKS * 7 }, () => ({ level: 0 }));
+  const days = contributions.slice(-weeks * 7);
+  const cells = days.length ? days : Array.from({ length: weeks * 7 }, () => ({ level: 0 }));
 
   return (
     <div
