@@ -21,6 +21,7 @@ export default function PixelAvatar({
   const wrapRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLCanvasElement>(null);
   const hoverRef = useRef<HTMLCanvasElement>(null);
+  const imgRef = useRef<HTMLImageElement>(null);
   const [show, setShow] = useState(false);   // reveal the sharp image
   const [cors, setCors] = useState(true);     // fall back to a plain <img> if CORS fails
 
@@ -31,7 +32,18 @@ export default function PixelAvatar({
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const showFinal = () => setShow(true);
 
-    const DURATION = 1700, SPREAD = 2600, RISE = 1.1, FOCAL = 320;
+    const DURATION = 850, SPREAD = 1300, RISE = 1.1, FOCAL = 320, FOCUS_LEAD = 400, RIPPLE_MS = 800;
+
+    // Sharp photo grows out from the center through a feathered circular mask.
+    // At 220% the opaque core (70% of the mask's half-size) reaches past the corners.
+    const rippleIn = () => {
+      const mask = { maskImage: 'radial-gradient(circle closest-side, #000 70%, transparent 100%)', maskPosition: 'center', maskRepeat: 'no-repeat' };
+      imgRef.current?.animate(
+        [{ ...mask, maskSize: '0% 0%' }, { ...mask, maskSize: '220% 220%' }],
+        { duration: RIPPLE_MS, easing: 'cubic-bezier(0.645, 0.045, 0.355, 1)' },
+      );
+      showFinal();
+    };
     let W = 0, H = 0, dpr = 1, raf = 0, hRaf = 0, hLast = 0, hReady = false, started = false;
     let parts: any[] = [], hParts: any[] = [];
     let hCols = 0, hRows = 0, hCol = new Uint8ClampedArray(0), hBusy = new Uint8Array(0);
@@ -155,8 +167,10 @@ export default function PixelAvatar({
       }
 
       const t0 = performance.now(), total = SPREAD + DURATION * 1.25;
+      let focusing = false;
       const frame = (now: number) => {
         const t = now - t0;
+        if (!focusing && t >= total - FOCUS_LEAD) { focusing = true; rippleIn(); }
         ictx.clearRect(0, 0, W, H);
         for (const p of parts) {
           const k = (t - p.delay) / p.dur;
@@ -216,12 +230,13 @@ export default function PixelAvatar({
       {/* in normal flow, so the wrapper is sized exactly like your old <img> */}
       <img
         key={String(cors)}
+        ref={imgRef}
         src={src}
         alt={alt}
         draggable={false}
         crossOrigin={cors ? 'anonymous' : undefined}
         onError={() => { if (cors) setCors(false); }}
-        className={`relative z-[1] block size-full rounded-[inherit] object-cover transition-opacity duration-500 ${show ? 'opacity-100' : 'opacity-0'}`}
+        className={`relative z-[1] block size-full rounded-[inherit] object-cover ${show ? 'opacity-100' : 'opacity-0'}`}
       />
       <canvas ref={introRef} className="absolute inset-0 z-0 size-full" />
       <canvas ref={hoverRef} className="pointer-events-none absolute inset-0 z-[2] size-full" />
