@@ -23,8 +23,8 @@
   --term-level-3: #7fb069;
   --term-level-4: #a9b665;
 
-  /* ASCII portrait tones: shadow, base, highlight, and displaced shadow. */
-  --term-portrait-dark: #504945;
+  /* ASCII portrait gradient (shadow → base → highlight) and displaced-shadow color. */
+  --term-portrait-dark: #6e6459;
   --term-portrait-mid: #d4be98;
   --term-portrait-light: #ebdbb2;
   --term-portrait-moved: #7a736a;
