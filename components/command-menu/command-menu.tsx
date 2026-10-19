@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { Command } from 'cmdk';
@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
+import { pixelNavigate } from 'lib/pixel-transition';
 
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
@@ -37,10 +38,15 @@ export function CommandMenu() {
   const { setTheme } = useTheme();
   const [open, setOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
+  const terminalIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
     setIsMac(/Mac|iPhone|iPad/.test(navigator.platform));
   }, []);
+
+  useEffect(() => {
+    if (open) router.prefetch('/themes/terminal');
+  }, [open, router]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -77,6 +83,19 @@ export function CommandMenu() {
       return;
     }
     router.push(href);
+  };
+
+  const openTerminalTheme = () => {
+    const icon = terminalIconRef.current?.getBoundingClientRect();
+    setOpen(false);
+    pixelNavigate(router, '/themes/terminal', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --term-accent and --term-bg in themes/terminal/terminal.module.css.
+      edge: '#b8c572',
+      background: '#0d0e0f'
+    });
   };
 
   return (
@@ -135,8 +154,8 @@ export function CommandMenu() {
                 </Command.Group>
 
                 <Command.Group heading="Themes" className="mb-2">
-                  <CommandItem onSelect={() => go('/themes/terminal')}>
-                    <TerminalIcon className="size-4 text-muted-foreground" />
+                  <CommandItem onSelect={openTerminalTheme}>
+                    <TerminalIcon ref={terminalIconRef} className="size-4 text-muted-foreground" />
                     <span>Terminal</span>
                   </CommandItem>
                 </Command.Group>

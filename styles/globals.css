@@ -433,3 +433,22 @@ a.nav-link:hover {
 .tooltip-popup[data-instant] {
   --tw-duration: 0s;
 }
+
+/* Theme switch, see lib/pixel-transition.ts. Cells between the old and new clip paths show the edge color. */
+html[data-pixel-transition]::view-transition-old(root),
+html[data-pixel-transition]::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+html[data-pixel-transition]::view-transition-old(root) {
+  background: var(--pixel-transition-old-bg);
+}
+
+html[data-pixel-transition]::view-transition-new(root) {
+  background: var(--pixel-transition-new-bg);
+}
+
+html[data-pixel-transition]::view-transition-image-pair(root) {
+  background: var(--pixel-transition-edge);
+}

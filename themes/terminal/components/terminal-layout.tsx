@@ -1,9 +1,11 @@
-import { ReactNode, useEffect, useRef, useState } from 'react';
+import { MouseEvent, ReactNode, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { JetBrains_Mono } from 'next/font/google';
 import { ArrowLeft, ArrowUp } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
+import { pixelNavigate } from 'lib/pixel-transition';
 import { TERMINAL_CONTENT } from '../content';
 import styles from '../terminal.module.css';
 
@@ -14,6 +16,7 @@ const mono = JetBrains_Mono({
 });
 
 export function TerminalLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const rootRef = useRef<HTMLDivElement>(null);
 
   // The shared body background follows the main site's light/dark mode; match it
@@ -26,6 +29,23 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
       document.body.style.background = previous;
     };
   }, []);
+
+  const backToMainSite = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0)
+      return;
+    event.preventDefault();
+    const arrow = event.currentTarget.getBoundingClientRect();
+    const mainSite = getComputedStyle(document.documentElement);
+    pixelNavigate(router, '/', {
+      origin: { x: arrow.left + arrow.width / 2, y: arrow.top + arrow.height / 2 },
+      edge: mainSite.getPropertyValue('--foreground').trim(),
+      background: mainSite.getPropertyValue('--background').trim()
+    });
+  };
+
+  useEffect(() => {
+    router.prefetch('/');
+  }, [router]);
 
   return (
     <div
@@ -41,6 +61,7 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
           <div className="flex shrink-0 items-center gap-3">
             <Link
               href="/"
+              onClick={backToMainSite}
               aria-label="Back to main site"
               title="Back to main site"
               className="!text-term-muted transition-colors duration-150 hover:!text-term-fg"
