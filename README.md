@@ -24,7 +24,7 @@
 - `/` - Profile, overview, GitHub contribution graph, tech stack, experience, education, and projects. Statically generated and revalidated once a day.
 - `/blog` - The 10 latest posts, merged from local `.mdx` files in `data/posts` and articles hosted on Dev.to.
 - `/blog/[slug]` - A single post. Only the 10 latest posts are served; other slugs return 404.
-- `/developer-story` and `/code-snippets` - Standalone pages.
+- `/code-snippets` - Standalone page.
 - `/llms.txt`, `/about.md`, `/experience.md`, `/education.md`, `/projects.md` - Plain markdown versions of the profile for AI agents. Requesting `/` with an `Accept: text/markdown` header returns the same content as `/llms.txt`.
 
 Press <kbd>⌘</kbd> <kbd>K</kbd>, <kbd>Ctrl</kbd> <kbd>K</kbd>, or <kbd>/</kbd> on any page to open the command menu.
