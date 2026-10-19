@@ -8,13 +8,13 @@ import {
   useRef,
   useState
 } from 'react';
+import { flushSync } from 'react-dom';
 import { useRouter } from 'next/router';
 import type { Activity } from 'lib/github-contributions';
 import {
   type Point,
   distance,
   easeInOutCubic,
-  easeOutBack,
   easeOutCubic,
   lerp,
   outside
@@ -45,13 +45,12 @@ import { TerminalPreview } from './previews/terminal-preview';
 import { Spark } from './spark';
 import { Wire } from './wire';
 
-type Phase = 'drag' | 'near' | 'snapping' | 'snapped' | 'retract';
+type Phase = 'drag' | 'near' | 'snapped' | 'retract';
 type WireState = { from: CardId; tip: Point; phase: Phase };
 type View = { layout: Layout; scale: number; ox: number; oy: number; width: number; height: number };
 
 const BAR_H = 56;
 const MOBILE_BREAKPOINT = 768;
-const OPEN_DELAY_MS = 620;
 const DRAG_THRESHOLD = 3;
 // Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
 // port adds a soft field, and every fresh reach for the port earns a kick that grows each time.
@@ -124,7 +123,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
-  const timerRef = useRef<number | undefined>(undefined);
   const reducedRef = useRef(false);
   const pointerRef = useRef<Point | null>(null);
   const kickRef = useRef<{ vec: Point; start: number } | null>(null);
@@ -166,7 +164,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       cancelAnimationFrame(frameRef.current);
       cancelAnimationFrame(kickFrameRef.current);
       releaseRef.current?.();
-      window.clearTimeout(timerRef.current);
       window.clearTimeout(zapTimerRef.current);
     };
   }, []);
@@ -211,16 +208,18 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     });
   };
 
-  const snap = (from: CardId, tip: Point) => {
+  /**
+   * Plugs the wire in and opens the theme in the same frame, so the snapshot the pixel transition
+   * dissolves already shows the connection and the page opens as fast as from the command menu.
+   */
+  const snap = (from: CardId) => {
     releaseRef.current?.();
-    const done = () => {
+    cancelAnimationFrame(frameRef.current);
+    flushSync(() => {
       setWire({ from, tip: target(from)(), phase: 'snapped' });
       setBurst(Date.now());
-      timerRef.current = window.setTimeout(() => open(from), reducedRef.current ? 200 : OPEN_DELAY_MS);
-    };
-    if (reducedRef.current) return done();
-    setWire({ from, tip, phase: 'snapping' });
-    animate(tip, target(from), 220, easeOutBack, (p) => setWire({ from, tip: p, phase: 'snapping' }), done);
+    });
+    open(from);
   };
 
   const retract = (from: CardId, tip: Point) => {
@@ -401,7 +400,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         if (!dragging && !cancelled && viewRef.current?.layout === 'mobile') return connect(id);
         const current = wireRef.current;
         if (!current || (current.phase !== 'drag' && current.phase !== 'near')) return;
-        if (!cancelled && current.phase === 'near') snap(id, current.tip);
+        if (!cancelled && current.phase === 'near') snap(id);
         else retract(id, current.tip);
       }
     );
@@ -410,7 +409,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const connect = (id: CardId) => {
     if (wireRef.current) return;
     const from = outputPort(id, positionsRef.current[id], viewRef.current!.layout);
-    if (reducedRef.current) return snap(id, from);
+    if (reducedRef.current) return snap(id);
     setWire({ from: id, tip: from, phase: 'drag' });
     animate(
       from,
@@ -418,7 +417,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       760,
       easeInOutCubic,
       (p) => moveTip(id, p),
-      () => snap(id, target(id)())
+      () => snap(id)
     );
   };
 
@@ -548,7 +547,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           {wire && wire.phase !== 'snapped' && (
             <circle className={styles.tip} cx={wire.tip.x} cy={wire.tip.y} r={4} />
           )}
-          {(wire?.phase === 'near' || wire?.phase === 'snapping') && port && !reducedRef.current && (
+          {wire?.phase === 'near' && port && !reducedRef.current && (
             <Spark source={wire.from} tip={wire.tip} port={port} />
           )}
           {zap && wire && (wire.phase === 'drag' || wire.phase === 'near') && (
