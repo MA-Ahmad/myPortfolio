@@ -39,7 +39,7 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
       <header className="fixed inset-x-0 top-0 z-50 border-b border-term-border/50 bg-term-bg/80 backdrop-blur-md">
         <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <Link
-            href="/terminal"
+            href="/themes/terminal"
             className={cn(
               styles.glow,
               'shrink-0 text-sm font-semibold tracking-wider !text-term-accent transition-opacity hover:opacity-80'

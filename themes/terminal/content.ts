@@ -53,8 +53,7 @@ export const TERMINAL_CONTENT = {
   }),
   nav: [
     { label: 'experience', href: '#experience' },
-    { label: 'projects', href: '#projects' },
-    { label: 'blog', href: '/blog' }
+    { label: 'projects', href: '#projects' }
   ],
   whyHireMe: [
     "I've been shipping production software since 2017, from Rails monoliths to Next.js frontends, NestJS services, and web3 platforms. I like owning a feature end to end, from the database to the pixels.",

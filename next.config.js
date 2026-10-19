@@ -15,6 +15,11 @@ const nextConfig = {
         source: '/llms-full.txt',
         destination: '/llms.txt',
         permanent: true
+      },
+      {
+        source: '/terminal',
+        destination: '/themes/terminal',
+        permanent: true
       }
     ];
   },
@@ -59,6 +64,6 @@ const nextConfig = {
       ]
     };
   }
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;

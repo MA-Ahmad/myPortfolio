@@ -13,7 +13,8 @@ import {
   LayersIcon,
   MoonStarIcon,
   SearchIcon,
-  SunMediumIcon
+  SunMediumIcon,
+  TerminalIcon
 } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
@@ -133,6 +134,13 @@ export function CommandMenu() {
                   ))}
                 </Command.Group>
 
+                <Command.Group heading="Themes" className="mb-2">
+                  <CommandItem onSelect={() => go('/themes/terminal')}>
+                    <TerminalIcon className="size-4 text-muted-foreground" />
+                    <span>Terminal</span>
+                  </CommandItem>
+                </Command.Group>
+
                 <Command.Group heading="On this site" className="mb-2">
                   {SECTION_LINKS.map((link) => (
                     <CommandItem key={link.href} onSelect={() => go(link.href)}>
@@ -161,7 +169,7 @@ export function CommandMenu() {
                   </CommandItem>
                 </Command.Group>
 
-                <Command.Group heading="Theme">
+                <Command.Group heading="Mode">
                   <CommandItem onSelect={() => { setTheme('light'); setOpen(false); }}>
                     <SunMediumIcon className="size-4 text-muted-foreground" />
                     <span>Light</span>
