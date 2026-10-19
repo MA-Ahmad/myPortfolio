@@ -17,11 +17,11 @@ type Props = {
 
 const CanvasPage: NextPageWithLayout<Props> = ({ contributions }) => (
   <>
-    <Meta title="Canvas" />
+    <Meta title="Theme Studio" />
     <Head>
       <meta name="robots" content="noindex" />
     </Head>
-    <h1 className="sr-only">Canvas: wire a theme into the display to open it</h1>
+    <h1 className="sr-only">Theme Studio: wire a theme into the display to open it</h1>
     <CanvasStage contributions={contributions} />
   </>
 );
@@ -76,7 +76,7 @@ function CanvasLayout({ children }: { children: ReactNode }) {
           >
             <ArrowLeft className="size-4" />
           </Link>
-          Canvas
+          Theme Studio
           <span className={styles.hint}>Drag a wire from a theme into the display</span>
         </div>
       </header>

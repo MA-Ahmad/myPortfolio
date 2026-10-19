@@ -7,7 +7,8 @@ export type Side = 'left' | 'right';
 
 export const CARD_W = 300;
 export const CARD_HEADER_H = 44;
-export const CARD_FOOTER_H = 40;
+/** Below the preview: the same 6px inset it has at the sides, plus the card border. */
+export const CARD_BOTTOM = 7;
 export const PORT_SIZE = 12;
 
 export const DISPLAY_W = 280;
@@ -16,8 +17,8 @@ export const DISPLAY_ROW_H = 36;
 export const DISPLAY_BODY_PAD = 8;
 export const DISPLAY_FOOTER_H = 40;
 export const DISPLAY_H = DISPLAY_HEADER_H + DISPLAY_BODY_PAD * 2 + DISPLAY_ROW_H * 3 + DISPLAY_FOOTER_H;
-/** The inputs sit on the first row, `source`, one on each side. */
-export const DISPLAY_INPUT_Y = DISPLAY_HEADER_H + DISPLAY_BODY_PAD + DISPLAY_ROW_H / 2;
+/** The inputs sit halfway down, one on each side, level with every card port. */
+export const DISPLAY_INPUT_Y = DISPLAY_H / 2;
 
 export const NEAR_RADIUS = 64;
 export const SNAP_RADIUS = 18;
@@ -26,10 +27,10 @@ const GAP_X = 120;
 const GAP_Y = 32;
 const SIDE_W = 340;
 const PREVIEW = { home: 207, terminal: 172, notebook: 446 };
-const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_FOOTER_H;
+const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_BOTTOM;
 
-// Desktop is as tall as the right column; the notebook and the display are centered on it, and
-// the notebook port sits level with the display input so its wire runs straight.
+// Desktop is as tall as the right column; the notebook and the display are centered on it, so
+// the notebook port sits level with the display input and its wire runs straight.
 const DESKTOP_H = Math.max(chrome(PREVIEW.notebook), chrome(PREVIEW.home) + GAP_Y + chrome(PREVIEW.terminal));
 const NOTEBOOK_Y = (DESKTOP_H - chrome(PREVIEW.notebook)) / 2;
 const DISPLAY_Y = (DESKTOP_H - DISPLAY_H) / 2;
@@ -41,8 +42,6 @@ export type CardDef = {
   href: string;
   width: Record<Layout, number>;
   previewHeight: Record<Layout, number>;
-  /** Port height from the card top; defaults to the middle of the footer. */
-  portY?: Partial<Record<Layout, number>>;
   /** The card edge the port is on, facing the display; defaults to the right. */
   portSide?: Partial<Record<Layout, Side>>;
 };
@@ -50,7 +49,7 @@ export type CardDef = {
 export const CARDS: CardDef[] = [
   {
     id: 'home',
-    title: 'Home',
+    title: 'Classic',
     route: '/',
     href: '/',
     width: { desktop: SIDE_W, mobile: CARD_W },
@@ -64,7 +63,6 @@ export const CARDS: CardDef[] = [
     href: '/themes/terminal',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.terminal, mobile: 150 },
-    portY: { desktop: CARD_HEADER_H / 2 },
     portSide: { desktop: 'left' }
   },
   {
@@ -73,8 +71,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/notebook',
     href: '/themes/notebook',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 },
-    portY: { desktop: DISPLAY_Y + DISPLAY_INPUT_Y - NOTEBOOK_Y }
+    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 }
   }
 ];
 
@@ -95,8 +92,8 @@ export const portSide = (id: CardId, layout: Layout): Side =>
 export const inputSide = (id: CardId, layout: Layout): Side =>
   portSide(id, layout) === 'left' ? 'right' : 'left';
 
-export const portY = (card: CardDef, layout: Layout) =>
-  card.portY?.[layout] ?? cardHeight(card, layout) - CARD_FOOTER_H / 2;
+/** Every port sits halfway down its card's edge. */
+export const portY = (card: CardDef, layout: Layout) => cardHeight(card, layout) / 2;
 
 /**
  * Desktop puts the display in the middle: the tall notebook on its left, home above terminal on

@@ -52,7 +52,7 @@ export function CommandMenu() {
     if (!open) return;
     router.prefetch('/themes/terminal');
     router.prefetch('/themes/notebook');
-    router.prefetch('/canvas');
+    router.prefetch('/theme-studio');
   }, [open, router]);
 
   useEffect(() => {
@@ -123,7 +123,7 @@ export function CommandMenu() {
     const icon = canvasIconRef.current?.getBoundingClientRect();
     const dark = resolvedTheme === 'dark';
     setOpen(false);
-    pixelNavigate(router, '/canvas', {
+    pixelNavigate(router, '/theme-studio', {
       origin: icon
         ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
         : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
@@ -189,6 +189,10 @@ export function CommandMenu() {
                 </Command.Group>
 
                 <Command.Group heading="Themes" className="mb-2">
+                  <CommandItem onSelect={openCanvas} keywords={['canvas', 'wire', 'switch']}>
+                    <WorkflowIcon ref={canvasIconRef} className="size-4 text-muted-foreground" />
+                    <span>Theme Studio</span>
+                  </CommandItem>
                   <CommandItem onSelect={openTerminalTheme}>
                     <TerminalIcon ref={terminalIconRef} className="size-4 text-muted-foreground" />
                     <span>Terminal</span>
@@ -196,10 +200,6 @@ export function CommandMenu() {
                   <CommandItem onSelect={openNotebookTheme}>
                     <NotebookIcon ref={notebookIconRef} className="size-4 text-muted-foreground" />
                     <span>Notebook</span>
-                  </CommandItem>
-                  <CommandItem onSelect={openCanvas}>
-                    <WorkflowIcon ref={canvasIconRef} className="size-4 text-muted-foreground" />
-                    <span>Canvas</span>
                   </CommandItem>
                 </Command.Group>
 
@@ -256,14 +256,17 @@ export function CommandMenu() {
 
 function CommandItem({
   children,
-  onSelect
+  onSelect,
+  keywords
 }: {
   children: React.ReactNode;
   onSelect: () => void;
+  keywords?: string[];
 }) {
   return (
     <Command.Item
       onSelect={onSelect}
+      keywords={keywords}
       className={cn(
         'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm outline-none',
         'data-[selected=true]:bg-muted'

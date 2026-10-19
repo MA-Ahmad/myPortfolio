@@ -8,6 +8,28 @@ export const lerp = (a: Point, b: Point, t: number): Point => ({
 });
 
 /**
+ * Moves `p` out to the outline of the box at `at` grown by `pad` with round corners, through the
+ * nearest side, or returns it as is when it is already outside.
+ */
+export function outside(p: Point, at: Point, size: { w: number; h: number }, pad: number): Point {
+  const hw = size.w / 2;
+  const hh = size.h / 2;
+  const cx = at.x + hw;
+  const cy = at.y + hh;
+  const sx = p.x < cx ? -1 : 1;
+  const sy = p.y < cy ? -1 : 1;
+  const qx = Math.abs(p.x - cx) - hw;
+  const qy = Math.abs(p.y - cy) - hh;
+  if (qx > 0 && qy > 0) {
+    const d = Math.hypot(qx, qy);
+    if (d >= pad) return p;
+    return { x: cx + sx * (hw + (qx / d) * pad), y: cy + sy * (hh + (qy / d) * pad) };
+  }
+  if (qx >= qy) return qx >= pad ? p : { x: cx + sx * (hw + pad), y: p.y };
+  return qy >= pad ? p : { x: p.x, y: cy + sy * (hh + pad) };
+}
+
+/**
  * A wire leaves its output straight out of the port's edge and enters its input the same way,
  * like a node editor: `fromDir` and `toDir` are +1 for a port on a right edge, -1 for a left one.
  * The handles grow with the gap, and more when the input sits behind the output, so the wire

@@ -3,7 +3,6 @@ import { GripVertical, House, NotebookPen, SquareTerminal } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
 import {
-  CARD_FOOTER_H,
   CARD_HEADER_H,
   type CardDef,
   type CardId,
@@ -28,6 +27,8 @@ type Props = {
   dragging: boolean;
   lit: boolean;
   shake: boolean;
+  /** Which way to jolt when a wire is pushed off this card or off another one; `count` restarts it. */
+  repel: { x: number; y: number; count: number } | null;
   busy: boolean;
   onGrab: (event: PointerEvent) => void;
   onWire: (event: PointerEvent) => void;
@@ -44,6 +45,7 @@ export function NodeCard({
   dragging,
   lit,
   shake,
+  repel,
   busy,
   onGrab,
   onWire,
@@ -60,10 +62,13 @@ export function NodeCard({
       data-dragging={dragging || undefined}
       data-lit={lit || undefined}
       data-shake={shake || undefined}
+      data-repel={repel ? (repel.count % 2 ? 'a' : 'b') : undefined}
       aria-label={`${card.title} theme`}
       style={
         {
           '--accent': `var(--accent-${card.id})`,
+          '--rx': repel?.x ?? 0,
+          '--ry': repel?.y ?? 0,
           width: card.width[layout],
           height,
           zIndex: z,
@@ -93,19 +98,16 @@ export function NodeCard({
         {children}
       </div>
 
-      <footer className={styles.footer} style={{ height: CARD_FOOTER_H - 1 }}>
-        <span className={styles.route}>{card.route}</span>
-        <button type="button" className={styles.connect} onClick={onConnect} disabled={busy}>
-          Connect<span className="sr-only"> {card.title} to display</span>
-        </button>
-      </footer>
-
-      <span
+      {/* A pointer press on the port belongs to the wire drag; only a keyboard click (detail 0) connects. */}
+      <button
+        type="button"
         className={`${styles.port} ${styles.output}`}
         data-lit={lit || undefined}
-        aria-hidden
-        style={{ left: side === 'left' ? -1 : '100%', top: portY(card, layout) - 1 }}
+        aria-label={`Connect ${card.title} to display`}
+        aria-disabled={busy || undefined}
+        style={{ left: side === 'left' ? -1 : 'calc(100% + 1px)', top: portY(card, layout) - 1 }}
         onPointerDown={onWire}
+        onClick={(event) => event.detail === 0 && !busy && onConnect()}
       />
     </article>
   );

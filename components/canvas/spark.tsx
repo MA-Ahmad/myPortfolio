@@ -6,6 +6,8 @@ import { type CardId, NEAR_RADIUS, SNAP_RADIUS } from './nodes';
 const PARTICLES = 18;
 const FLICKER_MS = 45;
 const PARTICLE_LIFE_MS = 420;
+// The lit input grows to about 16px across with its ring; nothing is drawn inside that.
+const PORT_RIM = 9;
 
 type Particle = { x: number; y: number; vx: number; vy: number; born: number };
 
@@ -40,18 +42,24 @@ export function Spark({ source, tip, port }: Props) {
       const { tip, port } = live.current;
       const gap = distance(tip, port);
       const closeness = 1 - Math.min(1, Math.max(0, (gap - SNAP_RADIUS) / (NEAR_RADIUS - SNAP_RADIUS)));
+      // The bolt lands on the input's rim, not its middle, so the dot stays clean.
+      const rim =
+        gap > PORT_RIM
+          ? { x: port.x + ((tip.x - port.x) / gap) * PORT_RIM, y: port.y + ((tip.y - port.y) / gap) * PORT_RIM }
+          : tip;
+      const span = distance(tip, rim);
 
       if (now - lastFlicker > FLICKER_MS) {
         lastFlicker = now;
-        const amplitude = 3 + gap * 0.18;
-        const bolt = pointsAttribute(boltPoints(tip, port, amplitude, Math.max(4, Math.round(gap / 7))));
+        const amplitude = 3 + span * 0.18;
+        const bolt = pointsAttribute(boltPoints(tip, rim, amplitude, Math.max(4, Math.round(span / 7))));
         glowRef.current?.setAttribute('points', bolt);
         coreRef.current?.setAttribute('points', bolt);
         whiteRef.current?.setAttribute('points', bolt);
 
-        const start = boltPoints(tip, port, amplitude, 4)[1 + Math.floor(Math.random() * 2)];
-        const angle = Math.atan2(port.y - tip.y, port.x - tip.x) + (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.6);
-        const reach = 6 + gap * 0.3 * Math.random();
+        const start = boltPoints(tip, rim, amplitude, 4)[1 + Math.floor(Math.random() * 2)];
+        const angle = Math.atan2(rim.y - tip.y, rim.x - tip.x) + (Math.random() < 0.5 ? -1 : 1) * (0.6 + Math.random() * 0.6);
+        const reach = Math.min(6 + span * 0.3 * Math.random(), distance(start, rim) * 0.8);
         const end = { x: start.x + Math.cos(angle) * reach, y: start.y + Math.sin(angle) * reach };
         forkRef.current?.setAttribute('points', pointsAttribute(boltPoints(start, end, 3, 3)));
         forkRef.current?.setAttribute('opacity', String(Math.random() < 0.6 ? 0.8 : 0));
@@ -68,7 +76,10 @@ export function Spark({ source, tip, port }: Props) {
           if (particles.length >= PARTICLES) particles.shift();
           const angle = Math.random() * Math.PI * 2;
           const speed = 0.04 + Math.random() * 0.08 * (0.5 + closeness);
-          particles.push({ x: port.x, y: port.y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, born: now });
+          particles.push({
+            x: port.x + Math.cos(angle) * (PORT_RIM + 2),
+            y: port.y + Math.sin(angle) * (PORT_RIM + 2),
+            vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, born: now });
         }
       }
 
@@ -96,8 +107,8 @@ export function Spark({ source, tip, port }: Props) {
 
   return (
     <g style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
-      <circle className={styles.ring} cx={port.x} cy={port.y} r={7} />
-      <circle className={styles.ring} cx={port.x} cy={port.y} r={7} />
+      <circle className={styles.ring} cx={port.x} cy={port.y} r={PORT_RIM} />
+      <circle className={styles.ring} cx={port.x} cy={port.y} r={PORT_RIM} />
       <polyline ref={glowRef} className={styles.boltGlow} />
       <polyline ref={coreRef} className={styles.boltCore} />
       <polyline ref={whiteRef} className={styles.boltCoreWhite} />

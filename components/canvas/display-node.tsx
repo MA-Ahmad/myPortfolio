@@ -40,7 +40,7 @@ export function DisplayNode({ at, z, draggable, dragging, source, state, inputs,
       : state === 'near' && card
         ? `Release to open ${card.title}`
         : state === 'armed'
-          ? 'Drop the wire on source'
+          ? 'Drop the wire on an input'
           : 'Awaiting input';
 
   return (
@@ -130,7 +130,7 @@ export function DisplayNode({ at, z, draggable, dragging, source, state, inputs,
           data-side={input}
           data-near={(input === side && (state === 'near' || open)) || undefined}
           aria-hidden
-          style={{ left: input === 'left' ? -1 : '100%', top: DISPLAY_INPUT_Y - 1 }}
+          style={{ left: input === 'left' ? -1 : 'calc(100% + 1px)', top: DISPLAY_INPUT_Y - 1 }}
         />
       ))}
     </article>

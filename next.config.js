@@ -20,6 +20,11 @@ const nextConfig = {
         source: '/terminal',
         destination: '/themes/terminal',
         permanent: true
+      },
+      {
+        source: '/canvas',
+        destination: '/theme-studio',
+        permanent: true
       }
     ];
   },

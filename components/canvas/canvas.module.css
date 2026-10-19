@@ -97,6 +97,70 @@
     0 0 36px -10px color-mix(in oklab, var(--accent) 70%, transparent);
 }
 
+/* A card pushed away from another: out along --rx/--ry, then settling. Two identical keyframes
+   so a second repel restarts the animation. Declared before the connect shake, which wins. */
+.node[data-repel='a'] {
+  animation: repelA 480ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.node[data-repel='b'] {
+  animation: repelB 480ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes repelA {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  16% {
+    translate: calc(var(--rx) * 9px) calc(var(--ry) * 9px);
+    rotate: calc(var(--rx) * 0.9deg);
+  }
+  38% {
+    translate: calc(var(--rx) * -3px) calc(var(--ry) * -3px);
+    rotate: calc(var(--rx) * -0.45deg);
+  }
+  58% {
+    translate: calc(var(--rx) * 1.5px) calc(var(--ry) * 1.5px);
+    rotate: calc(var(--rx) * 0.2deg);
+  }
+  80% {
+    translate: calc(var(--rx) * -0.5px) calc(var(--ry) * -0.5px);
+    rotate: 0deg;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
+@keyframes repelB {
+  0% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  16% {
+    translate: calc(var(--rx) * 9px) calc(var(--ry) * 9px);
+    rotate: calc(var(--rx) * 0.9deg);
+  }
+  38% {
+    translate: calc(var(--rx) * -3px) calc(var(--ry) * -3px);
+    rotate: calc(var(--rx) * -0.45deg);
+  }
+  58% {
+    translate: calc(var(--rx) * 1.5px) calc(var(--ry) * 1.5px);
+    rotate: calc(var(--rx) * 0.2deg);
+  }
+  80% {
+    translate: calc(var(--rx) * -0.5px) calc(var(--ry) * -0.5px);
+    rotate: 0deg;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+
 /* `translate` and `rotate` compose with the inline transform that positions the node. */
 .node[data-shake] {
   animation: shake 440ms cubic-bezier(0.2, 0, 0, 1);
@@ -203,47 +267,6 @@
   pointer-events: none;
 }
 
-.footer {
-  display: flex;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 0 22px 0 12px;
-  font-size: 11px;
-  color: var(--cv-muted);
-}
-
-.route {
-  font-family: Cascadia, ui-monospace, SFMono-Regular, Menlo, monospace;
-}
-
-.connect {
-  border-radius: 6px;
-  padding: 3px 7px;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--cv-muted);
-  transition:
-    background-color 150ms ease,
-    color 150ms ease;
-}
-
-.connect:hover {
-  background: color-mix(in oklab, var(--cv-text) 7%, transparent);
-  color: var(--cv-text);
-}
-
-.connect:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
-.connect:disabled {
-  pointer-events: none;
-  opacity: 0.4;
-}
-
 /* Ports */
 
 .port {
@@ -269,8 +292,14 @@
 }
 
 .output {
+  padding: 0;
   cursor: crosshair;
   touch-action: none;
+}
+
+.output:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
 }
 
 @media (hover: hover) {
@@ -324,23 +353,6 @@
   transition: opacity 500ms ease;
 }
 
-.display::after {
-  content: '';
-  position: absolute;
-  top: 18%;
-  bottom: 18%;
-  left: -1px;
-  width: 2px;
-  border-radius: 2px;
-  background: var(--accent);
-  box-shadow: 0 0 12px 1px var(--accent);
-  opacity: 0;
-  transform: scaleY(0.2);
-  pointer-events: none;
-  transition:
-    opacity 300ms ease,
-    transform 500ms cubic-bezier(0.2, 0, 0, 1);
-}
 
 .display[data-side='right']::before {
   left: auto;
@@ -353,18 +365,8 @@
   );
 }
 
-.display[data-side='right']::after {
-  left: auto;
-  right: -1px;
-}
-
 .display[data-lit]::before {
   opacity: 1;
-}
-
-.display[data-lit]::after {
-  opacity: 1;
-  transform: scaleY(1);
 }
 
 .trace {
@@ -385,7 +387,8 @@
   stroke-dasharray: 18 200;
   stroke-dashoffset: 18;
   opacity: 0;
-  animation: trace 900ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
+  /* Done before the page opens (620ms), so the transition never freezes a streak on the border. */
+  animation: traceOnce 520ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
 }
 
 .traceLine {
@@ -400,6 +403,27 @@
 .trace[data-loop] .traceLine,
 .trace[data-loop] .traceGlow {
   animation: trace 1400ms cubic-bezier(0.45, 0, 0.25, 1) infinite;
+}
+
+/* Fades out along the top and bottom, before the streaks reach the far edge. */
+@keyframes traceOnce {
+  0% {
+    stroke-dashoffset: 18;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 1;
+  }
+  78% {
+    opacity: 0;
+  }
+  100% {
+    stroke-dashoffset: -100;
+    opacity: 0;
+  }
 }
 
 @keyframes trace {
@@ -595,11 +619,11 @@
 
 @keyframes ring {
   from {
-    transform: scale(0.6);
+    transform: scale(1);
     opacity: 0.9;
   }
   to {
-    transform: scale(2.4);
+    transform: scale(1.9);
     opacity: 0;
   }
 }
@@ -730,6 +754,7 @@
   .burst,
   .caret,
   .node[data-shake],
+  .node[data-repel],
   .status[data-state='armed'] .dot {
     animation: none;
   }

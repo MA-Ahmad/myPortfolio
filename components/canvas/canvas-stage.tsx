@@ -16,7 +16,8 @@ import {
   easeInOutCubic,
   easeOutBack,
   easeOutCubic,
-  lerp
+  lerp,
+  outside
 } from 'lib/canvas/geometry';
 import { pixelNavigate } from 'lib/pixel-transition';
 import styles from './canvas.module.css';
@@ -52,6 +53,20 @@ const BAR_H = 56;
 const MOBILE_BREAKPOINT = 768;
 const OPEN_DELAY_MS = 620;
 const DRAG_THRESHOLD = 3;
+// Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
+// port adds a soft field, and every fresh reach for the port earns a kick that grows each time.
+const BODY_PAD = 16;
+const FIELD_RADIUS = 40;
+const REPEL_RADIUS = 30;
+const REARM_RADIUS = 42;
+const KICK = 60;
+const KICK_GROWTH = 0.18;
+const KICK_MAX = 1.6;
+const KICK_MS = 650;
+const ZAP_MS = 380;
+
+type Repel = { source: CardId; target: CardId; dir: Point; count: number };
+type Zap = { source: CardId; target: CardId; port: Point; key: number };
 
 function measure(stage: HTMLElement): View {
   const width = stage.clientWidth;
@@ -97,6 +112,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const [grabbed, setGrabbed] = useState<NodeId | null>(null);
   const [wire, setWire] = useState<WireState | null>(null);
   const [burst, setBurst] = useState<number | null>(null);
+  const [repel, setRepel] = useState<Repel | null>(null);
+  const [zap, setZap] = useState<Zap | null>(null);
 
   const viewRef = useRef(view);
   const positionsRef = useRef(positions);
@@ -109,6 +126,13 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const releaseRef = useRef<(() => void) | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
   const reducedRef = useRef(false);
+  const pointerRef = useRef<Point | null>(null);
+  const kickRef = useRef<{ vec: Point; start: number } | null>(null);
+  const kickFrameRef = useRef(0);
+  const armedRef = useRef<Partial<Record<CardId, boolean>>>({});
+  const repelCountRef = useRef(0);
+  const strikesRef = useRef(0);
+  const zapTimerRef = useRef<number | undefined>(undefined);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
@@ -140,8 +164,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     return () => {
       query.removeEventListener('change', onChange);
       cancelAnimationFrame(frameRef.current);
+      cancelAnimationFrame(kickFrameRef.current);
       releaseRef.current?.();
       window.clearTimeout(timerRef.current);
+      window.clearTimeout(zapTimerRef.current);
     };
   }, []);
 
@@ -264,6 +290,90 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     releaseRef.current = release;
   };
 
+  const center = (id: NodeId): Point => {
+    const at = positionsRef.current[id];
+    const size = nodeSize(id, viewRef.current!.layout);
+    return { x: at.x + size.w / 2, y: at.y + size.h / 2 };
+  };
+
+  /**
+   * How far the last kick still pushes the tip: out fast, then easing back while it trembles.
+   * The tremble stays on the far side, so the tip never swings back onto the port.
+   */
+  const kickOffset = (now: number): Point => {
+    const kick = kickRef.current;
+    if (!kick) return { x: 0, y: 0 };
+    const s = (now - kick.start) / 1000;
+    if (s * 1000 >= KICK_MS) {
+      kickRef.current = null;
+      return { x: 0, y: 0 };
+    }
+    const f = (1 - Math.exp(-s / 0.025)) * Math.exp(-s / 0.14) * (0.75 + 0.25 * Math.cos(s * 45));
+    return { x: kick.vec.x * f, y: kick.vec.y * f };
+  };
+
+  const kick = (id: CardId, target: CardId, port: Point, tip: Point, now: number) => {
+    armedRef.current[target] = false;
+    const dx = tip.x - port.x;
+    const dy = tip.y - port.y;
+    const length = Math.hypot(dx, dy);
+    const away =
+      length > 0.5
+        ? { x: dx / length, y: dy / length }
+        : { x: direction(portSide(target, viewRef.current!.layout)), y: 0 };
+    const strength = KICK * Math.min(KICK_MAX, 1 + strikesRef.current * KICK_GROWTH);
+    strikesRef.current += 1;
+    kickRef.current = { vec: { x: away.x * strength, y: away.y * strength }, start: now };
+
+    const a = center(id);
+    const b = center(target);
+    const apart = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+    repelCountRef.current += 1;
+    setRepel({ source: id, target, dir: { x: (b.x - a.x) / apart, y: (b.y - a.y) / apart }, count: repelCountRef.current });
+    setZap({ source: id, target, port, key: now });
+    window.clearTimeout(zapTimerRef.current);
+    zapTimerRef.current = window.setTimeout(() => setZap(null), ZAP_MS);
+
+    cancelAnimationFrame(kickFrameRef.current);
+    const step = (time: number) => {
+      if (!kickRef.current || !pointerRef.current) return;
+      aim(id, time);
+      kickFrameRef.current = requestAnimationFrame(step);
+    };
+    kickFrameRef.current = requestAnimationFrame(step);
+  };
+
+  /**
+   * Places the tip at the pointer, kept outside every other theme card and pushed off its port.
+   * A kick rearms once it has settled and the pointer has backed off the port a little.
+   */
+  const aim = (id: CardId, now = performance.now()) => {
+    const pointer = pointerRef.current;
+    const current = wireRef.current;
+    if (!pointer || (current && current.phase !== 'drag' && current.phase !== 'near')) return;
+    const layout = viewRef.current!.layout;
+    let tip = pointer;
+    for (const card of CARDS) {
+      if (card.id === id) continue;
+      tip = outside(tip, positionsRef.current[card.id], nodeSize(card.id, layout), BODY_PAD);
+      const port = outputPort(card.id, positionsRef.current[card.id], layout);
+      const gap = distance(tip, port);
+      if (gap > REARM_RADIUS && !kickRef.current) armedRef.current[card.id] = true;
+      if (gap < REPEL_RADIUS && armedRef.current[card.id] !== false && !reducedRef.current)
+        kick(id, card.id, port, tip, now);
+      if (gap < FIELD_RADIUS) {
+        const away =
+          gap > 0.5
+            ? { x: (tip.x - port.x) / gap, y: (tip.y - port.y) / gap }
+            : { x: direction(portSide(card.id, layout)), y: 0 };
+        const pushed = FIELD_RADIUS - (FIELD_RADIUS - gap) * 0.3;
+        tip = { x: port.x + away.x * pushed, y: port.y + away.y * pushed };
+      }
+    }
+    const offset = kickOffset(now);
+    moveTip(id, { x: tip.x + offset.x, y: tip.y + offset.y });
+  };
+
   // The wire only appears once the pointer actually moves, and plugs in only on release.
   const startWire = (id: CardId) => (event: PointerEvent) => {
     if (event.button !== 0 || wireRef.current) return;
@@ -271,6 +381,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     event.stopPropagation();
     const press = { x: event.clientX, y: event.clientY };
     let dragging = false;
+    armedRef.current = {};
+    strikesRef.current = 0;
     listen(
       event,
       (move) => {
@@ -278,11 +390,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < DRAG_THRESHOLD) return;
           dragging = true;
         }
-        const current = wireRef.current;
-        if (!current || current.phase === 'drag' || current.phase === 'near')
-          moveTip(id, toWorld(move.clientX, move.clientY));
+        pointerRef.current = toWorld(move.clientX, move.clientY);
+        aim(id);
       },
       (cancelled) => {
+        pointerRef.current = null;
+        kickRef.current = null;
+        cancelAnimationFrame(kickFrameRef.current);
+        // The stacked phone layout puts the display far below most ports, so a tap wires it up.
+        if (!dragging && !cancelled && viewRef.current?.layout === 'mobile') return connect(id);
         const current = wireRef.current;
         if (!current || (current.phase !== 'drag' && current.phase !== 'near')) return;
         if (!cancelled && current.phase === 'near') snap(id, current.tip);
@@ -380,6 +496,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             dragging={grabbed === card.id}
             lit={plugged === card.id}
             shake={plugged === card.id}
+            repel={
+              repel && (repel.source === card.id || repel.target === card.id)
+                ? {
+                    x: repel.source === card.id ? -repel.dir.x : repel.dir.x,
+                    y: repel.source === card.id ? -repel.dir.y : repel.dir.y,
+                    count: repel.count
+                  }
+                : null
+            }
             busy={wire !== null}
             onGrab={grab(card.id)}
             onWire={startWire(card.id)}
@@ -425,6 +550,14 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           )}
           {(wire?.phase === 'near' || wire?.phase === 'snapping') && port && !reducedRef.current && (
             <Spark source={wire.from} tip={wire.tip} port={port} />
+          )}
+          {zap && wire && (wire.phase === 'drag' || wire.phase === 'near') && (
+            <g key={zap.key}>
+              <Spark source={zap.source} tip={wire.tip} port={zap.port} />
+              <g style={{ '--accent': `var(--accent-${zap.target})` } as CSSProperties}>
+                <circle className={styles.burst} cx={zap.port.x} cy={zap.port.y} r={6} />
+              </g>
+            </g>
           )}
           {plugged && burst && port && (
             <g key={burst} style={{ '--accent': `var(--accent-${plugged})` } as CSSProperties}>
