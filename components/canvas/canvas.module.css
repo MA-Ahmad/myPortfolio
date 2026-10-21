@@ -381,37 +381,41 @@
   pointer-events: none;
 }
 
-.traceLine,
-.traceGlow {
+/*
+ * Each layer is one dash of a different length ending at the same head, so together they taper
+ * into a comet. The pattern is zero dash, (60 - length) gap, length dash: the dash always ends 60 past the
+ * dash offset, so one shared offset animation keeps every head together. pathLength is 100.
+ */
+.traceLayer {
   fill: none;
   stroke: var(--accent);
-  stroke-linecap: round;
-  /* pathLength is 100: an 18-long streak, with a gap longer than the path so it never wraps. */
-  stroke-dasharray: 18 200;
-  stroke-dashoffset: 18;
-  opacity: 0;
+  /* Butt caps, so the zero-length dash that leads each pattern draws nothing. */
+  stroke-linecap: butt;
+  stroke-dashoffset: 60;
   /* The page opens once this ends, so the transition never freezes a streak on the border. */
   animation: traceOnce 300ms cubic-bezier(0.3, 0, 0.2, 1) forwards;
+  opacity: 0;
 }
 
-.traceLine {
-  stroke-width: 1.5;
-}
-
-.traceGlow {
+.traceHalo {
+  stroke-dasharray: 0 42 18 300;
   stroke-width: 6;
   filter: blur(4px);
 }
 
-.trace[data-loop] .traceLine,
-.trace[data-loop] .traceGlow {
+.traceCore {
+  stroke-dasharray: 0 42 18 300;
+  stroke-width: 1.5;
+}
+
+.trace[data-loop] .traceLayer {
   animation: trace 1400ms cubic-bezier(0.45, 0, 0.25, 1) infinite;
 }
 
 /* Fades out along the top and bottom, before the streaks reach the far edge. */
 @keyframes traceOnce {
   0% {
-    stroke-dashoffset: 18;
+    stroke-dashoffset: 60;
     opacity: 0;
   }
   8% {
@@ -424,14 +428,14 @@
     opacity: 0;
   }
   100% {
-    stroke-dashoffset: -100;
+    stroke-dashoffset: -58;
     opacity: 0;
   }
 }
 
 @keyframes trace {
   0% {
-    stroke-dashoffset: 18;
+    stroke-dashoffset: 60;
     opacity: 0;
   }
   12% {
@@ -441,7 +445,7 @@
     opacity: 1;
   }
   100% {
-    stroke-dashoffset: -100;
+    stroke-dashoffset: -58;
     opacity: 0;
   }
 }

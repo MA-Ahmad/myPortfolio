@@ -148,6 +148,11 @@ const Y = DISPLAY_INPUT_Y;
 const UP = `M${E} ${Y} V${E + R} A${R} ${R} 0 0 1 ${E + R} ${E} H${RIGHT - R} A${R} ${R} 0 0 1 ${RIGHT} ${E + R} V${Y}`;
 const DOWN = `M${E} ${Y} V${BOTTOM - R} A${R} ${R} 0 0 0 ${E + R} ${BOTTOM} H${RIGHT - R} A${R} ${R} 0 0 0 ${RIGHT} ${BOTTOM - R} V${Y}`;
 
+const TRACE_LAYERS = [
+  { className: styles.traceHalo, opacity: 0.7 },
+  { className: styles.traceCore, opacity: 1 },
+];
+
 /**
  * Light running from the input around the border both ways, meeting on the far side. It loops
  * while a wire is close enough to plug in and runs once when it does.
@@ -165,8 +170,11 @@ function Trace({ side, loop }: { side: Side; loop: boolean }) {
       <g transform={side === 'right' ? `matrix(-1 0 0 1 ${DISPLAY_W} 0)` : undefined}>
         {[UP, DOWN].map((d) => (
           <g key={d}>
-            <path className={styles.traceGlow} d={d} pathLength={100} />
-            <path className={styles.traceLine} d={d} pathLength={100} />
+            {TRACE_LAYERS.map(({ className, opacity }) => (
+              <g key={className} opacity={opacity}>
+                <path className={`${styles.traceLayer} ${className}`} d={d} pathLength={100} />
+              </g>
+            ))}
           </g>
         ))}
       </g>
