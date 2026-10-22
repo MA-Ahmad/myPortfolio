@@ -73,7 +73,9 @@ export function IndexRow({
   leadTone = 'faint',
   mainTone = 'ink',
   clip,
-  stackTrail
+  stackTrail,
+  detail,
+  stack
 }: {
   href?: string;
   external?: boolean;
@@ -85,20 +87,38 @@ export function IndexRow({
   mainTone?: Tone;
   clip?: boolean;
   stackTrail?: boolean;
+  /** Put `main` on its own wrapping line under `lead`, which carries the external arrow. */
+  detail?: boolean;
+  /** Always show `trail` as a wrapping second line under `main`, on every width. */
+  stack?: boolean;
 }) {
-  const className = cn(styles.row, stackTrail && styles.stackTrail, lead == null && styles.noLead);
+  const className = cn(
+    styles.row,
+    (stackTrail || stack) && styles.stackTrail,
+    stack && styles.stack,
+    detail && styles.detail,
+    lead == null && styles.noLead
+  );
+  const arrow = (
+    <span aria-hidden className={styles.arrow}>
+      ↗
+    </span>
+  );
   const cells = (
     <>
-      {lead == null ? null : <span className={cn(styles.lead, TONE[leadTone])}>{lead}</span>}
+      {lead == null ? null : (
+        <span className={cn(styles.lead, TONE[leadTone])}>
+          {lead}
+          {detail && external ? arrow : null}
+        </span>
+      )}
       <span className={cn(styles.mainCell, TONE[mainTone], clip && styles.clip)}>{main}</span>
-      <span className={styles.trail}>
-        {trail}
-        {external ? (
-          <span aria-hidden className={styles.arrow}>
-            ↗
-          </span>
-        ) : null}
-      </span>
+      {detail ? null : (
+        <span className={styles.trail}>
+          {trail}
+          {external ? arrow : null}
+        </span>
+      )}
     </>
   );
 

@@ -45,8 +45,7 @@ export function NotebookHome({ contributions, posts }: ThemeHomeProps) {
               leadTone="ink"
               main={project.description}
               mainTone="body"
-              trail={project.link ? domain(project.link) : undefined}
-              clip
+              detail
             />
           ))}
         </IndexList>
@@ -96,8 +95,7 @@ export function NotebookHome({ contributions, posts }: ThemeHomeProps) {
               key={education.id}
               main={education.school}
               trail={education.degree}
-              clip
-              stackTrail
+              stack
             />
           ))}
         </IndexList>
@@ -128,8 +126,4 @@ function dotDate(iso: string) {
 
 function period({ start, end }: { start: string; end?: string }) {
   return `${start} → ${end ?? 'now'}`;
-}
-
-function domain(url: string) {
-  return new URL(url).hostname.replace(/^www\./, '');
 }

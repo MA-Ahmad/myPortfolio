@@ -229,6 +229,42 @@
   grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
 }
 
+.detail {
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding-bottom: 12px;
+}
+
+.detail .lead {
+  grid-area: 1 / 1;
+}
+
+.detail .trail {
+  grid-area: 1 / 2;
+}
+
+.detail .mainCell {
+  grid-area: 2 / 1 / 3 / -1;
+}
+
+.stack {
+  grid-template-columns: var(--c1, 10ch) minmax(0, 1fr);
+}
+
+.stack.noLead {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.stack .trail {
+  grid-column: 2;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+}
+
+.stack.noLead .trail {
+  grid-column: 1;
+}
+
 .lead,
 .main,
 .trail {
@@ -299,7 +335,8 @@ a.row:focus-visible > * {
     column-gap: 2ch;
   }
 
-  .noLead {
+  .noLead,
+  .detail {
     grid-template-columns: minmax(0, 1fr);
   }
 
