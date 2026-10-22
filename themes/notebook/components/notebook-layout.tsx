@@ -9,6 +9,7 @@ import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
 import { NOTEBOOK_CONTENT } from '../content';
 import { Backdrop } from './backdrop';
+import { NotebookSearch } from './theme-search';
 import styles from '../notebook.module.css';
 
 export function NotebookLayout({ children }: { children: ReactNode }) {
@@ -76,6 +77,7 @@ export function NotebookLayout({ children }: { children: ReactNode }) {
                   {item.label}
                 </a>
               ))}
+              <NotebookSearch />
             </nav>
           </header>
           <main id="main" tabIndex={-1} className={styles.main}>

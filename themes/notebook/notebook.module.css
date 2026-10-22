@@ -225,6 +225,10 @@
   padding: 0 1ch;
 }
 
+.noLead {
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+}
+
 .lead,
 .main,
 .trail {
@@ -293,6 +297,14 @@ a.row:focus-visible > * {
   .row {
     grid-template-columns: var(--c1m, var(--c1, 10ch)) minmax(0, 1fr);
     column-gap: 2ch;
+  }
+
+  .noLead {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .noLead.stackTrail .trail {
+    grid-column: 1;
   }
 
   .trail {
@@ -527,4 +539,142 @@ a.row:focus-visible > * {
   .backdrop {
     display: none;
   }
+}
+
+/* Search: the shared command menu, drawn as a hairline index card. */
+
+.searchTrigger {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 1ch;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--nb-faint);
+  font: inherit;
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.searchTrigger:hover {
+  color: var(--nb-ink);
+}
+
+.searchTrigger svg {
+  align-self: center;
+  width: 12px;
+  height: 12px;
+}
+
+.searchKbd {
+  display: none;
+  color: var(--nb-faint);
+  font-size: 11px;
+}
+
+@media (min-width: 768px) {
+  .searchKbd {
+    display: inline;
+  }
+}
+
+.searchBackdrop {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--nb-bg) 72%, transparent);
+  backdrop-filter: blur(3px);
+}
+
+.searchPanel {
+  position: relative;
+  width: min(34rem, calc(100vw - 1.5rem));
+  margin: 64px auto 0;
+  overflow: hidden;
+  border: 1px solid var(--nb-ink);
+  background: var(--nb-bg);
+  color: var(--nb-ink);
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  text-transform: lowercase;
+  box-shadow: 6px 6px 0 var(--nb-rule);
+}
+
+.searchInputRow {
+  display: flex;
+  align-items: center;
+  gap: 1.5ch;
+  height: 44px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--nb-rule);
+  color: var(--nb-faint);
+}
+
+.searchInput {
+  width: 100%;
+  height: 44px;
+  border: 0;
+  background: none;
+  color: var(--nb-ink);
+  font: inherit;
+  outline: none;
+  text-transform: lowercase;
+}
+
+.searchInput::placeholder {
+  color: var(--nb-faint);
+}
+
+.searchList {
+  max-height: 20rem;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.searchGroup {
+  margin-bottom: 8px;
+}
+
+.searchGroup [cmdk-group-heading] {
+  padding: 4px 8px;
+  color: var(--nb-faint);
+  font-size: 11px;
+}
+
+.searchItem {
+  display: flex;
+  align-items: center;
+  gap: 1.5ch;
+  padding: 6px 8px;
+  color: var(--nb-body);
+  cursor: pointer;
+  outline: none;
+}
+
+.searchItem[data-selected='true'] {
+  background: var(--nb-ink);
+  color: var(--nb-bg);
+}
+
+.searchItem[data-selected='true'] .searchIcon {
+  color: inherit;
+}
+
+.searchIcon {
+  color: var(--nb-faint);
+}
+
+.searchEmpty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--nb-faint);
+}
+
+.searchFooter {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 14px;
+  border-top: 1px solid var(--nb-rule);
+  color: var(--nb-faint);
+  font-size: 11px;
 }

@@ -7,6 +7,7 @@ import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
 import { TERMINAL_CONTENT } from '../content';
+import { TerminalSearch } from './theme-search';
 import styles from '../terminal.module.css';
 
 const mono = JetBrains_Mono({
@@ -90,6 +91,7 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            <TerminalSearch />
           </div>
         </nav>
       </header>
