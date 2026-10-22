@@ -12,7 +12,7 @@ export function ProfileHeader() {
           <MarkIsometric />
         </div>
 
-        <HandwrittenNote
+        {/* <HandwrittenNote
           className="bottom-20 left-full hidden w-36 flex-col items-start [@media(pointer:fine)_and_(min-width:1280px)]:flex"
           aria-hidden
         >
@@ -22,17 +22,14 @@ export function ProfileHeader() {
             <span className="block" />
             click for a sound
           </span>
-        </HandwrittenNote>
+        </HandwrittenNote> */}
       </figure>
 
       <div className="flex flex-col sm:row-span-2 sm:row-start-1">
         <div className="screen-line-top mt-auto shrink-0 border-r border-line">
           <div className="mx-0.5 my-[3px] flex outline-none">
             <div className="relative size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">
-              <PixelAvatar
-                src={`${PROFILE.avatar}&s=920`}
-                alt={PROFILE.displayName}
-              />
+              <PixelAvatar src={`${PROFILE.avatar}&s=920`} alt={PROFILE.displayName} />
               <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-foreground/30 dark:ring-foreground/10" />
             </div>
           </div>
