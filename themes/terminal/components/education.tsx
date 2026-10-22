@@ -6,7 +6,6 @@ export function Education() {
   const entries = institutes.map((institute) => ({
     id: institute.title,
     title: `${institute.role.toLowerCase()} — ${institute.short_title.toLowerCase()}`,
-    meta: institute.period,
     body: (
       <>
         <p>{institute.title.toLowerCase()}</p>

@@ -6,7 +6,7 @@ import { Tag } from '../tag';
 import { VerticalDivider } from '../separator';
 
 export function EducationItem({ item }: { item: EducationItemData }) {
-  const { start, end } = item.period;
+  const { start, end } = item.period ?? {};
   const isOngoing = !end;
 
   return (
@@ -34,21 +34,22 @@ export function EducationItem({ item }: { item: EducationItemData }) {
           </div>
 
           <dl className="flex min-w-0 flex-wrap items-center gap-x-2 pl-9 text-sm text-muted-foreground">
-            <div>
-              <dt className="sr-only">Study period</dt>
-              <dd className="flex items-center gap-0.5 tabular-nums">
-                <span>{start}</span>
-                <span className="font-mono">—</span>
-                {isOngoing ? (
-                  <InfinityIcon className="size-4" aria-label="Present" strokeWidth={1.5} />
-                ) : (
-                  <span>{end}</span>
-                )}
-              </dd>
-            </div>
+            {item.period ? (
+              <div>
+                <dt className="sr-only">Study period</dt>
+                <dd className="flex items-center gap-0.5 tabular-nums">
+                  <span>{start}</span>
+                  <span className="font-mono">—</span>
+                  {isOngoing ? (
+                    <InfinityIcon className="size-4" aria-label="Present" strokeWidth={1.5} />
+                  ) : (
+                    <span>{end}</span>
+                  )}
+                </dd>
+              </div>
+            ) : null}
             {item.degree ? (
               <>
-                <VerticalDivider />
                 <div className="min-w-0">
                   <dt className="sr-only">Degree</dt>
                   <dd className="text-pretty">{item.degree}</dd>

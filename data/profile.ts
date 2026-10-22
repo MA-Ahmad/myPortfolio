@@ -69,19 +69,17 @@ export type EducationItemData = {
   id: string;
   school: string;
   degree?: string;
-  period: { start: string; end?: string };
+  period?: { start: string; end?: string };
   description?: string;
   skills?: string[];
   isExpanded?: boolean;
 };
 
 export const EDUCATION: EducationItemData[] = institutes.map((institute) => {
-  const { start, end } = splitPeriod(institute.period);
   return {
     id: slugify(institute.short_title || institute.title),
     school: institute.title,
     degree: institute.role,
-    period: { start, end },
     description: institute.awards
       ?.map((award) => `**${award.title}** — ${award.description}`)
       .join('\n\n'),

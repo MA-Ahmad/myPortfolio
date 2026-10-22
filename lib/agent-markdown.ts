@@ -67,8 +67,10 @@ ${EDUCATION.map((item) => {
       ? `\n\nSkills: ${item.skills.join(', ')}`
       : '';
     const description = item.description ? `\n\n${item.description.trim()}` : '';
-    const end = item.period.end || 'Present';
-    return `## ${heading}${school}\n\nDuration: ${item.period.start} - ${end}${skills}${description}`;
+    const duration = item.period
+      ? `\n\nDuration: ${item.period.start} - ${item.period.end || 'Present'}`
+      : '';
+    return `## ${heading}${school}${duration}${skills}${description}`;
   }).join('\n\n')}
 `;
 }

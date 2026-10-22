@@ -77,7 +77,8 @@ export function IndexRow({
 }: {
   href?: string;
   external?: boolean;
-  lead: ReactNode;
+  /** Omit to drop the lead column, so the row starts at the left edge. */
+  lead?: ReactNode;
   main: ReactNode;
   trail?: ReactNode;
   leadTone?: Tone;
@@ -85,10 +86,10 @@ export function IndexRow({
   clip?: boolean;
   stackTrail?: boolean;
 }) {
-  const className = cn(styles.row, stackTrail && styles.stackTrail);
+  const className = cn(styles.row, stackTrail && styles.stackTrail, lead == null && styles.noLead);
   const cells = (
     <>
-      <span className={cn(styles.lead, TONE[leadTone])}>{lead}</span>
+      {lead == null ? null : <span className={cn(styles.lead, TONE[leadTone])}>{lead}</span>}
       <span className={cn(styles.mainCell, TONE[mainTone], clip && styles.clip)}>{main}</span>
       <span className={styles.trail}>
         {trail}

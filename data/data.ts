@@ -56,8 +56,6 @@ export const institutes = [
     alt: 'Nuces image',
     role: "Bachelor's Degree in Computer Science",
     skills: ['project management', 'web development', 'data structures'],
-    period: '2013 - 2017',
-    startingYear: '2013',
     logo: '/assets/images/logos/fast.png',
     awards: [
       {

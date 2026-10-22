@@ -90,11 +90,10 @@ export function NotebookHome({ contributions, posts }: ThemeHomeProps) {
       ) : null}
 
       <IndexSection id="education" label="education">
-        <IndexList lead="12ch">
+        <IndexList>
           {EDUCATION.map((education) => (
             <IndexRow
               key={education.id}
-              lead={period(education.period)}
               main={education.school}
               trail={education.degree}
               clip
