@@ -239,10 +239,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const css = getComputedStyle(stageRef.current!);
     const token = (name: string) => css.getPropertyValue(name).trim();
     return {
-      card: token('--cv-card'),
-      border: token('--cv-border'),
-      text: token('--cv-text'),
-      muted: token('--cv-muted'),
       backdrop: `color-mix(in oklab, ${token('--cv-bg')} 70%, transparent)`,
       accent: token(`--accent-${id}`)
     };
@@ -281,7 +277,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     screenRef.current = createScreen(router, {
       href: card.href,
       title: card.title,
-      route: card.route,
       colors: screenColors(id)
     });
     preparedRef.current = id;
@@ -356,7 +351,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     timerRef.current = window.setTimeout(() => {
       const display = displayRef.current;
       if (!screenRef.current || !display) return;
-      screenRef.current.run(display.getBoundingClientRect());
+      screenRef.current.run(display);
       setLifted(true);
     }, LIFT_DELAY_MS);
   };

@@ -16,6 +16,34 @@ const ICON = 19;
 
 export const packetIcon = (file: string) => `/assets/images/skills/${file}`;
 
+// ASCII riding the wire with the icons, in each theme's own characters, flickering through the
+// set as it goes: a short trail behind every icon, and a few strays trickling between them.
+const GLYPHS: Record<CardId, string> = {
+  home: '</>{}();=*+',
+  terminal: '$>_/~|01#{}',
+  notebook: "aeiou·.,'~*"
+};
+const GLYPH_FLICKER_MS = 90;
+// Each trail glyph follows this far behind the one before, swaying across the wire.
+const TRAIL = 3;
+const TRAIL_GAP = 13;
+const TRAIL_SWAY = 4;
+const STRAY_COUNT = 10;
+const STRAY_DRIFT = 12;
+
+type Stray = { delay: number; pace: number; side: number };
+
+/** `at` on the wire moved `offset` across it, square to the wire's direction there. */
+function across(path: SVGPathElement, along: number, length: number, offset: number) {
+  const at = path.getPointAtLength(along);
+  const ahead = path.getPointAtLength(Math.min(length, along + 1));
+  const behind = path.getPointAtLength(Math.max(0, along - 1));
+  const dx = ahead.x - behind.x;
+  const dy = ahead.y - behind.y;
+  const norm = Math.hypot(dx, dy) || 1;
+  return { x: at.x - (dy / norm) * offset, y: at.y + (dx / norm) * offset };
+}
+
 const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 type Props = {
@@ -38,6 +66,7 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
   const icons = cardById(source).packets;
   const pathRef = useRef<SVGPathElement>(null);
   const packetRefs = useRef<(SVGGElement | null)[]>([]);
+  const glyphRefs = useRef<(SVGTextElement | null)[]>([]);
   const callbacks = useRef({ onArrive, onDone });
   callbacks.current = { onArrive, onDone };
   const d = wirePath(from, fromDir, to, toDir);
@@ -50,17 +79,53 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
     const stagger = Math.min(STAGGER_MS.max, Math.max(STAGGER_MS.min, (SPACING * travel) / length));
     const total = START_MS + (icons.length - 1) * stagger + travel;
     const arrived = new Set<number>();
+    const charset = GLYPHS[source];
+    // Strays leave evenly over the transfer, each landing before the last icon does.
+    const strays: Stray[] = Array.from({ length: STRAY_COUNT }, (_, i) => {
+      const pace = travel * (0.8 + Math.random() * 0.3);
+      return {
+        pace,
+        delay: START_MS + (i / (STRAY_COUNT - 1)) * Math.max(0, total - pace - START_MS),
+        // Well out to one side, so none sits on the line itself.
+        side: (i % 2 ? -1 : 1) * STRAY_DRIFT * (0.6 + Math.random() * 0.4)
+      };
+    });
+    const glyphAt = (i: number) => glyphRefs.current[i];
+    const hide = (glyph: SVGTextElement) => glyph.setAttribute('opacity', '0');
+    const show = (glyph: SVGTextElement, p: Point, opacity: number, char: string) => {
+      glyph.setAttribute('x', p.x.toFixed(1));
+      glyph.setAttribute('y', p.y.toFixed(1));
+      glyph.setAttribute('opacity', opacity.toFixed(3));
+      if (glyph.textContent !== char) glyph.textContent = char;
+    };
     const start = performance.now();
     let frame = 0;
 
     const step = (now: number) => {
       const elapsed = now - start;
       const current = path.getTotalLength();
+      const tick = Math.floor(elapsed / GLYPH_FLICKER_MS);
       packetRefs.current.forEach((packet, i) => {
         if (!packet) return;
         const t = Math.min(1, Math.max(0, (elapsed - START_MS - i * stagger) / travel));
-        const at = path.getPointAtLength(easeInOutSine(t) * current);
+        const along = easeInOutSine(t) * current;
+        const at = path.getPointAtLength(along);
         const opacity = t <= 0 ? 0 : Math.min(1, t / 0.1, (1 - t) / 0.1);
+
+        // The trail: fainter the further back, swaying across the wire, and never ahead of the
+        // card's port or past the icon's own landing.
+        for (let k = 0; k < TRAIL; k++) {
+          const glyph = glyphAt(i * TRAIL + k);
+          if (!glyph) continue;
+          const back = along - TOKEN / 2 - TRAIL_GAP * (k + 0.6);
+          if (opacity <= 0 || back <= 0) {
+            hide(glyph);
+            continue;
+          }
+          const sway = (k % 2 ? 1 : -1) * TRAIL_SWAY * Math.sin(elapsed / 160 + i * 1.7 + k);
+          const char = charset[(tick + i * 3 + k * 5) % charset.length];
+          show(glyph, across(path, back, current, sway), opacity * (0.9 - k * 0.25), char);
+        }
         const scale = t < 0.1 ? 0.75 + (t / 0.1) * 0.25 : t > 0.9 ? 1 - ((t - 0.9) / 0.1) * 0.5 : 1;
         packet.setAttribute('transform', `translate(${at.x.toFixed(1)} ${at.y.toFixed(1)}) scale(${scale.toFixed(3)})`);
         packet.setAttribute('opacity', opacity.toFixed(3));
@@ -68,6 +133,15 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
           arrived.add(i);
           callbacks.current.onArrive();
         }
+      });
+      strays.forEach(({ delay, pace, side }, j) => {
+        const glyph = glyphAt(icons.length * TRAIL + j);
+        if (!glyph) return;
+        const t = (elapsed - delay) / pace;
+        if (t <= 0 || t >= 1) return hide(glyph);
+        // Off to one side of the wire, pulled back onto it at both ends.
+        const p = across(path, t * current, current, side * Math.sin(Math.PI * t));
+        show(glyph, p, Math.min(1, t / 0.15, (1 - t) / 0.2) * 0.6, charset[(tick + j * 7) % charset.length]);
       });
       if (elapsed < total) frame = requestAnimationFrame(step);
       else callbacks.current.onDone();
@@ -81,6 +155,16 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
   return (
     <g className={styles.packets} data-theme={source} style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
       <path ref={pathRef} d={d} fill="none" stroke="none" data-wire />
+      {Array.from({ length: icons.length * TRAIL + STRAY_COUNT }, (_, i) => (
+        <text
+          key={i}
+          ref={(node) => void (glyphRefs.current[i] = node)}
+          className={styles.packetGlyph}
+          textAnchor="middle"
+          dominantBaseline="central"
+          opacity={0}
+        />
+      ))}
       {icons.map((icon, i) => (
         <g key={icon} ref={(node) => void (packetRefs.current[i] = node)} opacity={0}>
           <rect

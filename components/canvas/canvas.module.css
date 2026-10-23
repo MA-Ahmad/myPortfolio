@@ -763,6 +763,14 @@
   opacity: 0.22;
 }
 
+.packetGlyph {
+  font-family: Cascadia, ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--accent);
+  user-select: none;
+}
+
 .packetToken {
   fill: #fff;
   stroke: var(--accent);
@@ -780,10 +788,10 @@
       color-mix(in oklab, var(--accent) 70%, transparent);
 }
 
-/* The display fades out under the screen that grows out of it. */
+/* The screen that grows out of the display starts as its exact copy, so it hides at once. */
 .display[data-lifted] {
   opacity: 0;
-  transition: opacity 160ms ease;
+  transition: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
