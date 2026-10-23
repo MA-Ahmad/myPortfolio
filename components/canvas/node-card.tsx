@@ -33,6 +33,9 @@ type Props = {
   onGrab: (event: PointerEvent) => void;
   onWire: (event: PointerEvent) => void;
   onConnect: () => void;
+  /** The pointer or focus reached the port, so a connect may follow. */
+  onPrepare: () => void;
+  onLeave: () => void;
   children: ReactNode;
 };
 
@@ -50,6 +53,8 @@ export function NodeCard({
   onGrab,
   onWire,
   onConnect,
+  onPrepare,
+  onLeave,
   children
 }: Props) {
   const Icon = ICONS[card.id];
@@ -107,6 +112,10 @@ export function NodeCard({
         aria-disabled={busy || undefined}
         style={{ left: side === 'left' ? -1 : 'calc(100% + 1px)', top: portY(card, layout) - 1 }}
         onPointerDown={onWire}
+        onPointerEnter={onPrepare}
+        onFocus={onPrepare}
+        onPointerLeave={onLeave}
+        onBlur={onLeave}
         onClick={(event) => event.detail === 0 && !busy && onConnect()}
       />
     </article>

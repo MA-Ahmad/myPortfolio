@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { openedFromScreen } from 'lib/canvas/screen';
 
 type Props = {
   src?: string;
@@ -204,7 +205,8 @@ export default function PixelAvatar({
     const onClick = (e: MouseEvent) => { if ((e as PointerEvent).pointerType === 'touch') replay(); };
 
     img.onload = () => {
-      if (reduce) { showFinal(); return; }
+      // Opened from a Theme Studio screen, which already showed the intro playing.
+      if (reduce || openedFromScreen()) { showFinal(); return; }
       io = new IntersectionObserver(([en]) => {
         if (en.isIntersecting && !started) { started = true; io?.disconnect(); runIntro(); }
       }, { threshold: .35 });

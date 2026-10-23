@@ -42,6 +42,8 @@ export type CardDef = {
   href: string;
   width: Record<Layout, number>;
   previewHeight: Record<Layout, number>;
+  /** Skill icons, from /assets/images/skills, that travel down the wire into the display once plugged in. */
+  packets: string[];
   /** The card edge the port is on, facing the display; defaults to the right. */
   portSide?: Partial<Record<Layout, Side>>;
 };
@@ -54,6 +56,7 @@ export const CARDS: CardDef[] = [
     href: '/',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.home, mobile: 168 },
+    packets: ['react.png', 'nextjs.png', 'typescript.png', 'tailwindcss.svg', 'vercel.svg', 'claude.svg'],
     portSide: { desktop: 'left' }
   },
   {
@@ -63,6 +66,7 @@ export const CARDS: CardDef[] = [
     href: '/themes/terminal',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.terminal, mobile: 150 },
+    packets: ['rails.png', 'ruby.png', 'nestjs.svg', 'postgresql.png', 'redis.png', 'claude.svg'],
     portSide: { desktop: 'left' }
   },
   {
@@ -71,7 +75,8 @@ export const CARDS: CardDef[] = [
     route: '/themes/notebook',
     href: '/themes/notebook',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 }
+    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 },
+    packets: ['claude.svg', 'react.png', 'nextjs.png', 'rails.png', 'typescript.png', 'cursor.svg']
   }
 ];
 

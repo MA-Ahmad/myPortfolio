@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEvent } from 'react';
+import type { CSSProperties, PointerEvent, Ref } from 'react';
 import { GripVertical, Monitor } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
@@ -16,6 +16,7 @@ import {
 export type DisplayState = 'idle' | 'armed' | 'near' | 'open';
 
 type Props = {
+  ref?: Ref<HTMLElement>;
   at: Point;
   z: number;
   draggable: boolean;
@@ -27,10 +28,30 @@ type Props = {
   inputs: Side[];
   /** The input the current source plugs into. */
   side: Side;
+  /** How many packets have landed; each one brightens the glow. */
+  swell: number;
+  /** The node's size about its center, as it swells with each packet. */
+  scale: number;
+  /** Hidden under the screen that grows out of it. */
+  lifted: boolean;
   onGrab: (event: PointerEvent) => void;
 };
 
-export function DisplayNode({ at, z, draggable, dragging, source, state, inputs, side, onGrab }: Props) {
+export function DisplayNode({
+  ref,
+  at,
+  z,
+  draggable,
+  dragging,
+  source,
+  state,
+  inputs,
+  side,
+  swell,
+  scale,
+  lifted,
+  onGrab
+}: Props) {
   const card = source ? cardById(source) : null;
   const open = state === 'open';
 
@@ -45,19 +66,23 @@ export function DisplayNode({ at, z, draggable, dragging, source, state, inputs,
 
   return (
     <article
+      ref={ref}
       className={styles.display}
       data-dragging={dragging || undefined}
       data-lit={open || undefined}
       data-shake={open || undefined}
       data-side={side}
+      data-lifted={lifted || undefined}
       aria-label="Display"
       style={
         {
           '--accent': card ? `var(--accent-${card.id})` : 'var(--cv-muted)',
+          '--swell': swell,
           width: DISPLAY_W,
           height: DISPLAY_H,
           zIndex: z,
-          transform: `translate3d(${at.x}px, ${at.y}px, 0)`
+          // Scaled inside the transform, so it swells about its own center.
+          transform: `translate3d(${at.x}px, ${at.y}px, 0) scale(${scale})`
         } as CSSProperties
       }
     >

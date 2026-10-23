@@ -16,8 +16,9 @@ export function Wire({ source, from, fromDir, to, toDir, lit }: Props) {
   const d = wirePath(from, fromDir, to, toDir);
   return (
     <g style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
-      <path className={styles.wireGlow} data-lit={lit || undefined} d={d} />
-      <path className={styles.wire} data-lit={lit || undefined} d={d} />
+      {/* data-wire: the stage redraws these each frame while the display swells. */}
+      <path className={styles.wireGlow} data-lit={lit || undefined} data-wire d={d} />
+      <path className={styles.wire} data-lit={lit || undefined} data-wire d={d} />
     </g>
   );
 }

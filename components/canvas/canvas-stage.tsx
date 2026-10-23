@@ -17,12 +17,15 @@ import {
   easeInOutCubic,
   easeOutCubic,
   lerp,
-  outside
+  outside,
+  wirePath
 } from 'lib/canvas/geometry';
 import { pixelNavigate } from 'lib/pixel-transition';
+import { type Screen, createScreen } from 'lib/canvas/screen';
 import styles from './canvas.module.css';
 import { DisplayNode, type DisplayState } from './display-node';
 import { NodeCard } from './node-card';
+import { Packets, packetIcon } from './packets';
 import {
   CARDS,
   type CardId,
@@ -51,10 +54,6 @@ type View = { layout: Layout; scale: number; ox: number; oy: number; width: numb
 
 const BAR_H = 56;
 const MOBILE_BREAKPOINT = 768;
-// The connect vibration, glow and burst in canvas.module.css run 300ms; the theme opens when they
-// end, and never later than the cap.
-const CONNECT_ANIMATION = /(shake|traceOnce|burst)$/;
-const CONNECT_MAX_MS = 420;
 const DRAG_THRESHOLD = 3;
 // Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
 // port adds a soft field, and every fresh reach for the port earns a kick that grows each time.
@@ -67,6 +66,13 @@ const KICK_GROWTH = 0.18;
 const KICK_MAX = 1.6;
 const KICK_MS = 650;
 const ZAP_MS = 380;
+// The screen grows out of the display once the last packet's swell has peaked.
+const LIFT_DELAY_MS = 220;
+// Each packet that lands swells the display about its center by this much, on a bouncy spring.
+const SWELL_STEP = 0.014;
+const SWELL_SPRING = { stiffness: 380, damping: 14 };
+// A screen loaded ahead for a port the pointer left is dropped after this, unless a wire is out.
+const PREPARE_IDLE_MS = 2000;
 
 type Repel = { source: CardId; target: CardId; dir: Point; count: number };
 type Zap = { source: CardId; target: CardId; port: Point; key: number };
@@ -117,6 +123,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const [burst, setBurst] = useState<number | null>(null);
   const [repel, setRepel] = useState<Repel | null>(null);
   const [zap, setZap] = useState<Zap | null>(null);
+  // The theme whose packets are on the wire, and whether its screen has grown out of the display.
+  const [booting, setBooting] = useState<CardId | null>(null);
+  const [lifted, setLifted] = useState(false);
+  const [arrivals, setArrivals] = useState(0);
 
   const viewRef = useRef(view);
   const positionsRef = useRef(positions);
@@ -128,6 +138,12 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
+  const swellRef = useRef({ x: 1, v: 0, target: 1, frame: 0 });
+  const screenRef = useRef<Screen | null>(null);
+  const preparedRef = useRef<CardId | null>(null);
+  const discardRef = useRef<number | undefined>(undefined);
+  const displayRef = useRef<HTMLElement>(null);
+  const layerRef = useRef<SVGSVGElement>(null);
   const reducedRef = useRef(false);
   const pointerRef = useRef<Point | null>(null);
   const kickRef = useRef<{ vec: Point; start: number } | null>(null);
@@ -157,6 +173,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   useEffect(() => {
     CARDS.forEach((card) => router.prefetch(card.href));
+    // Decoded ahead, so no icon pops in partway down the wire.
+    CARDS.forEach((card) => card.packets.forEach((icon) => (new Image().src = packetIcon(icon))));
   }, [router]);
 
   useEffect(() => {
@@ -169,8 +187,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       cancelAnimationFrame(frameRef.current);
       cancelAnimationFrame(kickFrameRef.current);
       releaseRef.current?.();
-      window.clearTimeout(timerRef.current);
       window.clearTimeout(zapTimerRef.current);
+      window.clearTimeout(timerRef.current);
+      window.clearTimeout(discardRef.current);
+      cancelAnimationFrame(swellRef.current.frame);
+      screenRef.current?.destroy();
     };
   }, []);
 
@@ -214,31 +235,130 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     });
   };
 
+  const screenColors = (id: CardId) => {
+    const css = getComputedStyle(stageRef.current!);
+    const token = (name: string) => css.getPropertyValue(name).trim();
+    return {
+      card: token('--cv-card'),
+      border: token('--cv-border'),
+      text: token('--cv-text'),
+      muted: token('--cv-muted'),
+      backdrop: `color-mix(in oklab, ${token('--cv-bg')} 70%, transparent)`,
+      accent: token(`--accent-${id}`)
+    };
+  };
+
   /**
-   * Plugs the wire in at once, lets the cards vibrate and the glow run round the display, then
-   * opens the theme. The page transition freezes whatever is on screen, so it waits for those
-   * animations to actually finish, since they start a frame or two after the release.
+   * Plugs the wire in at once: the cards vibrate, the glow runs round the display and the theme's
+   * packets ride the wire in. Meanwhile the theme's page starts loading in a screen that grows out
+   * of the display once the last packet lands (see `lift`). Reduced motion opens the page at once.
    */
   const snap = (from: CardId) => {
     releaseRef.current?.();
     cancelAnimationFrame(frameRef.current);
+    // Usually loaded ahead already; this only catches a connect nothing announced.
+    prepare(from);
     flushSync(() => {
       setWire({ from, tip: target(from)(), phase: 'snapped' });
       setBurst(Date.now());
     });
     if (reducedRef.current) return open(from);
-    let opened = false;
-    const go = () => {
-      if (opened) return;
-      opened = true;
-      window.clearTimeout(timerRef.current);
-      open(from);
+    setBooting(from);
+  };
+
+  /**
+   * Starts loading a theme's page in a hidden screen as soon as a connect looks likely: the
+   * pointer or focus reaching its port. The page's own startup work runs on this thread, so done
+   * this early it finishes before the packets fly instead of stuttering them.
+   */
+  const prepare = (id: CardId) => {
+    const current = wireRef.current;
+    if (reducedRef.current || (current && (current.from !== id || current.phase === 'snapped'))) return;
+    window.clearTimeout(discardRef.current);
+    if (screenRef.current && preparedRef.current === id) return;
+    screenRef.current?.destroy();
+    const card = cardById(id);
+    screenRef.current = createScreen(router, {
+      href: card.href,
+      title: card.title,
+      route: card.route,
+      colors: screenColors(id)
+    });
+    preparedRef.current = id;
+  };
+
+  /** Drops a screen loaded ahead that went unused, so its hidden page doesn't keep running. */
+  const discardSoon = () => {
+    window.clearTimeout(discardRef.current);
+    discardRef.current = window.setTimeout(() => {
+      if (wireRef.current || !screenRef.current?.destroy()) return;
+      screenRef.current = null;
+      preparedRef.current = null;
+    }, PREPARE_IDLE_MS);
+  };
+
+  /** Where the input port is drawn while the display is swollen about its center by `scale`. */
+  const swollenPort = (from: CardId, scale: number): Point => {
+    const layout = viewRef.current!.layout;
+    const at = positionsRef.current.display;
+    const size = nodeSize('display', layout);
+    const p = inputPort(at, inputSide(from, layout));
+    const cx = at.x + size.w / 2;
+    const cy = at.y + size.h / 2;
+    return { x: cx + (p.x - cx) * scale, y: cy + (p.y - cy) * scale };
+  };
+
+  /**
+   * Swells the display and moves the wire's end with it, straight on the elements: a React render
+   * per frame would redraw every card and preview. Renders in between read the same scale.
+   */
+  const applySwell = (scale: number) => {
+    const current = wireRef.current;
+    const display = displayRef.current;
+    if (!current || !display) return;
+    const layout = viewRef.current!.layout;
+    const at = positionsRef.current.display;
+    display.style.transform = `translate3d(${at.x}px, ${at.y}px, 0) scale(${scale})`;
+    const port = swollenPort(current.from, scale);
+    const from = outputPort(current.from, positionsRef.current[current.from], layout);
+    const d = wirePath(from, direction(portSide(current.from, layout)), port, direction(inputSide(current.from, layout)));
+    const layer = layerRef.current;
+    layer?.querySelectorAll('[data-wire]').forEach((path) => path.setAttribute('d', d));
+    layer?.querySelectorAll('[data-port]').forEach((circle) => {
+      circle.setAttribute('cx', String(port.x));
+      circle.setAttribute('cy', String(port.y));
+    });
+  };
+
+  /**
+   * Springs the display toward `target` scale. It runs here rather than in CSS so the wire's end
+   * can follow the input port as the display swells.
+   */
+  const swellTo = (target: number) => {
+    const swell = swellRef.current;
+    swell.target = target;
+    if (swell.frame) return;
+    let last = performance.now();
+    const step = (now: number) => {
+      const dt = Math.min(0.032, (now - last) / 1000);
+      last = now;
+      swell.v += (SWELL_SPRING.stiffness * (swell.target - swell.x) - SWELL_SPRING.damping * swell.v) * dt;
+      swell.x += swell.v * dt;
+      const settled = Math.abs(swell.target - swell.x) < 0.0005 && Math.abs(swell.v) < 0.005;
+      if (settled) swell.x = swell.target;
+      applySwell(swell.x);
+      swell.frame = settled ? 0 : requestAnimationFrame(step);
     };
-    const connecting = (stageRef.current?.getAnimations({ subtree: true }) ?? []).filter(
-      (animation) => animation instanceof CSSAnimation && CONNECT_ANIMATION.test(animation.animationName)
-    );
-    Promise.all(connecting.map((animation) => animation.finished)).then(go, go);
-    timerRef.current = window.setTimeout(go, CONNECT_MAX_MS);
+    swell.frame = requestAnimationFrame(step);
+  };
+
+  const lift = () => {
+    timerRef.current = window.setTimeout(() => {
+      const display = displayRef.current;
+      if (!screenRef.current || !display) return;
+      screenRef.current.run(display.getBoundingClientRect());
+      setLifted(true);
+    }, LIFT_DELAY_MS);
   };
 
   const retract = (from: CardId, tip: Point) => {
@@ -252,7 +372,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       Math.min(520, 260 + reach * 0.5),
       easeOutCubic,
       (p) => setWire({ from, tip: p, phase: 'retract' }),
-      () => setWire(null)
+      () => {
+        setWire(null);
+        discardSoon();
+      }
     );
   };
 
@@ -395,6 +518,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   // The wire only appears once the pointer actually moves, and plugs in only on release.
   const startWire = (id: CardId) => (event: PointerEvent) => {
     if (event.button !== 0 || wireRef.current) return;
+    prepare(id);
     event.preventDefault();
     event.stopPropagation();
     const press = { x: event.clientX, y: event.clientY };
@@ -427,6 +551,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const connect = (id: CardId) => {
     if (wireRef.current) return;
+    prepare(id);
     const from = outputPort(id, positionsRef.current[id], viewRef.current!.layout);
     if (reducedRef.current) return snap(id);
     setWire({ from: id, tip: from, phase: 'drag' });
@@ -470,9 +595,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   const layout = view?.layout ?? 'desktop';
-  const draggable = layout === 'desktop';
+  const draggable = layout === 'desktop' && !booting;
   const source = wire ? outputPort(wire.from, positions[wire.from], layout) : null;
-  const port = wire ? inputPort(positions.display, inputSide(wire.from, layout)) : null;
+  // The display swells about its center as packets land; the input port is drawn where it ends up.
+  const displayScale = swellRef.current.x;
+  const port = wire ? swollenPort(wire.from, displayScale) : null;
   const inputs = Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout))));
   const plugged = wire?.phase === 'snapped' ? wire.from : null;
   const nearSource = wire && wire.phase !== 'drag' && wire.phase !== 'retract' ? wire.from : null;
@@ -527,12 +654,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             onGrab={grab(card.id)}
             onWire={startWire(card.id)}
             onConnect={() => connect(card.id)}
+            onPrepare={() => prepare(card.id)}
+            onLeave={discardSoon}
           >
             {previews[card.id]}
           </NodeCard>
         ))}
 
         <DisplayNode
+          ref={displayRef}
           at={positions.display}
           z={order.indexOf('display') + 1}
           draggable={draggable}
@@ -541,10 +671,13 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           state={displayState}
           inputs={inputs}
           side={wire ? inputSide(wire.from, layout) : inputs[0]}
+          swell={arrivals}
+          scale={displayScale}
+          lifted={lifted}
           onGrab={grab('display')}
         />
 
-        <svg className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
+        <svg ref={layerRef} className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
           {wire && source && (
             <>
               <Wire
@@ -558,7 +691,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
                 <circle className={styles.cap} data-lit={plugged || undefined} cx={source.x} cy={source.y} r={5} />
                 {plugged && port && (
-                  <circle className={styles.cap} data-lit cx={port.x} cy={port.y} r={6} />
+                  <circle className={styles.cap} data-lit data-port cx={port.x} cy={port.y} r={6} />
                 )}
               </g>
             </>
@@ -577,9 +710,24 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               </g>
             </g>
           )}
+          {booting && plugged && source && port && (
+            <Packets
+              source={plugged}
+              from={source}
+              fromDir={direction(portSide(plugged, layout))}
+              to={port}
+              toDir={direction(inputSide(plugged, layout))}
+              onArrive={() => {
+                setBurst(Date.now());
+                setArrivals((count) => count + 1);
+                swellTo(swellRef.current.target + SWELL_STEP);
+              }}
+              onDone={lift}
+            />
+          )}
           {plugged && burst && port && (
             <g key={burst} style={{ '--accent': `var(--accent-${plugged})` } as CSSProperties}>
-              <circle className={styles.burst} cx={port.x} cy={port.y} r={6} />
+              <circle className={styles.burst} data-port cx={port.x} cy={port.y} r={6} />
             </g>
           )}
         </svg>

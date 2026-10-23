@@ -58,7 +58,8 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
       <div className={cn(inter.className, inter.variable)}>
         <TooltipProvider delayDuration={200}>
           <PrismGlobal />
-          <Analytics />
+          {/* Theme Studio previews a page in a frame before opening it; that isn't a visit. */}
+          <Analytics beforeSend={(event) => (window.self === window.top ? event : null)} />
           {getLayout(
             <AnimatePresence
               mode="wait"
