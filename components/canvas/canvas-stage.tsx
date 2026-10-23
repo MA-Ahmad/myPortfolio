@@ -24,6 +24,7 @@ import { pixelNavigate } from 'lib/pixel-transition';
 import { type Screen, createScreen } from 'lib/canvas/screen';
 import styles from './canvas.module.css';
 import { DisplayNode, type DisplayState } from './display-node';
+import { Hint } from './hint';
 import { NodeCard } from './node-card';
 import { Packets, packetIcon } from './packets';
 import {
@@ -69,8 +70,14 @@ const ZAP_MS = 380;
 // The screen grows out of the display once the last packet's swell has peaked.
 const LIFT_DELAY_MS = 220;
 // Each packet that lands swells the display about its center by this much, on a bouncy spring.
-const SWELL_STEP = 0.014;
+const SWELL_STEP = 0.02;
 const SWELL_SPRING = { stiffness: 380, damping: 14 };
+// Pulled out, it settles back without the bounce.
+const SHRINK_SPRING = { stiffness: 260, damping: 26 };
+// Matches .packets[data-stopped] in canvas.module.css.
+const PACKETS_FADE_MS = 240;
+// Matches .hint[data-leaving].
+const HINT_FADE_MS = 200;
 // A screen loaded ahead for a port the pointer left is dropped after this, unless a wire is out.
 const PREPARE_IDLE_MS = 2000;
 
@@ -127,6 +134,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const [booting, setBooting] = useState<CardId | null>(null);
   const [lifted, setLifted] = useState(false);
   const [arrivals, setArrivals] = useState(0);
+  // Each transfer remounts the packets; an unplug stops them mid-wire while they fade.
+  const [transfer, setTransfer] = useState(0);
+  const [packetsStopped, setPacketsStopped] = useState(false);
+  const [powerOff, setPowerOff] = useState<{ key: number; source: CardId } | null>(null);
+  const [hint, setHint] = useState<{ id: CardId; leaving: boolean } | null>(null);
 
   const viewRef = useRef(view);
   const positionsRef = useRef(positions);
@@ -138,7 +150,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
-  const swellRef = useRef({ x: 1, v: 0, target: 1, frame: 0 });
+  const swellRef = useRef({ x: 1, v: 0, target: 1, frame: 0, spring: SWELL_SPRING });
+  const liftedRef = useRef(false);
+  const packetsTimerRef = useRef<number | undefined>(undefined);
+  const hintTimerRef = useRef<number | undefined>(undefined);
   const screenRef = useRef<Screen | null>(null);
   const preparedRef = useRef<CardId | null>(null);
   const discardRef = useRef<number | undefined>(undefined);
@@ -177,6 +192,24 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     CARDS.forEach((card) => card.packets.forEach((icon) => (new Image().src = packetIcon(icon))));
   }, [router]);
 
+  // Once a real wire is out the hint gives way to it. Pressing a port focuses it, which would
+  // otherwise bring the hint straight back to loop its token beside the real packets.
+  useEffect(() => {
+    if (wire && hint && !hint.leaving) hideHint();
+    // hideHint only sets state and a timer.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wire, hint]);
+
+  // Esc pulls the wire back out while its packets are still flying in.
+  useEffect(() => {
+    if (!booting) return;
+    const onKey = (event: KeyboardEvent) => event.key === 'Escape' && pullOut();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // pullOut reads everything it needs from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [booting]);
+
   useEffect(() => {
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     reducedRef.current = query.matches;
@@ -190,6 +223,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       window.clearTimeout(zapTimerRef.current);
       window.clearTimeout(timerRef.current);
       window.clearTimeout(discardRef.current);
+      window.clearTimeout(packetsTimerRef.current);
+      window.clearTimeout(hintTimerRef.current);
       cancelAnimationFrame(swellRef.current.frame);
       screenRef.current?.destroy();
     };
@@ -259,7 +294,85 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       setBurst(Date.now());
     });
     if (reducedRef.current) return open(from);
+    window.clearTimeout(packetsTimerRef.current);
+    setPacketsStopped(false);
+    setTransfer((count) => count + 1);
     setBooting(from);
+  };
+
+  /**
+   * Switches the display back off when its wire is pulled out mid-transfer: the packets stop and
+   * fade, the swell settles back, and the display's screen collapses old-TV style.
+   */
+  const powerDown = (id: CardId) => {
+    // A lift may be waiting on the last swell.
+    window.clearTimeout(timerRef.current);
+    setPacketsStopped(true);
+    window.clearTimeout(packetsTimerRef.current);
+    packetsTimerRef.current = window.setTimeout(() => setBooting(null), PACKETS_FADE_MS);
+    setArrivals(0);
+    setBurst(null);
+    setPowerOff({ key: Date.now(), source: id });
+    swellTo(1, SHRINK_SPRING);
+  };
+
+  /** Esc while packets are flying: power down and let the wire spring back to its card. */
+  const pullOut = () => {
+    const current = wireRef.current;
+    if (!current || current.phase !== 'snapped' || liftedRef.current) return;
+    powerDown(current.from);
+    retract(current.from, swollenPort(current.from, swellRef.current.x));
+  };
+
+  /**
+   * A press on the plugged-in input pulls the wire back out: dragged, it follows the pointer and
+   * can go back in; clicked, it springs home.
+   */
+  const unplug = (event: PointerEvent) => {
+    const current = wireRef.current;
+    if (event.button !== 0 || !current || current.phase !== 'snapped' || liftedRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const id = current.from;
+    const press = { x: event.clientX, y: event.clientY };
+    let dragging = false;
+    powerDown(id);
+    setWire({ from: id, tip: swollenPort(id, swellRef.current.x), phase: 'near' });
+    armedRef.current = {};
+    strikesRef.current = 0;
+    listen(
+      event,
+      (move) => {
+        if (!dragging) {
+          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < DRAG_THRESHOLD) return;
+          dragging = true;
+        }
+        pointerRef.current = toWorld(move.clientX, move.clientY);
+        aim(id);
+      },
+      (cancelled) => {
+        pointerRef.current = null;
+        kickRef.current = null;
+        cancelAnimationFrame(kickFrameRef.current);
+        const wire = wireRef.current;
+        if (!wire || (wire.phase !== 'drag' && wire.phase !== 'near')) return;
+        if (dragging && !cancelled && wire.phase === 'near') snap(id);
+        else retract(id, wire.tip);
+      }
+    );
+  };
+
+  /** While a port is hovered or focused, show what plugging it in would do. */
+  const showHint = (id: CardId) => {
+    if (reducedRef.current || wireRef.current) return;
+    window.clearTimeout(hintTimerRef.current);
+    setHint({ id, leaving: false });
+  };
+
+  const hideHint = () => {
+    setHint((current) => current && { ...current, leaving: true });
+    window.clearTimeout(hintTimerRef.current);
+    hintTimerRef.current = window.setTimeout(() => setHint(null), HINT_FADE_MS);
   };
 
   /**
@@ -314,6 +427,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const layout = viewRef.current!.layout;
     const at = positionsRef.current.display;
     display.style.transform = `translate3d(${at.x}px, ${at.y}px, 0) scale(${scale})`;
+    // Once pulled out the wire follows the pointer, so only a plugged-in one tracks the port.
+    if (current.phase !== 'snapped') return;
     const port = swollenPort(current.from, scale);
     const from = outputPort(current.from, positionsRef.current[current.from], layout);
     const d = wirePath(from, direction(portSide(current.from, layout)), port, direction(inputSide(current.from, layout)));
@@ -329,15 +444,16 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
    * Springs the display toward `target` scale. It runs here rather than in CSS so the wire's end
    * can follow the input port as the display swells.
    */
-  const swellTo = (target: number) => {
+  const swellTo = (target: number, spring = SWELL_SPRING) => {
     const swell = swellRef.current;
     swell.target = target;
+    swell.spring = spring;
     if (swell.frame) return;
     let last = performance.now();
     const step = (now: number) => {
       const dt = Math.min(0.032, (now - last) / 1000);
       last = now;
-      swell.v += (SWELL_SPRING.stiffness * (swell.target - swell.x) - SWELL_SPRING.damping * swell.v) * dt;
+      swell.v += (swell.spring.stiffness * (swell.target - swell.x) - swell.spring.damping * swell.v) * dt;
       swell.x += swell.v * dt;
       const settled = Math.abs(swell.target - swell.x) < 0.0005 && Math.abs(swell.v) < 0.005;
       if (settled) swell.x = swell.target;
@@ -352,6 +468,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       const display = displayRef.current;
       if (!screenRef.current || !display) return;
       screenRef.current.run(display);
+      liftedRef.current = true;
       setLifted(true);
     }, LIFT_DELAY_MS);
   };
@@ -514,6 +631,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const startWire = (id: CardId) => (event: PointerEvent) => {
     if (event.button !== 0 || wireRef.current) return;
     prepare(id);
+    hideHint();
     event.preventDefault();
     event.stopPropagation();
     const press = { x: event.clientX, y: event.clientY };
@@ -547,6 +665,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const connect = (id: CardId) => {
     if (wireRef.current) return;
     prepare(id);
+    hideHint();
     const from = outputPort(id, positionsRef.current[id], viewRef.current!.layout);
     if (reducedRef.current) return snap(id);
     setWire({ from: id, tip: from, phase: 'drag' });
@@ -649,8 +768,14 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             onGrab={grab(card.id)}
             onWire={startWire(card.id)}
             onConnect={() => connect(card.id)}
-            onPrepare={() => prepare(card.id)}
-            onLeave={discardSoon}
+            onPrepare={() => {
+              prepare(card.id);
+              showHint(card.id);
+            }}
+            onLeave={() => {
+              discardSoon();
+              hideHint();
+            }}
           >
             {previews[card.id]}
           </NodeCard>
@@ -669,10 +794,23 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           swell={arrivals}
           scale={displayScale}
           lifted={lifted}
+          powerOff={powerOff}
           onGrab={grab('display')}
+          onUnplug={unplug}
         />
 
         <svg ref={layerRef} className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
+          {hint && view && (
+            <Hint
+              key={hint.id}
+              source={hint.id}
+              from={outputPort(hint.id, positions[hint.id], layout)}
+              fromDir={direction(portSide(hint.id, layout))}
+              to={inputPort(positions.display, inputSide(hint.id, layout))}
+              toDir={direction(inputSide(hint.id, layout))}
+              leaving={hint.leaving}
+            />
+          )}
           {wire && source && (
             <>
               <Wire
@@ -705,13 +843,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               </g>
             </g>
           )}
-          {booting && plugged && source && port && (
+          {booting && wire?.from === booting && source && port && (
             <Packets
-              source={plugged}
+              key={transfer}
+              source={booting}
               from={source}
-              fromDir={direction(portSide(plugged, layout))}
+              fromDir={direction(portSide(booting, layout))}
               to={port}
-              toDir={direction(inputSide(plugged, layout))}
+              toDir={direction(inputSide(booting, layout))}
+              stopped={packetsStopped}
               onArrive={() => {
                 setBurst(Date.now());
                 setArrivals((count) => count + 1);

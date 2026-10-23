@@ -34,7 +34,11 @@ type Props = {
   scale: number;
   /** Hidden under the screen that grows out of it. */
   lifted: boolean;
+  /** Set when a wire was just pulled out; `key` replays the power-down, tinted for `source`. */
+  powerOff: { key: number; source: CardId } | null;
   onGrab: (event: PointerEvent) => void;
+  /** A press on the plugged-in input, which pulls the wire back out. */
+  onUnplug: (event: PointerEvent) => void;
 };
 
 export function DisplayNode({
@@ -50,7 +54,9 @@ export function DisplayNode({
   swell,
   scale,
   lifted,
-  onGrab
+  powerOff,
+  onGrab,
+  onUnplug
 }: Props) {
   const card = source ? cardById(source) : null;
   const open = state === 'open';
@@ -148,16 +154,32 @@ export function DisplayNode({
         {status}
       </div>
 
-      {inputs.map((input) => (
+      {/* An old set switching off: the picture squashes to a line, the line to a dot. A span, so
+          the screen that copies this node's rows never mistakes it for them. */}
+      {powerOff && (
         <span
-          key={input}
-          className={`${styles.port} ${styles.input}`}
-          data-side={input}
-          data-near={(input === side && (state === 'near' || open)) || undefined}
+          key={powerOff.key}
+          className={styles.powerOff}
+          style={{ '--off-accent': `var(--accent-${powerOff.source})`, top: DISPLAY_HEADER_H } as CSSProperties}
           aria-hidden
-          style={{ left: input === 'left' ? -1 : 'calc(100% + 1px)', top: DISPLAY_INPUT_Y - 1 }}
         />
-      ))}
+      )}
+
+      {inputs.map((input) => {
+        const plugged = open && input === side;
+        return (
+          <span
+            key={input}
+            className={`${styles.port} ${styles.input}`}
+            data-side={input}
+            data-near={(input === side && (state === 'near' || open)) || undefined}
+            data-plugged={plugged || undefined}
+            aria-hidden
+            style={{ left: input === 'left' ? -1 : 'calc(100% + 1px)', top: DISPLAY_INPUT_Y - 1 }}
+            onPointerDown={plugged ? onUnplug : undefined}
+          />
+        );
+      })}
     </article>
   );
 }

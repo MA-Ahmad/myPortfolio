@@ -794,6 +794,127 @@
   transition: none;
 }
 
+/* Pulling the wire back out of a display that is taking packets in. */
+
+.input[data-plugged] {
+  cursor: grab;
+  touch-action: none;
+}
+
+/*
+ * The display switching off like an old set, over its body: the card's own color covers the
+ * rows, the picture squashes into a bright line, the line shrinks to a dot, the dot fades, and
+ * the cover lifts off the display, back to awaiting input.
+ */
+.powerOff {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 0 0 13px 13px;
+  pointer-events: none;
+  animation: powerOffCover 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.powerOff::before {
+  content: '';
+  width: 100%;
+  height: 100%;
+  /* Brightest through the middle and soft at the edges, so it squashes into a glowing band
+     rather than a flat slab, tinted by the theme that was plugged in. */
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, #fff 88%, var(--off-accent)) 38%,
+    #fff 50%,
+    color-mix(in oklab, #fff 88%, var(--off-accent)) 62%,
+    transparent
+  );
+  animation: powerOffPicture 620ms cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes powerOffCover {
+  0% {
+    background: transparent;
+  }
+  18%,
+  78% {
+    background: var(--cv-card);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+@keyframes powerOffPicture {
+  0% {
+    transform: scale(1, 1);
+    opacity: 0;
+  }
+  16% {
+    transform: scale(1, 0.55);
+    opacity: 0.3;
+  }
+  38% {
+    transform: scale(1, 0.02);
+    opacity: 1;
+  }
+  64% {
+    transform: scale(0.012, 0.02);
+    opacity: 1;
+  }
+  82%,
+  100% {
+    transform: scale(0.012, 0.02);
+    opacity: 0;
+  }
+}
+
+/* Packets caught on the wire by an unplug stop where they are and fade. */
+.packets[data-stopped] {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+
+/* The hint while a port is hovered: a ghost wire to the display, a token gliding down it. */
+
+.hint {
+  transition: opacity 200ms ease-out;
+}
+
+.hint[data-leaving] {
+  opacity: 0;
+}
+
+.hintWire {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  opacity: 0.4;
+  animation: hintDraw 480ms cubic-bezier(0.3, 0.7, 0, 1) forwards;
+}
+
+.hintPulse {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes hintDraw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ring,
   .burst,
@@ -810,6 +931,10 @@
   }
 
   .trace {
+    display: none;
+  }
+
+  .powerOff {
     display: none;
   }
 

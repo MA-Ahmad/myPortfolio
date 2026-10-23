@@ -42,7 +42,10 @@ export type CardDef = {
   href: string;
   width: Record<Layout, number>;
   previewHeight: Record<Layout, number>;
-  /** Skill icons, from /assets/images/skills, that travel down the wire into the display once plugged in. */
+  /**
+   * Skill icons, from /assets/images/skills. Plugging in sends the first few down the wire (see
+   * TRANSFER_COUNT in packets.tsx); hovering the port cycles through them all.
+   */
   packets: string[];
   /** The card edge the port is on, facing the display; defaults to the right. */
   portSide?: Partial<Record<Layout, Side>>;
@@ -56,7 +59,7 @@ export const CARDS: CardDef[] = [
     href: '/',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.home, mobile: 168 },
-    packets: ['react.png', 'nextjs.png', 'typescript.png', 'tailwindcss.svg', 'vercel.svg', 'claude.svg'],
+    packets: ['react.png', 'nextjs.png', 'typescript.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg'],
     portSide: { desktop: 'left' }
   },
   {
@@ -66,7 +69,7 @@ export const CARDS: CardDef[] = [
     href: '/themes/terminal',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.terminal, mobile: 150 },
-    packets: ['rails.png', 'ruby.png', 'nestjs.svg', 'postgresql.png', 'redis.png', 'claude.svg'],
+    packets: ['rails.png', 'nestjs.svg', 'postgresql.png', 'claude.svg', 'ruby.png', 'redis.png'],
     portSide: { desktop: 'left' }
   },
   {

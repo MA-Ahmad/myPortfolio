@@ -1,8 +1,10 @@
-import { type CSSProperties, useEffect, useRef } from 'react';
+import { type CSSProperties, type Ref, useEffect, useRef } from 'react';
 import { type Point, wirePath } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
 import { type CardId, cardById } from './nodes';
 
+// Plugging in sends this many of the theme's icons; the hover hint cycles through them all.
+const TRANSFER_COUNT = 4;
 const START_MS = 60;
 // A packet covers the wire in about this long per pixel, within these bounds.
 const MS_PER_PX = 2.4;
@@ -18,12 +20,12 @@ export const packetIcon = (file: string) => `/assets/images/skills/${file}`;
 
 // ASCII riding the wire with the icons, in each theme's own characters, flickering through the
 // set as it goes: a short trail behind every icon, and a few strays trickling between them.
-const GLYPHS: Record<CardId, string> = {
+export const GLYPHS: Record<CardId, string> = {
   home: '</>{}();=*+',
   terminal: '$>_/~|01#{}',
   notebook: "aeiou·.,'~*"
 };
-const GLYPH_FLICKER_MS = 90;
+export const GLYPH_FLICKER_MS = 90;
 // Each trail glyph follows this far behind the one before, swaying across the wire.
 const TRAIL = 3;
 const TRAIL_GAP = 13;
@@ -34,7 +36,7 @@ const STRAY_DRIFT = 12;
 type Stray = { delay: number; pace: number; side: number };
 
 /** `at` on the wire moved `offset` across it, square to the wire's direction there. */
-function across(path: SVGPathElement, along: number, length: number, offset: number) {
+export function across(path: SVGPathElement, along: number, length: number, offset: number) {
   const at = path.getPointAtLength(along);
   const ahead = path.getPointAtLength(Math.min(length, along + 1));
   const behind = path.getPointAtLength(Math.max(0, along - 1));
@@ -44,7 +46,7 @@ function across(path: SVGPathElement, along: number, length: number, offset: num
   return { x: at.x - (dy / norm) * offset, y: at.y + (dx / norm) * offset };
 }
 
-const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
+export const easeInOutSine = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
 
 type Props = {
   source: CardId;
@@ -52,23 +54,52 @@ type Props = {
   fromDir: number;
   to: Point;
   toDir: number;
+  /** Set when the wire is pulled out: everything stops where it is and fades. */
+  stopped: boolean;
   /** Each time a packet reaches the display. */
   onArrive: () => void;
   onDone: () => void;
 };
+
+/** A skill icon on its white token, centered on the origin. */
+export function PacketToken({ source, icon, imageRef }: { source: CardId; icon: string; imageRef?: Ref<SVGImageElement> }) {
+  return (
+    <>
+      <rect
+        className={styles.packetHalo}
+        x={-TOKEN / 2 - 4}
+        y={-TOKEN / 2 - 4}
+        width={TOKEN + 8}
+        height={TOKEN + 8}
+        rx={source === 'terminal' ? 9 : TOKEN / 2 + 4}
+      />
+      <rect
+        className={styles.packetToken}
+        x={-TOKEN / 2}
+        y={-TOKEN / 2}
+        width={TOKEN}
+        height={TOKEN}
+        rx={source === 'terminal' ? 6 : TOKEN / 2}
+      />
+      <image ref={imageRef} href={packetIcon(icon)} x={-ICON / 2} y={-ICON / 2} width={ICON} height={ICON} />
+    </>
+  );
+}
 
 /**
  * The theme's skill icons riding the plugged-in wire into the display, one after another: they
  * fade in off the card's port, ease along the wire, and shrink into the display's input.
  * Positions are set per frame on the elements, so React renders them once.
  */
-export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: Props) {
-  const icons = cardById(source).packets;
+export function Packets({ source, from, fromDir, to, toDir, stopped, onArrive, onDone }: Props) {
+  const icons = cardById(source).packets.slice(0, TRANSFER_COUNT);
   const pathRef = useRef<SVGPathElement>(null);
   const packetRefs = useRef<(SVGGElement | null)[]>([]);
   const glyphRefs = useRef<(SVGTextElement | null)[]>([]);
   const callbacks = useRef({ onArrive, onDone });
   callbacks.current = { onArrive, onDone };
+  const stoppedRef = useRef(stopped);
+  stoppedRef.current = stopped;
   const d = wirePath(from, fromDir, to, toDir);
 
   useEffect(() => {
@@ -102,6 +133,8 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
     let frame = 0;
 
     const step = (now: number) => {
+      // Pulled out: leave everything where it is, mid-wire, while it fades.
+      if (stoppedRef.current) return;
       const elapsed = now - start;
       const current = path.getTotalLength();
       const tick = Math.floor(elapsed / GLYPH_FLICKER_MS);
@@ -153,7 +186,7 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
   }, []);
 
   return (
-    <g className={styles.packets} data-theme={source} style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
+    <g className={styles.packets} data-theme={source} data-stopped={stopped || undefined} style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
       <path ref={pathRef} d={d} fill="none" stroke="none" data-wire />
       {Array.from({ length: icons.length * TRAIL + STRAY_COUNT }, (_, i) => (
         <text
@@ -167,23 +200,7 @@ export function Packets({ source, from, fromDir, to, toDir, onArrive, onDone }: 
       ))}
       {icons.map((icon, i) => (
         <g key={icon} ref={(node) => void (packetRefs.current[i] = node)} opacity={0}>
-          <rect
-            className={styles.packetHalo}
-            x={-TOKEN / 2 - 4}
-            y={-TOKEN / 2 - 4}
-            width={TOKEN + 8}
-            height={TOKEN + 8}
-            rx={source === 'terminal' ? 9 : TOKEN / 2 + 4}
-          />
-          <rect
-            className={styles.packetToken}
-            x={-TOKEN / 2}
-            y={-TOKEN / 2}
-            width={TOKEN}
-            height={TOKEN}
-            rx={source === 'terminal' ? 6 : TOKEN / 2}
-          />
-          <image href={packetIcon(icon)} x={-ICON / 2} y={-ICON / 2} width={ICON} height={ICON} />
+          <PacketToken source={source} icon={icon} />
         </g>
       ))}
     </g>
