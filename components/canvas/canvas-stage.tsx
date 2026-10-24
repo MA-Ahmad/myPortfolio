@@ -662,8 +662,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         pointerRef.current = null;
         kickRef.current = null;
         cancelAnimationFrame(kickFrameRef.current);
-        // The stacked phone layout puts the display far below most ports, so a tap wires it up.
-        if (!dragging && !cancelled && viewRef.current?.layout === 'mobile') return connect(id);
+        // A press that never became a drag wires it up, like a tap on the card.
+        if (!dragging && !cancelled) return connect(id);
         const current = wireRef.current;
         if (!current || (current.phase !== 'drag' && current.phase !== 'near')) return;
         if (!cancelled && current.phase === 'near') snap(id);
