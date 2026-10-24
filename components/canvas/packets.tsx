@@ -54,6 +54,7 @@ type Props = {
   fromDir: number;
   to: Point;
   toDir: number;
+  reachCap?: number;
   /** Set when the wire is pulled out: everything stops where it is and fades. */
   stopped: boolean;
   /** Each time a packet reaches the display. */
@@ -91,7 +92,7 @@ export function PacketToken({ source, icon, imageRef }: { source: CardId; icon: 
  * fade in off the card's port, ease along the wire, and shrink into the display's input.
  * Positions are set per frame on the elements, so React renders them once.
  */
-export function Packets({ source, from, fromDir, to, toDir, stopped, onArrive, onDone }: Props) {
+export function Packets({ source, from, fromDir, to, toDir, reachCap, stopped, onArrive, onDone }: Props) {
   const icons = cardById(source).packets.slice(0, TRANSFER_COUNT);
   const pathRef = useRef<SVGPathElement>(null);
   const packetRefs = useRef<(SVGGElement | null)[]>([]);
@@ -100,7 +101,7 @@ export function Packets({ source, from, fromDir, to, toDir, stopped, onArrive, o
   callbacks.current = { onArrive, onDone };
   const stoppedRef = useRef(stopped);
   stoppedRef.current = stopped;
-  const d = wirePath(from, fromDir, to, toDir);
+  const d = wirePath(from, fromDir, to, toDir, reachCap);
 
   useEffect(() => {
     const path = pathRef.current!;

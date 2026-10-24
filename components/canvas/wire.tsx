@@ -10,10 +10,11 @@ type Props = {
   to: Point;
   toDir: number;
   lit: boolean;
+  reachCap?: number;
 };
 
-export function Wire({ source, from, fromDir, to, toDir, lit }: Props) {
-  const d = wirePath(from, fromDir, to, toDir);
+export function Wire({ source, from, fromDir, to, toDir, lit, reachCap }: Props) {
+  const d = wirePath(from, fromDir, to, toDir, reachCap);
   return (
     <g style={{ '--accent': `var(--accent-${source})` } as CSSProperties}>
       {/* data-wire: the stage redraws these each frame while the display swells. */}

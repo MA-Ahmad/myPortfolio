@@ -41,6 +41,7 @@ import {
   inputPort,
   inputSide,
   nodeSize,
+  wireReachCap,
   outputPort,
   portSide
 } from './nodes';
@@ -433,7 +434,13 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const port = swollenPort(current.from, scale);
     const positions = positionsRef.current;
     const from = outputPort(current.from, positions, layout);
-    const d = wirePath(from, direction(portSide(current.from, layout, positions)), port, direction(inputSide(current.from, layout, positions)));
+    const d = wirePath(
+      from,
+      direction(portSide(current.from, layout, positions)),
+      port,
+      direction(inputSide(current.from, layout, positions)),
+      wireReachCap(layout)
+    );
     const layer = layerRef.current;
     layer?.querySelectorAll('[data-wire]').forEach((path) => path.setAttribute('d', d));
     layer?.querySelectorAll('[data-port]').forEach((circle) => {
@@ -668,6 +675,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     if (wireRef.current) return;
     prepare(id);
     hideHint();
+    // On a phone the display leads the stack, so bring it into view as the wire flies up to it.
+    if (viewRef.current?.layout === 'mobile' && window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: reducedRef.current ? 'auto' : 'smooth' });
+    }
     const from = outputPort(id, positionsRef.current, viewRef.current!.layout);
     if (reducedRef.current) return snap(id);
     setWire({ from: id, tip: from, phase: 'drag' });
@@ -827,6 +838,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
                 to={wire.phase === 'snapped' && port ? port : wire.tip}
                 toDir={direction(inputSide(wire.from, layout, positions))}
                 lit={wire.phase === 'snapped'}
+                reachCap={wireReachCap(layout)}
               />
               <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
                 <circle className={styles.cap} data-lit={plugged || undefined} cx={source.x} cy={source.y} r={5} />
@@ -858,6 +870,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               fromDir={direction(portSide(booting, layout, positions))}
               to={port}
               toDir={direction(inputSide(booting, layout, positions))}
+              reachCap={wireReachCap(layout)}
               stopped={packetsStopped}
               onArrive={() => {
                 setBurst(Date.now());

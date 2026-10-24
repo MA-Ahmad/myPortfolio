@@ -104,9 +104,12 @@ export function portSide(id: CardId, layout: Layout, positions: Positions): Side
   return cardCenter < displayCenter ? 'right' : 'left';
 }
 
-/** A card's port faces the display, so it plugs into the display input on the opposite side. */
+/**
+ * A desktop card's port faces the display, so it plugs into the display input on the opposite
+ * side. On a phone the display is above the stack and every wire runs up its right edge.
+ */
 export const inputSide = (id: CardId, layout: Layout, positions: Positions): Side =>
-  portSide(id, layout, positions) === 'left' ? 'right' : 'left';
+  layout !== 'desktop' ? 'right' : portSide(id, layout, positions) === 'left' ? 'right' : 'left';
 
 /** Every port sits halfway down its card's edge. */
 export const portY = (card: CardDef, layout: Layout) => cardHeight(card, layout) / 2;
@@ -125,21 +128,35 @@ export function initialPositions(layout: Layout): Record<NodeId, Point> {
       terminal: { x: right, y: chrome(PREVIEW.home) + GAP_Y }
     };
   }
-  let y = 0;
+  // The display leads the stack, so it is on screen whenever the page opens; the cards sit
+  // under it and wire up the right side.
   const stack = {} as Record<NodeId, Point>;
+  stack.display = { x: MOBILE_GUTTER + (CARD_W - DISPLAY_W) / 2, y: 0 };
+  let y = DISPLAY_H + MOBILE_GAP_DISPLAY;
   for (const card of CARDS) {
-    stack[card.id] = { x: 0, y };
+    stack[card.id] = { x: MOBILE_GUTTER, y };
     y += cardHeight(card, 'mobile') + 24;
   }
-  stack.display = { x: (CARD_W - DISPLAY_W) / 2, y: y + 24 };
   return stack;
 }
+
+// On a phone every wire runs up the right edge of the stack, out of its card's port and back
+// into the display's input; this much room is kept for the curve on both sides, so the stack
+// itself stays centered.
+const MOBILE_GUTTER = 44;
+const MOBILE_GAP_DISPLAY = 56;
+
+/**
+ * How far a phone wire's curve may reach out of its ports. A bezier with both handles this far
+ * out swings 3/4 of it beyond the ports, which stays inside the gutter.
+ */
+export const wireReachCap = (layout: Layout) => (layout === 'mobile' ? MOBILE_GUTTER * 1.2 : Infinity);
 
 export const DESIGN = {
   desktop: { w: CARD_W + GAP_X * 2 + DISPLAY_W + SIDE_W, h: DESKTOP_H },
   mobile: {
-    w: CARD_W,
-    h: CARDS.reduce((sum, card) => sum + cardHeight(card, 'mobile') + 24, 0) + 24 + DISPLAY_H
+    w: CARD_W + MOBILE_GUTTER * 2,
+    h: DISPLAY_H + MOBILE_GAP_DISPLAY + CARDS.reduce((sum, card) => sum + cardHeight(card, 'mobile') + 24, 0)
   }
 };
 
