@@ -5,7 +5,6 @@ import { FileUserIcon } from 'lucide-react';
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
-import { useLinkColor } from 'components/theme';
 import { CommandMenu } from 'components/command-menu/command-menu';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
@@ -42,7 +41,6 @@ const NavLink = (props: NavLinkProps) => {
 };
 
 export default function TopNav() {
-  const linkColor = useLinkColor();
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
 
@@ -60,11 +58,10 @@ export default function TopNav() {
           </button>
         ) : null}
 
-        <NextLink href="/" aria-label="Home" className="shrink-0 no-underline">
+        <NextLink href="/" aria-label="Home" className="avatar-ring shrink-0 no-underline">
           <img
             alt={PROFILE.displayName}
-            className="size-8 rounded-full border object-cover"
-            style={{ borderColor: linkColor }}
+            className="size-8 rounded-full object-cover"
             src={PROFILE.avatar}
           />
         </NextLink>
