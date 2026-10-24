@@ -19,10 +19,10 @@ export function Hero() {
   const { handle, bio, currently, openToWork, stack } = TERMINAL_CONTENT;
 
   return (
-    <section className="relative flex min-h-[100dvh] w-full flex-col justify-center px-4 pb-16 pt-20 sm:px-6 md:block md:min-h-0 md:pt-24">
+    <section className="relative w-full px-4 pb-6 pt-20 sm:px-6 md:pb-16 md:pt-24">
       {openToWork && <Stamp className="absolute right-8 top-24 text-[9px] md:hidden" />}
 
-      <div className="mx-auto -mt-10 grid w-full max-w-4xl grid-cols-1 items-center gap-10 md:mt-0 md:grid-cols-[auto_1fr] md:gap-14">
+      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 items-center gap-10 md:grid-cols-[auto_1fr] md:gap-14">
         <div className={cn(styles.fadeIn, 'flex flex-col items-center gap-4')}>
           <div className="relative w-[200px] sm:w-[240px] md:w-[280px]">
             <AsciiPortrait src={`${PROFILE.avatar}&s=480`} alt={PROFILE.displayName} />

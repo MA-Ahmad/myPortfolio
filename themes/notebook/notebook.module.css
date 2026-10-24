@@ -72,7 +72,8 @@
 .page {
   position: relative;
   z-index: 1;
-  padding: clamp(48px, 11vh, 112px) clamp(20px, 9vw, 160px) 160px;
+  /* The same room above and below. */
+  padding: clamp(48px, 11vh, 112px) clamp(20px, 9vw, 160px);
 }
 
 .column {
@@ -329,7 +330,12 @@ a.row:focus-visible > * {
   white-space: nowrap;
 }
 
+/* On a phone the sides are as narrow as the terminal's and the main site's, not 9vw. */
 @media (max-width: 640px) {
+  .page {
+    padding-inline: 20px;
+  }
+
   .row {
     grid-template-columns: var(--c1m, var(--c1, 10ch)) minmax(0, 1fr);
     column-gap: 2ch;
