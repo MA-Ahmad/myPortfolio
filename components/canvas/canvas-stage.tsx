@@ -142,6 +142,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const [packetsStopped, setPacketsStopped] = useState(false);
   const [powerOff, setPowerOff] = useState<{ key: number; source: CardId } | null>(null);
   const [hint, setHint] = useState<{ id: CardId; leaving: boolean } | null>(null);
+  // Read out by screen readers as a theme starts opening or is pulled back out.
+  const [status, setStatus] = useState('');
 
   const viewRef = useRef(view);
   const positionsRef = useRef(positions);
@@ -296,7 +298,12 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       setWire({ from, tip: target(from)(), phase: 'snapped' });
       setBurst(Date.now());
     });
-    if (reducedRef.current) return open(from);
+    const title = cardById(from).title;
+    if (reducedRef.current) {
+      setStatus(`Opening ${title} theme`);
+      return open(from);
+    }
+    setStatus(`Opening ${title} theme. Press Escape to cancel.`);
     window.clearTimeout(packetsTimerRef.current);
     setPacketsStopped(false);
     setTransfer((count) => count + 1);
@@ -316,6 +323,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     setArrivals(0);
     setBurst(null);
     setPowerOff({ key: Date.now(), source: id });
+    setStatus(`Stopped opening ${cardById(id).title} theme`);
     swellTo(1, SHRINK_SPRING);
   };
 
@@ -765,6 +773,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   return (
     <div ref={stageRef} className={styles.stage} style={{ height: stageHeight }}>
+      <p className="sr-only" role="status" aria-live="polite">
+        {status}
+      </p>
       <div
         className={styles.world}
         style={{
