@@ -47,9 +47,9 @@ export type CardDef = {
    * TRANSFER_COUNT in packets.tsx); hovering the port cycles through them all.
    */
   packets: string[];
-  /** The card edge the port is on, facing the display; defaults to the right. */
-  portSide?: Partial<Record<Layout, Side>>;
 };
+
+export type Positions = Record<NodeId, Point>;
 
 export const CARDS: CardDef[] = [
   {
@@ -59,8 +59,7 @@ export const CARDS: CardDef[] = [
     href: '/',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.home, mobile: 168 },
-    packets: ['react.png', 'nextjs.png', 'typescript.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg'],
-    portSide: { desktop: 'left' }
+    packets: ['react.png', 'nextjs.png', 'typescript.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg']
   },
   {
     id: 'terminal',
@@ -69,8 +68,7 @@ export const CARDS: CardDef[] = [
     href: '/themes/terminal',
     width: { desktop: SIDE_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.terminal, mobile: 150 },
-    packets: ['rails.png', 'nestjs.svg', 'postgresql.png', 'claude.svg', 'ruby.png', 'redis.png'],
-    portSide: { desktop: 'left' }
+    packets: ['rails.png', 'nestjs.svg', 'postgresql.png', 'claude.svg', 'ruby.png', 'redis.png']
   },
   {
     id: 'notebook',
@@ -93,12 +91,22 @@ export const nodeSize = (id: NodeId, layout: Layout) => {
   return { w: card.width[layout], h: cardHeight(card, layout) };
 };
 
-export const portSide = (id: CardId, layout: Layout): Side =>
-  cardById(id).portSide?.[layout] ?? 'right';
+/**
+ * The card edge the port is on. On desktop it faces the display, whichever side of it the card
+ * has been moved to, so every card can plug in from either side. The phone stack is a single
+ * column left of the display's input, so its ports stay on the right.
+ */
+export function portSide(id: CardId, layout: Layout, positions: Positions): Side {
+  if (layout !== 'desktop') return 'right';
+  const card = cardById(id);
+  const cardCenter = positions[id].x + card.width.desktop / 2;
+  const displayCenter = positions.display.x + DISPLAY_W / 2;
+  return cardCenter < displayCenter ? 'right' : 'left';
+}
 
 /** A card's port faces the display, so it plugs into the display input on the opposite side. */
-export const inputSide = (id: CardId, layout: Layout): Side =>
-  portSide(id, layout) === 'left' ? 'right' : 'left';
+export const inputSide = (id: CardId, layout: Layout, positions: Positions): Side =>
+  portSide(id, layout, positions) === 'left' ? 'right' : 'left';
 
 /** Every port sits halfway down its card's edge. */
 export const portY = (card: CardDef, layout: Layout) => cardHeight(card, layout) / 2;
@@ -135,9 +143,10 @@ export const DESIGN = {
   }
 };
 
-export function outputPort(id: CardId, at: Point, layout: Layout): Point {
+export function outputPort(id: CardId, positions: Positions, layout: Layout): Point {
   const card = cardById(id);
-  const x = portSide(id, layout) === 'left' ? at.x : at.x + card.width[layout];
+  const at = positions[id];
+  const x = portSide(id, layout, positions) === 'left' ? at.x : at.x + card.width[layout];
   return { x, y: at.y + portY(card, layout) };
 }
 

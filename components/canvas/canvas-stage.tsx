@@ -34,6 +34,7 @@ import {
   type Layout,
   NEAR_RADIUS,
   type NodeId,
+  type Side,
   cardById,
   direction,
   initialPositions,
@@ -256,7 +257,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   const target = (from: CardId) => () =>
-    inputPort(positionsRef.current.display, inputSide(from, viewRef.current!.layout));
+    inputPort(positionsRef.current.display, inputSide(from, viewRef.current!.layout, positionsRef.current));
 
   const open = (id: CardId) => {
     const stage = stageRef.current;
@@ -410,7 +411,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const layout = viewRef.current!.layout;
     const at = positionsRef.current.display;
     const size = nodeSize('display', layout);
-    const p = inputPort(at, inputSide(from, layout));
+    const p = inputPort(at, inputSide(from, layout, positionsRef.current));
     const cx = at.x + size.w / 2;
     const cy = at.y + size.h / 2;
     return { x: cx + (p.x - cx) * scale, y: cy + (p.y - cy) * scale };
@@ -430,8 +431,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     // Once pulled out the wire follows the pointer, so only a plugged-in one tracks the port.
     if (current.phase !== 'snapped') return;
     const port = swollenPort(current.from, scale);
-    const from = outputPort(current.from, positionsRef.current[current.from], layout);
-    const d = wirePath(from, direction(portSide(current.from, layout)), port, direction(inputSide(current.from, layout)));
+    const positions = positionsRef.current;
+    const from = outputPort(current.from, positions, layout);
+    const d = wirePath(from, direction(portSide(current.from, layout, positions)), port, direction(inputSide(current.from, layout, positions)));
     const layer = layerRef.current;
     layer?.querySelectorAll('[data-wire]').forEach((path) => path.setAttribute('d', d));
     layer?.querySelectorAll('[data-port]').forEach((circle) => {
@@ -476,7 +478,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const retract = (from: CardId, tip: Point) => {
     releaseRef.current?.();
     if (reducedRef.current) return setWire(null);
-    const home = () => outputPort(from, positionsRef.current[from], viewRef.current!.layout);
+    const home = () => outputPort(from, positionsRef.current, viewRef.current!.layout);
     const reach = distance(tip, home());
     animate(
       tip,
@@ -573,7 +575,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const away =
       length > 0.5
         ? { x: dx / length, y: dy / length }
-        : { x: direction(portSide(target, viewRef.current!.layout)), y: 0 };
+        : { x: direction(portSide(target, viewRef.current!.layout, positionsRef.current)), y: 0 };
     const strength = KICK * Math.min(KICK_MAX, 1 + strikesRef.current * KICK_GROWTH);
     strikesRef.current += 1;
     kickRef.current = { vec: { x: away.x * strength, y: away.y * strength }, start: now };
@@ -609,7 +611,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     for (const card of CARDS) {
       if (card.id === id) continue;
       tip = outside(tip, positionsRef.current[card.id], nodeSize(card.id, layout), BODY_PAD);
-      const port = outputPort(card.id, positionsRef.current[card.id], layout);
+      const port = outputPort(card.id, positionsRef.current, layout);
       const gap = distance(tip, port);
       if (gap > REARM_RADIUS && !kickRef.current) armedRef.current[card.id] = true;
       if (gap < REPEL_RADIUS && armedRef.current[card.id] !== false && !reducedRef.current)
@@ -618,7 +620,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         const away =
           gap > 0.5
             ? { x: (tip.x - port.x) / gap, y: (tip.y - port.y) / gap }
-            : { x: direction(portSide(card.id, layout)), y: 0 };
+            : { x: direction(portSide(card.id, layout, positionsRef.current)), y: 0 };
         const pushed = FIELD_RADIUS - (FIELD_RADIUS - gap) * 0.3;
         tip = { x: port.x + away.x * pushed, y: port.y + away.y * pushed };
       }
@@ -666,7 +668,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     if (wireRef.current) return;
     prepare(id);
     hideHint();
-    const from = outputPort(id, positionsRef.current[id], viewRef.current!.layout);
+    const from = outputPort(id, positionsRef.current, viewRef.current!.layout);
     if (reducedRef.current) return snap(id);
     setWire({ from: id, tip: from, phase: 'drag' });
     animate(
@@ -710,11 +712,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const layout = view?.layout ?? 'desktop';
   const draggable = layout === 'desktop' && !booting;
-  const source = wire ? outputPort(wire.from, positions[wire.from], layout) : null;
+  const source = wire ? outputPort(wire.from, positions, layout) : null;
   // The display swells about its center as packets land; the input port is drawn where it ends up.
   const displayScale = swellRef.current.x;
   const port = wire ? swollenPort(wire.from, displayScale) : null;
-  const inputs = Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout))));
+  // Desktop cards can sit on either side, so the display always offers both inputs.
+  const inputs: Side[] =
+    layout === 'desktop'
+      ? ['left', 'right']
+      : Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout, positions))));
   const plugged = wire?.phase === 'snapped' ? wire.from : null;
   const nearSource = wire && wire.phase !== 'drag' && wire.phase !== 'retract' ? wire.from : null;
   const displayState: DisplayState = plugged
@@ -749,6 +755,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             key={card.id}
             card={card}
             layout={layout}
+            side={portSide(card.id, layout, positions)}
             at={positions[card.id]}
             z={order.indexOf(card.id) + 1}
             draggable={draggable}
@@ -790,7 +797,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           source={plugged ?? nearSource}
           state={displayState}
           inputs={inputs}
-          side={wire ? inputSide(wire.from, layout) : inputs[0]}
+          side={wire ? inputSide(wire.from, layout, positions) : inputs[0]}
           swell={arrivals}
           scale={displayScale}
           lifted={lifted}
@@ -804,10 +811,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             <Hint
               key={hint.id}
               source={hint.id}
-              from={outputPort(hint.id, positions[hint.id], layout)}
-              fromDir={direction(portSide(hint.id, layout))}
-              to={inputPort(positions.display, inputSide(hint.id, layout))}
-              toDir={direction(inputSide(hint.id, layout))}
+              from={outputPort(hint.id, positions, layout)}
+              fromDir={direction(portSide(hint.id, layout, positions))}
+              to={inputPort(positions.display, inputSide(hint.id, layout, positions))}
+              toDir={direction(inputSide(hint.id, layout, positions))}
               leaving={hint.leaving}
             />
           )}
@@ -816,9 +823,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               <Wire
                 source={wire.from}
                 from={source}
-                fromDir={direction(portSide(wire.from, layout))}
+                fromDir={direction(portSide(wire.from, layout, positions))}
                 to={wire.phase === 'snapped' && port ? port : wire.tip}
-                toDir={direction(inputSide(wire.from, layout))}
+                toDir={direction(inputSide(wire.from, layout, positions))}
                 lit={wire.phase === 'snapped'}
               />
               <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
@@ -848,9 +855,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               key={transfer}
               source={booting}
               from={source}
-              fromDir={direction(portSide(booting, layout))}
+              fromDir={direction(portSide(booting, layout, positions))}
               to={port}
-              toDir={direction(inputSide(booting, layout))}
+              toDir={direction(inputSide(booting, layout, positions))}
               stopped={packetsStopped}
               onArrive={() => {
                 setBurst(Date.now());

@@ -7,8 +7,8 @@ import {
   type CardDef,
   type CardId,
   type Layout,
+  type Side,
   cardHeight,
-  portSide,
   portY
 } from './nodes';
 
@@ -21,6 +21,8 @@ const ICONS: Record<CardId, typeof House> = {
 type Props = {
   card: CardDef;
   layout: Layout;
+  /** The edge the port is on: the one facing the display, wherever the card has been moved. */
+  side: Side;
   at: Point;
   z: number;
   draggable: boolean;
@@ -42,6 +44,7 @@ type Props = {
 export function NodeCard({
   card,
   layout,
+  side,
   at,
   z,
   draggable,
@@ -59,7 +62,6 @@ export function NodeCard({
 }: Props) {
   const Icon = ICONS[card.id];
   const height = cardHeight(card, layout);
-  const side = portSide(card.id, layout);
 
   return (
     <article

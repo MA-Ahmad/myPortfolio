@@ -282,7 +282,8 @@
   transition:
     background-color 250ms ease,
     box-shadow 250ms ease,
-    transform 200ms cubic-bezier(0.2, 0, 0, 1);
+    transform 200ms cubic-bezier(0.2, 0, 0, 1),
+    left 360ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .port::after {
