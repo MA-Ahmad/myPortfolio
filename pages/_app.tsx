@@ -10,6 +10,7 @@ import { useRouter } from 'next/router';
 import * as gtag from 'lib/gtag';
 import { AnimatePresence } from 'framer-motion';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { cn } from 'lib/cn';
 import '../styles/globals.css';
 
@@ -60,6 +61,7 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
           <PrismGlobal />
           {/* Theme Studio previews a page in a frame before opening it; that isn't a visit. */}
           <Analytics beforeSend={(event) => (window.self === window.top ? event : null)} />
+          <SpeedInsights />
           {getLayout(
             <AnimatePresence
               mode="wait"
