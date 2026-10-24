@@ -22,7 +22,7 @@ const CanvasPage: NextPageWithLayout<Props> = ({ contributions }) => (
     <Head>
       <meta name="robots" content="noindex" />
     </Head>
-    <h1 className="sr-only">Theme Studio: wire a theme into the display to open it</h1>
+    <h1 className="sr-only">Theme Studio: open a theme by choosing its card, or wire it into the display</h1>
     <CanvasStage contributions={contributions} />
   </>
 );
@@ -79,7 +79,7 @@ function CanvasLayout({ children }: { children: ReactNode }) {
               <ArrowLeft className="size-4" />
             </Link>
             Theme Studio
-            <span className={styles.hint}>Drag a wire from a theme into the display</span>
+            <span className={styles.hint}>Tap a theme, or drag its wire into the display</span>
           </div>
           <PresenceToggle />
         </header>
