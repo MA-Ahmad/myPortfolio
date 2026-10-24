@@ -1,0 +1,37 @@
+<!doctype html>
+<!--
+  Source of public/og.png, the link-preview image (1200x630). The mark's shapes are copied from
+  components/portfolio/mark-isometric.tsx at its resting pose, in the dark palette.
+  Regenerate: open this file in Chrome at 1200x630 and save a screenshot over public/og.png.
+-->
+<meta charset="utf-8">
+<title>og</title>
+<style>
+  html, body { margin: 0; background: #09090b; }
+  svg { display: block; width: 1200px; height: 630px; }
+</style>
+<svg viewBox="-160 -64 1000 525" xmlns="http://www.w3.org/2000/svg" fill="none">
+  <defs>
+    <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse">
+      <path d="M-1 1l2 -2M0 10l10 -10M9 11l2 -2" stroke="#25252a" stroke-width="1"/>
+    </pattern>
+    <g id="faces"><path d="M53.5 246.0L53.5 36.0L113.5 44.4L226.0 177.2L338.5 76.1L398.5 84.5L398.5 294.5L338.5 286.1L338.5 154.1L226.0 255.2L113.5 122.4L113.5 254.4Z"/><path d="M431.5 299.1L505.6 99.5L552.4 106.1L478.3 305.7Z"/><path d="M568.0 108.3L626.5 326.5L579.7 320.0L540.7 191.5Z"/><path d="M509.5 256.1L552.4 262.1L560.2 287.2L501.7 279.0Z"/></g>
+    <path id="stroke" d="M53.5 246.0L53.5 36.0L113.5 44.4L226.0 177.2L338.5 76.1L398.5 84.5L398.5 294.5L338.5 286.1L338.5 154.1L226.0 255.2L113.5 122.4L113.5 254.4ZM398.5 294.5L338.5 286.1L338.5 321.1L398.5 329.5ZM338.5 154.1L226.0 255.2L226.0 290.2L338.5 189.1ZM226.0 255.2L113.5 122.4L113.5 157.4L226.0 290.2ZM113.5 254.4L53.5 246.0L53.5 281.0L113.5 289.4ZM431.5 299.1L505.6 99.5L552.4 106.1L478.3 305.7ZM552.4 106.1L478.3 305.7L478.3 340.7L552.4 141.1ZM478.3 305.7L431.5 299.1L431.5 334.1L478.3 340.7ZM568.0 108.3L626.5 326.5L579.7 320.0L540.7 191.5ZM626.5 326.5L579.7 320.0L579.7 355.0L626.5 361.5ZM579.7 320.0L540.7 191.5L540.7 226.5L579.7 355.0ZM509.5 256.1L552.4 262.1L560.2 287.2L501.7 279.0ZM560.2 287.2L501.7 279.0L501.7 314.0L560.2 322.2Z"/>
+    <radialGradient id="glint" cx="560" cy="150" r="190" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#fff"/>
+      <stop offset="1" stop-color="#52525b" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vignette" cx="340" cy="198" r="560" gradientUnits="userSpaceOnUse">
+      <stop offset="0.55" stop-color="#09090b" stop-opacity="0"/>
+      <stop offset="1" stop-color="#09090b" stop-opacity="0.9"/>
+    </radialGradient>
+  </defs>
+
+  <g stroke="#1f1f23" stroke-width="1" stroke-dasharray="4 2"><path d="M-1729.12 -213.57L1836.12 285.57"/><path d="M-1729.12 31.43L1836.12 530.57"/></g>
+  <g fill="#09090b" fill-rule="evenodd"><path d="M398.5 294.5L338.5 286.1L338.5 321.1L398.5 329.5Z"/><path d="M338.5 154.1L226.0 255.2L226.0 290.2L338.5 189.1Z"/><path d="M226.0 255.2L113.5 122.4L113.5 157.4L226.0 290.2Z"/><path d="M113.5 254.4L53.5 246.0L53.5 281.0L113.5 289.4Z"/><path d="M552.4 106.1L478.3 305.7L478.3 340.7L552.4 141.1Z"/><path d="M478.3 305.7L431.5 299.1L431.5 334.1L478.3 340.7Z"/><path d="M626.5 326.5L579.7 320.0L579.7 355.0L626.5 361.5Z"/><path d="M579.7 320.0L540.7 191.5L540.7 226.5L579.7 355.0Z"/><path d="M560.2 287.2L501.7 279.0L501.7 314.0L560.2 322.2Z"/></g>
+  <use href="#faces" fill="#09090b"/>
+  <use href="#faces" fill="url(#hatch)"/>
+  <use href="#stroke" stroke="#3a3a40" stroke-width="1.25"/>
+  <use href="#stroke" stroke="url(#glint)" stroke-width="1.25"/>
+  <rect x="-160" y="-64" width="1000" height="525" fill="url(#vignette)"/>
+</svg>

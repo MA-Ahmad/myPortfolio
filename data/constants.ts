@@ -10,4 +10,5 @@ export const DEVTO_API_URL = 'https://dev.to/api';
  * SEO constants
  */
 export const SITE_URL = 'https://mahmad.me';
-export const SEO_IMAGE = `${SITE_URL}/logo.png`;
+// 1200x630 link preview; its source is scripts/og-image.html.
+export const SEO_IMAGE = `${SITE_URL}/og.png`;
