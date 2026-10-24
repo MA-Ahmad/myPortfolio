@@ -25,6 +25,7 @@ import { type Screen, createScreen } from 'lib/canvas/screen';
 import styles from './canvas.module.css';
 import { DisplayNode, type DisplayState } from './display-node';
 import { Hint } from './hint';
+import { PeerLayer, type SharedWire } from './multiplayer';
 import { NodeCard } from './node-card';
 import { Packets, packetIcon } from './packets';
 import {
@@ -742,6 +743,18 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         ? 'armed'
         : 'idle';
   const design = DESIGN[layout];
+  const sharedWire: SharedWire | null =
+    wire && source && port
+      ? {
+          source: wire.from,
+          from: source,
+          fromDir: direction(portSide(wire.from, layout, positions)),
+          to: wire.phase === 'snapped' ? port : wire.tip,
+          toDir: direction(inputSide(wire.from, layout, positions)),
+          lit: wire.phase === 'snapped',
+          reachCap: layout === 'mobile' ? wireReachCap(layout) : null
+        }
+      : null;
   const stageHeight = layout === 'mobile' && view ? view.oy + design.h * view.scale + 40 : undefined;
 
   const previews: Record<CardId, ReactNode> = {
@@ -886,6 +899,17 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             </g>
           )}
         </svg>
+
+        {view && (
+          <PeerLayer
+            layout={layout}
+            scale={view.scale}
+            toWorld={toWorld}
+            wire={sharedWire}
+            width={design.w}
+            height={design.h}
+          />
+        )}
       </div>
     </div>
   );

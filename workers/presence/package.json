@@ -1,0 +1,16 @@
+{
+  "name": "theme-studio-presence",
+  "private": true,
+  "scripts": {
+    "cf:login": "XDG_CONFIG_HOME=.cloudflare wrangler login",
+    "cf:whoami": "XDG_CONFIG_HOME=.cloudflare wrangler whoami",
+    "dev": "wrangler dev",
+    "deploy": "XDG_CONFIG_HOME=.cloudflare wrangler deploy",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "5.20261024.1",
+    "typescript": "^5.1.6",
+    "wrangler": "4.152.0"
+  }
+}

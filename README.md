@@ -91,6 +91,7 @@ Create a `.env` file in the project root:
 | `IP_ADDRESS_HASH` | Salt used to hash visitor IP addresses in `/api/posts/[id]` |
 | `GA_TRACKING_ID` | Google Analytics measurement ID |
 | `MICROSOFT_CLARITY` | Microsoft Clarity project ID |
+| `NEXT_PUBLIC_PRESENCE_URL` | WebSocket URL of the `workers/presence` room for live cursors on `/theme-studio`, e.g. `wss://theme-studio-presence.<you>.workers.dev/room` (optional; without it the page is single-player) |
 
 ## Production
 

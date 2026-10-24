@@ -1,0 +1,4 @@
+node_modules
+.wrangler
+# This repo's own Cloudflare login (see the login script)
+.cloudflare

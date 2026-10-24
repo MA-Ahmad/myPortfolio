@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import { ArrowLeft } from 'lucide-react';
 import Meta from 'components/shared/meta';
 import { CanvasStage } from 'components/canvas/canvas-stage';
+import { Multiplayer, PresenceToggle } from 'components/canvas/multiplayer';
 import styles from 'components/canvas/canvas.module.css';
 import { Activity, contributionsRevalidate, fetchGitHubContributions } from 'lib/github-contributions';
 import { pixelNavigate } from 'lib/pixel-transition';
@@ -64,24 +65,27 @@ function CanvasLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div ref={rootRef} className={styles.root}>
-      <header className={styles.bar}>
-        <div className={styles.title}>
-          <Link
-            href="/"
-            onClick={backToMainSite}
-            aria-label="Back to main site"
-            title="Back to main site"
-            className={styles.back}
-          >
-            <ArrowLeft className="size-4" />
-          </Link>
-          Theme Studio
-          <span className={styles.hint}>Drag a wire from a theme into the display</span>
-        </div>
-      </header>
-      <main>{children}</main>
-    </div>
+    <Multiplayer>
+      <div ref={rootRef} className={styles.root}>
+        <header className={styles.bar}>
+          <div className={styles.title}>
+            <Link
+              href="/"
+              onClick={backToMainSite}
+              aria-label="Back to main site"
+              title="Back to main site"
+              className={styles.back}
+            >
+              <ArrowLeft className="size-4" />
+            </Link>
+            Theme Studio
+            <span className={styles.hint}>Drag a wire from a theme into the display</span>
+          </div>
+          <PresenceToggle />
+        </header>
+        <main>{children}</main>
+      </div>
+    </Multiplayer>
   );
 }
 

@@ -747,6 +747,106 @@
   color: var(--cv-muted);
 }
 
+.presence {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--cv-border);
+  border-radius: 10px;
+  background: var(--cv-card);
+  color: var(--cv-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease;
+}
+
+.presence:hover {
+  color: var(--cv-text);
+  border-color: var(--cv-border-strong);
+}
+
+.presence:focus-visible {
+  outline: 2px solid var(--cv-text);
+  outline-offset: 2px;
+}
+
+.presenceDots {
+  display: flex;
+}
+
+.presenceDots > span {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--cv-card);
+  border-radius: 50%;
+  box-sizing: content-box;
+}
+
+.presenceDots > span + span {
+  margin-left: -5px;
+}
+
+/* Other visitors, drawn into the world in its coordinates. */
+
+.peers {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  pointer-events: none;
+}
+
+.peerCursor {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  /* Presence arrives every 50ms; easing over that gap keeps the cursor gliding, not stepping. */
+  transition: transform 80ms linear;
+  will-change: transform;
+}
+
+.peerCursor > svg {
+  display: block;
+  filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.25));
+}
+
+.peerCursor > span {
+  position: absolute;
+  top: 16px;
+  left: 12px;
+  padding: 2px 7px;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.peerWire {
+  fill: none;
+  stroke: var(--peer);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-dasharray: 5 5;
+  opacity: 0.5;
+}
+
+.peerWire[data-lit] {
+  stroke: var(--accent);
+  stroke-dasharray: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .peerCursor {
+    transition: none;
+  }
+}
+
 @media (max-width: 767px) {
   .bar {
     position: absolute;
