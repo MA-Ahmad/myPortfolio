@@ -268,6 +268,37 @@
   pointer-events: none;
 }
 
+/* The card below its header opens the theme on a click, tap or Enter. */
+.open {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 0 0 14px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.open[aria-disabled] {
+  cursor: default;
+}
+
+.open:focus-visible {
+  outline: none;
+}
+
+.node:has(.open:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (hover: hover) {
+  .node:has(.open:not([aria-disabled]):hover) {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--cv-border));
+  }
+}
+
 /* Ports */
 
 .port {
@@ -294,14 +325,8 @@
 }
 
 .output {
-  padding: 0;
   cursor: crosshair;
   touch-action: none;
-}
-
-.output:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
 }
 
 @media (hover: hover) {

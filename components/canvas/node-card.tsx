@@ -1,4 +1,4 @@
-import type { CSSProperties, PointerEvent, ReactNode } from 'react';
+import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react';
 import { GripVertical, House, NotebookPen, SquareTerminal } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
@@ -35,7 +35,7 @@ type Props = {
   onGrab: (event: PointerEvent) => void;
   onWire: (event: PointerEvent) => void;
   onConnect: () => void;
-  /** The pointer or focus reached the port, so a connect may follow. */
+  /** The pointer reached the port or card, or focus reached the card, so a connect may follow. */
   onPrepare: () => void;
   onLeave: () => void;
   children: ReactNode;
@@ -105,20 +105,34 @@ export function NodeCard({
         {children}
       </div>
 
-      {/* A pointer press on the port belongs to the wire drag; only a keyboard click (detail 0) connects. */}
-      <button
-        type="button"
-        className={`${styles.port} ${styles.output}`}
-        data-lit={lit || undefined}
-        aria-label={`Connect ${card.title} to display`}
+      {/* The card's way in without a drag: a click, tap or Enter plays the same connect. Clicks
+          with a modifier, and anything without JavaScript, just follow the link. */}
+      <a
+        href={card.href}
+        className={styles.open}
+        style={{ top: CARD_HEADER_H }}
+        aria-label={`Open ${card.title} theme`}
         aria-disabled={busy || undefined}
-        style={{ left: side === 'left' ? -1 : 'calc(100% + 1px)', top: portY(card, layout) - 1 }}
-        onPointerDown={onWire}
+        onClick={(event: MouseEvent) => {
+          if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+          event.preventDefault();
+          if (!busy) onConnect();
+        }}
         onPointerEnter={onPrepare}
         onFocus={onPrepare}
         onPointerLeave={onLeave}
         onBlur={onLeave}
-        onClick={(event) => event.detail === 0 && !busy && onConnect()}
+      />
+
+      {/* Only for dragging a wire; the link above is the keyboard and screen reader path. */}
+      <span
+        className={`${styles.port} ${styles.output}`}
+        data-lit={lit || undefined}
+        aria-hidden
+        style={{ left: side === 'left' ? -1 : 'calc(100% + 1px)', top: portY(card, layout) - 1 }}
+        onPointerDown={onWire}
+        onPointerEnter={onPrepare}
+        onPointerLeave={onLeave}
       />
     </article>
   );
