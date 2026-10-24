@@ -1,0 +1,441 @@
+/*
+ * The Theme Studio corner card. Timelines follow CYCLE_MS (3800ms) in studio-dock.tsx: packets
+ * ride the wire over the first ~40%, then the screen powers on.
+ *
+ * Every color, radius and font goes through the --dock-* tokens, so each look (data-look) only
+ * maps them onto its page's own palette.
+ */
+
+.dock {
+  --dock-bg: var(--background);
+  --dock-fg: var(--foreground);
+  --dock-muted: var(--muted-foreground);
+  --dock-border: var(--border);
+  --dock-card: var(--background);
+  --dock-dot: color-mix(in oklab, var(--foreground) 9%, transparent);
+  --dock-wire: color-mix(in oklab, var(--foreground) 22%, transparent);
+  --dock-token: #fff;
+  --dock-radius: 16px;
+  --dock-radius-inner: 8px;
+  --dock-font: inherit;
+  --dock-screen-font: inherit;
+  --dock-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 12px 32px -14px rgb(0 0 0 / 0.22);
+  --dock-home: #2563eb;
+  --dock-terminal: #6f7d1f;
+  --dock-notebook: #d43d8f;
+
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--dock-border);
+  border-radius: var(--dock-radius);
+  background-color: var(--dock-bg);
+  background-image: radial-gradient(var(--dock-dot) 1px, transparent 1.2px);
+  background-size: 14px 14px;
+  background-position: -7px -7px;
+  box-shadow: var(--dock-shadow);
+  color: var(--dock-fg);
+  font-family: var(--dock-font);
+  text-decoration: none;
+  animation: dock-in 500ms cubic-bezier(0.23, 1, 0.32, 1) 600ms backwards;
+  transition:
+    transform 200ms cubic-bezier(0.23, 1, 0.32, 1),
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+:global(.dark) .dock {
+  --dock-card: #141416;
+  --dock-shadow:
+    0 1px 0 rgb(255 255 255 / 0.03) inset,
+    0 16px 40px -18px rgb(0 0 0 / 0.9);
+  --dock-home: #7db4ff;
+  --dock-terminal: #b8c572;
+  --dock-notebook: #f27ab9;
+}
+
+/* The terminal theme: its gruvbox palette, mono type, near-square corners and a soft glow. */
+.dock[data-look='terminal'] {
+  --dock-bg: var(--term-bg);
+  --dock-fg: var(--term-fg);
+  --dock-muted: var(--term-muted);
+  --dock-border: var(--term-border);
+  --dock-card: var(--term-card);
+  --dock-dot: color-mix(in oklab, var(--term-fg) 7%, transparent);
+  --dock-wire: color-mix(in oklab, var(--term-muted) 55%, transparent);
+  --dock-token: var(--term-card);
+  --dock-radius: 2px;
+  --dock-radius-inner: 2px;
+  --dock-shadow: 0 0 0 1px color-mix(in oklab, var(--term-accent) 6%, transparent), 0 18px 40px -20px rgb(0 0 0 / 0.9);
+  --dock-home: var(--term-blue);
+  --dock-terminal: var(--term-accent);
+  --dock-notebook: var(--term-purple);
+}
+
+/* The notebook theme: ink on paper, hairline rules, no rounding, no shadow, its pixel face. */
+.dock[data-look='notebook'] {
+  --dock-bg: var(--nb-bg);
+  --dock-fg: var(--nb-ink);
+  --dock-muted: var(--nb-faint);
+  --dock-border: var(--nb-rule);
+  --dock-card: var(--nb-bg);
+  --dock-dot: transparent;
+  --dock-wire: color-mix(in oklab, var(--nb-faint) 60%, transparent);
+  --dock-token: var(--nb-bg);
+  --dock-radius: 0;
+  --dock-radius-inner: 0;
+  --dock-screen-font: var(--font-geist-pixel-square), var(--font-geist-mono), monospace;
+  --dock-shadow: none;
+  /* One ink for every theme: the notebook is monochrome. */
+  --dock-home: var(--nb-ink);
+  --dock-terminal: var(--nb-ink);
+  --dock-notebook: var(--nb-ink);
+}
+
+/*
+ * Desktop only: a real pointer and a window wide enough to sit beside the page's content
+ * column. The terminal theme's column is the widest (896px, its outer 24px only padding), so it
+ * needs the most room: half of it plus the card and its margins, from the center.
+ */
+@media (min-width: 1400px) and (hover: hover) and (pointer: fine) {
+  .dock {
+    display: flex;
+  }
+
+  .dock[data-look='terminal'] {
+    display: none;
+  }
+}
+
+@media (min-width: 1500px) and (hover: hover) and (pointer: fine) {
+  .dock[data-look='terminal'] {
+    display: flex;
+  }
+}
+
+.dock:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in oklab, var(--dock-fg) 22%, var(--dock-border));
+}
+
+.dock:focus-visible {
+  outline: 2px solid var(--dock-fg);
+  outline-offset: 3px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.title {
+  font-weight: 500;
+}
+
+.dock[data-look='terminal'] .title {
+  color: var(--term-accent);
+  text-shadow: 0 0 8px #a9b66533;
+}
+
+.open {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  color: var(--dock-muted);
+  transition: color 150ms ease;
+}
+
+.open svg {
+  transition: transform 200ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.dock:hover .open {
+  color: var(--dock-fg);
+}
+
+.dock:hover .open svg {
+  transform: translate(1px, -1px);
+}
+
+/* The stage is laid out 1:1 in px by studio-dock.tsx. */
+.stage {
+  position: relative;
+  width: 248px;
+  height: 132px;
+}
+
+.wires {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+.wire {
+  fill: none;
+  stroke: var(--dock-wire);
+  stroke-width: 1.25;
+  stroke-dasharray: 3 4;
+  transition:
+    stroke 300ms ease,
+    stroke-width 300ms ease;
+}
+
+.wire[data-lit] {
+  stroke: var(--wire);
+  stroke-width: 1.75;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--wire) 70%, transparent));
+}
+
+.dock[data-look='notebook'] .wire[data-lit] {
+  stroke-width: 1.25;
+  filter: none;
+}
+
+.input {
+  fill: var(--dock-card);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  transition: stroke 300ms ease;
+}
+
+.card {
+  position: absolute;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 92px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--dock-border);
+  border-radius: var(--dock-radius-inner);
+  background: var(--dock-card);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--dock-muted);
+  transition:
+    color 300ms ease,
+    border-color 300ms ease;
+}
+
+.dock[data-look='notebook'] .card {
+  text-transform: lowercase;
+}
+
+.card[data-lit] {
+  color: var(--dock-fg);
+  border-color: color-mix(in oklab, var(--card) 60%, var(--dock-border));
+}
+
+.cardIcon {
+  width: 12px;
+  height: 12px;
+  color: var(--card);
+}
+
+.port {
+  position: absolute;
+  top: 50%;
+  right: -4px;
+  width: 7px;
+  height: 7px;
+  margin-top: -3.5px;
+  border: 1.5px solid var(--dock-wire);
+  border-radius: 50%;
+  background: var(--dock-card);
+  transition:
+    border-color 300ms ease,
+    background-color 300ms ease;
+}
+
+.card[data-lit] .port {
+  border-color: var(--card);
+  background: var(--card);
+}
+
+.display {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--dock-border);
+  border-radius: calc(var(--dock-radius-inner) + 2px);
+  background: var(--dock-card);
+  overflow: hidden;
+}
+
+.dock[data-look='notebook'] .display {
+  border-radius: 0;
+}
+
+.displayBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 7px;
+  border-bottom: 1px solid var(--dock-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 9px;
+  color: var(--dock-muted);
+}
+
+.dock[data-look='terminal'] .displayBar,
+.dock[data-look='notebook'] .displayBar {
+  font-family: inherit;
+}
+
+/* Off until the last packet lands, then on like an old TV: a bright line that opens up. */
+.screen {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 5px;
+  border-radius: max(0px, calc(var(--dock-radius-inner) - 2px));
+  background:
+    radial-gradient(circle at 50% 40%, color-mix(in oklab, var(--accent) 28%, transparent), transparent 70%),
+    color-mix(in oklab, var(--accent) 10%, var(--dock-card));
+  color: var(--accent);
+  font-family: var(--dock-screen-font);
+  font-size: 10px;
+  font-weight: 500;
+  transform-origin: center;
+  animation: screen-power 3800ms linear both;
+}
+
+.dock[data-look='terminal'] .screen {
+  text-shadow: 0 0 6px color-mix(in oklab, var(--accent) 55%, transparent);
+}
+
+/* The terminal's screen ends on a blinking block cursor. */
+.dock[data-look='terminal'] .screenTitle::after {
+  content: '▍';
+  margin-left: 1px;
+  animation: caret 1s steps(1) infinite;
+}
+
+.dock[data-look='notebook'] .screen {
+  background: color-mix(in oklab, var(--nb-ink) 6%, var(--nb-bg));
+  font-size: 13px;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+
+.screenIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* A skill icon on its token, riding the lit wire into the display's input. */
+.packet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1.25px solid var(--accent);
+  border-radius: 50%;
+  background: var(--dock-token);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--accent) 22%, transparent);
+  offset-rotate: 0deg;
+  animation: packet-ride 1100ms cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+
+/* Square tokens on the terminal, like its packets in Theme Studio. */
+.dock[data-look='terminal'] .packet {
+  border-radius: 3px;
+}
+
+.dock[data-look='notebook'] .packet {
+  box-shadow: none;
+}
+
+.packet img {
+  width: 10px;
+  height: 10px;
+}
+
+@keyframes packet-ride {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  85% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes screen-power {
+  0%,
+  39% {
+    opacity: 0;
+    transform: scale(1, 0.02);
+    filter: brightness(1);
+  }
+  41% {
+    opacity: 1;
+    transform: scale(1, 0.02);
+    filter: brightness(2.2);
+  }
+  47% {
+    transform: scale(1, 1);
+    filter: brightness(1.3);
+  }
+  52%,
+  88% {
+    opacity: 1;
+    transform: scale(1, 1);
+    filter: brightness(1);
+  }
+  97%,
+  100% {
+    opacity: 0;
+    transform: scale(1, 1);
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes dock-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+  }
+}
+
+/* Reduced motion: one theme stays plugged in, screen on, nothing travelling or blinking. */
+.dock[data-reduced],
+.dock[data-reduced] .screen,
+.dock[data-reduced] .screenTitle::after {
+  animation: none;
+}

@@ -7,6 +7,7 @@ import { GeistPixelSquare } from 'geist/font/pixel';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
+import { StudioDock } from 'components/shared/studio-dock';
 import { NOTEBOOK_CONTENT } from '../content';
 import { Backdrop } from './backdrop';
 import { NotebookSearch } from './theme-search';
@@ -85,6 +86,7 @@ export function NotebookLayout({ children }: { children: ReactNode }) {
           </main>
         </div>
       </div>
+      <StudioDock look="notebook" />
     </div>
   );
 }

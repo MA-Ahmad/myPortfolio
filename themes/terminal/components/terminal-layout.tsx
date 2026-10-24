@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowUp } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
+import { StudioDock } from 'components/shared/studio-dock';
 import { TERMINAL_CONTENT } from '../content';
 import { TerminalSearch } from './theme-search';
 import styles from '../terminal.module.css';
@@ -111,6 +112,8 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </footer>
+
+      <StudioDock look="terminal" />
     </div>
   );
 }
