@@ -805,8 +805,15 @@
   left: 0;
   transform-origin: 0 0;
   /* Presence arrives every 50ms; easing over that gap keeps the cursor gliding, not stepping. */
-  transition: transform 80ms linear;
+  transition:
+    transform 80ms linear,
+    opacity 400ms ease;
   will-change: transform;
+}
+
+/* Still for a while: fade out until it moves again. */
+.peerCursor[data-idle] {
+  opacity: 0;
 }
 
 .peerCursor > svg {

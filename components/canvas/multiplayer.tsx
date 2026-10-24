@@ -39,39 +39,47 @@ const FULL_RETRY_MS = 60_000;
 const ABUSE_RETRY_MS = 10 * 60_000;
 const HOUR_MS = 3_600_000;
 const SHOWN_DOTS = 3;
+// A cursor that hasn't moved for this long fades out until it moves again.
+const IDLE_MS = 8000;
 
-type Peers = readonly (readonly [id: number, presence: Presence])[];
+type Peers = readonly (readonly [id: number, presence: Presence, movedAt: number])[];
 type Identity = Pick<Presence, 'name' | 'color'>;
 
 const NO_PEERS: Peers = [];
 
 const pick = <T,>(list: T[]) => list[Math.floor(Math.random() * list.length)];
 
-const storage = {
+const store = (area: () => Storage) => ({
   get(key: string) {
     try {
-      return window.localStorage.getItem(key);
+      return area().getItem(key);
     } catch {
       return null;
     }
   },
   set(key: string, value: string | null) {
     try {
-      if (value === null) window.localStorage.removeItem(key);
-      else window.localStorage.setItem(key, value);
+      if (value === null) area().removeItem(key);
+      else area().setItem(key, value);
     } catch {}
   }
-};
+});
 
-/** An anonymous name and color, kept per browser so a reload doesn't rename you. */
+const storage = store(() => window.localStorage);
+const tabStorage = store(() => window.sessionStorage);
+
+/**
+ * An anonymous name and color, kept per tab: a reload doesn't rename you, and two of your own
+ * tabs show up as two visitors rather than one name in two places.
+ */
 function identity(): Identity {
   try {
-    const saved = JSON.parse(storage.get(IDENTITY_KEY) ?? '');
+    const saved = JSON.parse(tabStorage.get(IDENTITY_KEY) ?? '');
     const [adjective, animal] = String(saved?.name).split(' ');
     if (ADJECTIVES.includes(adjective) && ANIMALS.includes(animal) && COLORS.includes(saved?.color)) return saved;
   } catch {}
   const fresh = { name: `${pick(ADJECTIVES)} ${pick(ANIMALS)}`, color: pick(COLORS) };
-  storage.set(IDENTITY_KEY, JSON.stringify(fresh));
+  tabStorage.set(IDENTITY_KEY, JSON.stringify(fresh));
   return fresh;
 }
 
@@ -93,6 +101,7 @@ function retryDelay(code: number, retries: number) {
 class Room {
   private socket: WebSocket | null = null;
   private others = new Map<number, Presence>();
+  private movedAt = new Map<number, number>();
   private snapshot: Peers = NO_PEERS;
   private listeners = new Set<() => void>();
   private pending: Partial<Presence> = {};
@@ -137,7 +146,11 @@ class Room {
     window.clearTimeout(this.retryTimer);
     window.clearInterval(this.pingTimer);
     cancelAnimationFrame(this.emitFrame);
-    this.socket?.close();
+    // Closing a socket that is still opening can leave the room holding the far end, so let it
+    // open first and close it then.
+    const socket = this.socket;
+    if (socket?.readyState === WebSocket.CONNECTING) socket.onopen = () => socket.close();
+    else socket?.close();
   }
 
   private connect() {
@@ -158,11 +171,17 @@ class Room {
       } catch {
         return;
       }
+      const now = Date.now();
       if (message.t === 'welcome') {
         this.others = new Map(message.peers.map((peer) => [peer.id, peer.p]));
+        this.movedAt = new Map(message.peers.map((peer) => [peer.id, now]));
       } else if (message.t === 'update') {
+        const before = this.others.get(message.id);
+        if (!before || JSON.stringify(before.cursor) !== JSON.stringify(message.p.cursor) || JSON.stringify(before.wire) !== JSON.stringify(message.p.wire))
+          this.movedAt.set(message.id, now);
         this.others.set(message.id, message.p);
       } else if (message.t === 'leave') {
+        this.movedAt.delete(message.id);
         if (!this.others.delete(message.id)) return;
       } else return;
       this.emit();
@@ -171,6 +190,7 @@ class Room {
       window.clearInterval(this.pingTimer);
       this.socket = null;
       this.others.clear();
+      this.movedAt.clear();
       this.emit();
       if (this.destroyed) return;
       this.retryTimer = window.setTimeout(() => this.connect(), retryDelay(event.code, this.retries));
@@ -197,7 +217,7 @@ class Room {
     if (this.emitFrame) return;
     this.emitFrame = requestAnimationFrame(() => {
       this.emitFrame = 0;
-      this.snapshot = Array.from(this.others);
+      this.snapshot = Array.from(this.others, ([id, presence]) => [id, presence, this.movedAt.get(id) ?? 0] as const);
       this.listeners.forEach((listener) => listener());
     });
   }
@@ -344,10 +364,13 @@ function RoomLayer({ room, layout, scale, toWorld, wire, width, height }: LayerP
     };
     // A finger isn't a cursor once it lifts.
     const up = (event: PointerEvent) => event.pointerType === 'touch' && away();
+    // Leaving the window fast can skip pointerleave; a pointerout with nowhere to go is the same.
+    const out = (event: PointerEvent) => !event.relatedTarget && away();
     const hide = () => document.visibilityState === 'hidden' && away();
     window.addEventListener('pointermove', move);
     window.addEventListener('pointerup', up);
     window.addEventListener('blur', away);
+    window.addEventListener('pointerout', out);
     document.documentElement.addEventListener('pointerleave', away);
     document.addEventListener('visibilitychange', hide);
     return () => {
@@ -355,12 +378,22 @@ function RoomLayer({ room, layout, scale, toWorld, wire, width, height }: LayerP
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('blur', away);
+      window.removeEventListener('pointerout', out);
       document.documentElement.removeEventListener('pointerleave', away);
       document.removeEventListener('visibilitychange', hide);
     };
   }, [room, toWorld]);
 
   const peers = useMemo(() => others.filter(([, presence]) => presence.layout === layout), [others, layout]);
+
+  // Idle cursors fade out; while any cursor is shown, check once a second which ones went still.
+  const [now, setNow] = useState(() => Date.now());
+  const showing = peers.some(([, presence]) => presence.cursor);
+  useEffect(() => {
+    if (!showing) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [showing]);
 
   return (
     <>
@@ -378,11 +411,12 @@ function RoomLayer({ room, layout, scale, toWorld, wire, width, height }: LayerP
         )}
       </svg>
       <div className={styles.peers} aria-hidden>
-        {peers.map(([id, { name, color, cursor }]) =>
+        {peers.map(([id, { name, color, cursor }, movedAt]) =>
           cursor ? (
             <div
               key={id}
               className={styles.peerCursor}
+              data-idle={now - movedAt > IDLE_MS || undefined}
               style={{ transform: `translate3d(${cursor.x}px, ${cursor.y}px, 0) scale(${1 / scale})`, color }}
             >
               <svg width="16" height="18" viewBox="0 0 16 18">

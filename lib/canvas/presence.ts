@@ -42,7 +42,9 @@ export const CLOSE = {
   /** Too many messages: this address is banned for a while. */
   abuse: 1008,
   /** The room's hourly message budget is spent; it reopens on the next hour. */
-  resting: 4000
+  resting: 4000,
+  /** The room heard nothing from this connection for too long; the page just reconnects. */
+  stale: 4001
 } as const;
 
 export const ADJECTIVES = ['Amber', 'Brisk', 'Calm', 'Dusky', 'Jade', 'Lucky', 'Misty', 'Neon', 'Quiet', 'Teal'];

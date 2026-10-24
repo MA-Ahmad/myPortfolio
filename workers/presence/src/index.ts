@@ -16,7 +16,8 @@ type Env = {
   ALLOWED_ORIGINS: string;
 };
 
-type Attachment = { id: number; ip: string; p: Partial<Presence> };
+// `seen` is the last time this visitor sent anything besides a ping (pings are timed by the runtime).
+type Attachment = { id: number; ip: string; seen: number; p: Partial<Presence> };
 type Bucket = { tokens: number; at: number };
 type Usage = { hour: number; count: number };
 
@@ -45,6 +46,11 @@ const BAN_MS = 10 * 60_000;
 // Matches the page's keep-alive; answered by the runtime without waking the room.
 const PING = 'ping';
 const PONG = 'pong';
+// A connection that dies without closing (a sleeping laptop, a dropped network) never says goodbye,
+// so while anyone is here the room sweeps for sockets that stopped answering. Pages ping every
+// 30s, but a hidden tab's timers can slow to once a minute, hence the margin.
+const SWEEP_MS = 30_000;
+const STALE_MS = 150_000;
 const ROOM = '*';
 
 const ready = (p: Partial<Presence>): p is Presence => typeof p.name === 'string' && typeof p.color === 'string';
@@ -82,8 +88,9 @@ export class PresenceRoom extends DurableObject<Env> {
       return response;
     }
     this.ctx.acceptWebSocket(server);
-    const attachment: Attachment = { id: crypto.getRandomValues(new Uint32Array(1))[0], ip, p: {} };
+    const attachment: Attachment = { id: crypto.getRandomValues(new Uint32Array(1))[0], ip, seen: now, p: {} };
     server.serializeAttachment(attachment);
+    if ((await this.ctx.storage.getAlarm()) === null) await this.ctx.storage.setAlarm(now + SWEEP_MS);
     const peers = this.attachments(server).filter((peer) => ready(peer.p)) as { id: number; p: Presence }[];
     this.send(server, { t: 'welcome', peers: peers.map(({ id, p }) => ({ id, p })) });
     return response;
@@ -109,8 +116,21 @@ export class PresenceRoom extends DurableObject<Env> {
     }
     if (parsed?.t !== 'update') return;
     attachment.p = { ...attachment.p, ...sanitize(parsed.p) };
+    attachment.seen = now;
     ws.serializeAttachment(attachment);
     if (ready(attachment.p)) this.broadcast(ws, { t: 'update', id: attachment.id, p: attachment.p });
+  }
+
+  /** Drops sockets that went quiet, and keeps sweeping while anyone is left. */
+  async alarm() {
+    const now = Date.now();
+    for (const ws of this.ctx.getWebSockets()) {
+      const attachment = ws.deserializeAttachment() as Attachment | null;
+      if (!attachment) continue;
+      const pinged = this.ctx.getWebSocketAutoResponseTimestamp(ws)?.getTime() ?? 0;
+      if (now - Math.max(attachment.seen, pinged) > STALE_MS) this.close(ws, CLOSE.stale, 'Stale');
+    }
+    if (this.attachments().length > 0) await this.ctx.storage.setAlarm(now + SWEEP_MS);
   }
 
   async webSocketClose(ws: WebSocket) {
@@ -168,23 +188,23 @@ export class PresenceRoom extends DurableObject<Env> {
     this.addresses.delete(ip);
     for (const ws of this.ctx.getWebSockets()) {
       const attachment = ws.deserializeAttachment() as Attachment | null;
-      if (attachment?.ip === ip) this.close(ws, CLOSE.abuse);
+      if (attachment?.ip === ip) this.close(ws, CLOSE.abuse, 'Limit reached');
     }
   }
 
   /** The room's hourly budget is spent: everyone leaves until the next hour. */
   private rest(now: number) {
     this.ctx.storage.kv.put('rest', nextHour(now));
-    for (const ws of this.ctx.getWebSockets()) this.close(ws, CLOSE.resting);
+    for (const ws of this.ctx.getWebSockets()) this.close(ws, CLOSE.resting, 'Limit reached');
   }
 
-  private close(ws: WebSocket, code: number) {
+  private close(ws: WebSocket, code: number, reason: string) {
     // Cleared first, so its close handler doesn't announce a leave twice.
     const attachment = ws.deserializeAttachment() as Attachment | null;
     ws.serializeAttachment(null);
     if (attachment) this.broadcast(ws, { t: 'leave', id: attachment.id });
     try {
-      ws.close(code, 'Limit reached');
+      ws.close(code, reason);
     } catch {}
   }
 
