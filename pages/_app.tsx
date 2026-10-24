@@ -9,7 +9,7 @@ import { PrismGlobal } from 'components/theme/prism';
 import { useRouter } from 'next/router';
 import * as gtag from 'lib/gtag';
 import { AnimatePresence } from 'framer-motion';
-import { Analytics } from '@vercel/analytics/react';
+import { Analytics } from '@vercel/analytics/next';
 import { cn } from 'lib/cn';
 import '../styles/globals.css';
 
