@@ -27,8 +27,8 @@ const MAX_SLOTS = 96;
 // the steep diagonal of the iOS original; a wide one looks from the side and only a little from
 // above, so the row runs nearly horizontally. Screens in between blend the two.
 const VIEWS = {
-  tall: { aspect: 0.6, fov: 24, distance: 12.5, azimuth: 44, elevation: 16, skew: 0.5, lookAt: [-0.3, -0.18, -0.7] },
-  wide: { aspect: 1.6, fov: 18, distance: 12, azimuth: 40, elevation: 18, skew: 0.2, lookAt: [0.05, -0.04, -0.6] }
+  tall: { aspect: 0.6, fov: 24, back: 3, distance: 12.5, azimuth: 44, elevation: 16, skew: 0.42, lookAt: [0.3, 0.12, -0.7] },
+  wide: { aspect: 1.6, fov: 18, back: 0, distance: 12, azimuth: 40, elevation: 18, skew: 0.2, lookAt: [0.05, -0.04, -0.6] }
 } as const;
 
 const clamp = THREE.MathUtils.clamp;
@@ -240,6 +240,8 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   let near = 12;
   let far = 22;
   let skew = VIEWS.tall.skew as number;
+  // How many places back along the row the focused case sits, leaving that many cases in front of it.
+  let back = 0;
 
   const camera = new THREE.PerspectiveCamera(VIEWS.wide.fov, 1, 0.1, 100);
   const composer = new EffectComposer(renderer);
@@ -256,6 +258,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     const azimuth = THREE.MathUtils.degToRad(mix(tall.azimuth, wide.azimuth));
     const elevation = THREE.MathUtils.degToRad(mix(tall.elevation, wide.elevation));
     skew = mix(tall.skew, wide.skew);
+    back = mix(tall.back, wide.back);
     const lookAt = new THREE.Vector3(...tall.lookAt.map((v, i) => mix(v, wide.lookAt[i])) as [number, number, number]);
     // `distance` is measured as if through an 18° lens; a wider lens (more perspective, near cases
     // larger than far ones) moves the camera in to keep the same framing.
@@ -302,7 +305,8 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     for (let d = 1; d < MAX_SLOTS; d++) {
       const offset = d * direction;
       // The case's corner nearest the middle of the screen: once that is out, all of it is.
-      corner.set(-offset * GAP * skew - direction * 0.5, -direction * CASE_H * 0.5, -offset * GAP).project(camera);
+      const place = offset + back;
+      corner.set(-place * GAP * skew - direction * 0.5, -direction * CASE_H * 0.5, -place * GAP).project(camera);
       const out = direction > 0 ? corner.x > 1 || corner.y > 1 : corner.x < -1 || corner.y < -1;
       if (out) return Math.min(d + 2, MAX_SLOTS / 2);
     }
@@ -336,9 +340,9 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       // Only settled cases cast shadows; a case in flight would just smear across the floor.
       mesh.castShadow = landed > 0.999;
       mesh.position.set(
-        -d * GAP * skew + pull * PULL_X + away * 6,
+        -(d + back) * GAP * skew + pull * PULL_X + away * 6,
         pull * 0.015 + away * 1.2 + (mesh.userData.lift as number) * HOVER_LIFT,
-        -d * GAP + pull * PULL_Z + away * 1.5
+        -(d + back) * GAP + pull * PULL_Z + away * 1.5
       );
       mesh.rotation.set(0, away * 1.3, 0);
     });

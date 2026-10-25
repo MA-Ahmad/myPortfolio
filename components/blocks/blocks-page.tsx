@@ -66,18 +66,6 @@ export function BlocksPage({ blocks, category }: { blocks: BlockMeta[]; category
       <BlockList blocks={blocks} />
 
       <div className="screen-line-bottom h-px" />
-
-      <div className="p-2">
-        <div className="relative border border-line p-4">
-          <p className="font-mono text-sm text-muted-foreground">More blocks on the way…</p>
-          <div className="[&>*]:absolute [&>*]:flex [&>*]:size-2 [&>*]:border [&>*]:border-border [&>*]:bg-background">
-            <div className="left-[-4.5px] top-[-4.5px]" />
-            <div className="bottom-[-4.5px] left-[-4.5px]" />
-            <div className="right-[-4.5px] top-[-4.5px]" />
-            <div className="bottom-[-4.5px] right-[-4.5px]" />
-          </div>
-        </div>
-      </div>
     </PageLayout>
   );
 }

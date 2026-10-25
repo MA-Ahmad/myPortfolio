@@ -12,13 +12,20 @@ function AppLayout(props: { children: React.ReactNode }) {
   const isWide = router.pathname.startsWith('/blocks');
 
   return (
-    <div className="group/layout relative isolate min-h-screen bg-background text-foreground">
+    // On wide pages the column's side lines run down to the footer, which sits at the bottom of the
+    // screen however short the content is.
+    <div
+      className={cn(
+        'group/layout relative isolate min-h-screen bg-background text-foreground',
+        isWide && 'flex flex-col'
+      )}
+    >
       <TopNav wide={isWide} />
-      <main className="max-w-[100vw] overflow-x-clip px-2">
+      <main className={cn('max-w-[100vw] overflow-x-clip px-2', isWide && 'flex flex-1 flex-col')}>
         {isHome ? (
           props.children
         ) : isWide ? (
-          <div className="mx-auto border-x border-line md:max-w-6xl">
+          <div className="mx-auto w-full flex-1 border-x border-line md:max-w-6xl">
             {props.children}
           </div>
         ) : isBlog ? (
