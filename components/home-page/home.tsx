@@ -16,7 +16,7 @@ export default function Home({
 }) {
   return (
     <div className="[--separator-height:2rem]">
-      <div className="mx-auto md:max-w-3xl">
+      <div className="site-frame mx-auto md:max-w-3xl">
         <ProfileHeader />
         <StripeSeparator />
         <SocialLinks />

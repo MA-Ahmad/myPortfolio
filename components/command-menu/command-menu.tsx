@@ -15,6 +15,7 @@ import {
   NotebookIcon,
   SearchIcon,
   SunMediumIcon,
+  SwatchBookIcon,
   TerminalIcon,
   WorkflowIcon
 } from 'lucide-react';
@@ -255,6 +256,10 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
                   <CommandItem className={s.item} onSelect={openNotebookTheme}>
                     <NotebookIcon ref={notebookIconRef} className={iconClass} />
                     <span>Notebook</span>
+                  </CommandItem>
+                  <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
+                    <SwatchBookIcon className={iconClass} />
+                    <span>Play mode</span>
                   </CommandItem>
                 </Command.Group>
 

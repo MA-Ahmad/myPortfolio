@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { AiOutlineClose } from 'react-icons/ai';
-import { FileUserIcon } from 'lucide-react';
+import { FileUserIcon, SwatchBookIcon } from 'lucide-react';
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { CommandMenu } from 'components/command-menu/command-menu';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
+import { PLAY_EXIT_EVENT, isPlaying } from 'lib/play';
 
 const pageLinks: { name: string; path: string }[] = [
   // { name: 'Blog', path: '/blog' }
@@ -40,13 +41,41 @@ const NavLink = (props: NavLinkProps) => {
   );
 };
 
+/** Toggles play mode; it is home-page only, so other pages don't show it. */
+const PlayButton = () => {
+  const router = useRouter();
+  if (router.pathname !== '/') return null;
+  const playing = isPlaying(router.query);
+
+  const toggle = () => {
+    if (playing) window.dispatchEvent(new Event(PLAY_EXIT_EVENT));
+    else router.replace({ pathname: '/', query: { play: '1' } }, undefined, { shallow: true, scroll: false });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-pressed={playing}
+      aria-label={playing ? 'Exit play mode' : 'Play with the layout'}
+      title={playing ? 'Exit play mode' : 'Play with the layout'}
+      className={cn(
+        'inline-flex size-8 items-center justify-center rounded-full border border-line text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-muted hover:text-foreground active:scale-[0.94]',
+        playing && 'bg-muted text-foreground'
+      )}
+    >
+      <SwatchBookIcon className="size-3.5" />
+    </button>
+  );
+};
+
 export default function TopNav() {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
 
   return (
     <header className="sticky top-0 z-50 max-w-[100vw] overflow-x-clip bg-background px-2">
-      <div className="screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] md:max-w-3xl">
+      <div className="screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] md:max-w-3xl site-frame">
         {pageLinks.length > 0 ? (
           <button
             type="button"
@@ -90,6 +119,7 @@ export default function TopNav() {
           >
             <FileUserIcon className="size-3.5" />
           </a>
+          <PlayButton />
           <CommandMenu />
           <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
           <ColorModeSwitcher />

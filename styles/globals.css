@@ -521,3 +521,257 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
     animation: none;
   }
 }
+
+/*
+ * Play mode (`/?play=1`, components/play/play-toolbar.tsx). Nothing here matches until the
+ * toolbar sets `data-play` on <html>, so the normal page never sees it. Each setting moves a
+ * registered property, which is what lets colors, widths and heights ease instead of snap; the
+ * defaults reproduce the page's own values exactly, so entering and leaving play is seamless.
+ */
+@property --play-tint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --play-tint-strong {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --play-sep-tint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --play-info {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: transparent;
+}
+
+@property --play-lines-on {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --play-stripes {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 100%;
+}
+
+@property --play-dots {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --play-fill {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --play-frame {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 48rem;
+}
+
+@property --play-gutter {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --play-rails {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 0%;
+}
+
+@property --play-sep-height {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 2rem;
+}
+
+html[data-play] {
+  --play-line-default: color-mix(in oklab, var(--border) 64%, var(--background));
+  --play-tint: var(--play-line-default);
+  --play-tint-strong: var(--border);
+  --play-sep-tint: var(--play-line-default);
+  /* Same as --info; it can't be referenced, since --info points back here. */
+  --play-info: #38bdf8;
+  --play-lines-on: 100%;
+  --play-stripes: 100%;
+  --play-dots: 0%;
+  --play-fill: 0%;
+  --play-frame: 48rem;
+  --play-gutter: 0px;
+  --play-rails: 0%;
+  --play-sep-height: 2rem;
+
+  --line: color-mix(in oklab, var(--play-tint) var(--play-lines-on), transparent);
+  --play-border: color-mix(in oklab, var(--play-tint-strong) var(--play-lines-on), transparent);
+  --info: var(--play-info);
+}
+
+/* Switched on a frame after `data-play`, so the page first lands on the defaults without easing. */
+html[data-play][data-play-ready] {
+  transition-property:
+    --play-tint, --play-tint-strong, --play-sep-tint, --play-info, --play-lines-on, --play-stripes,
+    --play-dots, --play-fill, --play-frame, --play-gutter, --play-rails, --play-sep-height;
+  transition-duration: 500ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-play][data-play-ready] {
+    transition-duration: 0ms;
+  }
+}
+
+html[data-play][data-play-lines='none'] {
+  --play-lines-on: 0%;
+}
+
+html[data-play][data-play-lines='guides'] {
+  --play-gutter: 1.5rem;
+  --play-rails: 100%;
+}
+
+html[data-play][data-play-sep='dots'] {
+  --play-stripes: 0%;
+  --play-dots: 100%;
+}
+
+html[data-play][data-play-sep='solid'] {
+  --play-stripes: 0%;
+  --play-fill: 100%;
+}
+
+html[data-play][data-play-sep='none'] {
+  --play-stripes: 0%;
+  --play-sep-height: 0px;
+}
+
+html[data-play][data-play-width='wide'] {
+  --play-frame: 64rem;
+}
+
+html[data-play-accent='blue'] {
+  --play-accent: #3b82f6;
+}
+
+html[data-play-accent='violet'] {
+  --play-accent: #8b5cf6;
+}
+
+html[data-play-accent='emerald'] {
+  --play-accent: #10b981;
+}
+
+html[data-play-accent='amber'] {
+  --play-accent: #f59e0b;
+}
+
+html[data-play-accent='rose'] {
+  --play-accent: #f43f5e;
+}
+
+html[data-play][data-play-accent]:not([data-play-accent='mono']) {
+  --play-tint: color-mix(in oklab, var(--play-accent) 35%, var(--play-line-default));
+  --play-tint-strong: color-mix(in oklab, var(--play-accent) 55%, var(--border));
+  --play-sep-tint: color-mix(in oklab, var(--play-accent) 70%, var(--play-line-default));
+  --play-info: var(--play-accent);
+}
+
+html[data-play][data-play-accent]:not([data-play-accent='mono']) ::selection {
+  background-color: color-mix(in oklab, var(--play-accent) 30%, transparent);
+}
+
+@media (min-width: 48em) {
+  html[data-play] .site-frame {
+    max-width: var(--play-frame);
+  }
+}
+
+/* Round controls (icon buttons, social links) keep their outline when the frame lines go. */
+html[data-play] [class*='rounded'].border-line {
+  border-color: var(--play-tint);
+}
+
+html[data-play] .screen-line-top-border::before,
+html[data-play] .screen-line-bottom-border::after {
+  background-color: var(--play-border);
+}
+
+/* Stripes, dots and a fill are stacked on every separator; each fades by its own percentage. */
+html[data-play] .stripe-divider {
+  height: var(--play-sep-height);
+}
+
+html[data-play] .stripe-divider::before {
+  background-image:
+    repeating-linear-gradient(
+      315deg,
+      color-mix(in oklab, var(--play-sep-tint) calc(var(--play-stripes) * 0.56), transparent) 0,
+      color-mix(in oklab, var(--play-sep-tint) calc(var(--play-stripes) * 0.56), transparent) 1px,
+      transparent 0,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle,
+      color-mix(in oklab, var(--play-sep-tint) var(--play-dots), transparent) 1px,
+      transparent 1.5px
+    ),
+    linear-gradient(
+      color-mix(in oklab, var(--play-sep-tint) calc(var(--play-fill) * 0.3), transparent),
+      color-mix(in oklab, var(--play-sep-tint) calc(var(--play-fill) * 0.3), transparent)
+    );
+  background-size: 10px 10px, 8px 8px, auto;
+  background-position: 0 0, 4px 50%, 0 0;
+}
+
+/* Guides: hatched gutters just outside the content column, drawn through the header too. */
+.play-rails {
+  position: fixed;
+  inset-block: 0;
+  left: 50%;
+  z-index: 51;
+  width: min(100% - 1rem, var(--play-frame));
+  transform: translateX(-50%);
+  pointer-events: none;
+  --play-rail: color-mix(in oklab, var(--line) var(--play-rails), transparent);
+}
+
+.play-rails::before,
+.play-rails::after {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  width: var(--play-gutter);
+  background-image: repeating-linear-gradient(
+    315deg,
+    color-mix(in oklab, var(--play-rail) 56%, transparent) 0,
+    color-mix(in oklab, var(--play-rail) 56%, transparent) 1px,
+    transparent 0,
+    transparent 50%
+  );
+  background-size: 10px 10px;
+}
+
+.play-rails::before {
+  right: 100%;
+  border-left: 1px solid var(--play-rail);
+}
+
+.play-rails::after {
+  left: 100%;
+  border-right: 1px solid var(--play-rail);
+}

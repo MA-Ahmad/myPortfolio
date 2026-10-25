@@ -51,6 +51,11 @@
     box-shadow 200ms ease;
 }
 
+/* Play mode's guide rails (z-index 51) run down the page; keep the dock above them. */
+:global(html[data-play]) .dock {
+  z-index: 52;
+}
+
 :global(.dark) .dock {
   --dock-card: #141416;
   --dock-shadow:
