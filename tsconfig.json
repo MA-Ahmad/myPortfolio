@@ -46,6 +46,9 @@
       "themes/*": [
         "themes/*"
       ],
+      "blocks/*": [
+        "blocks/*"
+      ],
       "public/*": [
         "public/*"
       ]

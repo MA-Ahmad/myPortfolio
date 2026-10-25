@@ -782,3 +782,81 @@ html[data-play] .stripe-divider::before {
   left: 100%;
   border-right: 1px solid var(--play-rail);
 }
+
+/*
+ * The block viewer's code panel (components/blocks/block-viewer.tsx). It carries its own token
+ * palette for both color modes, scoped tightly enough to win over the blog's global Prism theme.
+ */
+.block-code {
+  --code-text: var(--foreground);
+  --code-muted: #6a737d;
+  --code-keyword: #cf222e;
+  --code-tag: #116329;
+  --code-attr: #0550ae;
+  --code-string: #0a3069;
+  --code-function: #8250df;
+  --code-number: #0550ae;
+}
+
+.dark .block-code {
+  --code-muted: #8b949e;
+  --code-keyword: #ff7b72;
+  --code-tag: #7ee787;
+  --code-attr: #79c0ff;
+  --code-string: #a5d6ff;
+  --code-function: #d2a8ff;
+  --code-number: #79c0ff;
+}
+
+.block-code code[class*='language-'] {
+  color: var(--code-text);
+  background: none;
+  font: inherit;
+}
+
+.block-code .token.comment {
+  color: var(--code-muted);
+  font-style: italic;
+}
+
+.block-code .token.punctuation,
+.block-code .token.operator {
+  color: var(--code-muted);
+}
+
+.block-code .token.plain-text,
+.block-code .token.namespace {
+  color: var(--code-text);
+  opacity: 1;
+}
+
+.block-code .token.keyword,
+.block-code .token.builtin {
+  color: var(--code-keyword);
+}
+
+.block-code .token.tag,
+.block-code .token.tag .token.class-name {
+  color: var(--code-tag);
+}
+
+.block-code .token.attr-name,
+.block-code .token.property {
+  color: var(--code-attr);
+}
+
+.block-code .token.string,
+.block-code .token.attr-value {
+  color: var(--code-string);
+}
+
+.block-code .token.function,
+.block-code .token.class-name {
+  color: var(--code-function);
+}
+
+.block-code .token.number,
+.block-code .token.boolean,
+.block-code .token.constant {
+  color: var(--code-number);
+}

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useTheme } from 'next-themes';
 import { Command } from 'cmdk';
 import {
+  BlocksIcon,
   BriefcaseBusinessIcon,
   FileTextIcon,
   FileUserIcon,
@@ -25,6 +26,7 @@ import { pixelNavigate } from 'lib/pixel-transition';
 
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
+  { title: 'Blocks', href: '/blocks', icon: BlocksIcon },
   { title: 'Resume', href: PROFILE.resumeUrl, icon: FileUserIcon, external: true }
 ];
 

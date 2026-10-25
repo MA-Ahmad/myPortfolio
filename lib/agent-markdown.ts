@@ -1,6 +1,7 @@
 import type { NextApiResponse } from 'next';
 import { skillsArray } from 'data/data';
 import { SITE_URL } from 'data/constants';
+import { getBlocks } from 'blocks/registry';
 import { EDUCATION, EXPERIENCES, PROFILE, PROJECTS } from 'data/profile';
 
 export function sendMarkdown(res: NextApiResponse, content: string) {
@@ -15,6 +16,12 @@ export function llmsTxt() {
 - [Experience](${SITE_URL}/experience.md): Highlights from my career and key roles I've taken on.
 - [Education](${SITE_URL}/education.md): Where I studied, what I focused on, and what I built along the way.
 - [Projects](${SITE_URL}/projects.md): Selected projects that show my skills and creativity.
+
+## Blocks
+
+${getBlocks()
+  .map((block) => `- [${block.title}](${SITE_URL}/blocks/${block.name}.md): ${block.description}`)
+  .join('\n')}
 `;
 }
 

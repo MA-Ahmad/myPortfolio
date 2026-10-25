@@ -28,6 +28,10 @@ const nextConfig = {
       }
     ];
   },
+  // The block Markdown route reads its source files from disk at request time.
+  outputFileTracingIncludes: {
+    '/api/agents/blocks/*': ['./blocks/**/*']
+  },
   async rewrites() {
     return {
       beforeFiles: [
@@ -54,6 +58,10 @@ const nextConfig = {
         {
           source: '/projects.md',
           destination: '/api/agents/projects'
+        },
+        {
+          source: '/blocks/:name([a-z0-9-]+).md',
+          destination: '/api/agents/blocks/:name'
         },
         {
           source: '/',

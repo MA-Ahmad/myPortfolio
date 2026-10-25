@@ -69,13 +69,18 @@ const PlayButton = () => {
   );
 };
 
-export default function TopNav() {
+export default function TopNav({ wide = false }: { wide?: boolean }) {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
 
   return (
     <header className="sticky top-0 z-50 max-w-[100vw] overflow-x-clip bg-background px-2">
-      <div className="screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] md:max-w-3xl site-frame">
+      <div
+        className={cn(
+          'screen-line-top screen-line-bottom mx-auto flex h-[var(--header-height)] items-center gap-2 border-x border-line screen-line-bottom-border screen-line-top-border pl-4 pr-2 after:z-[1] site-frame',
+          wide ? 'md:max-w-6xl' : 'md:max-w-3xl'
+        )}
+      >
         {pageLinks.length > 0 ? (
           <button
             type="button"

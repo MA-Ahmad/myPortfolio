@@ -1,10 +1,15 @@
 import siteConfig from '../../configs/site-config';
 import { cn } from 'lib/cn';
 
-const Footer = ({ className }: { className?: string }) => {
+const Footer = ({ className, wide = false }: { className?: string; wide?: boolean }) => {
   return (
     <footer className={cn('max-w-[100vw] overflow-x-clip px-2', className)}>
-      <div className="screen-line-top site-frame mx-auto border-x border-line px-4 py-4 md:max-w-3xl">
+      <div
+        className={cn(
+          'screen-line-top site-frame mx-auto border-x border-line px-4 py-4',
+          wide ? 'md:max-w-6xl' : 'md:max-w-3xl'
+        )}
+      >
         <div className="flex w-full flex-col-reverse items-center justify-center gap-3 md:flex-row md:justify-between">
           <p className="text-center text-sm text-muted-foreground">
             © {new Date().getFullYear()} Muhammad Ahmad

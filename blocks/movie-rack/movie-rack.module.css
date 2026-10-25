@@ -1,0 +1,273 @@
+.root {
+  position: relative;
+  isolation: isolate;
+  height: 100vh;
+  min-height: 640px;
+  overflow: hidden;
+  background: #060709;
+  color: #fff;
+  font-family: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, sans-serif;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  touch-action: none;
+}
+
+/* Darkens the top and bottom bands so the title and controls sit on calm ground. */
+.root::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgb(0 0 0 / 0.45), transparent 26%, transparent 66%, rgb(0 0 0 / 0.7));
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  color: rgb(255 255 255 / 0.6);
+  font-size: 14px;
+}
+
+.header {
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: clamp(28px, 6vh, 56px) 24px 0;
+  text-align: center;
+  pointer-events: none;
+}
+
+.titleSlot {
+  display: grid;
+  width: min(560px, 100%);
+  transition:
+    filter 280ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.header[data-picking] .titleSlot {
+  filter: blur(8px);
+  opacity: 0.5;
+}
+
+.titleBlock {
+  grid-area: 1 / 1;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(24px, 3.2vw, 36px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+  text-shadow: 0 2px 24px rgb(0 0 0 / 0.35);
+}
+
+.meta {
+  margin: 8px 0 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: rgb(255 255 255 / 0.66);
+  font-variant-numeric: tabular-nums;
+}
+
+.pillSlot {
+  display: grid;
+  min-height: 30px;
+  place-items: center;
+}
+
+/* Liquid glass: a frosted fill, a lit top edge and a faint dark bottom edge. */
+.glass {
+  border: 1px solid transparent;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.06)) padding-box,
+    linear-gradient(180deg, rgb(255 255 255 / 0.38), rgb(255 255 255 / 0.06) 45%, rgb(255 255 255 / 0.14)) border-box;
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.12),
+    0 12px 32px -14px rgb(0 0 0 / 0.65);
+  backdrop-filter: blur(24px) saturate(1.8);
+  -webkit-backdrop-filter: blur(24px) saturate(1.8);
+}
+
+.pill {
+  display: inline-flex;
+  height: 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pillIcon {
+  width: 13px;
+  height: 13px;
+}
+
+.footer {
+  position: absolute;
+  z-index: 1;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 0 20px clamp(20px, 4vh, 36px);
+  pointer-events: none;
+}
+
+.footer > * {
+  pointer-events: auto;
+}
+
+.ruler {
+  position: relative;
+  width: min(560px, 90%);
+  height: 64px;
+  cursor: ew-resize;
+  touch-action: none;
+}
+
+.tape {
+  position: absolute;
+  inset: auto 0 0;
+  height: 30px;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 22%, #000 78%, transparent);
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 1.5px;
+  height: 100%;
+  margin-left: -0.75px;
+  border-radius: 1px;
+  background: #fff;
+  transform-origin: bottom;
+  will-change: transform, opacity;
+}
+
+.needle {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  width: 2px;
+  height: 40px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: #fff;
+  box-shadow: 0 0 12px rgb(255 255 255 / 0.55);
+}
+
+.counter {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  display: grid;
+  min-width: 34px;
+  height: 22px;
+  place-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.iconButton,
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    transform 160ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+    background 160ms ease,
+    opacity 160ms ease;
+}
+
+.iconButton {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.primary {
+  height: 48px;
+  gap: 8px;
+  padding: 0 24px;
+  border-radius: 999px;
+  background:
+    linear-gradient(rgb(255 255 255 / 0.92), rgb(240 241 244 / 0.86)) padding-box,
+    linear-gradient(180deg, #fff, rgb(255 255 255 / 0.4)) border-box;
+  color: #111214;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.iconButton:active,
+.primary:active {
+  transform: scale(0.97);
+}
+
+.primary:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.iconButton:focus-visible,
+.primary:focus-visible,
+.root:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.7);
+  outline-offset: -4px;
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .iconButton:hover {
+    background:
+      linear-gradient(rgb(255 255 255 / 0.18), rgb(255 255 255 / 0.1)) padding-box,
+      linear-gradient(180deg, rgb(255 255 255 / 0.45), rgb(255 255 255 / 0.08) 45%, rgb(255 255 255 / 0.18)) border-box;
+  }
+
+  .primary:hover {
+    background:
+      linear-gradient(#fff, rgb(246 247 249)) padding-box,
+      linear-gradient(180deg, #fff, rgb(255 255 255 / 0.5)) border-box;
+  }
+}

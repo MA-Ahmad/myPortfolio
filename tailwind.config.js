@@ -12,6 +12,7 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx}',
     './components/**/*.{js,ts,jsx,tsx}',
     './themes/**/*.{js,ts,jsx,tsx}',
+    './blocks/**/*.{js,ts,jsx,tsx}',
   ],
   corePlugins: {
     preflight: true,
