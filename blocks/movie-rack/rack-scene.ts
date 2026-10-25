@@ -41,6 +41,9 @@ const FLIGHT = 0.3;
 const GROUP = 6;
 // Which end of the rack arrives first: 'far' (top right) or 'near' (bottom left).
 const ARRIVE_FROM: 'far' | 'near' = 'far';
+// Restack exit: the entrance played backwards. The focused case slides back in first, then the cases
+// fly back out to the right, the way they came, the last to land leaving first.
+const EXIT_MS = 1500;
 // A reel coming to rest: fast start, very long settle.
 const easeOutQuint = (t: number) => 1 - (1 - t) ** 5;
 
@@ -117,12 +120,12 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   const key = new THREE.DirectionalLight(0xffffff, 1.4);
   key.position.set(-3, 7, 5);
   key.castShadow = true;
-  key.shadow.mapSize.set(2048, 2048);
+  key.shadow.mapSize.set(1024, 1024);
   key.shadow.camera.left = -7;
   key.shadow.camera.right = 7;
   key.shadow.camera.top = 7;
   key.shadow.camera.bottom = -7;
-  key.shadow.radius = 6;
+  key.shadow.radius = 4;
   key.shadow.bias = -0.0004;
   scene.add(key, key.target);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x1a1c22, 0.5));
@@ -140,13 +143,12 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   const edge = (across: 'u' | 'v') => {
     const map = new THREE.CanvasTexture(drawEdge(across));
     map.colorSpace = THREE.SRGBColorSpace;
+    // Opaque: the banded texture carries the plastic look, and transmission would cost a second
+    // full render of the scene every frame.
     return new THREE.MeshPhysicalMaterial({
       map,
       roughness: 0.08,
       metalness: 0,
-      transmission: 0.25,
-      thickness: 0.06,
-      ior: 1.5,
       clearcoat: 1,
       clearcoatRoughness: 0.04
     });
@@ -239,6 +241,8 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   let arrival = reduced ? 1 : 0;
   let arrivalTween: { from: number; to: number; begin: number; duration: number; ease: (t: number) => number } | null =
     reduced ? null : { from: 0, to: 1, begin: performance.now() + 150, duration: ARRIVAL_MS, ease: linear };
+  // Set while the restack plays the entrance backwards; the entrance restarts when it ends.
+  let exiting = false;
   let shownIndex = -1;
 
   const wrapIndex = (i: number) => ((i % count) + count) % count;
@@ -280,6 +284,8 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       const settled = smoothstep(clamp((arrival - STACKED) / (1 - STACKED), 0, 1));
       const pull = smoothstep(clamp(1 - Math.abs(d), 0, 1)) * settled;
       mesh.visible = landed > 0.001;
+      // Only settled cases cast shadows; a case in flight would just smear across the floor.
+      mesh.castShadow = landed > 0.999;
       mesh.position.set(
         -d * GAP * skew + pull * PULL_X + away * 6,
         pull * 0.015 + away * 1.2,
@@ -321,7 +327,14 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     if (arrivalTween && now >= arrivalTween.begin) {
       const t = clamp((now - arrivalTween.begin) / arrivalTween.duration, 0, 1);
       arrival = arrivalTween.from + (arrivalTween.to - arrivalTween.from) * arrivalTween.ease(t);
-      if (t >= 1) arrivalTween = null;
+      if (t >= 1) {
+        arrivalTween = null;
+        if (exiting) {
+          // Every case has left and is invisible at arrival 0, so the entrance starts in the same frame.
+          exiting = false;
+          arrivalTween = { from: 0, to: 1, begin: now, duration: ARRIVAL_MS, ease: linear };
+        }
+      }
     }
   }
 
@@ -483,13 +496,10 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     },
 
     replay() {
-      if (reduced) return;
-      const now = performance.now();
-      arrivalTween = { from: arrival, to: 0, begin: now, duration: 520, ease: linear };
-      window.setTimeout(() => {
-        arrivalTween = { from: 0, to: 1, begin: performance.now(), duration: ARRIVAL_MS, ease: linear };
-        wake();
-      }, 560);
+      if (reduced || exiting) return;
+      // Reverse from wherever the entrance is, at the exit's pace, so a part-built rack leaves sooner.
+      exiting = true;
+      arrivalTween = { from: arrival, to: 0, begin: performance.now(), duration: Math.max(1, EXIT_MS * arrival), ease: linear };
       wake();
     },
 
