@@ -197,8 +197,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     CARDS.forEach((card) => card.packets.forEach((icon) => (new Image().src = packetIcon(icon))));
   }, [router]);
 
-  // Once a real wire is out the hint gives way to it. Pressing a port focuses it, which would
-  // otherwise bring the hint straight back to loop its token beside the real packets.
+  // Once a real wire is out the hint gives way to it. Clicking a card focuses its link, which
+  // would otherwise bring the hint straight back to loop its token beside the real packets.
   useEffect(() => {
     if (wire && hint && !hint.leaving) hideHint();
     // hideHint only sets state and a timer.

@@ -118,9 +118,11 @@ export function NodeCard({
           event.preventDefault();
           if (!busy) onConnect();
         }}
-        onPointerEnter={onPrepare}
+        // A finger lands on the cards whenever the phone stack is scrolled, so only a hovering
+        // pointer loads the theme ahead; a tap's connect loads it anyway.
+        onPointerEnter={(event) => event.pointerType !== 'touch' && onPrepare()}
         onFocus={onPrepare}
-        onPointerLeave={onLeave}
+        onPointerLeave={(event) => event.pointerType !== 'touch' && onLeave()}
         onBlur={onLeave}
       />
 
