@@ -8,7 +8,7 @@ import { Tag } from '../tag';
 export function ProjectItem({ project }: { project: ProjectItemData }) {
   return (
     <Disclosure>
-      <div className="relative flex items-center hover:bg-muted/60">
+      <div className="relative flex items-center transition-[background-color] duration-150 ease-out hover:bg-accent-muted">
         <IconTile className="mx-4">
           <BoxIcon />
         </IconTile>
