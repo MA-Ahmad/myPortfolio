@@ -1,16 +1,19 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
-import { drawCover, drawEdge } from './cover-texture';
+import { HINGE, drawCover, drawLid } from './cover-texture';
 import type { Movie } from './movies';
 
 // Geometry, in case widths: a jewel case is 1 wide.
 // A touch shorter than a real jewel case (0.88), which reads portrait once seen at an angle.
 const CASE_H = 0.78;
 const CASE_T = 0.08;
+// The lid stands proud of the insert by RECESS, so the cover sits down under the glass: at an angle
+// the lid's inner walls show and the cover shifts against the rim. RIM is the lid's border on the
+// three open sides (the hinge spine, HINGE wide, is the fourth); BEVEL rounds its edges.
+const RECESS = 0.018;
+const RIM = 0.02;
+const BEVEL = 0.003;
 const GAP = 0.27;
 // How far each case also steps left as the row goes back: more tips the row into a steep diagonal.
 // Set per screen shape on resize (see VIEWS).
@@ -68,6 +71,8 @@ export type RackScene = ReturnType<typeof createRackScene>;
 
 export function createRackScene({ canvas, movies, start, reduced, onFrame, onIndex, onReveal }: RackSceneOptions) {
   const count = movies.length;
+  // Drawn straight to the canvas, the only place `antialias` applies: through an offscreen composer
+  // target the cases' thin, slightly slanted edges came out jagged, as broken white dashes.
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.toneMapping = THREE.NeutralToneMapping;
@@ -140,25 +145,13 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   floor.receiveShadow = true;
   scene.add(floor);
 
-  // Cases: a rounded clear-plastic shell, its insert under a glossy lid on the front face.
-  const geometry = new RoundedBoxGeometry(1, CASE_H, CASE_T, 4, 0.02);
-  // Clear polystyrene edges, banded with the lid-and-tray profile. On a box, the side faces run
-  // their thickness along u and the top and bottom along v, so each gets its own band direction.
-  const edge = (across: 'u' | 'v') => {
-    const map = new THREE.CanvasTexture(drawEdge(across));
-    map.colorSpace = THREE.SRGBColorSpace;
-    // Opaque: the banded texture carries the plastic look, and transmission would cost a second
-    // full render of the scene every frame.
-    return new THREE.MeshPhysicalMaterial({
-      map,
-      roughness: 0.08,
-      metalness: 0,
-      clearcoat: 1,
-      clearcoatRoughness: 0.04
-    });
-  };
-  const sides = edge('u');
-  const tops = edge('v');
+  // Cases: a rounded clear-plastic body with the insert on its front face, and in front of that the
+  // lid: a raised frame (hinge spine plus rim) around a window, and a glass pane across the top.
+  const geometry = new RoundedBoxGeometry(1, CASE_H, CASE_T - RECESS, 4, 0.02);
+  geometry.translate(0, 0, -RECESS / 2);
+  // The edges: plain dark, glossy plastic. Untextured on purpose: any painted line is only a pixel or
+  // two wide edge-on and breaks into flickering dashes; the rounded corners catch one clean highlight.
+  const shell = new THREE.MeshPhysicalMaterial({ color: 0x2c2f35, roughness: 0.18, clearcoat: 1, clearcoatRoughness: 0.04 });
   const backing = new THREE.MeshPhysicalMaterial({ color: 0x1b1d22, roughness: 0.4, clearcoat: 1 });
   const maxAnisotropy = renderer.capabilities.getMaxAnisotropy();
 
@@ -176,10 +169,51 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     return { front, texture };
   });
 
+  // The lid's frame: a rounded rectangle with the window cut out, extruded by RECESS. Its face is
+  // mapped across the whole front (extruded caps take their x, y as uv), its walls stay plain plastic.
+  const frameShape = (() => {
+    const rounded = (path: THREE.Path, x0: number, y0: number, x1: number, y1: number, r: number) => {
+      path.moveTo(x0 + r, y0);
+      path.lineTo(x1 - r, y0);
+      path.quadraticCurveTo(x1, y0, x1, y0 + r);
+      path.lineTo(x1, y1 - r);
+      path.quadraticCurveTo(x1, y1, x1 - r, y1);
+      path.lineTo(x0 + r, y1);
+      path.quadraticCurveTo(x0, y1, x0, y1 - r);
+      path.lineTo(x0, y0 + r);
+      path.quadraticCurveTo(x0, y0, x0 + r, y0);
+      return path;
+    };
+    const outerX = 0.5 - BEVEL;
+    const outerY = CASE_H / 2 - BEVEL;
+    const shape = rounded(new THREE.Shape(), -outerX, -outerY, outerX, outerY, 0.02 - BEVEL) as THREE.Shape;
+    const innerY = CASE_H / 2 - RIM;
+    shape.holes.push(rounded(new THREE.Path(), -0.5 + HINGE, -innerY, 0.5 - RIM, innerY, 0.006));
+    return shape;
+  })();
+  const frameGeometry = new THREE.ExtrudeGeometry(frameShape, {
+    depth: RECESS - BEVEL * 2,
+    bevelEnabled: true,
+    bevelThickness: BEVEL,
+    bevelSize: BEVEL,
+    bevelSegments: 2,
+    curveSegments: 6
+  });
+  frameGeometry.translate(0, 0, CASE_T / 2 - RECESS + BEVEL);
+  const lidMap = new THREE.CanvasTexture(drawLid());
+  lidMap.colorSpace = THREE.SRGBColorSpace;
+  lidMap.anisotropy = Math.min(8, maxAnisotropy);
+  lidMap.repeat.set(1, 1 / CASE_H);
+  lidMap.offset.set(0.5, 0.5);
+  const frameFace = new THREE.MeshPhysicalMaterial({ map: lidMap, roughness: 0.25, clearcoat: 1, clearcoatRoughness: 0.04 });
+  // The walls: the lid's clear plastic seen edge-on, a shade lighter than the tray's edges behind it.
+  const frameWall = new THREE.MeshPhysicalMaterial({ color: 0x484c54, roughness: 0.12, clearcoat: 1, clearcoatRoughness: 0.03 });
+  const frameMaterials = [frameFace, frameWall];
+
   // The glass lid: a thin panel over each case's front that only adds reflected light. Black and
   // additive, it never washes the cover out; the environment's highlights slide across it as the case
   // moves, and Fresnel brightens it at glancing angles, which is what makes it read as glass.
-  const lidGeometry = new THREE.PlaneGeometry(0.985, CASE_H - 0.015);
+  const lidGeometry = new THREE.PlaneGeometry(1 - BEVEL * 2, CASE_H - BEVEL * 2);
   // Its own studio to reflect: dark, with a few long softbox strips, so the lid catches crisp streaks.
   // It needs its own envMap anyway: with only scene.environment, envMapIntensity is ignored.
   const studio = new THREE.Scene();
@@ -222,12 +256,16 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   // A fixed pool of cases; each frame, slot k shows whichever film sits at its place in the loop.
   const slots = Array.from({ length: MAX_SLOTS }, () => {
     // Box faces: +x, -x, +y, -y, +z (front), -z (back).
-    const materials = [sides, sides, tops, tops, covers[0].front, backing];
+    const materials = [shell, shell, shell, shell, covers[0].front, backing];
     const mesh = new THREE.Mesh(geometry, materials);
     mesh.castShadow = true;
     mesh.visible = false;
     mesh.userData.index = -1;
     mesh.userData.lift = 0;
+    const frame = new THREE.Mesh(frameGeometry, frameMaterials);
+    // Casts no shadow (the body's already covers it) and, like the lid, is not a ray target.
+    frame.raycast = () => {};
+    mesh.add(frame);
     const lid = new THREE.Mesh(lidGeometry, glass);
     lid.position.z = CASE_T / 2 + 0.002;
     // Not a ray target: the pick test should hit the case, not its lid.
@@ -244,13 +282,9 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   let back = 0;
 
   const camera = new THREE.PerspectiveCamera(VIEWS.wide.fov, 1, 0.1, 100);
-  const composer = new EffectComposer(renderer);
-  composer.addPass(new RenderPass(scene, camera));
-  composer.addPass(new OutputPass());
 
   function resize(width: number, height: number) {
     renderer.setSize(width, height, false);
-    composer.setSize(width, height);
     camera.aspect = width / height;
     const { tall, wide } = VIEWS;
     const t = smoothstep(clamp((camera.aspect - tall.aspect) / (wide.aspect - tall.aspect), 0, 1));
@@ -276,7 +310,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     near = Math.min(reach(-1), MAX_SLOTS - far - 2);
     // Draw now rather than on the next frame, so a resize never shows an empty canvas.
     layout();
-    composer.render();
+    renderer.render(scene, camera);
     wake();
   }
 
@@ -452,7 +486,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     }
 
     layout();
-    composer.render(dt);
+    renderer.render(scene, camera);
     onFrame(position);
 
     // Sleeps once everything has settled; any input wakes it.
@@ -612,19 +646,19 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       }
       geometry.dispose();
       lidGeometry.dispose();
+      frameGeometry.dispose();
+      lidMap.dispose();
+      frameFace.dispose();
+      frameWall.dispose();
       glass.dispose();
       studioEnv.dispose();
-      for (const material of [sides, tops]) {
-        material.map?.dispose();
-        material.dispose();
-      }
+      shell.dispose();
       backing.dispose();
       floor.geometry.dispose();
       (floor.material as THREE.Material).dispose();
       backdropTexture.dispose();
       environment.dispose();
       pmrem.dispose();
-      composer.dispose();
       renderer.dispose();
     }
   };
