@@ -140,7 +140,7 @@ export function BlockViewer({ block, files, markdown }: { block: BlockMeta; file
             </ToolButton>
           </div>
 
-          {file && <CopyButton text={file.code} label={`Copy ${file.path}`} withText />}
+          {view === 'code' && file && <CopyButton text={file.code} label={`Copy ${file.path}`} withText />}
           <OpenInMenu block={block} markdown={markdown} />
         </div>
       </div>

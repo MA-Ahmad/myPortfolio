@@ -3,7 +3,6 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { drawCover, drawEdge } from './cover-texture';
 import type { Movie } from './movies';
@@ -58,11 +57,13 @@ export type RackSceneOptions = {
   onFrame: (position: number) => void;
   /** When the case in focus changes. */
   onIndex: (index: number) => void;
+  /** Whether the focused case has slid out, which is when its title should be shown. */
+  onReveal: (revealed: boolean) => void;
 };
 
 export type RackScene = ReturnType<typeof createRackScene>;
 
-export function createRackScene({ canvas, movies, start, reduced, onFrame, onIndex }: RackSceneOptions) {
+export function createRackScene({ canvas, movies, start, reduced, onFrame, onIndex, onReveal }: RackSceneOptions) {
   const count = movies.length;
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -137,7 +138,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   scene.add(floor);
 
   // Cases: a rounded clear-plastic shell, its insert under a glossy lid on the front face.
-  const geometry = new RoundedBoxGeometry(1, CASE_H, CASE_T, 3, 0.014);
+  const geometry = new RoundedBoxGeometry(1, CASE_H, CASE_T, 4, 0.02);
   // Clear polystyrene edges, banded with the lid-and-tray profile. On a box, the side faces run
   // their thickness along u and the top and bottom along v, so each gets its own band direction.
   const edge = (across: 'u' | 'v') => {
@@ -172,6 +173,49 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     return { front, texture };
   });
 
+  // The glass lid: a thin panel over each case's front that only adds reflected light. Black and
+  // additive, it never washes the cover out; the environment's highlights slide across it as the case
+  // moves, and Fresnel brightens it at glancing angles, which is what makes it read as glass.
+  const lidGeometry = new THREE.PlaneGeometry(0.985, CASE_H - 0.015);
+  // Its own studio to reflect: dark, with a few long softbox strips, so the lid catches crisp streaks.
+  // It needs its own envMap anyway: with only scene.environment, envMapIntensity is ignored.
+  const studio = new THREE.Scene();
+  const softbox = new THREE.MeshBasicMaterial({ color: 0xffffff, side: THREE.DoubleSide });
+  const strip = new THREE.PlaneGeometry(1, 1);
+  // Every lid faces the same way, so from the camera they all mirror the same patch of this studio:
+  // low, to the left and in front of the rack. A long diagonal strip sits across that patch, so its
+  // streak runs over the lids and sweeps along as the cases slide; a fainter softbox beside it adds a
+  // broad sheen, and a strip overhead catches the top edges.
+  const dim = new THREE.MeshBasicMaterial({ color: 0x2a2a2a, side: THREE.DoubleSide });
+  for (const [x, y, z, w, h, ry, brightness] of [
+    [-3.7, -1.9, 4.4, 0.3, 12, 0.55, softbox],
+    [-1.6, -1.2, 5.6, 1.6, 6, 0.55, dim],
+    [0, 6, -3, 8, 0.8, 0, softbox]
+  ] as const) {
+    const light = new THREE.Mesh(strip, brightness);
+    light.position.set(x, y, z);
+    light.scale.set(w, h, 1);
+    light.lookAt(0, 0, 0);
+    light.rotateZ(ry);
+    studio.add(light);
+  }
+  const studioEnv = pmrem.fromScene(studio, 0.02).texture;
+  strip.dispose();
+  softbox.dispose();
+  dim.dispose();
+  const glass = new THREE.MeshPhysicalMaterial({
+    envMap: studioEnv,
+    color: 0x000000,
+    roughness: 0.04,
+    metalness: 0,
+    clearcoat: 1,
+    clearcoatRoughness: 0.02,
+    envMapIntensity: 1.3,
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+  });
+
   // A fixed pool of cases; each frame, slot k shows whichever film sits at its place in the loop.
   const slots = Array.from({ length: MAX_SLOTS }, () => {
     // Box faces: +x, -x, +y, -y, +z (front), -z (back).
@@ -180,6 +224,11 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     mesh.castShadow = true;
     mesh.visible = false;
     mesh.userData.index = -1;
+    const lid = new THREE.Mesh(lidGeometry, glass);
+    lid.position.z = CASE_T / 2 + 0.002;
+    // Not a ray target: the pick test should hit the case, not its lid.
+    lid.raycast = () => {};
+    mesh.add(lid);
     scene.add(mesh);
     return { mesh, materials };
   });
@@ -191,11 +240,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   const camera = new THREE.PerspectiveCamera(VIEWS.wide.fov, 1, 0.1, 100);
   const composer = new EffectComposer(renderer);
   composer.addPass(new RenderPass(scene, camera));
-  const bokeh = new BokehPass(scene, camera, { focus: 14, aperture: 0.0035, maxblur: 0.008 });
-  composer.addPass(bokeh);
   composer.addPass(new OutputPass());
-
-  const focusPoint = new THREE.Vector3(PULL_X, 0, PULL_Z);
 
   function resize(width: number, height: number) {
     renderer.setSize(width, height, false);
@@ -219,7 +264,6 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       .add(lookAt);
     camera.lookAt(lookAt);
     camera.updateProjectionMatrix();
-    (bokeh.uniforms as Record<string, THREE.IUniform>).focus.value = camera.position.distanceTo(focusPoint);
     camera.updateMatrixWorld();
     far = reach(1);
     near = Math.min(reach(-1), MAX_SLOTS - far - 2);
@@ -244,6 +288,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   // Set while the restack plays the entrance backwards; the entrance restarts when it ends.
   let exiting = false;
   let shownIndex = -1;
+  let revealed: boolean | null = null;
 
   const wrapIndex = (i: number) => ((i % count) + count) % count;
 
@@ -369,6 +414,13 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       shownIndex = index;
       wanted = movies[index].palette.map(toColor);
       onIndex(index);
+    }
+
+    // The title shows once the focused case is most of the way out of the row.
+    const reveal = arrival > STACKED + (1 - STACKED) * 0.5;
+    if (reveal !== revealed) {
+      revealed = reveal;
+      onReveal(reveal);
     }
 
     layout();
@@ -516,6 +568,9 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
         cover.front.dispose();
       }
       geometry.dispose();
+      lidGeometry.dispose();
+      glass.dispose();
+      studioEnv.dispose();
       for (const material of [sides, tops]) {
         material.map?.dispose();
         material.dispose();

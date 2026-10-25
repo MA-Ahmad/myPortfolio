@@ -208,9 +208,10 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
 
   // Clear lid plastic over the tray: light grey, brightest along the top where the light lands.
   const lid = ctx.createLinearGradient(0, 0, COVER_W * 0.3, COVER_H);
-  lid.addColorStop(0, 'rgb(214 218 224)');
-  lid.addColorStop(0.5, 'rgb(176 181 189)');
-  lid.addColorStop(1, 'rgb(150 156 165)');
+  // Clear plastic shows the dark tray behind it, with a little light caught toward the top.
+  lid.addColorStop(0, 'rgb(74 78 86)');
+  lid.addColorStop(0.5, 'rgb(46 49 55)');
+  lid.addColorStop(1, 'rgb(34 36 41)');
   ctx.fillStyle = lid;
   ctx.fillRect(0, 0, COVER_W, COVER_H);
 
@@ -228,19 +229,17 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
   ctx.lineWidth = 1;
   ctx.strokeRect(x - 2.5, y - 2.5, w + 5, h + 5);
 
-  // The lid's groove: a dark line with a bright one just inside, the "double rail" along each edge.
-  ctx.strokeStyle = 'rgba(40,44,52,0.45)';
+  // The lid's groove: one soft line inside the rim. Stacked lines read as a busy frame at the corners.
+  ctx.strokeStyle = 'rgba(255,255,255,0.28)';
   ctx.lineWidth = 1;
   ctx.strokeRect(groove + 0.5, groove + 0.5, COVER_W - groove * 2 - 1, COVER_H - groove * 2 - 1);
-  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-  ctx.strokeRect(groove + 1.5, groove + 1.5, COVER_W - groove * 2 - 3, COVER_H - groove * 2 - 3);
 
   // Hinge: a frosted strip with fine vertical ridges, a lit edge and a shadow where it meets the lid.
   const frost = ctx.createLinearGradient(0, 0, hinge, 0);
-  frost.addColorStop(0, 'rgb(232 235 239)');
-  frost.addColorStop(0.35, 'rgb(205 210 216)');
-  frost.addColorStop(0.7, 'rgb(226 229 234)');
-  frost.addColorStop(1, 'rgb(196 201 208)');
+  frost.addColorStop(0, 'rgb(150 155 163)');
+  frost.addColorStop(0.35, 'rgb(112 117 125)');
+  frost.addColorStop(0.7, 'rgb(138 143 151)');
+  frost.addColorStop(1, 'rgb(100 105 113)');
   ctx.fillStyle = frost;
   ctx.fillRect(0, 0, hinge, COVER_H);
   for (let rx = 3; rx < hinge - 3; rx += 3) {
@@ -257,7 +256,7 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
   const tabH = Math.round(COVER_H * 0.075);
   const tabX = Math.round((hinge - tabW) / 2) - 1;
   for (const tabY of [Math.round(border * 0.9), COVER_H - Math.round(border * 0.9) - tabH]) {
-    ctx.fillStyle = 'rgba(150,156,165,0.9)';
+    ctx.fillStyle = 'rgba(70,74,82,0.9)';
     ctx.fillRect(tabX, tabY, tabW, tabH);
     ctx.fillStyle = 'rgba(30,34,40,0.55)';
     ctx.fillRect(tabX, tabY, tabW, 1.5);
@@ -288,14 +287,16 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
  */
 export function drawEdge(across: 'u' | 'v'): HTMLCanvasElement {
   const bands: [number, string][] = [
-    [0.1, 'rgb(246 248 251)'],
-    [0.17, 'rgb(168 174 183)'],
-    [0.42, 'rgb(212 217 223)'],
-    [0.5, 'rgb(96 102 112)'],
-    [0.58, 'rgb(186 192 200)'],
-    [0.82, 'rgb(208 213 220)'],
-    [0.9, 'rgb(244 246 249)'],
-    [1, 'rgb(170 176 185)']
+    // Mostly dark see-through plastic, lit only along the lid lip and the tray rim. Mirror-symmetric,
+    // because the top and side faces run their thickness in opposite directions; a lopsided profile
+    // makes the lines miss each other where the edges meet at a corner.
+    [0.08, 'rgb(226 230 235)'],
+    [0.16, 'rgb(80 85 93)'],
+    [0.44, 'rgb(56 60 67)'],
+    [0.56, 'rgb(28 30 35)'],
+    [0.84, 'rgb(56 60 67)'],
+    [0.92, 'rgb(80 85 93)'],
+    [1, 'rgb(226 230 235)']
   ];
   const size = 64;
   const length = across === 'u' ? 256 : 4;

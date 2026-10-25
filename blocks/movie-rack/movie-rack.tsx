@@ -18,6 +18,13 @@ const BELL = 26;
 
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
+// The ruler's number rolls like an iOS picker: up when moving forward, down when moving back.
+const ROLL = {
+  enter: (direction: number) => ({ y: direction * 12, opacity: 0, filter: 'blur(2px)' }),
+  center: { y: 0, opacity: 1, filter: 'blur(0px)' },
+  exit: (direction: number) => ({ y: direction * -12, opacity: 0, filter: 'blur(2px)' })
+};
+
 /**
  * A rack of CD jewel cases you scroll through; the case in focus slides out to show its cover.
  * Rendered with three.js (lit, glossy cases with soft shadows and depth of field) and driven by a
@@ -32,7 +39,13 @@ export default function MovieRack() {
   const tickRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   const [index, setIndex] = useState(START);
+  // Which way the counter rolls: the shorter way round the loop from the last film shown. Set in
+  // the same update as the index, so the incoming number enters from the right side.
+  const [direction, setDirection] = useState(1);
+  const lastIndex = useRef(START);
   const [picking, setPicking] = useState(false);
+  // False while the rack arrives or leaves; the title stays blurred until the focused case is out.
+  const [revealed, setRevealed] = useState(false);
   const [picked, setPicked] = useState<number | null>(START);
   const [saved, setSaved] = useState<Set<string>>(() => new Set());
   const [failed, setFailed] = useState(false);
@@ -67,7 +80,13 @@ export default function MovieRack() {
         start: START,
         reduced,
         onFrame: updateRuler,
-        onIndex: setIndex
+        onReveal: setRevealed,
+        onIndex: (next) => {
+          const delta = (((next - lastIndex.current) % COUNT) + COUNT) % COUNT;
+          if (delta) setDirection(delta <= COUNT / 2 ? 1 : -1);
+          lastIndex.current = next;
+          setIndex(next);
+        }
       });
     } catch {
       setFailed(true);
@@ -222,9 +241,11 @@ export default function MovieRack() {
         }}
         aria-hidden
       />
+      {/* Softens only the far left and right edges of the screen; the cases themselves stay sharp. */}
+      <div className={styles.edgeBlur} aria-hidden />
       {failed && <p className={styles.fallback}>This needs WebGL, which isn’t available in this browser.</p>}
 
-      <header className={styles.header} data-picking={picking || undefined}>
+      <header className={styles.header} data-picking={picking || !revealed || undefined}>
         <div className={styles.titleSlot} aria-live={picking ? 'off' : 'polite'}>
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
@@ -288,7 +309,22 @@ export default function MovieRack() {
             ))}
           </div>
           <div className={styles.needle} />
-          <span className={`${styles.glass} ${styles.counter}`}>{index + 1}</span>
+          <span className={`${styles.glass} ${styles.counter}`}>
+            <AnimatePresence initial={false} custom={direction}>
+              <motion.span
+                key={index}
+                custom={direction}
+                variants={ROLL}
+                initial="enter"
+                animate="center"
+                exit="exit"
+                transition={{ duration: 0.18, ease: EASE_OUT }}
+                className={styles.counterValue}
+              >
+                {index + 1}
+              </motion.span>
+            </AnimatePresence>
+          </span>
         </div>
 
         <div className={styles.controls}>
