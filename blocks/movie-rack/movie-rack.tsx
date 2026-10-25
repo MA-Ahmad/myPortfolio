@@ -107,6 +107,8 @@ export default function MovieRack() {
       const scale = event.deltaMode === 1 ? 16 : 1;
       const delta = (Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX) * scale;
       setPicking(false);
+      // The cases slide out from under a still mouse, so drop the lift until it moves again.
+      scene.hover(null);
       scene.wheel(delta / 110);
     };
     canvas.addEventListener('wheel', onWheel, { passive: false });
@@ -132,9 +134,16 @@ export default function MovieRack() {
     if (!scene) return;
     const state = press.current;
     if (!state) {
+      // Hover lift is for a mouse only; on touch a tap would leave a case raised.
+      if (event.pointerType !== 'mouse') return;
       const rect = canvas.getBoundingClientRect();
-      const over = scene.hit(event.clientX - rect.left, event.clientY - rect.top, rect.width, rect.height);
-      canvas.style.cursor = over === null ? 'grab' : 'pointer';
+      const over = scene.hover({
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+        width: rect.width,
+        height: rect.height
+      });
+      canvas.style.cursor = over ? 'pointer' : 'grab';
       return;
     }
     const dx = event.clientX - state.x;
@@ -142,6 +151,7 @@ export default function MovieRack() {
     if (!state.dragging) {
       if (Math.hypot(dx, dy) < 4) return;
       state.dragging = true;
+      scene.hover(null);
       canvas.setPointerCapture(event.pointerId);
       canvas.style.cursor = 'grabbing';
       setPicking(false);
@@ -238,6 +248,7 @@ export default function MovieRack() {
         onPointerCancel={onPointerUp}
         onPointerLeave={() => {
           if (!press.current && canvasRef.current) canvasRef.current.style.cursor = '';
+          sceneRef.current?.hover(null);
         }}
         aria-hidden
       />

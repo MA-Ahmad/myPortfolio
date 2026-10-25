@@ -16,6 +16,9 @@ const GAP = 0.27;
 // Set per screen shape on resize (see VIEWS).
 const PULL_X = 1.0;
 const PULL_Z = 0.12;
+// How far a case rises under the mouse, and how quickly it eases there (per second).
+const HOVER_LIFT = 0.055;
+const HOVER_RATE = 14;
 // The rack loops, and enough cases are laid out to run past both corners of the screen, so it
 // always reads as endless: new cases slide in from off-screen rather than appearing at an end.
 const MAX_SLOTS = 96;
@@ -224,6 +227,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     mesh.castShadow = true;
     mesh.visible = false;
     mesh.userData.index = -1;
+    mesh.userData.lift = 0;
     const lid = new THREE.Mesh(lidGeometry, glass);
     lid.position.z = CASE_T / 2 + 0.002;
     // Not a ray target: the pick test should hit the case, not its lid.
@@ -333,7 +337,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       mesh.castShadow = landed > 0.999;
       mesh.position.set(
         -d * GAP * skew + pull * PULL_X + away * 6,
-        pull * 0.015 + away * 1.2,
+        pull * 0.015 + away * 1.2 + (mesh.userData.lift as number) * HOVER_LIFT,
         -d * GAP + pull * PULL_Z + away * 1.5
       );
       mesh.rotation.set(0, away * 1.3, 0);
@@ -383,6 +387,25 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     }
   }
 
+  // The hovered case rises and the rest settle back; an exponential approach stays smooth when the
+  // mouse sweeps quickly across several cases.
+  let hovered: THREE.Object3D | null = null;
+  function easeLift(dt: number) {
+    let moving = false;
+    const rate = 1 - Math.exp(-dt * HOVER_RATE);
+    for (const { mesh } of slots) {
+      const lift = mesh.userData.lift as number;
+      const target = mesh === hovered ? 1 : 0;
+      if (Math.abs(target - lift) < 0.001) {
+        mesh.userData.lift = target;
+        continue;
+      }
+      mesh.userData.lift = lift + (target - lift) * rate;
+      moving = true;
+    }
+    return moving;
+  }
+
   function easeBackdrop(dt: number) {
     let moving = false;
     const rate = 1 - Math.exp(-dt * 5);
@@ -408,6 +431,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     last = now;
     stepPhysics(now, dt);
     const backdropMoving = easeBackdrop(dt);
+    const lifting = easeLift(dt);
 
     const index = wrapIndex(Math.round(position));
     if (index !== shownIndex) {
@@ -428,7 +452,7 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
     onFrame(position);
 
     // Sleeps once everything has settled; any input wakes it.
-    if (mode.kind !== 'idle' || arrivalTween || backdropMoving) wake();
+    if (mode.kind !== 'idle' || arrivalTween || backdropMoving || lifting) wake();
     else last = 0;
   }
 
@@ -461,14 +485,29 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
   const raycaster = new THREE.Raycaster();
   const meshes = slots.map((slot) => slot.mesh);
 
+  function caseAt(x: number, y: number, width: number, height: number) {
+    raycaster.setFromCamera(new THREE.Vector2((x / width) * 2 - 1, -(y / height) * 2 + 1), camera);
+    const [first] = raycaster.intersectObjects(meshes.filter((m) => m.visible), false);
+    return first ? first.object : null;
+  }
+
   const api = {
     resize,
 
     /** The film under a point in canvas pixels, if any. */
     hit(x: number, y: number, width: number, height: number): number | null {
-      raycaster.setFromCamera(new THREE.Vector2((x / width) * 2 - 1, -(y / height) * 2 + 1), camera);
-      const [first] = raycaster.intersectObjects(meshes.filter((m) => m.visible), false);
-      return first ? (first.object.userData.index as number) : null;
+      const object = caseAt(x, y, width, height);
+      return object ? (object.userData.index as number) : null;
+    },
+
+    /** Raises the case under a mouse position (canvas pixels), or lowers it again with null. */
+    hover(point: { x: number; y: number; width: number; height: number } | null): boolean {
+      const next = point ? caseAt(point.x, point.y, point.width, point.height) : null;
+      if (next !== hovered) {
+        hovered = next;
+        wake();
+      }
+      return next !== null;
     },
 
     goTo(index: number) {
