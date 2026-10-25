@@ -27,6 +27,7 @@ export function blockMarkdown(block: BlockMeta, files: BlockFile[], siteUrl: str
   const dependencies = block.dependencies?.length
     ? `## Dependencies\n\n\`\`\`bash\nnpm install ${block.dependencies.join(' ')}\n\`\`\`\n\n`
     : '';
+  const assets = block.assets ? `## Assets\n\n${block.assets}\n\n` : '';
   return `# ${block.title}
 
 ${block.description}
@@ -34,7 +35,7 @@ ${block.description}
 - Preview: ${siteUrl}/blocks/${block.category}/${block.name}
 - Built with React, TypeScript and CSS modules. The default export of \`${files[0]?.path}\` is the block.
 
-${dependencies}## Files
+${dependencies}${assets}## Files
 
 ${files.map((file) => `- \`${block.name}/${file.path}\``).join('\n')}
 

@@ -26,6 +26,9 @@ export type BlockMeta = {
   iframeHeight?: number;
   /** npm packages the block needs, listed in its Markdown for AI tools and anyone copying it. */
   dependencies?: string[];
+  /** Files the block reads from `public/` rather than ships as source (images, fonts), in Markdown:
+   * where they go, and how the block behaves without them. Listed under "Assets" in its Markdown. */
+  assets?: string;
 };
 
 export const BLOCK_CATEGORIES: BlockCategory[] = [
@@ -47,7 +50,9 @@ export const BLOCKS: BlockMeta[] = [
     createdAt: '2026-10-25',
     files: ['movie-rack.tsx', 'rack-scene.ts', 'cover-texture.ts', 'movies.ts', 'movie-rack.module.css'],
     iframeHeight: 820,
-    dependencies: ['three', 'framer-motion', 'lucide-react']
+    dependencies: ['three', 'framer-motion', 'lucide-react'],
+    assets:
+      'Optional film posters, one per film in `movies.ts`, at `public/blocks/movie-rack/posters/<id>.jpg` (the `poster` field holds each path; any portrait image works). They are not included here. Every case shows a painted cover until its poster loads, so the rack works without them; to leave them out entirely, remove the `poster` fields.'
   }
 ];
 
