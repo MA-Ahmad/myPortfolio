@@ -166,6 +166,18 @@ export function createRackScene({ canvas, movies, start, reduced, onFrame, onInd
       clearcoat: 1,
       clearcoatRoughness: 0.04
     });
+    // The painted cover holds the place until the real poster arrives, then is redrawn with it.
+    if (movie.poster) {
+      const image = new Image();
+      image.decoding = 'async';
+      image.onload = () => {
+        if (disposed) return;
+        texture.image = drawCover(movie, image);
+        texture.needsUpdate = true;
+        wake();
+      };
+      image.src = movie.poster;
+    }
     return { front, texture };
   });
 

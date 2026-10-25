@@ -3,6 +3,14 @@ import type { Movie } from './movies';
 // The insert's pixel size, matching the case: 1 wide by 0.78 tall (CASE_H in rack-scene.ts).
 export const COVER_W = 512;
 export const COVER_H = 400;
+// The hinge spine down the lid's left side, as a share of the case's width.
+export const HINGE = 0.07;
+
+// Where the insert sits in the tray, in cover pixels: right of the hinge, inside a dark border.
+const BORDER = Math.round(COVER_W * 0.034);
+const INSERT_X = Math.round(COVER_W * HINGE) + Math.round(BORDER * 0.7);
+const INSERT_W = COVER_W - INSERT_X - BORDER;
+const INSERT_H = COVER_H - BORDER * 2;
 
 let grain: HTMLCanvasElement | null = null;
 
@@ -49,11 +57,15 @@ function glow(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, co
  * Paints a film's insert: a spine strip with the title set vertically, then a poster built from
  * soft light, one restrained motif and condensed type, finished with grain and seated in the tray.
  */
-export function drawCover(movie: Movie): HTMLCanvasElement {
+export function drawCover(movie: Movie, poster?: HTMLImageElement): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = COVER_W;
   canvas.height = COVER_H;
   const ctx = canvas.getContext('2d')!;
+  if (poster) {
+    drawPoster(ctx, movie, poster);
+    return encase(canvas);
+  }
   const [deep, mid, light] = movie.palette;
   const spine = Math.round(COVER_W * 0.15);
   const artX = spine;
@@ -188,8 +200,93 @@ export function drawCover(movie: Movie): HTMLCanvasElement {
   return encase(canvas);
 }
 
-// The hinge spine down the lid's left side, as a share of the case's width.
-export const HINGE = 0.07;
+/** The darkened average color of a region of an image, for a band that sits beside it. */
+function bandColor(image: HTMLImageElement, sx: number, sy: number, sw: number, sh: number) {
+  const probe = document.createElement('canvas');
+  probe.width = probe.height = 8;
+  const ctx = probe.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(image, sx, sy, sw, sh, 0, 0, 8, 8);
+  const data = ctx.getImageData(0, 0, 8, 8).data;
+  let [r, g, b] = [0, 0, 0];
+  for (let i = 0; i < data.length; i += 4) [r, g, b] = [r + data[i], g + data[i + 1], b + data[i + 2]];
+  const n = data.length / 4;
+  // Darkened so the white title always reads, whatever the poster's colors.
+  const dim = (v: number) => Math.round((v / n) * 0.45);
+  return `rgb(${dim(r)} ${dim(g)} ${dim(b)})`;
+}
+
+/**
+ * Lays out a real poster's insert like a shop-bought case: a band down the left in the poster's own
+ * darkened color, the title set up it in bold capitals with the year at its foot, and the poster
+ * filling the rest, cropped around `focus` (0 top, 1 bottom). Drawn in insert pixels and stretched to
+ * the canvas, so it comes out undistorted once the insert is seated.
+ */
+function drawPoster(ctx: CanvasRenderingContext2D, movie: Movie, poster: HTMLImageElement) {
+  ctx.save();
+  ctx.scale(COVER_W / INSERT_W, COVER_H / INSERT_H);
+  const band = Math.round(INSERT_W * 0.3);
+  const artW = INSERT_W - band;
+
+  // Poster: a thin margin is trimmed first, because some scans carry a white border.
+  const trim = 0.04;
+  const width = poster.naturalWidth * (1 - trim * 2);
+  const height = poster.naturalHeight * (1 - trim * 2);
+  const aspect = artW / INSERT_H;
+  const sw = Math.min(width, height * aspect);
+  const sh = sw / aspect;
+  const sx = poster.naturalWidth * trim + (width - sw) / 2;
+  const sy = poster.naturalHeight * trim + (height - sh) * Math.min(1, Math.max(0, movie.focus ?? 0.5));
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(poster, sx, sy, sw, sh, band, 0, artW, INSERT_H);
+
+  // Band: colored from the poster's left edge, a touch lighter at the top, with a soft shadow where
+  // it meets the art.
+  ctx.fillStyle = bandColor(poster, sx, sy, sw * 0.25, sh);
+  ctx.fillRect(0, 0, band, INSERT_H);
+  const light = ctx.createLinearGradient(0, 0, 0, INSERT_H);
+  light.addColorStop(0, 'rgba(255,255,255,0.08)');
+  light.addColorStop(1, 'rgba(0,0,0,0.2)');
+  ctx.fillStyle = light;
+  ctx.fillRect(0, 0, band, INSERT_H);
+  const edge = ctx.createLinearGradient(band, 0, band + 10, 0);
+  edge.addColorStop(0, 'rgba(0,0,0,0.35)');
+  edge.addColorStop(1, 'transparent');
+  ctx.fillStyle = edge;
+  ctx.fillRect(band, 0, 10, INSERT_H);
+
+  // Title: up the band, bottom to top, on up to three lines, as large as fits.
+  const pad = 22;
+  const yearSpace = 46;
+  const length = INSERT_H - pad - yearSpace;
+  const across = band - pad * 2;
+  const title = movie.title.toUpperCase();
+  let size = 36;
+  let lines: string[] = [];
+  for (; size > 12; size -= 1) {
+    ctx.font = `800 ${size}px 'Helvetica Neue', Arial, sans-serif`;
+    lines = wrap(ctx, title, length);
+    const longest = Math.max(...lines.map((line) => ctx.measureText(line).width));
+    if (lines.length <= 3 && lines.length * size * 1.08 <= across && longest <= length) break;
+  }
+  ctx.save();
+  ctx.translate(band / 2, INSERT_H - yearSpace);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'middle';
+  ctx.letterSpacing = '0.5px';
+  const lineHeight = size * 1.08;
+  lines.forEach((line, i) => ctx.fillText(line, 0, (i - (lines.length - 1) / 2) * lineHeight));
+  ctx.restore();
+
+  // Year, level at the foot of the band.
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.font = `600 15px system-ui, sans-serif`;
+  ctx.letterSpacing = '1px';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(String(movie.year), band / 2, INSERT_H - pad);
+  ctx.restore();
+}
 
 /**
  * Seats the insert in the tray under the lid: dark plastic around it, the insert recessed with a soft
@@ -201,12 +298,7 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
   canvas.width = COVER_W;
   canvas.height = COVER_H;
   const ctx = canvas.getContext('2d')!;
-  const hinge = Math.round(COVER_W * HINGE);
-  const border = Math.round(COVER_W * 0.034);
-  const x = hinge + Math.round(border * 0.7);
-  const y = border;
-  const w = COVER_W - x - border;
-  const h = COVER_H - border * 2;
+  const [x, y, w, h] = [INSERT_X, BORDER, INSERT_W, INSERT_H];
 
   // Clear plastic shows the dark tray behind it, with a little light caught toward the top.
   const lid = ctx.createLinearGradient(0, 0, COVER_W * 0.3, COVER_H);
