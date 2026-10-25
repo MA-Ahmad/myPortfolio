@@ -6,8 +6,8 @@ import type { ParsedUrlQuery } from 'querystring';
  */
 export const PLAY_OPTIONS = {
   lines: [
-    { value: 'default', label: 'Default' },
     { value: 'guides', label: 'Guides' },
+    { value: 'plain', label: 'Plain' },
     { value: 'none', label: 'None' }
   ],
   sep: [
@@ -37,7 +37,7 @@ export const PLAY_KEYS = Object.keys(PLAY_OPTIONS) as PlayKey[];
 
 /** The page as it ships; play mode with these values looks exactly like the normal page. */
 export const PLAY_DEFAULTS: PlaySettings = {
-  lines: 'default',
+  lines: 'guides',
   sep: 'stripes',
   width: 'narrow',
   accent: 'mono'

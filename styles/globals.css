@@ -576,28 +576,29 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
   initial-value: 0%;
 }
 
+/* Initial values must not depend on font size, so these lengths are px (48rem, 1.5rem, 2rem). */
 @property --play-frame {
   syntax: '<length>';
   inherits: true;
-  initial-value: 48rem;
+  initial-value: 768px;
 }
 
 @property --play-gutter {
   syntax: '<length>';
   inherits: true;
-  initial-value: 0px;
+  initial-value: 24px;
 }
 
 @property --play-rails {
   syntax: '<percentage>';
   inherits: true;
-  initial-value: 0%;
+  initial-value: 100%;
 }
 
 @property --play-sep-height {
   syntax: '<length>';
   inherits: true;
-  initial-value: 2rem;
+  initial-value: 32px;
 }
 
 html[data-play] {
@@ -612,8 +613,8 @@ html[data-play] {
   --play-dots: 0%;
   --play-fill: 0%;
   --play-frame: 48rem;
-  --play-gutter: 0px;
-  --play-rails: 0%;
+  --play-gutter: 1.5rem;
+  --play-rails: 100%;
   --play-sep-height: 2rem;
 
   --line: color-mix(in oklab, var(--play-tint) var(--play-lines-on), transparent);
@@ -638,11 +639,13 @@ html[data-play][data-play-ready] {
 
 html[data-play][data-play-lines='none'] {
   --play-lines-on: 0%;
+  --play-gutter: 0px;
+  --play-rails: 0%;
 }
 
-html[data-play][data-play-lines='guides'] {
-  --play-gutter: 1.5rem;
-  --play-rails: 100%;
+html[data-play][data-play-lines='plain'] {
+  --play-gutter: 0px;
+  --play-rails: 0%;
 }
 
 html[data-play][data-play-sep='dots'] {
@@ -738,8 +741,12 @@ html[data-play] .stripe-divider::before {
   background-position: 0 0, 4px 50%, 0 0;
 }
 
-/* Guides: hatched gutters just outside the content column, drawn through the header too. */
-.play-rails {
+/*
+ * Guide rails (components/home-page/home.tsx): hatched gutters just outside the home page's
+ * content column, drawn through the header too. They are part of the normal page; play mode
+ * only moves the registered properties they read, whose initial values are the shipped look.
+ */
+.guide-rails {
   position: fixed;
   inset-block: 0;
   left: 50%;
@@ -750,8 +757,8 @@ html[data-play] .stripe-divider::before {
   --play-rail: color-mix(in oklab, var(--line) var(--play-rails), transparent);
 }
 
-.play-rails::before,
-.play-rails::after {
+.guide-rails::before,
+.guide-rails::after {
   content: '';
   position: absolute;
   inset-block: 0;
@@ -766,12 +773,12 @@ html[data-play] .stripe-divider::before {
   background-size: 10px 10px;
 }
 
-.play-rails::before {
+.guide-rails::before {
   right: 100%;
   border-left: 1px solid var(--play-rail);
 }
 
-.play-rails::after {
+.guide-rails::after {
   left: 100%;
   border-right: 1px solid var(--play-rail);
 }
