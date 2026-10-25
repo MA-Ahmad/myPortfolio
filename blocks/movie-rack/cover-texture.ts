@@ -189,59 +189,92 @@ export function drawCover(movie: Movie): HTMLCanvasElement {
 }
 
 /**
- * Seats the insert inside the jewel case's front: a frosted hinge band down the left, a thin
- * strip of clear plastic around the insert showing the dark tray behind, and the lid's lit rim.
+ * Seats the insert inside the jewel case's front, the way a real one reads at a glance: a frosted
+ * hinge strip down the left with its knuckle tabs top and bottom, a band of clear lid plastic around
+ * the recessed insert, a groove running inside the lid's rim, and a faint sheen across the lid.
  */
 function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
   const canvas = document.createElement('canvas');
   canvas.width = COVER_W;
   canvas.height = COVER_H;
   const ctx = canvas.getContext('2d')!;
-  const hinge = Math.round(COVER_W * 0.085);
-  const border = Math.round(COVER_W * 0.022);
-  const x = hinge + Math.round(border * 0.6);
+  const hinge = Math.round(COVER_W * 0.07);
+  const border = Math.round(COVER_W * 0.034);
+  const groove = Math.round(border * 0.42);
+  const x = hinge + Math.round(border * 0.7);
   const y = border;
   const w = COVER_W - x - border;
   const h = COVER_H - border * 2;
 
-  // The tray, seen through clear plastic.
-  ctx.fillStyle = '#1c1f25';
+  // Clear lid plastic over the tray: light grey, brightest along the top where the light lands.
+  const lid = ctx.createLinearGradient(0, 0, COVER_W * 0.3, COVER_H);
+  lid.addColorStop(0, 'rgb(214 218 224)');
+  lid.addColorStop(0.5, 'rgb(176 181 189)');
+  lid.addColorStop(1, 'rgb(150 156 165)');
+  ctx.fillStyle = lid;
   ctx.fillRect(0, 0, COVER_W, COVER_H);
-  ctx.drawImage(insert, x, y, w, h);
-  ctx.strokeStyle = 'rgba(255,255,255,0.16)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(x - 0.5, y - 0.5, w + 1, h + 1);
 
-  // Hinge: frosted plastic with fine vertical ridges and a knuckle at each end.
+  // The insert, recessed: a soft shadow under its edge, a dark contact line and a lit lip outside it.
+  ctx.save();
+  ctx.shadowColor = 'rgba(0,0,0,0.45)';
+  ctx.shadowBlur = 6;
+  ctx.shadowOffsetY = 1.5;
+  ctx.drawImage(insert, x, y, w, h);
+  ctx.restore();
+  ctx.strokeStyle = 'rgba(20,22,26,0.7)';
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x - 0.75, y - 0.75, w + 1.5, h + 1.5);
+  ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x - 2.5, y - 2.5, w + 5, h + 5);
+
+  // The lid's groove: a dark line with a bright one just inside, the "double rail" along each edge.
+  ctx.strokeStyle = 'rgba(40,44,52,0.45)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(groove + 0.5, groove + 0.5, COVER_W - groove * 2 - 1, COVER_H - groove * 2 - 1);
+  ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+  ctx.strokeRect(groove + 1.5, groove + 1.5, COVER_W - groove * 2 - 3, COVER_H - groove * 2 - 3);
+
+  // Hinge: a frosted strip with fine vertical ridges, a lit edge and a shadow where it meets the lid.
   const frost = ctx.createLinearGradient(0, 0, hinge, 0);
-  frost.addColorStop(0, 'rgb(236 240 245)');
-  frost.addColorStop(0.22, 'rgb(196 202 211)');
-  frost.addColorStop(0.5, 'rgb(242 245 248)');
-  frost.addColorStop(0.78, 'rgb(182 189 199)');
-  frost.addColorStop(1, 'rgb(226 230 236)');
+  frost.addColorStop(0, 'rgb(232 235 239)');
+  frost.addColorStop(0.35, 'rgb(205 210 216)');
+  frost.addColorStop(0.7, 'rgb(226 229 234)');
+  frost.addColorStop(1, 'rgb(196 201 208)');
   ctx.fillStyle = frost;
   ctx.fillRect(0, 0, hinge, COVER_H);
-  for (let rx = 2; rx < hinge - 1; rx += 3) {
-    ctx.fillStyle = rx % 2 ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.08)';
+  for (let rx = 3; rx < hinge - 3; rx += 3) {
+    ctx.fillStyle = rx % 2 ? 'rgba(255,255,255,0.35)' : 'rgba(0,0,0,0.06)';
     ctx.fillRect(rx, 0, 1, COVER_H);
   }
-  ctx.fillStyle = 'rgba(30,34,40,0.35)';
-  for (const top of [0.06, 0.86]) ctx.fillRect(2, COVER_H * top, hinge - 4, COVER_H * 0.08);
-  ctx.fillStyle = 'rgba(255,255,255,0.9)';
-  ctx.fillRect(hinge - 1.5, 0, 1.5, COVER_H);
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(hinge, 0, 1.5, COVER_H);
+  ctx.fillStyle = 'rgba(255,255,255,0.95)';
+  ctx.fillRect(hinge - 2, 0, 1.5, COVER_H);
+  ctx.fillStyle = 'rgba(30,34,40,0.4)';
+  ctx.fillRect(hinge - 0.5, 0, 1.5, COVER_H);
 
-  // The lid: a bright outer rim, a softer inner one, and a faint diagonal sheen.
-  ctx.strokeStyle = 'rgba(255,255,255,0.9)';
-  ctx.lineWidth = 2.5;
-  ctx.strokeRect(1.25, 1.25, COVER_W - 2.5, COVER_H - 2.5);
-  ctx.strokeStyle = 'rgba(255,255,255,0.22)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(5.5, 5.5, COVER_W - 11, COVER_H - 11);
+  // Knuckle tabs at each end of the hinge: small inset rectangles with a shadowed top and lit bottom.
+  const tabW = Math.round(hinge * 0.5);
+  const tabH = Math.round(COVER_H * 0.075);
+  const tabX = Math.round((hinge - tabW) / 2) - 1;
+  for (const tabY of [Math.round(border * 0.9), COVER_H - Math.round(border * 0.9) - tabH]) {
+    ctx.fillStyle = 'rgba(150,156,165,0.9)';
+    ctx.fillRect(tabX, tabY, tabW, tabH);
+    ctx.fillStyle = 'rgba(30,34,40,0.55)';
+    ctx.fillRect(tabX, tabY, tabW, 1.5);
+    ctx.fillRect(tabX, tabY, 1.5, tabH);
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.fillRect(tabX, tabY + tabH - 1.5, tabW, 1.5);
+    ctx.fillRect(tabX + tabW - 1.5, tabY, 1.5, tabH);
+  }
+
+  // The lid's outer rim, and a faint sheen falling across the clear plastic.
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(1, 1, COVER_W - 2, COVER_H - 2);
   const sheen = ctx.createLinearGradient(0, 0, COVER_W, COVER_H);
-  sheen.addColorStop(0, 'rgba(255,255,255,0.12)');
-  sheen.addColorStop(0.35, 'rgba(255,255,255,0)');
+  sheen.addColorStop(0, 'rgba(255,255,255,0.16)');
+  sheen.addColorStop(0.3, 'rgba(255,255,255,0.03)');
+  sheen.addColorStop(0.55, 'rgba(255,255,255,0)');
   ctx.fillStyle = sheen;
   ctx.fillRect(0, 0, COVER_W, COVER_H);
 
@@ -250,30 +283,41 @@ function encase(insert: HTMLCanvasElement): HTMLCanvasElement {
 
 /**
  * The case's thin edges in profile: lid lip, the seam where lid meets tray, then the tray's rim.
- * Bands run across the edge's thickness; `across` picks which texture axis that is.
+ * Bands run across the edge's thickness; `across` picks which texture axis that is. The sides
+ * (`u`) also carry the lid's snap clips near the top and bottom, as short dark notches.
  */
 export function drawEdge(across: 'u' | 'v'): HTMLCanvasElement {
   const bands: [number, string][] = [
-    [0.12, 'rgb(248 250 252)'],
-    [0.2, 'rgb(150 156 166)'],
-    [0.44, 'rgb(214 219 226)'],
-    [0.54, 'rgb(70 75 84)'],
-    [0.8, 'rgb(206 211 219)'],
-    [0.9, 'rgb(246 248 251)'],
-    [1, 'rgb(160 166 176)']
+    [0.1, 'rgb(246 248 251)'],
+    [0.17, 'rgb(168 174 183)'],
+    [0.42, 'rgb(212 217 223)'],
+    [0.5, 'rgb(96 102 112)'],
+    [0.58, 'rgb(186 192 200)'],
+    [0.82, 'rgb(208 213 220)'],
+    [0.9, 'rgb(244 246 249)'],
+    [1, 'rgb(170 176 185)']
   ];
   const size = 64;
+  const length = across === 'u' ? 256 : 4;
   const canvas = document.createElement('canvas');
   canvas.width = across === 'u' ? size : 4;
-  canvas.height = across === 'u' ? 4 : size;
+  canvas.height = across === 'u' ? length : size;
   const ctx = canvas.getContext('2d')!;
   let from = 0;
   for (const [to, color] of bands) {
     ctx.fillStyle = color;
-    if (across === 'u') ctx.fillRect(from * size, 0, (to - from) * size + 1, 4);
+    if (across === 'u') ctx.fillRect(from * size, 0, (to - from) * size + 1, length);
     // Canvas rows run top-down but v runs bottom-up; either way the profile is symmetric enough.
     else ctx.fillRect(0, from * size, 4, (to - from) * size + 1);
     from = to;
+  }
+  if (across === 'u') {
+    for (const at of [0.1, 0.84]) {
+      ctx.fillStyle = 'rgba(40,44,52,0.75)';
+      ctx.fillRect(size * 0.3, length * at, size * 0.4, length * 0.06);
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillRect(size * 0.3, length * (at + 0.06), size * 0.4, 1);
+    }
   }
   return canvas;
 }

@@ -15,7 +15,7 @@ const CASE_T = 0.08;
 const GAP = 0.27;
 // How far each case also steps left as the row goes back: more tips the row into a steep diagonal.
 // Set per screen shape on resize (see VIEWS).
-const PULL_X = 0.92;
+const PULL_X = 1.0;
 const PULL_Z = 0.12;
 // The rack loops, and enough cases are laid out to run past both corners of the screen, so it
 // always reads as endless: new cases slide in from off-screen rather than appearing at an end.
