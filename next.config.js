@@ -25,7 +25,11 @@ const nextConfig = {
         source: '/canvas',
         destination: '/theme-studio',
         permanent: true
-      }
+      },
+      // Pages removed in October 2026 whose content now lives on the home page.
+      ...['/about', '/projects', '/tech-stack', '/open-source', '/developer-story'].map(
+        (source) => ({ source, destination: '/', permanent: true })
+      )
     ];
   },
   // The block Markdown route reads its source files from disk at request time.
@@ -35,6 +39,10 @@ const nextConfig = {
   async rewrites() {
     return {
       beforeFiles: [
+        {
+          source: '/sitemap.xml',
+          destination: '/api/sitemap'
+        },
         {
           source: '/llms.txt',
           destination: '/api/agents/llms'

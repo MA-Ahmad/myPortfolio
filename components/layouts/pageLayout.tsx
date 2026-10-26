@@ -8,6 +8,7 @@ type Props = {
   description?: string
   keywords?: string
   image?: string
+  canonical?: string
   animate?: boolean
 }
 
@@ -23,6 +24,7 @@ const PageLayout = ({
   description,
   keywords,
   image,
+  canonical,
   animate = true,
 }: Props): JSX.Element => (
   <Fragment>
@@ -31,6 +33,7 @@ const PageLayout = ({
       description={description}
       keywords={keywords}
       image={image}
+      canonical={canonical}
     />
     {animate ? (
       <motion.main

@@ -6,6 +6,8 @@ import { EDUCATION, EXPERIENCES, PROFILE, PROJECTS } from 'data/profile';
 
 export function sendMarkdown(res: NextApiResponse, content: string) {
   res.setHeader('Content-Type', 'text/markdown;charset=utf-8');
+  // Every document restates the home page, so search engines should index that instead.
+  res.setHeader('Link', `<${SITE_URL}/>; rel="canonical"`);
   res.status(200).send(content);
 }
 

@@ -1,6 +1,5 @@
 import { ReactElement, ReactNode } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
-import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Meta from 'components/shared/meta';
 import type { BlogListPost } from 'components/blog/post-item';
@@ -24,10 +23,7 @@ const ThemePage: NextPageWithLayout<Props> = ({ theme, contributions, posts }) =
 
   return (
     <>
-      <Meta title={title} />
-      <Head>
-        <meta name="robots" content="noindex" />
-      </Head>
+      <Meta title={title} noindex />
       <Home contributions={contributions} posts={posts} />
     </>
   );
