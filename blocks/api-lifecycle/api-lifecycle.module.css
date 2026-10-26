@@ -70,13 +70,18 @@
     transform 120ms var(--anatomy-ease);
 }
 
-.chip:hover {
+.chip:not(:disabled):hover {
   box-shadow: 0 0 0 1px var(--anatomy-mid);
   color: var(--anatomy-strong);
 }
 
-.chip:active {
+.chip:not(:disabled):active {
   transform: scale(0.97);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .chip[aria-pressed='true'] {
@@ -133,14 +138,19 @@
 /* ── Figure ───────────────────────────────────────────────────────────────── */
 
 .stageFrame {
-  cursor: pointer;
+  cursor: grab;
   touch-action: pan-y;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }
 
+.stageFrame:active {
+  cursor: grabbing;
+}
+
+/* Clipped to its box: moving in to the monitor would otherwise spill over the card's corners. */
 .stage :global(.iso-svg) {
-  overflow: visible;
+  overflow: hidden;
 }
 
 .recessFloor {
@@ -297,7 +307,11 @@
     overflow: hidden;
   }
 
-  .root :global(.iso-plate) .stage :global(.iso-svg) {
+  .root :global(.iso-plate) .stageFrame:active {
+  cursor: grabbing;
+}
+
+.stage :global(.iso-svg) {
     width: 112%;
     margin: -2% -6% -1%;
   }

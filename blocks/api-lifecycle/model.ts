@@ -10,16 +10,19 @@
 export interface Profile {
   id: number;
   name: string;
+  /** Social handle, shown as @handle. */
   handle: string;
+  /** GitHub username, when the user has one. */
+  github?: string;
   role: string;
   repos: number;
   followers: number;
 }
 
 export const PROFILES: Profile[] = [
-  { id: 42, name: 'Ada Lovelace', handle: 'ada', role: 'Analyst', repos: 12, followers: 1843 },
-  { id: 108, name: 'Grace Hopper', handle: 'grace', role: 'Compiler lead', repos: 31, followers: 5210 },
-  { id: 256, name: 'Linus Torvalds', handle: 'linus', role: 'Kernel maintainer', repos: 7, followers: 21400 }
+  // Repos and followers are MA-Ahmad's public GitHub counts.
+  { id: 42, name: 'Muhammad Ahmad', handle: 'muhammad_ahmaad', github: 'MA-Ahmad', role: 'Senior Software Engineer', repos: 77, followers: 241 },
+  { id: 108, name: 'Grace Hopper', handle: 'grace', role: 'Compiler lead', repos: 31, followers: 5210 }
 ];
 
 /** An id with no row, so the database answers 404. */
@@ -146,13 +149,13 @@ export function planOf(request: Request, cached: boolean): Plan {
     );
 
     if (outcome === 'hit') {
-      steps.push({ secs: 0.9, ms: 0, card: ['pocket', 'shuttle'], set: { label: 'cache hit', slip: 'none' } });
+      steps.push({ secs: 0.9, ms: 0, card: ['pocket', 'shuttle'], set: { label: 'cache hit' } });
     } else {
       steps.push(
         { secs: 1.0, ms: HOP, to: { x: STOP.db }, set: { label: 'to the database', pocket: -1 } },
         { secs: 0.7, ms: QUERY / 2, to: { drawer: 1 }, set: { label: 'querying' } }
       );
-      if (outcome === 'miss') steps.push({ secs: 1.0, ms: QUERY / 2, card: ['drawer', 'shuttle'], set: { label: 'row found', slip: 'none' } });
+      if (outcome === 'miss') steps.push({ secs: 1.0, ms: QUERY / 2, card: ['drawer', 'shuttle'], set: { label: 'row found' } });
       else steps.push({ secs: 0.8, ms: QUERY / 2, set: { label: 'no row', slip: 'empty', status: 404 } });
       steps.push({ secs: 1.0, ms: HOP, to: { x: STOP.cache, drawer: 0 }, set: { label: 'to the cache' } });
       if (outcome === 'miss') steps.push({ secs: 0.6, ms: CACHE_SET, set: { label: 'caching', pocket, stored: true } });

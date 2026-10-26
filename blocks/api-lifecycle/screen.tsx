@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CLIENT_ART } from './geometry';
+import type { Geometry } from './geometry';
 import { followersText, ms, profileOf, type Plan, type Screen as Kind } from './model';
 import { SCREEN } from './view';
 import styles from './api-lifecycle.module.css';
@@ -12,6 +12,8 @@ import styles from './api-lifecycle.module.css';
 
 export interface ScreenHandle {
   show: (kind: Kind, plan: Plan | null) => void;
+  /** Lay the screen on the glass as this camera sees it. */
+  place: (geometry: Geometry) => void;
 }
 
 const W = SCREEN.w;
@@ -56,17 +58,22 @@ function Body({ kind, plan }: { kind: Kind; plan: Plan | null }) {
         <text className={styles.screenStrong} x={17.5} y={9} fontSize={3.4}>
           {profile.name}
         </text>
-        <text className={styles.screenText} x={17.5} y={14} fontSize={2.5}>
+        <text className={styles.screenText} x={17.5} y={13.6} fontSize={2.5}>
           @{profile.handle}
         </text>
-        <text className={styles.screenText} x={3} y={21.5} fontSize={2.5}>
+        <text className={styles.screenText} x={3} y={19.6} fontSize={2.4}>
           {profile.role}
         </text>
-        <text className={styles.screenText} x={3} y={25.5} fontSize={2.4}>
+        {profile.github ? (
+          <text className={styles.screenText} x={3} y={23} fontSize={2.2}>
+            github.com/{profile.github}
+          </text>
+        ) : null}
+        <text className={styles.screenText} x={3} y={26.4} fontSize={2.3}>
           {profile.repos} repos · {followersText(profile.followers)} followers
         </text>
-        <line className={styles.screenRule} x1={3} x2={W - 3} y1={27.4} y2={27.4} />
-        <text className={styles.screenDim} x={3} y={30.4} fontSize={2}>
+        <line className={styles.screenRule} x1={3} x2={W - 3} y1={28} y2={28} />
+        <text className={styles.screenDim} x={3} y={31} fontSize={2}>
           200 · {plan ? ms(plan.ms) : ''} · {plan?.outcome === 'hit' ? 'cache' : 'db'}
         </text>
       </g>
@@ -105,13 +112,29 @@ function Body({ kind, plan }: { kind: Kind; plan: Plan | null }) {
   );
 }
 
-export const Screen = React.forwardRef<ScreenHandle>(function Screen(_, handle) {
+export const Screen = React.forwardRef<ScreenHandle, { geometry: Geometry }>(function Screen({ geometry }, handle) {
   const [shown, setShown] = React.useState<{ kind: Kind; plan: Plan | null }>({ kind: 'idle', plan: null });
-  React.useImperativeHandle(handle, () => ({ show: (kind, plan) => setShown({ kind, plan }) }), []);
+  const glass = React.useRef<SVGPathElement>(null);
+  const face = React.useRef<SVGGElement>(null);
+  const frame = React.useRef<SVGPathElement>(null);
+  React.useImperativeHandle(
+    handle,
+    () => ({
+      show: (kind, plan) => setShown({ kind, plan }),
+      place: ({ CLIENT_ART }) => {
+        glass.current?.setAttribute('d', CLIENT_ART.glass);
+        face.current?.setAttribute('transform', CLIENT_ART.screenMatrix);
+        frame.current?.setAttribute('d', CLIENT_ART.window);
+      }
+    }),
+    []
+  );
+  // The first render uses the resting camera; later cameras are written by `place`.
+  const { CLIENT_ART } = geometry;
   return (
     <g>
-      <path className={styles.glass} d={CLIENT_ART.glass} />
-      <g transform={CLIENT_ART.screenMatrix}>
+      <path ref={glass} className={styles.glass} d={CLIENT_ART.glass} />
+      <g ref={face} transform={CLIENT_ART.screenMatrix}>
         <clipPath id={CLIP}>
           <rect x={0} y={0} width={W} height={H} />
         </clipPath>
@@ -120,7 +143,7 @@ export const Screen = React.forwardRef<ScreenHandle>(function Screen(_, handle) 
           <Body kind={shown.kind} plan={shown.plan} />
         </g>
       </g>
-      <path className="iso-line" data-tone="mid" d={CLIENT_ART.window} />
+      <path ref={frame} className="iso-line" data-tone="mid" d={CLIENT_ART.window} />
     </g>
   );
 });

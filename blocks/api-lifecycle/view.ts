@@ -1,4 +1,4 @@
-import { boxCorners, fitProjection, iso, type Flat, type Plan, type Point3 } from './iso-kit';
+import { boxCorners, iso, type Plan, type Point3, type Projection } from './iso-kit';
 import { GATE_X, STOP } from './model';
 
 /**
@@ -9,6 +9,10 @@ import { GATE_X, STOP } from './model';
 export const WIDTH = 760;
 export const HEIGHT = 380;
 export const AZIMUTH = 62;
+/** The camera turns between these azimuths: past 90 the bench's far side, which has no detail, would face the viewer. */
+export const AZIMUTH_MIN = 22;
+export const AZIMUTH_MAX = 88;
+const PAD = 30;
 
 export const BASE: Plan = { x: -292, y: -76, w: 524, d: 146, r: 10 };
 export const BASE_H = 10;
@@ -30,7 +34,8 @@ export const DECK_TOP = DECK_Z + DECK_H;
 // The card a row travels as: a flat index card.
 export const CARD: Plan = { x: -8, y: -5.5, w: 16, d: 11, r: 1 };
 export const CARD_H = 0.8;
-export const SLIP: Plan = { x: -6, y: -4, w: 12, d: 8, r: 0.8 };
+/** The request ticket: narrow, beside the card's seat, so the card is added next to it and never replaces it. */
+export const SLIP: Plan = { x: 9.8, y: -4.5, w: 4.2, d: 9, r: 0.8 };
 
 // Client terminal.
 export const CLIENT_X = STOP.client;
@@ -70,12 +75,13 @@ export const DIAL_TOP = SERVER_TOP + DIAL_H;
 export const ROUTES = 5;
 export const ROUTE = 2;
 
-// Cache: a box with three pockets, a card lying in each cached one.
+// Cache: a box with two pockets, a card lying in each cached one.
 export const CACHE_X = STOP.cache;
 export const CACHE_BOX: Plan = { x: CACHE_X - 34, y: -38, w: 68, d: 40, r: 3 };
 export const CACHE_H = 18;
 export const POCKET_Y = -17;
-export const POCKET_X = [CACHE_X - 20, CACHE_X, CACHE_X + 20];
+/** One pocket per profile in PROFILES. */
+export const POCKET_X = [CACHE_X - 11, CACHE_X + 11];
 
 // Database: a filing cabinet with three drawers that slide toward the viewer.
 export const DB_X = STOP.db;
@@ -86,18 +92,41 @@ export const DRAWER_Z = [4, 27, 50];
 export const DRAWER_OUT = 22;
 export const DRAWER_BOX: Plan = { x: DB_X - 31, y: -48, w: 62, d: 48, r: 1.5 };
 
-export const P = fitProjection(
-  [
-    ...boxCorners(BASE, -BASE_H - FOOT_H, 0),
-    ...boxCorners(CABINET, 0, CABINET_H),
-    ...boxCorners({ x: GATE_X - POST / 2, y: POST_BACK_Y, w: POST, d: POST_FRONT_Y + POST - POST_BACK_Y, r: 0 }, 0, BEAM_Z + BEAM_H)
-  ],
-  WIDTH,
-  HEIGHT,
-  { pad: 30, azimuth: AZIMUTH }
-);
+const EXTREMES: Point3[] = [
+  ...boxCorners(BASE, -BASE_H - FOOT_H, 0),
+  ...boxCorners(CABINET, 0, CABINET_H),
+  ...boxCorners({ x: GATE_X - POST / 2, y: POST_BACK_Y, w: POST, d: POST_FRONT_Y + POST - POST_BACK_Y, r: 0 }, 0, BEAM_Z + BEAM_H)
+];
 
-export const at = (point: Point3): Flat => iso(point, P);
+function boundsAt(azimuth: number) {
+  const flat = EXTREMES.map((point) => iso(point, { origin: [0, 0], scale: 1, azimuth }));
+  const xs = flat.map(([x]) => x);
+  const ys = flat.map(([, y]) => y);
+  return { left: Math.min(...xs), right: Math.max(...xs), up: Math.min(...ys), down: Math.max(...ys) };
+}
+
+/** One scale for every azimuth, so turning the camera never zooms it. */
+const SCALE = (() => {
+  let scale = Infinity;
+  for (let azimuth = AZIMUTH_MIN; azimuth <= AZIMUTH_MAX; azimuth += 1) {
+    const { left, right, up, down } = boundsAt(azimuth);
+    scale = Math.min(scale, (WIDTH - PAD * 2) / (right - left), (HEIGHT - PAD * 2) / (down - up));
+  }
+  return scale;
+})();
+
+/** The camera at this azimuth, with the bench centred in the view box. */
+export function projectionAt(azimuth: number): Projection {
+  const { left, right, up, down } = boundsAt(azimuth);
+  return {
+    origin: [WIDTH / 2 - ((left + right) / 2) * SCALE, HEIGHT / 2 - ((up + down) / 2) * SCALE],
+    scale: SCALE,
+    azimuth
+  };
+}
+
+/** The resting camera, which the server renders. */
+export const P0 = projectionAt(AZIMUTH);
 
 /** Card anchors, as world points of the card's centre. */
 export const ANCHOR_POINT = {

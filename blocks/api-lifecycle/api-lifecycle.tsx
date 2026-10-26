@@ -23,20 +23,37 @@ export default function ApiLifecycle() {
   const [token, setToken] = useState<Request['token']>('valid');
   const [busy, setBusy] = useState(false);
   const [cached, setCached] = useState<number[]>([]);
+  const [zoomed, setZoomed] = useState(false);
 
   useEffect(() => setMounted(true), []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
-  const send = () => bench.current?.send({ id: user, token });
+  // The bench never re-renders, so it reads the request to send from a ref.
+  const request = useRef<Request>({ id: user, token });
+  request.current = { id: user, token };
+  const send = useCallback(() => bench.current?.send(request.current), []);
+  // A request in flight has already been sent with its user and token, and has already asked the
+  // cache, so the controls that shape a request wait for it to land. The ref catches a key pressed
+  // in the same instant a request starts, before React has re-rendered with `busy`.
+  const flying = useRef(false);
+  const onBusy = useCallback((value: boolean) => {
+    flying.current = value;
+    setBusy(value);
+  }, []);
   const pick = (id: number) => {
+    if (flying.current) return;
     setUser(id);
     bench.current?.touch();
   };
   const toggleToken = () => {
+    if (flying.current) return;
     setToken((current) => (current === 'valid' ? 'expired' : 'valid'));
     bench.current?.touch();
   };
-  const flush = () => bench.current?.flush();
+  const flush = () => {
+    if (flying.current) return;
+    bench.current?.flush();
+  };
   const onTour = useCallback((request: Request) => {
     setUser(request.id);
     setToken(request.token);
@@ -44,7 +61,13 @@ export default function ApiLifecycle() {
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const digit = Number(event.key);
+    const step = event.shiftKey ? 18 : 6;
     if (event.key === 'Enter' || event.key === ' ') send();
+    else if (event.key === 'ArrowLeft') bench.current?.turn(-step);
+    else if (event.key === 'ArrowRight') bench.current?.turn(step);
+    else if (event.key === 'Home') bench.current?.home();
+    else if (event.key === 'z' || event.key === 'Z' || event.key === 'm' || event.key === 'M') bench.current?.zoom();
+    else if (event.key === 'Escape' && zoomed) bench.current?.zoom(false);
     else if (digit >= 1 && digit <= USERS.length) pick(USERS[digit - 1].id);
     else if (event.key === 't' || event.key === 'T') toggleToken();
     else if (event.key === 'c' || event.key === 'C') flush();
@@ -65,6 +88,7 @@ export default function ApiLifecycle() {
               className={styles.chip}
               aria-pressed={user === option.id}
               data-cached={cached.includes(option.id) ? '' : undefined}
+              disabled={busy}
               onClick={() => pick(option.id)}
             >
               {option.name}
@@ -73,11 +97,14 @@ export default function ApiLifecycle() {
           ))}
         </div>
         <div className={styles.group}>
-          <button type="button" className={styles.chip} aria-pressed={token === 'expired'} onClick={toggleToken}>
+          <button type="button" className={styles.chip} aria-pressed={token === 'expired'} disabled={busy} onClick={toggleToken}>
             {token === 'valid' ? 'Token valid' : 'Token expired'}
           </button>
-          <button type="button" className={styles.chip} onClick={flush} disabled={!cached.length}>
+          <button type="button" className={styles.chip} onClick={flush} disabled={busy || !cached.length}>
             Flush cache
+          </button>
+          <button type="button" className={styles.chip} aria-pressed={zoomed} onClick={() => bench.current?.zoom()}>
+            {zoomed ? 'Back to bench' : 'Monitor'}
           </button>
           <button type="button" className={styles.send} onClick={send} disabled={busy}>
             {busy ? 'In flight…' : `GET /users/${user}`}
@@ -87,10 +114,10 @@ export default function ApiLifecycle() {
       <Plate
         fig="Fig 1"
         title="Fetch a user profile"
-        hint="Click to send · 1–4 user · T token"
+        hint={zoomed ? 'Click or Esc to step back' : 'Drag to turn · click the monitor'}
         readout="GET /users/:id · ready"
         keys={[
-          { mark: 'lit', label: 'What travels: the request slip out, the row card back' },
+          { mark: 'lit', label: 'What travels: the request ticket, and the row card that answers it' },
           { mark: 'green', label: 'Token accepted, pocket read' },
           { mark: 'red', label: 'Token rejected' }
         ]}
@@ -100,16 +127,10 @@ export default function ApiLifecycle() {
           className={styles.stageFrame}
           role="group"
           tabIndex={0}
-          aria-label="Request bench. Enter sends the request, 1 to 4 pick a user, T toggles the token, C flushes the cache."
+          aria-label="Request bench. Enter sends the request, 1 to 3 pick a user, T toggles the token, C flushes the cache. Left and right arrows turn the bench, Home resets the view, Z moves in to the monitor and Escape steps back."
           onKeyDown={onKeyDown}
-          onClick={send}
         >
-          <Bench
-            ref={bench}
-            onBusy={setBusy}
-            onCache={setCached}
-            onTour={onTour}
-          />
+          <Bench ref={bench} onBusy={onBusy} onCache={setCached} onTour={onTour} onSend={send} onZoom={setZoomed} />
         </div>
       </Plate>
     </section>
