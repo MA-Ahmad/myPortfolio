@@ -1,0 +1,304 @@
+.root {
+  --al-glass: #e6e7e2;
+  --al-ink: #3a3b3f;
+  --al-ink-strong: #111113;
+  --al-ink-dim: #9a9a9e;
+  --al-line: rgba(0, 0, 0, 0.08);
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px 48px;
+  color: var(--anatomy-text);
+}
+
+.root[data-theme='dark'] {
+  --al-glass: #0a0b0a;
+  --al-ink: #bdbdbd;
+  --al-ink-strong: #f2f2f2;
+  --al-ink-dim: #575757;
+  --al-line: rgba(255, 255, 255, 0.08);
+}
+
+.root :global(.iso-figure) {
+  margin: 0;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 14px;
+  font-family: var(--anatomy-mono);
+  font-size: 12px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupLabel {
+  margin-right: 4px;
+  color: var(--anatomy-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    box-shadow 160ms var(--anatomy-ease),
+    color 160ms var(--anatomy-ease),
+    transform 120ms var(--anatomy-ease);
+}
+
+.chip:hover {
+  box-shadow: 0 0 0 1px var(--anatomy-mid);
+  color: var(--anatomy-strong);
+}
+
+.chip:active {
+  transform: scale(0.97);
+}
+
+.chip[aria-pressed='true'] {
+  box-shadow: 0 0 0 1px var(--anatomy-hi);
+  color: var(--anatomy-strong);
+}
+
+.chip:focus-visible,
+.send:focus-visible,
+.stageFrame:focus-visible {
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 4px;
+}
+
+/* A dot on a user the cache holds. */
+.chip[data-cached]::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--anatomy-green);
+}
+
+.chipId {
+  color: var(--anatomy-muted);
+}
+
+.send {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-strong);
+  color: var(--anatomy-card);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    opacity 160ms var(--anatomy-ease),
+    transform 120ms var(--anatomy-ease);
+}
+
+.send:active {
+  transform: scale(0.97);
+}
+
+.send:disabled {
+  opacity: 0.45;
+  cursor: progress;
+}
+
+/* ── Figure ───────────────────────────────────────────────────────────────── */
+
+.stageFrame {
+  cursor: pointer;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.stage :global(.iso-svg) {
+  overflow: visible;
+}
+
+.recessFloor {
+  fill: var(--anatomy-top);
+}
+
+.recessWall {
+  fill: var(--anatomy-shade-1);
+}
+
+.slot {
+  fill: var(--anatomy-shade-0);
+  stroke: var(--anatomy-lo);
+  stroke-width: var(--anatomy-weight);
+}
+
+.glass {
+  fill: var(--al-glass);
+}
+
+.scan {
+  fill: var(--al-glass);
+}
+
+.screenText {
+  fill: var(--al-ink);
+  font-family: var(--anatomy-mono);
+}
+
+.screenStrong {
+  fill: var(--al-ink-strong);
+  font-family: var(--anatomy-mono);
+  font-weight: 600;
+}
+
+.screenDim {
+  fill: var(--al-ink-dim);
+  font-family: var(--anatomy-mono);
+}
+
+.screenRule {
+  stroke: var(--al-ink-dim);
+  stroke-width: 0.2;
+}
+
+.avatar {
+  fill: none;
+  stroke: var(--al-ink);
+  stroke-width: 0.3;
+}
+
+.avatarText {
+  fill: var(--al-ink-strong);
+  font-family: var(--anatomy-mono);
+}
+
+.skeleton {
+  fill: var(--al-ink-dim);
+  opacity: 0.5;
+  animation: skeleton 1.1s ease-in-out infinite;
+}
+
+.cursor {
+  fill: var(--al-ink);
+  animation: blink 1.05s steps(1, end) infinite;
+}
+
+@keyframes skeleton {
+  50% {
+    opacity: 0.18;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.led {
+  fill: var(--anatomy-lo);
+  transition: fill 200ms var(--anatomy-ease);
+}
+
+.led[data-state='ok'],
+.led[data-on] {
+  fill: var(--anatomy-green);
+}
+
+.led[data-state='deny'] {
+  fill: var(--anatomy-red);
+}
+
+.statusLed {
+  fill: var(--anatomy-lo);
+}
+
+.server[data-busy] .statusLed {
+  fill: var(--anatomy-green);
+  animation: blink 0.44s steps(1, end) infinite;
+}
+
+.slip[data-hidden],
+.carried[data-hidden] {
+  display: none;
+}
+
+.slip[data-state='denied'] :global(.iso-edge) {
+  stroke: var(--anatomy-red);
+}
+
+.slip[data-state='empty'] {
+  opacity: 0.4;
+}
+
+.pocketCard {
+  transition: opacity 320ms var(--anatomy-ease);
+}
+
+.pocketCard[data-hidden] {
+  opacity: 0;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton,
+  .cursor,
+  .server[data-busy] .statusLed {
+    animation: none;
+  }
+
+  .chip,
+  .send,
+  .pocketCard,
+  .led {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .root {
+    padding: 24px 12px 32px;
+  }
+
+  .stage {
+    overflow: hidden;
+  }
+
+  .root :global(.iso-plate) .stage :global(.iso-svg) {
+    width: 112%;
+    margin: -2% -6% -1%;
+  }
+}

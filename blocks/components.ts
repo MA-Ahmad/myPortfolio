@@ -6,5 +6,6 @@ import dynamic from 'next/dynamic';
  * so it gets its own chunk and a page only downloads the blocks it shows.
  */
 export const BLOCK_COMPONENTS: Record<string, ComponentType> = {
+  'api-lifecycle': dynamic(() => import('./api-lifecycle/api-lifecycle')),
   'movie-rack': dynamic(() => import('./movie-rack/movie-rack'))
 };

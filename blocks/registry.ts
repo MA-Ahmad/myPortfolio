@@ -43,6 +43,27 @@ export const BLOCK_CATEGORIES: BlockCategory[] = [
 
 export const BLOCKS: BlockMeta[] = [
   {
+    name: 'api-lifecycle',
+    title: 'API lifecycle',
+    description: 'An isometric request bench that fetches a user profile through the gateway, server, cache and database.',
+    category: 'interactive',
+    createdAt: '2026-10-26',
+    files: [
+      'api-lifecycle.tsx',
+      'live.tsx',
+      'model.ts',
+      'screen.tsx',
+      'art.tsx',
+      'geometry.ts',
+      'view.ts',
+      'api-lifecycle.module.css',
+      'iso-react.tsx',
+      'iso-kit.ts'
+    ],
+    iframeHeight: 860,
+    dependencies: ['next-themes']
+  },
+  {
     name: 'movie-rack',
     title: 'Movie rack',
     description: 'A 3D rack of CD cases to scroll through, with a slot-machine pick.',
