@@ -148,6 +148,67 @@
   cursor: grabbing;
 }
 
+/* Zoomed in, a drag pans in every direction, so touch must not scroll the page under it. */
+.stageFrame[data-panning] {
+  touch-action: none;
+}
+
+/* Zoom in, zoom out and reset, in the card's top right under its title. */
+.view {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  z-index: 1;
+  display: flex;
+  gap: 1px;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.viewButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  color: var(--anatomy-text);
+  cursor: pointer;
+  transition:
+    color 160ms var(--anatomy-ease),
+    background-color 160ms var(--anatomy-ease);
+}
+
+.viewButton svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.6;
+  transition: transform 120ms var(--anatomy-ease);
+}
+
+.viewButton:not(:disabled):hover {
+  background: var(--anatomy-page);
+  color: var(--anatomy-strong);
+}
+
+.viewButton:not(:disabled):active svg {
+  transform: scale(0.88);
+}
+
+.viewButton:disabled {
+  color: var(--anatomy-lo);
+  cursor: not-allowed;
+}
+
+.viewButton:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 2px;
+}
+
 /* Clipped to its box: moving in to the monitor would otherwise spill over the card's corners. */
 .stage :global(.iso-svg) {
   overflow: hidden;
@@ -292,6 +353,8 @@
 
   .chip,
   .send,
+  .viewButton,
+  .viewButton svg,
   .pocketCard,
   .led {
     transition: none;
@@ -307,11 +370,7 @@
     overflow: hidden;
   }
 
-  .root :global(.iso-plate) .stageFrame:active {
-  cursor: grabbing;
-}
-
-.stage :global(.iso-svg) {
+  .root :global(.iso-plate) .stage :global(.iso-svg) {
     width: 112%;
     margin: -2% -6% -1%;
   }

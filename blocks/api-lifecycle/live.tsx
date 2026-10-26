@@ -63,6 +63,10 @@ const ZOOM_EASE = 0.3;
 /** Close to the monitor, the camera turns almost square to the glass. */
 const ZOOM_AZIMUTH = 84;
 const FULL = [0, 0, WIDTH, HEIGHT];
+/** The + and − buttons multiply the view's scale by this, between 1× and the most. */
+export const SCALE_STEP = 1.5;
+export const SCALE_MOST = 4;
+const SCALE_EASE = 0.22;
 
 const GEOMETRY_0 = geometryOf(P0);
 const ART_0 = artOf(GEOMETRY_0);
@@ -74,6 +78,14 @@ const smooth = (t: number) => {
 
 const clampAzimuth = (azimuth: number) => Math.min(AZIMUTH_MAX, Math.max(AZIMUTH_MIN, azimuth));
 
+/** Keep a zoomed view inside the drawing: its centre may move only as far as its edges can. */
+function clampPan(camera: { scaleTarget: number; panXTarget: number; panYTarget: number }) {
+  const x = (WIDTH / 2) * (1 - 1 / camera.scaleTarget);
+  const y = (HEIGHT / 2) * (1 - 1 / camera.scaleTarget);
+  camera.panXTarget = Math.min(x, Math.max(-x, camera.panXTarget));
+  camera.panYTarget = Math.min(y, Math.max(-y, camera.panYTarget));
+}
+
 export interface BenchHandle {
   send: (request: Request) => void;
   flush: () => void;
@@ -81,8 +93,10 @@ export interface BenchHandle {
   touch: () => void;
   /** Turn the camera by `degrees`. */
   turn: (degrees: number) => void;
-  /** Back to the resting camera, out of the monitor. */
+  /** Back to the resting camera: its angle, 1×, centred, out of the monitor. */
   home: () => void;
+  /** Zoom the whole view by `factor` about its centre (the + and − buttons). */
+  scaleBy: (factor: number) => void;
   /** Move in to the monitor (true), out (false), or toggle. */
   zoom: (on?: boolean) => void;
 }
@@ -93,6 +107,7 @@ interface Props {
   onTour: (request: Request) => void;
   onSend: () => void;
   onZoom: (zoomed: boolean) => void;
+  onScale: (scale: number) => void;
 }
 
 /** The view-box rectangle that frames the terminal's screen for this camera. */
@@ -180,7 +195,7 @@ type Groups = Record<
 
 /** The bench itself. It never re-renders: every frame, and every turn of the camera, writes through refs. */
 export const Bench = React.memo(
-  React.forwardRef<BenchHandle, Props>(function Bench({ onBusy, onCache, onTour, onSend, onZoom }, handle) {
+  React.forwardRef<BenchHandle, Props>(function Bench({ onBusy, onCache, onTour, onSend, onZoom, onScale }, handle) {
     const { anchor, say } = useReadout<HTMLDivElement>();
     const inView = useInView(anchor);
     const screen = React.useRef<ScreenHandle>(null);
@@ -190,7 +205,7 @@ export const Bench = React.memo(
     const groups = React.useRef({} as Groups);
     const drawerOut = React.useRef<(SVGGElement | null)[]>([]);
     const drawerFront = React.useRef<(SVGGElement | null)[]>([]);
-    const drag = React.useRef<{ id: number; x: number; azimuth: number; moved: boolean } | null>(null);
+    const drag = React.useRef<{ id: number; x: number; y: number; azimuth: number; panX: number; panY: number; pan: boolean; moved: boolean } | null>(null);
     const live = React.useRef({
       plan: null as Plan | null,
       t: 0,
@@ -203,12 +218,27 @@ export const Bench = React.memo(
       drawer: -1,
       order: '',
       tour: { index: 0, wait: TOUR_FIRST, hovering: false, idle: TOUR_BACK },
-      camera: { azimuth: AZIMUTH, target: AZIMUTH, home: AZIMUTH, drawn: AZIMUTH, zoom: 0, zoomTarget: 0, shownZoom: 0 },
+      camera: {
+        azimuth: AZIMUTH,
+        target: AZIMUTH,
+        home: AZIMUTH,
+        drawn: AZIMUTH,
+        zoom: 0,
+        zoomTarget: 0,
+        // The +/− zoom of the whole view and where it is panned to, in view-box units from the centre.
+        scale: 1,
+        scaleTarget: 1,
+        panX: 0,
+        panY: 0,
+        panXTarget: 0,
+        panYTarget: 0,
+        shown: ''
+      },
       P: P0,
       geometry: GEOMETRY_0 as Geometry
     });
-    const callbacks = React.useRef({ onBusy, onCache, onTour, onSend, onZoom });
-    callbacks.current = { onBusy, onCache, onTour, onSend, onZoom };
+    const callbacks = React.useRef({ onBusy, onCache, onTour, onSend, onZoom, onScale });
+    callbacks.current = { onBusy, onCache, onTour, onSend, onZoom, onScale };
 
     const ref = (key: keyof Groups) => (node: SVGGElement | null) => {
       groups.current[key] = node;
@@ -357,10 +387,13 @@ export const Bench = React.memo(
     const frame = React.useCallback(() => {
       const state = live.current;
       const camera = state.camera;
-      const box = camera.zoom ? focusOf(state.P).map((value, index) => FULL[index] + (value - FULL[index]) * camera.zoom) : FULL;
+      // The +/− view first, then the monitor's close-up blended over it.
+      const w = WIDTH / camera.scale;
+      const h = HEIGHT / camera.scale;
+      const view = [WIDTH / 2 + camera.panX - w / 2, HEIGHT / 2 + camera.panY - h / 2, w, h];
+      const box = camera.zoom ? focusOf(state.P).map((value, index) => view[index] + (value - view[index]) * camera.zoom) : view;
       const svg = groups.current.base?.ownerSVGElement;
       svg?.setAttribute('viewBox', box.map((value) => Math.round(value * 100) / 100).join(' '));
-      camera.shownZoom = camera.zoom;
     }, []);
 
     const finish = React.useCallback((plan: Plan) => {
@@ -389,10 +422,22 @@ export const Bench = React.memo(
       const camera = state.camera;
       camera.azimuth = follow(camera.azimuth, camera.target, dt, TURN_EASE, calm);
       camera.zoom = follow(camera.zoom, camera.zoomTarget, dt, ZOOM_EASE, calm);
+      camera.scale = follow(camera.scale, camera.scaleTarget, dt, SCALE_EASE, calm);
+      camera.panX = follow(camera.panX, camera.panXTarget, dt, SCALE_EASE, calm);
+      camera.panY = follow(camera.panY, camera.panYTarget, dt, SCALE_EASE, calm);
       const turned = Math.abs(camera.azimuth - camera.drawn) > 0.01;
       if (turned) redraw(camera.azimuth);
-      if (turned || camera.zoom !== camera.shownZoom) frame();
-      const moving = camera.azimuth !== camera.target || camera.zoom !== camera.zoomTarget;
+      const shown = `${camera.zoom} ${camera.scale} ${camera.panX} ${camera.panY}`;
+      if (turned || shown !== camera.shown) {
+        camera.shown = shown;
+        frame();
+      }
+      const moving =
+        camera.azimuth !== camera.target ||
+        camera.zoom !== camera.zoomTarget ||
+        camera.scale !== camera.scaleTarget ||
+        camera.panX !== camera.panXTarget ||
+        camera.panY !== camera.panYTarget;
 
       const plan = state.plan;
       if (plan && !state.finished) {
@@ -451,6 +496,20 @@ export const Bench = React.memo(
       [touch]
     );
 
+    const setScale = React.useCallback(
+      (scale: number) => {
+        const camera = live.current.camera;
+        camera.scaleTarget = Math.min(SCALE_MOST, Math.max(1, Math.round(scale * 1000) / 1000));
+        if (camera.scaleTarget === 1) {
+          camera.panXTarget = 0;
+          camera.panYTarget = 0;
+        } else clampPan(camera);
+        callbacks.current.onScale(camera.scaleTarget);
+        touch();
+      },
+      [touch]
+    );
+
     React.useImperativeHandle(
       handle,
       () => ({
@@ -480,11 +539,17 @@ export const Bench = React.memo(
           camera.home = AZIMUTH;
           if (camera.zoomTarget) zoom(false);
           camera.target = AZIMUTH;
+          setScale(1);
           touch();
+        },
+        scaleBy: (factor) => {
+          // The buttons zoom the bench, so they first step back out of the monitor.
+          if (live.current.camera.zoomTarget) zoom(false);
+          setScale(live.current.camera.scaleTarget * factor);
         },
         zoom
       }),
-      [apply, kick, start, touch, zoom]
+      [apply, kick, setScale, start, touch, zoom]
     );
 
     const hover = (hovering: boolean) => () => {
@@ -493,22 +558,43 @@ export const Bench = React.memo(
       kick();
     };
 
-    // Drag sideways to turn the camera; a press that barely moves is a click.
+    // At 1× a drag turns the camera; zoomed in with +, it pans. A press that barely moves is a click.
     const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
       if (event.button !== 0) return;
-      drag.current = { id: event.pointerId, x: event.clientX, azimuth: live.current.camera.target, moved: false };
+      const camera = live.current.camera;
+      drag.current = {
+        id: event.pointerId,
+        x: event.clientX,
+        y: event.clientY,
+        azimuth: camera.target,
+        panX: camera.panXTarget,
+        panY: camera.panYTarget,
+        pan: camera.scaleTarget > 1 && !camera.zoomTarget,
+        moved: false
+      };
     };
     const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
       const held = drag.current;
       if (!held || held.id !== event.pointerId) return;
       const dx = event.clientX - held.x;
-      if (!held.moved && Math.abs(dx) > CLICK_SLOP) {
+      const dy = event.clientY - held.y;
+      if (!held.moved && Math.hypot(dx, held.pan ? dy : 0) > CLICK_SLOP) {
         held.moved = true;
         event.currentTarget.setPointerCapture(event.pointerId);
       }
       if (!held.moved) return;
-      // The bench's front follows the hand.
-      live.current.camera.target = clampAzimuth(held.azimuth + dx * DRAG_RATE);
+      const camera = live.current.camera;
+      if (held.pan) {
+        // The bench follows the hand: one CSS pixel is this many view-box units at the current scale.
+        const width = groups.current.base?.ownerSVGElement?.getBoundingClientRect().width || WIDTH;
+        const units = WIDTH / camera.scaleTarget / width;
+        camera.panXTarget = held.panX - dx * units;
+        camera.panYTarget = held.panY - dy * units;
+        clampPan(camera);
+      } else {
+        // The bench's front follows the hand.
+        camera.target = clampAzimuth(held.azimuth + dx * DRAG_RATE);
+      }
       touch();
     };
     const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {

@@ -62,7 +62,7 @@ export const BLOCKS: BlockMeta[] = [
       'iso-kit.ts'
     ],
     iframeHeight: 860,
-    dependencies: ['next-themes']
+    dependencies: ['next-themes', 'lucide-react']
   },
   {
     name: 'movie-rack',

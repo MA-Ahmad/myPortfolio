@@ -1,8 +1,9 @@
 import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
+import { MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
 import { ISO_CSS } from './iso-kit';
 import { Plate } from './iso-react';
-import { Bench, type BenchHandle } from './live';
+import { Bench, SCALE_MOST, SCALE_STEP, type BenchHandle } from './live';
 import { MISSING_ID, NETWORK, PROFILES, QUERY, TOTALS, ms, type Request } from './model';
 import styles from './api-lifecycle.module.css';
 
@@ -24,6 +25,7 @@ export default function ApiLifecycle() {
   const [busy, setBusy] = useState(false);
   const [cached, setCached] = useState<number[]>([]);
   const [zoomed, setZoomed] = useState(false);
+  const [scale, setScale] = useState(1);
 
   useEffect(() => setMounted(true), []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
@@ -59,13 +61,21 @@ export default function ApiLifecycle() {
     setToken(request.token);
   }, []);
 
+  // The view controls in the frame: zoom the whole bench, and put everything back.
+  const zoomIn = () => bench.current?.scaleBy(SCALE_STEP);
+  const zoomOut = () => bench.current?.scaleBy(1 / SCALE_STEP);
+  const turn = (degrees: number) => bench.current?.turn(degrees);
+  const reset = () => bench.current?.home();
+
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     const digit = Number(event.key);
     const step = event.shiftKey ? 18 : 6;
     if (event.key === 'Enter' || event.key === ' ') send();
-    else if (event.key === 'ArrowLeft') bench.current?.turn(-step);
-    else if (event.key === 'ArrowRight') bench.current?.turn(step);
-    else if (event.key === 'Home') bench.current?.home();
+    else if (event.key === 'ArrowLeft') turn(-step);
+    else if (event.key === 'ArrowRight') turn(step);
+    else if (event.key === 'Home' || event.key === '0') reset();
+    else if (event.key === '+' || event.key === '=') zoomIn();
+    else if (event.key === '-' || event.key === '_') zoomOut();
     else if (event.key === 'z' || event.key === 'Z' || event.key === 'm' || event.key === 'M') bench.current?.zoom();
     else if (event.key === 'Escape' && zoomed) bench.current?.zoom(false);
     else if (digit >= 1 && digit <= USERS.length) pick(USERS[digit - 1].id);
@@ -103,9 +113,6 @@ export default function ApiLifecycle() {
           <button type="button" className={styles.chip} onClick={flush} disabled={busy || !cached.length}>
             Flush cache
           </button>
-          <button type="button" className={styles.chip} aria-pressed={zoomed} onClick={() => bench.current?.zoom()}>
-            {zoomed ? 'Back to bench' : 'Monitor'}
-          </button>
           <button type="button" className={styles.send} onClick={send} disabled={busy}>
             {busy ? 'In flight…' : `GET /users/${user}`}
           </button>
@@ -114,7 +121,7 @@ export default function ApiLifecycle() {
       <Plate
         fig="Fig 1"
         title="Fetch a user profile"
-        hint={zoomed ? 'Click or Esc to step back' : 'Drag to turn · click the monitor'}
+        hint={zoomed ? 'Click or Esc to step back' : scale > 1 ? 'Drag to pan · click the monitor' : 'Drag to turn · click the monitor'}
         readout="GET /users/:id · ready"
         keys={[
           { mark: 'lit', label: 'What travels: the request ticket, and the row card that answers it' },
@@ -123,14 +130,26 @@ export default function ApiLifecycle() {
         ]}
         caption={CAPTION}
       >
+        <div className={styles.view} role="group" aria-label="View">
+          <button type="button" className={styles.viewButton} onClick={zoomIn} disabled={!zoomed && scale >= SCALE_MOST} aria-label="Zoom in" title="Zoom in (+)">
+            <PlusIcon aria-hidden="true" />
+          </button>
+          <button type="button" className={styles.viewButton} onClick={zoomOut} disabled={!zoomed && scale <= 1} aria-label="Zoom out" title="Zoom out (−)">
+            <MinusIcon aria-hidden="true" />
+          </button>
+          <button type="button" className={styles.viewButton} onClick={reset} aria-label="Reset view" title="Reset view (0)">
+            <RotateCcwIcon aria-hidden="true" />
+          </button>
+        </div>
         <div
           className={styles.stageFrame}
+          data-panning={scale > 1 && !zoomed ? '' : undefined}
           role="group"
           tabIndex={0}
-          aria-label="Request bench. Enter sends the request, 1 to 3 pick a user, T toggles the token, C flushes the cache. Left and right arrows turn the bench, Home resets the view, Z moves in to the monitor and Escape steps back."
+          aria-label="Request bench. Enter sends the request, 1 to 3 pick a user, T toggles the token, C flushes the cache. Left and right arrows turn the bench, plus and minus zoom, 0 or Home resets the view, Z moves in to the monitor and Escape steps back."
           onKeyDown={onKeyDown}
         >
-          <Bench ref={bench} onBusy={onBusy} onCache={setCached} onTour={onTour} onSend={send} onZoom={setZoomed} />
+          <Bench ref={bench} onBusy={onBusy} onCache={setCached} onTour={onTour} onSend={send} onZoom={setZoomed} onScale={setScale} />
         </div>
       </Plate>
     </section>
