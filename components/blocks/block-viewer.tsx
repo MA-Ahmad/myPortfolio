@@ -45,10 +45,35 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
   const [iframeKey, setIframeKey] = useState(0);
   const [activeFile, setActiveFile] = useState(files[0]?.path);
   const stageRef = useRef<HTMLDivElement>(null);
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const fitRef = useRef<() => void>(undefined);
+  const frameRef = useRef<HTMLIFrameElement>(null);
 
   const height = block.iframeHeight ?? DEFAULT_IFRAME_HEIGHT;
   const src = `/preview/${block.name}`;
   const file = files.find((item) => item.path === activeFile) ?? files[0];
+
+  // For `fitContent` blocks: follow the height of the block inside the preview (same origin), so
+  // the page scrolls rather than the iframe. The preview page's wrapper is `min-h-screen`, so this
+  // measures the block's own wrapper, not that one.
+  const fitToContent = (frame: HTMLIFrameElement) => {
+    fitRef.current?.();
+    fitRef.current = undefined;
+    if (!block.fitContent) return;
+    const content = frame.contentDocument?.querySelector('[data-block-root]');
+    if (!content) return;
+    const observer = new ResizeObserver(() => setContentHeight(Math.ceil(content.getBoundingClientRect().height)));
+    observer.observe(content);
+    fitRef.current = () => observer.disconnect();
+  };
+
+  // The iframe can finish loading before hydration attaches `onLoad`.
+  useEffect(() => {
+    const frame = frameRef.current;
+    if (frame?.contentDocument?.readyState === 'complete') fitToContent(frame);
+    return () => fitRef.current?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iframeKey]);
 
   const resizeTo = (next: number | null) => {
     setView('preview');
@@ -162,10 +187,13 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
           <div className="relative overflow-hidden rounded-xl after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:ring-1 after:ring-inset after:ring-foreground/10">
             <iframe
               key={iframeKey}
+              ref={frameRef}
               src={src}
               title={`${block.title} preview`}
+              allow="fullscreen"
               loading="lazy"
-              height={height}
+              height={contentHeight ?? height}
+              onLoad={(event) => fitToContent(event.currentTarget)}
               className={cn('block w-full bg-background', dragging && 'pointer-events-none')}
             />
           </div>

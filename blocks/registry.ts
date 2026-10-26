@@ -24,6 +24,9 @@ export type BlockMeta = {
   files: string[];
   /** Height of the live preview in px. */
   iframeHeight?: number;
+  /** Grow the preview to the block's full height, so the page scrolls instead of the preview;
+   * `iframeHeight` is then only its height before the block has loaded. */
+  fitContent?: boolean;
   /** npm packages the block needs, listed in its Markdown for AI tools and anyone copying it. */
   dependencies?: string[];
   /** npm packages it needs only to build, such as type definitions (`npm install -D`). */
@@ -51,6 +54,39 @@ export const BLOCK_CATEGORIES: BlockCategory[] = [
 ];
 
 export const BLOCKS: BlockMeta[] = [
+  {
+    name: 'chatgpt-postgres',
+    title: 'Scaling Postgres for ChatGPT',
+    description:
+      'OpenAI’s PostgreSQL setup for 800 million ChatGPT users: the initial design and today’s, a tab each on one clock, with robot trays carrying queries through cache failures, connection storms, a primary failover and the ImageGen launch.',
+    category: 'interactive',
+    createdAt: '2026-10-27',
+    files: [
+      'chatgpt-postgres.tsx',
+      'bench.tsx',
+      'fleet.ts',
+      'sim.ts',
+      'scenarios.ts',
+      'facts.ts',
+      'world.ts',
+      'art.ts',
+      'parts.ts',
+      'robot.ts',
+      'order.ts',
+      'use-fullscreen.ts',
+      'chatgpt-postgres.module.css',
+      'iso-react.tsx',
+      'iso-kit.ts'
+    ],
+    iframeHeight: 980,
+    fitContent: true,
+    dependencies: ['next-themes', 'lucide-react'],
+    images: {
+      card: { light: '/blocks/chatgpt-postgres/card-light.webp', dark: '/blocks/chatgpt-postgres/card-dark.webp' },
+      og: '/blocks/chatgpt-postgres/og.png',
+      alt: 'Two isometric server floors side by side: on the left the initial design, with apps cabled straight to one PostgreSQL primary and three replicas; on the right today’s, with a rate-limit gate, a leased cache, PgBouncer, a primary with a hot standby, Azure Cosmos DB and replicas in three regions. Robot trays carry query slips between them.'
+    }
+  },
   {
     name: 'api-lifecycle',
     title: 'API lifecycle',

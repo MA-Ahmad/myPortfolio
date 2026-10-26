@@ -14,7 +14,10 @@ const BlockPreview: NextPageWithLayout<Props> = ({ name, title }) => {
   return (
     <>
       <Meta title={`${title} - Preview`} noindex />
-      <div className="min-h-screen bg-background text-foreground">{Block ? <Block /> : null}</div>
+      <div className="min-h-screen bg-background text-foreground">
+        {/* The block viewer measures this to fit the iframe to the block (`fitContent`). */}
+        <div data-block-root>{Block ? <Block /> : null}</div>
+      </div>
     </>
   );
 };

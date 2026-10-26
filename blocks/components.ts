@@ -7,5 +7,6 @@ import dynamic from 'next/dynamic';
  */
 export const BLOCK_COMPONENTS: Record<string, ComponentType> = {
   'api-lifecycle': dynamic(() => import('./api-lifecycle/api-lifecycle')),
+  'chatgpt-postgres': dynamic(() => import('./chatgpt-postgres/chatgpt-postgres')),
   'movie-rack': dynamic(() => import('./movie-rack/movie-rack'))
 };

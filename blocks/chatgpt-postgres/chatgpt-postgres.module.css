@@ -1,0 +1,1383 @@
+.root {
+  --cp-read: #3e63dd;
+  --cp-write: #c27a00;
+  --cp-join: #d6409f;
+  --cp-ok: #30a46c;
+  --cp-warn: #c27a00;
+  --cp-bad: #e5484d;
+  --cp-line: rgba(0, 0, 0, 0.08);
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 32px 20px 40px;
+  color: var(--anatomy-text);
+  font-family: var(--anatomy-mono);
+  outline: none;
+}
+
+.root[data-theme='dark'] {
+  --cp-read: #6b9bff;
+  --cp-write: #f5b246;
+  --cp-join: #f076c0;
+  --cp-ok: #6be0a0;
+  --cp-warn: #f5b246;
+  --cp-bad: #ff6b6b;
+  --cp-line: rgba(255, 255, 255, 0.08);
+}
+
+.root :global(.iso-figure) {
+  margin: 0;
+}
+
+/* Expanded: the figure alone (tabs, states and floor) fills the screen; the parts list stays on the page. */
+.stage {
+  outline: none;
+}
+
+.stage[data-expanded] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 20px 24px 24px;
+  background: var(--anatomy-page);
+}
+
+.stage[data-expanded='overlay'] {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+/* ── Header and controls ──────────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.title {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+
+.heading {
+  margin: 0;
+  color: var(--anatomy-strong);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-text);
+  cursor: pointer;
+  transition:
+    box-shadow 160ms var(--anatomy-ease),
+    color 160ms var(--anatomy-ease),
+    transform 120ms var(--anatomy-ease);
+}
+
+.iconButton svg {
+  width: 15px;
+  height: 15px;
+}
+
+.iconButton:hover,
+.iconButton[aria-expanded='true'] {
+  box-shadow: 0 0 0 1px var(--anatomy-mid);
+  color: var(--anatomy-strong);
+}
+
+.iconButton:active {
+  transform: scale(0.97);
+}
+
+
+.iconButton:focus-visible,
+.cardClose:focus-visible,
+.sources a:focus-visible {
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 3px;
+}
+
+.hotkey {
+  display: inline-grid;
+  place-items: center;
+  line-height: 1;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 3px;
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-muted);
+  font-size: 10px;
+}
+
+
+
+
+/* ── The post's numbers, one line under the title ─────────────────────────── */
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--anatomy-muted);
+  font-size: 11px;
+}
+
+.headline strong {
+  color: var(--anatomy-text);
+  font-weight: 400;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────────────────── */
+
+/* Tabs on the left, the three states on the right: one row above the floor. */
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  flex: 0 1 380px;
+  gap: 1px;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--anatomy-card);
+  color: var(--anatomy-muted);
+  font: inherit;
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    color 160ms var(--anatomy-ease),
+    background-color 160ms var(--anatomy-ease);
+}
+
+.tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--anatomy-strong);
+  transform: scaleX(0);
+  transition: transform 220ms var(--anatomy-ease);
+}
+
+.tab[aria-selected='true'] {
+  color: var(--anatomy-strong);
+}
+
+.tab[aria-selected='true']::after {
+  transform: scaleX(1);
+}
+
+.tab:not([aria-selected='true']):hover {
+  background: var(--anatomy-page);
+  color: var(--anatomy-text);
+}
+
+.tab:focus-visible {
+  z-index: 1;
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 2px;
+}
+
+.tabName {
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+
+.tabStatus {
+    display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--anatomy-text);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabStatus::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--cp-ok);
+  transition: background-color 200ms var(--anatomy-ease);
+}
+
+.tabStatus[data-status='degraded']::before {
+  background: var(--cp-warn);
+}
+
+.tabStatus[data-status='sev']::before,
+.tabStatus[data-status='sev0']::before {
+  background: var(--cp-bad);
+}
+
+.tabStatus[data-status='sev0'] {
+  color: var(--cp-bad);
+}
+
+/* ── The three states ─────────────────────────────────────────────────────── */
+
+.choices {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  flex: 1 1 auto;
+  gap: 1px;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--anatomy-card);
+  color: var(--anatomy-text);
+  font: inherit;
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--anatomy-ease),
+    color 160ms var(--anatomy-ease);
+}
+
+.choice:hover {
+  background: var(--anatomy-page);
+  color: var(--anatomy-strong);
+}
+
+.choice[aria-checked='true'] {
+  background: var(--anatomy-strong);
+  color: var(--anatomy-card);
+}
+
+.choice[aria-checked='true'] .hotkey {
+  box-shadow: 0 0 0 1px currentColor;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.choice:active {
+  transform: scale(0.99);
+}
+
+.choice:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 2px;
+}
+
+/* What is happening, in plain words, at the foot of the floor. */
+.banner {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 2px;
+  z-index: 2;
+  margin: 0;
+  padding: 6px 12px 6px 26px;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-text);
+  font-size: 12px;
+  line-height: 1.5;
+  /* The label runs inline with the message, so a notice is one line wherever it fits. */
+  text-wrap: pretty;
+  pointer-events: none;
+}
+
+.banner::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 12px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--anatomy-mid);
+}
+
+.banner strong {
+  margin-right: 10px;
+  color: var(--anatomy-strong);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.banner[data-tone='good'] strong {
+  color: var(--cp-ok);
+}
+
+.banner[data-tone='warn'] strong {
+  color: var(--cp-warn);
+}
+
+.banner[data-tone='bad'] strong {
+  color: var(--cp-bad);
+}
+
+.banner[data-tone='good']::before {
+  background: var(--cp-ok);
+}
+
+.banner[data-tone='warn'] {
+  box-shadow: 0 0 0 1px var(--cp-warn);
+}
+
+.banner[data-tone='warn']::before {
+  background: var(--cp-warn);
+}
+
+.banner[data-tone='bad'] {
+  box-shadow: 0 0 0 1px var(--cp-bad);
+  color: var(--anatomy-strong);
+}
+
+.banner[data-tone='bad']::before {
+  background: var(--cp-bad);
+  animation: breathe-dot 1.2s ease-in-out infinite;
+}
+
+@keyframes breathe-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+
+
+
+
+/* ── The floor ────────────────────────────────────────────────────────────── */
+
+.panel {
+  min-width: 0;
+}
+
+.stageFrame {
+  position: relative;
+  cursor: grab;
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  outline: none;
+}
+
+.stageFrame[data-panning] {
+  touch-action: none;
+}
+
+.stageFrame:active {
+  cursor: grabbing;
+}
+
+.stageFrame:focus-visible {
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 4px;
+}
+
+.floor[hidden] {
+  display: none;
+}
+
+/* Zoomed in, the drawing stays inside its frame. */
+.stageFrame {
+  overflow: hidden;
+}
+
+.stageFrame :global(.cp-svg) {
+  overflow: hidden;
+}
+
+.stage[data-expanded] .stageFrame :global(.cp-svg) {
+  max-height: calc(100dvh - 200px);
+}
+
+.view {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  display: flex;
+  gap: 1px;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.viewButton {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  color: var(--anatomy-text);
+  cursor: pointer;
+  transition:
+    color 160ms var(--anatomy-ease),
+    background-color 160ms var(--anatomy-ease);
+}
+
+.viewButton svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.6;
+  transition: transform 120ms var(--anatomy-ease);
+}
+
+.viewButton:not(:disabled):hover {
+  background: var(--anatomy-page);
+  color: var(--anatomy-strong);
+}
+
+.viewButton:not(:disabled):active svg {
+  transform: scale(0.88);
+}
+
+.viewButton:disabled {
+  color: var(--anatomy-lo);
+  cursor: not-allowed;
+}
+
+.viewButton[aria-pressed='false'] {
+  color: var(--anatomy-lo);
+}
+
+.viewButton:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 2px;
+}
+
+/* ── What's on the floor: its own section under the figure ─────────────────── */
+
+.floorParts {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--anatomy-faint);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.cards > li {
+  display: flex;
+  background: var(--anatomy-card);
+}
+
+.partCard {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-content: start;
+  gap: 12px;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  background: none;
+  color: var(--anatomy-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.55;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 160ms var(--anatomy-ease);
+}
+
+.partCard:hover,
+.partCard[aria-pressed='true'] {
+  background: var(--anatomy-page);
+}
+
+.partCard:focus-visible {
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: -2px;
+}
+
+.partText {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.partText strong {
+  color: var(--anatomy-strong);
+  font-weight: 500;
+}
+
+.partNote {
+  color: var(--anatomy-muted);
+  text-wrap: pretty;
+}
+
+.footnote {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+.footnote p {
+  margin: 0;
+  max-width: 90ch;
+}
+
+
+.subhead {
+  margin: 0 0 10px;
+  color: var(--anatomy-strong);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+
+
+
+
+
+
+
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--anatomy-strong);
+  color: var(--anatomy-card);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.number[data-missing] {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--anatomy-mid);
+  color: var(--anatomy-muted);
+}
+
+.missingTag {
+  margin-left: 8px;
+  color: var(--cp-warn);
+  font-size: 9.5px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+
+
+
+
+
+
+.muted {
+  color: var(--anatomy-muted);
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--anatomy-muted);
+  font-size: 11px;
+}
+
+.keys li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.keys li::before {
+  content: '';
+  width: 12px;
+  height: 3px;
+  background: var(--anatomy-mid);
+}
+
+.keys li[data-mark='read']::before {
+  background: var(--cp-read);
+}
+
+.keys li[data-mark='write']::before {
+  background: var(--cp-write);
+}
+
+.keys li[data-mark='join']::before {
+  background: var(--cp-join);
+}
+
+.keys li[data-mark='lease']::before,
+.keys li[data-mark='wait']::before,
+.keys li[data-mark='fail']::before,
+.keys li[data-mark='retry']::before {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.keys li[data-mark='lease']::before {
+  background: var(--cp-read);
+}
+
+.keys li[data-mark='wait']::before {
+  background: var(--cp-warn);
+}
+
+.keys li[data-mark='fail']::before {
+  background: var(--cp-bad);
+}
+
+.keys li[data-mark='retry']::before {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--cp-warn);
+}
+
+.sources {
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.sourcesHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--anatomy-strong);
+}
+
+.sources a {
+  color: var(--anatomy-strong);
+  text-underline-offset: 3px;
+}
+
+.sources ol {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px 20px;
+  margin: 0;
+  padding-left: 18px;
+}
+
+.sources li span {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ── Cards over the floor ─────────────────────────────────────────────────── */
+
+.card {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: grid;
+  gap: 8px;
+  width: min(330px, calc(100% - 12px));
+  max-height: calc(100% - 12px);
+  overflow: auto;
+  padding: 12px 32px 12px 14px;
+  background: var(--anatomy-card);
+  box-shadow: var(--anatomy-lift);
+  font-size: 11.5px;
+  line-height: 1.5;
+  cursor: default;
+  animation: cardIn 180ms var(--anatomy-ease);
+}
+
+.card p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardHead strong {
+  color: var(--anatomy-strong);
+  font-weight: 500;
+}
+
+.cardHead .missingTag {
+  margin-left: 0;
+}
+
+.parts {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 0 0;
+  border-top: 1px solid var(--anatomy-faint);
+  list-style: none;
+  counter-reset: part;
+  color: var(--anatomy-muted);
+  font-size: 11px;
+}
+
+.parts li {
+  counter-increment: part;
+}
+
+.parts li span {
+  display: block;
+  color: var(--anatomy-text);
+}
+
+.parts li span::before {
+  content: counter(part, decimal-leading-zero) '  ';
+  color: var(--anatomy-lo);
+}
+
+.cardClose {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  background: none;
+  color: var(--anatomy-muted);
+  font: inherit;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.tip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  display: grid;
+  gap: 3px;
+  max-width: 300px;
+  padding: 8px 10px;
+  background: var(--anatomy-card);
+  box-shadow: var(--anatomy-lift);
+  font-size: 10.5px;
+  line-height: 1.45;
+  pointer-events: none;
+}
+
+.tip[data-hidden] {
+  display: none;
+}
+
+.tip code {
+  color: var(--anatomy-strong);
+  font: inherit;
+  overflow-wrap: anywhere;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ── Inside the drawing ───────────────────────────────────────────────────── */
+
+.root :global([data-hidden]) {
+  display: none;
+}
+
+.root :global(.cp-led) {
+  fill: var(--anatomy-faint);
+  stroke: var(--anatomy-lo);
+  stroke-width: 0.4;
+  transition: fill 160ms linear;
+}
+
+.root :global(.cp-led[data-state='ok']) {
+  fill: var(--cp-ok);
+  fill-opacity: 0.55;
+}
+
+.root :global(.cp-led[data-state='busy']) {
+  fill: var(--cp-ok);
+}
+
+.root :global(.cp-led[data-state='hot']) {
+  fill: var(--cp-warn);
+}
+
+.root :global(.cp-led[data-state='down']) {
+  fill: var(--cp-bad);
+}
+
+.root :global(.cp-led[data-state='charge']) {
+  fill: var(--cp-ok);
+  animation: breathe 1.6s ease-in-out infinite;
+}
+
+.root :global(.cp-seg) {
+  fill: var(--anatomy-faint);
+  stroke: var(--anatomy-lo);
+}
+
+.root :global(.cp-seg[data-on='on']) {
+  fill: var(--cp-ok);
+  stroke: var(--cp-ok);
+}
+
+.root :global(.cp-seg[data-on='hot']) {
+  fill: var(--cp-warn);
+  stroke: var(--cp-warn);
+}
+
+.root :global(.cp-seg[data-on='full']) {
+  fill: var(--cp-bad);
+  stroke: var(--cp-bad);
+}
+
+.root :global(.cp-chevron) {
+  fill: var(--anatomy-lo);
+}
+
+/* WAL pipes in their trench, flowing toward the replicas. */
+.root :global(.cp-wal) {
+  stroke-width: 2.4;
+  stroke: var(--anatomy-faint);
+}
+
+.root :global(.cp-wal-flow) {
+  stroke: var(--cp-read);
+  stroke-opacity: 0.7;
+  animation: flow 1.2s linear infinite;
+}
+
+.root :global(.cp-floor[data-wal-state='warm'] .cp-wal-flow) {
+  stroke: var(--cp-warn);
+  animation-duration: 0.7s;
+}
+
+.root :global(.cp-floor[data-wal-state='hot'] .cp-wal-flow) {
+  stroke: var(--cp-bad);
+  animation-duration: 0.45s;
+}
+
+.root :global(.cp-floor[data-primary='down'] .cp-wal-flow) {
+  animation: none;
+  stroke-opacity: 0.2;
+}
+
+.root :global(.cp-cable) {
+  stroke-opacity: 0.25;
+}
+
+.root :global(.cp-cable[data-on='on']) {
+  stroke: var(--anatomy-mid);
+  stroke-opacity: 0.9;
+}
+
+.root :global(.cp-cable[data-on='hot']) {
+  stroke: var(--cp-warn);
+  stroke-opacity: 0.9;
+}
+
+.root :global(.cp-cable[data-on='full']) {
+  stroke: var(--cp-bad);
+  stroke-opacity: 1;
+}
+
+.root :global(.cp-sync) {
+  animation: flow 1.6s linear infinite;
+}
+
+/* What the initial design lacks: dashed ghosts, brought up when a scenario needs them. */
+.root :global(.cp-ghost) {
+  opacity: 0.7;
+}
+
+.root :global(.cp-machine[data-down]) {
+  filter: var(--cp-dim);
+}
+
+/* Status rings round each machine's foot. */
+.root :global(.cp-ring) {
+  fill: none;
+  stroke: none;
+  stroke-width: 1.6;
+  vector-effect: non-scaling-stroke;
+}
+
+.root :global(.cp-ring[data-state='hot']) {
+  fill: var(--cp-warn);
+  fill-opacity: 0.12;
+  stroke: var(--cp-warn);
+}
+
+.root :global(.cp-ring[data-state='down']) {
+  fill: var(--cp-bad);
+  fill-opacity: 0.16;
+  stroke: var(--cp-bad);
+  animation: ring-pulse 1.1s ease-in-out infinite;
+}
+
+.root :global(.cp-ring[data-state='promoted']) {
+  fill: var(--cp-ok);
+  fill-opacity: 0.14;
+  stroke: var(--cp-ok);
+}
+
+@keyframes ring-pulse {
+  50% {
+    stroke-opacity: 0.35;
+    fill-opacity: 0.06;
+  }
+}
+
+.root :global(.cp-pin[data-state='hot'] .cp-pin-head) {
+  fill: var(--cp-warn);
+}
+
+.root :global(.cp-pin[data-state='down'] .cp-pin-head) {
+  fill: var(--cp-bad);
+}
+
+.root :global(.cp-pin[data-state='promoted'] .cp-pin-head) {
+  fill: var(--cp-ok);
+}
+
+.root :global(.cp-pin[data-state] .cp-pin-text) {
+  fill: #fff;
+}
+
+/* Trays */
+.root :global(.cp-tray .cp-band) {
+  stroke: var(--anatomy-lo);
+  stroke-width: 0.9;
+}
+
+.root :global(.cp-lamp) {
+  stroke: var(--anatomy-mid);
+  stroke-width: 1.4;
+}
+
+.root :global(.cp-eye) {
+  fill: var(--anatomy-hi);
+}
+
+.root :global(.cp-tray[data-lamp='run'] .cp-lamp) {
+  stroke: var(--cp-ok);
+}
+
+.root :global(.cp-tray[data-lamp='lease'] .cp-lamp),
+.root :global(.cp-tray[data-lamp='lease'] .cp-band) {
+  stroke: var(--cp-read);
+}
+
+.root :global(.cp-tray[data-lamp='wait'] .cp-lamp),
+.root :global(.cp-tray[data-lamp='retry'] .cp-lamp) {
+  stroke: var(--cp-warn);
+}
+
+.root :global(.cp-tray[data-lamp='wait'] .cp-band) {
+  stroke: var(--cp-warn);
+  animation: blink 0.9s steps(2, end) infinite;
+}
+
+.root :global(.cp-tray[data-lamp='fail'] .cp-lamp),
+.root :global(.cp-tray[data-lamp='shed'] .cp-lamp),
+.root :global(.cp-tray[data-lamp='fail'] .cp-band),
+.root :global(.cp-tray[data-lamp='shed'] .cp-band) {
+  stroke: var(--cp-bad);
+}
+
+.root :global(.cp-tray[data-lamp='charge'] .cp-lamp) {
+  stroke: var(--cp-ok);
+  stroke-opacity: 0.5;
+}
+
+.root :global(.cp-tray-ring) {
+  fill: none;
+  stroke: none;
+  stroke-width: 1.4;
+  vector-effect: non-scaling-stroke;
+}
+
+.root :global(.cp-tray[data-lamp='fail'] .cp-tray-ring),
+.root :global(.cp-tray[data-lamp='shed'] .cp-tray-ring) {
+  fill: var(--cp-bad);
+  fill-opacity: 0.22;
+  stroke: var(--cp-bad);
+}
+
+.root :global(.cp-tray[data-lamp='wait'] .cp-tray-ring) {
+  fill: var(--cp-warn);
+  fill-opacity: 0.18;
+  stroke: var(--cp-warn);
+  animation: ring-pulse 0.9s ease-in-out infinite;
+}
+
+.root :global(.cp-tray[data-lamp='retry'] .cp-tray-ring) {
+  stroke: var(--cp-warn);
+  stroke-dasharray: 2 2;
+}
+
+.root :global(.cp-tray[data-lamp='lease'] .cp-tray-ring) {
+  fill: var(--cp-read);
+  fill-opacity: 0.18;
+  stroke: var(--cp-read);
+}
+
+.root :global(.cp-tray [data-slip]) {
+  display: none;
+}
+
+.root :global(.cp-tray[data-slip^='read'] [data-slip='read']),
+.root :global(.cp-tray[data-slip^='write'] [data-slip='read']),
+.root :global(.cp-tray[data-slip^='join'] [data-slip='join']) {
+  display: inline;
+}
+
+.root :global(.cp-tray[data-kind='read'] .cp-slip .iso-edge) {
+  stroke: var(--cp-read);
+}
+
+.root :global(.cp-tray[data-kind='write'] .cp-slip .iso-edge) {
+  stroke: var(--cp-write);
+}
+
+.root :global(.cp-tray[data-kind='join'] .cp-slip .iso-edge) {
+  stroke: var(--cp-join);
+}
+
+.root :global(.cp-tray[data-slip$='void'] .cp-slip) {
+  opacity: 0.45;
+}
+
+.root :global(.cp-tray[data-slip$='void'] .cp-slip .iso-edge) {
+  stroke: var(--cp-bad);
+  stroke-dasharray: 1.5 1.5;
+}
+
+/* Numbered pins: one per role, the same number on both floors. A missing role's pin is hollow. */
+.root :global(.cp-pins) {
+  display: none;
+}
+
+.root[data-pins] :global(.cp-pins) {
+  display: inline;
+}
+
+.root :global(.cp-pin) {
+  cursor: pointer;
+}
+
+.root :global(.cp-pin-stem) {
+  fill: none;
+  stroke: var(--anatomy-mid);
+  stroke-width: 0.8;
+}
+
+.root :global(.cp-pin-dot) {
+  fill: var(--anatomy-strong);
+}
+
+.root :global(.cp-pin-head) {
+  fill: var(--anatomy-strong);
+  stroke: var(--anatomy-card);
+  stroke-width: 1.4;
+  transition: transform 160ms var(--anatomy-ease);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.root :global(.cp-pin-text) {
+  fill: var(--anatomy-card);
+  font-family: var(--anatomy-mono);
+  font-size: 10px;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.root :global(.cp-pin[data-missing] .cp-pin-head) {
+  fill: var(--anatomy-card);
+  stroke: var(--anatomy-mid);
+  stroke-dasharray: 2 2;
+}
+
+.root :global(.cp-pin[data-missing] .cp-pin-text) {
+  fill: var(--anatomy-muted);
+}
+
+.root :global(.cp-pin[data-missing] .cp-pin-dot) {
+  fill: var(--anatomy-mid);
+}
+
+.root :global(.cp-pin:hover .cp-pin-head),
+.root :global(.cp-pin[data-focused] .cp-pin-head) {
+  transform: scale(1.15);
+}
+
+/*
+ * A role picked from the legend or the floor: its machines stay as drawn, the rest step back into
+ * the paper. A filter, not opacity, so every solid still hides what is behind it.
+ */
+.root {
+  --cp-dim: brightness(0.42) saturate(0.4);
+}
+
+.root[data-theme='light'] {
+  --cp-dim: contrast(0.38) brightness(1.18) saturate(0.4);
+}
+
+.root :global(.cp-items > *),
+.root :global(.cp-floor) {
+  transition: filter 220ms var(--anatomy-ease);
+}
+
+.root :global(.cp-items[data-focus] > :not([data-focused])) {
+  filter: var(--cp-dim);
+}
+
+.root :global(.cp-pins[data-focus] .cp-pin:not([data-focused])) {
+  filter: var(--cp-dim);
+}
+
+@keyframes flow {
+  to {
+    stroke-dashoffset: -8;
+  }
+}
+
+@keyframes blink {
+  50% {
+    stroke-opacity: 0.3;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    fill-opacity: 0.35;
+  }
+}
+
+/* Still: no trays moving, no flowing pipes; the lamps and readouts still tell the story. */
+@media (prefers-reduced-motion: reduce) {
+  .root :global(.cp-tray) {
+    display: none;
+  }
+
+  .root :global(.cp-wal-flow),
+  .root :global(.cp-ring),
+  .root :global(.cp-tray-ring),
+  .banner::before,
+  .root :global(.cp-sync),
+  .root :global(.cp-led[data-state='charge']),
+  .root :global(.cp-tray[data-lamp='wait'] .cp-band),
+  .card {
+    animation: none;
+  }
+
+  .choice,
+  .iconButton,
+  .root :global(.cp-led) {
+    transition: none;
+  }
+}
+
+@media (max-width: 960px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 640px) {
+  .cards {
+    grid-template-columns: 1fr;
+  }
+
+  .root {
+    padding: 20px 12px 28px;
+  }
+
+  .header {
+    align-items: flex-start;
+  }
+
+
+
+  .tab {
+    padding: 10px 12px;
+  }
+
+  .tabs {
+    flex-basis: 100%;
+  }
+
+  .choices {
+    grid-template-columns: 1fr;
+  }
+
+  .banner {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    margin-top: 6px;
+    padding: 6px 10px 6px 24px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+
+  .banner::before {
+    left: 10px;
+    top: 11px;
+    width: 6px;
+    height: 6px;
+  }
+
+  /* The view strip shrinks to keep the floor clear. */
+  .view {
+    top: 4px;
+    right: 4px;
+  }
+
+  .viewButton {
+    width: 24px;
+    height: 24px;
+  }
+
+  .viewButton svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  /* A phone has no room for the numbers: the banner's dot carries the status. */
+  .root :global(.iso-plate-corner[data-corner='hint']),
+  .root :global(.iso-plate-corner[data-corner='readout']) {
+    display: none;
+  }
+
+  /* With the foot corners hidden, the plate needs no room below the banner. */
+  .root :global(.iso-plate) {
+    padding-bottom: 12px;
+  }
+
+
+
+
+  /* The heading and its buttons share the first row; the facts take the full width below. */
+  .header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 8px 12px;
+  }
+
+  .title {
+    display: contents;
+  }
+
+  .heading {
+    align-self: center;
+  }
+
+  .headline {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  /* Two columns of facts fill the width; the long last fact takes a row of its own. */
+  .headline {
+    display: grid;
+    line-height: 1.4;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px 12px;
+  }
+
+  .headline > li:last-child {
+    grid-column: span 2;
+  }
+}
