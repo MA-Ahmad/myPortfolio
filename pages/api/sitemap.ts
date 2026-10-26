@@ -3,10 +3,18 @@ import path from 'path';
 import matter from 'gray-matter';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { SITE_URL } from 'data/constants';
+import { blockHref, getBlocks, getUsedCategories } from 'blocks/registry';
 
-// Theme pages are noindexed copies of the home page, and posts written on Dev.to name Dev.to as
-// canonical, so neither is listed.
-const PAGES = ['/', '/blog', '/theme-studio'];
+// Theme and block preview pages are noindexed, and posts written on Dev.to name Dev.to as
+// canonical, so none of them are listed.
+const PAGES = [
+  '/',
+  '/blog',
+  '/theme-studio',
+  '/blocks',
+  ...getUsedCategories().map((category) => `/blocks/${category.name}`),
+  ...getBlocks().map(blockHref)
+];
 
 const postsDir = path.join(process.cwd(), 'data', 'posts');
 

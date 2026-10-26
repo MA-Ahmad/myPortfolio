@@ -1,6 +1,5 @@
 import { ReactElement } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
-import Head from 'next/head';
 import Meta from 'components/shared/meta';
 import { BLOCKS, getBlock } from 'blocks/registry';
 import { BLOCK_COMPONENTS } from 'blocks/components';
@@ -14,10 +13,7 @@ const BlockPreview: NextPageWithLayout<Props> = ({ name, title }) => {
 
   return (
     <>
-      <Meta title={`${title} - Preview`} />
-      <Head>
-        <meta name="robots" content="noindex" />
-      </Head>
+      <Meta title={`${title} - Preview`} noindex />
       <div className="min-h-screen bg-background text-foreground">{Block ? <Block /> : null}</div>
     </>
   );

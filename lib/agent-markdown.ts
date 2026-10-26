@@ -4,10 +4,11 @@ import { SITE_URL } from 'data/constants';
 import { getBlocks } from 'blocks/registry';
 import { EDUCATION, EXPERIENCES, PROFILE, PROJECTS } from 'data/profile';
 
-export function sendMarkdown(res: NextApiResponse, content: string) {
+/** `canonical` is the site path of the HTML page the document restates; most restate the home page. */
+export function sendMarkdown(res: NextApiResponse, content: string, canonical = '/') {
   res.setHeader('Content-Type', 'text/markdown;charset=utf-8');
-  // Every document restates the home page, so search engines should index that instead.
-  res.setHeader('Link', `<${SITE_URL}/>; rel="canonical"`);
+  // Search engines should index the HTML page instead of its Markdown copy.
+  res.setHeader('Link', `<${SITE_URL}${canonical}>; rel="canonical"`);
   res.status(200).send(content);
 }
 
