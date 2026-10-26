@@ -80,9 +80,7 @@ export const EDUCATION: EducationItemData[] = institutes.map((institute) => {
     id: slugify(institute.short_title || institute.title),
     school: institute.title,
     degree: institute.role,
-    description: institute.awards
-      ?.map((award) => `**${award.title}** — ${award.description}`)
-      .join('\n\n'),
+    description: institute.awards?.map((award) => award.title).join('\n'),
     skills: institute.skills,
     isExpanded: true
   };

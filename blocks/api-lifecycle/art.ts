@@ -54,19 +54,29 @@ export function artOf(g: Geometry) {
     lineSvg(CLIENT_ART.keys, { tone: 'lo' })
   ].join('');
 
-  const server = [
-    halo(SERVER_ART.halo),
-    solidSvg(SERVER_ART.plinth, { tone: 'lo' }),
-    ...SERVER_ART.units.map(
-      (paths, unit) =>
-        `<g>${solidSvg(paths, { tone: 'mid' })}${lineSvg(SERVER_ART.unitMarks[unit], { tone: 'lo' })}${SERVER_ART.handles[unit]
-          .map((handle) => solidSvg(handle, { tone: 'mid', crease: 'none' }))
-          .join('')}</g>`
-    ),
-    dotsSvg(SERVER_ART.vents, { size: 0.45, tone: 'lo' }),
-    dotsSvg(SERVER_ART.bayLeds, { size: 0.6, tone: 'mid' }),
-    lineSvg(SERVER_ART.panelRules, { tone: 'lo', free: true }),
-    dotsSvg(SERVER_ART.topScrews, { size: 0.5, tone: 'mid' }),
+  // The server comes apart into layers that rise separately: the plinth stays, then the three units
+  // from the bottom (each with its own face marks, handles, vents and lights), then the router dial.
+  const server = [halo(SERVER_ART.halo), solidSvg(SERVER_ART.plinth, { tone: 'lo' })].join('');
+
+  const serverUnits = SERVER_ART.units.map((paths, unit) =>
+    [
+      solidSvg(paths, { tone: 'mid' }),
+      lineSvg(SERVER_ART.unitMarks[unit], { tone: 'lo' }),
+      ...SERVER_ART.handles[unit].map((handle) => solidSvg(handle, { tone: 'mid', crease: 'none' })),
+      dotsSvg(SERVER_ART.vents[unit], { size: 0.45, tone: 'lo' }),
+      dotsSvg(SERVER_ART.unitScrews[unit] ?? SERVER_ART.topScrews, { size: 0.5, tone: 'mid' }),
+      unit === 0 ? dotsSvg(SERVER_ART.bayLeds, { size: 0.6, tone: 'mid' }) : '',
+      unit === 2 ? lineSvg(SERVER_ART.panelRules, { tone: 'lo', free: true }) : '',
+      // The status lights blink while a handler runs.
+      ...(unit === 2
+        ? SERVER_ART.statusLeds.map(
+            ([x, y], index) => `<circle class="${styles.statusLed}" cx="${x}" cy="${y}" r="0.75" style="animation-delay:${index * 110}ms"/>`
+          )
+        : [])
+    ].join('')
+  );
+
+  const serverDial = [
     solidSvg(SERVER_ART.dialBase, { tone: 'lo' }),
     solidSvg(SERVER_ART.dial, {
       tone: 'hi',
@@ -76,11 +86,7 @@ export function artOf(g: Geometry) {
     lineSvg(SERVER_ART.bezel, { tone: 'lo' }),
     lineSvg(SERVER_ART.dialMinor, { tone: 'lo' }),
     lineSvg(SERVER_ART.dialMajor, { tone: 'mid' }),
-    dotsSvg([SERVER_ART.routeMark], { size: 0.6, tone: 'hi' }),
-    // The status lights blink while a handler runs.
-    ...SERVER_ART.statusLeds.map(
-      ([x, y], index) => `<circle class="${styles.statusLed}" cx="${x}" cy="${y}" r="0.75" style="animation-delay:${index * 110}ms"/>`
-    )
+    dotsSvg([SERVER_ART.routeMark], { size: 0.6, tone: 'hi' })
   ].join('');
 
   const gateBack = [
@@ -90,35 +96,61 @@ export function artOf(g: Geometry) {
     lineSvg(GATE_ART.guide, { tone: 'lo' })
   ].join('');
 
-  const cache = [
-    halo(CACHE_ART.halo),
-    solidSvg(CACHE_ART.plinth, { tone: 'lo' }),
-    solidSvg(CACHE_ART.box, { tone: 'mid', inner: lineSvg(CACHE_ART.seam, { tone: 'faint' }) }),
+  // One card per pocket, shown while the cache holds that user, and a light under each pocket.
+  const cacheCards = PROFILES.map(
+    (_, index) =>
+      `<g class="${styles.pocketCard}" data-pocket="${index}" data-hidden="">${solidSvg(CACHE_ART.cards[index], { tone: 'hi', crease: 'lo' })}${lineSvg(
+        CACHE_ART.cardMarks[index],
+        { tone: 'lo', free: true }
+      )}</g>`
+  ).join('');
+  const cacheLeds = CACHE_ART.leds.map(([x, y], index) => `<circle class="${styles.led}" data-pocket="${index}" cx="${x}" cy="${y}" r="0.8"/>`).join('');
+  /** The top of the case: its pockets, label and screws. */
+  const cacheTop = [
     lineSvg(CACHE_ART.pockets, { tone: 'lo' }),
     lineSvg(CACHE_ART.pocketFloors, { tone: 'faint' }),
     lineSvg(CACHE_ART.ledRings, { tone: 'lo' }),
     solidSvg(CACHE_ART.label, { tone: 'lo', crease: 'none' }),
     lineSvg(CACHE_ART.labelRules, { tone: 'lo', free: true }),
-    dotsSvg(CACHE_ART.screws, { size: 0.45, tone: 'mid' }),
-    // One card per pocket, shown while the cache holds that user, and a light under each pocket.
-    ...PROFILES.map(
-      (_, index) =>
-        `<g class="${styles.pocketCard}" data-pocket="${index}" data-hidden="">${solidSvg(CACHE_ART.cards[index], { tone: 'hi', crease: 'lo' })}${lineSvg(
-          CACHE_ART.cardMarks[index],
-          { tone: 'lo', free: true }
-        )}</g>`
-    ),
-    ...CACHE_ART.leds.map(([x, y], index) => `<circle class="${styles.led}" data-pocket="${index}" cx="${x}" cy="${y}" r="0.8"/>`)
+    dotsSvg(CACHE_ART.screws, { size: 0.45, tone: 'mid' })
+  ].join('');
+  const cacheFoot = halo(CACHE_ART.halo) + solidSvg(CACHE_ART.plinth, { tone: 'lo' });
+
+  // Whole, the case is one piece; taken apart it is drawn split at its seam instead, so it looks the same at rest.
+  const cache = [
+    `<g class="${styles.piece}" data-whole="">`,
+    cacheFoot,
+    solidSvg(CACHE_ART.box, { tone: 'mid', inner: lineSvg(CACHE_ART.seam, { tone: 'faint' }) }),
+    cacheTop,
+    cacheCards,
+    cacheLeds,
+    `</g><g class="${styles.piece}" data-split="" data-hidden="">`,
+    cacheFoot,
+    `<g data-layer="0">`,
+    solidSvg(CACHE_ART.body, { tone: 'mid' }),
+    lineSvg(CACHE_ART.ramSticks, { tone: 'lo' }),
+    lineSvg(CACHE_ART.ramChips, { tone: 'faint' }),
+    dotsSvg(CACHE_ART.bodyScrews, { size: 0.45, tone: 'mid' }),
+    `</g><g data-layer="1">`,
+    solidSvg(CACHE_ART.plate, { tone: 'mid' }),
+    cacheTop,
+    cacheCards,
+    cacheLeds,
+    `</g></g>`
   ].join('');
 
   const db = [
     halo(DB_ART.halo),
     solidSvg(DB_ART.plinth, { tone: 'lo' }),
     solidSvg(DB_ART.body, { tone: 'mid', inner: lineSvg(DB_ART.sideSeams, { tone: 'faint' }) }),
+    dotsSvg(DB_ART.bodyScrews, { size: 0.5, tone: 'mid' }),
+    lineSvg(DB_ART.openings, { tone: 'lo' }),
+    // The lid rises on its own when the cabinet is taken apart.
+    `<g data-layer="lid">`,
     solidSvg(DB_ART.lip, { tone: 'mid' }),
     dotsSvg(DB_ART.topScrews, { size: 0.5, tone: 'mid' }),
     faceTextSvg(DB_ART.label, 'users', { size: 4, tone: 'lo', anchor: 'middle' }),
-    lineSvg(DB_ART.openings, { tone: 'lo' })
+    `</g>`
   ].join('');
 
   const drawerFronts = DB_ART.drawers.map((drawer) =>
@@ -185,7 +217,7 @@ export function artOf(g: Geometry) {
     lineSvg(GATE_ART.ledRing, { tone: 'lo' })
   ].join('');
 
-  return { base, client, server, gateBack, cache, db, drawerFronts, rail, shuttle, slip, card, gateBeam, gatePlate, gateFront };
+  return { base, client, server, serverUnits, serverDial, gateBack, cache, db, drawerFronts, rail, shuttle, slip, card, gateBeam, gatePlate, gateFront };
 }
 
 export type Art = ReturnType<typeof artOf>;

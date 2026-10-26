@@ -57,16 +57,7 @@ export const institutes = [
     role: "Bachelor's Degree in Computer Science",
     skills: ['project management', 'web development', 'data structures'],
     logo: '/assets/images/logos/fast.png',
-    awards: [
-      {
-        title: 'Silver Medal',
-        description: 'This medal was awarded to me by FAST - NUCES for securing 2nd position.'
-      },
-      {
-        title: 'Speed Programming Battles',
-        description: 'Won speed programming battles which held at FAST - NUCES.'
-      }
-    ]
+    awards: [{ title: 'Silver medalist' }, { title: 'Speed programming battle winner' }]
   }
 ];
 

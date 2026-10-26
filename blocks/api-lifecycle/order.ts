@@ -13,18 +13,22 @@ import {
   DECK_TOP,
   DIAL_TOP,
   DRAWER_OUT,
+  DRAWER_REACH,
   GATE_LIFT,
   GATE_PLATE,
   GATE_PLATE_H,
   GATE_Z,
   KEYBOARD,
+  LID_LIFT,
   POST,
   POST_BACK_Y,
   POST_FRONT_Y,
   POST_H,
   RAIL,
   RAIL_H,
-  SHUTTLE
+  SHUTTLE,
+  UNITS,
+  liftOf
 } from './view';
 
 /**
@@ -43,25 +47,35 @@ type Box = [number, number, number, number, number, number];
 
 const box = (plan: { x: number; y: number; w: number; d: number }, z0: number, z1: number): Box => [plan.x, plan.x + plan.w, plan.y, plan.y + plan.d, z0, z1];
 
-const STATIC: Record<Exclude<Item, 'shuttle' | 'gatePlate'>, Box> = {
+/** How far each machine is taken apart, 0..1. */
+export interface Apart {
+  server: number;
+  cache: number;
+  db: number;
+}
+
+const TOGETHER: Apart = { server: 0, cache: 0, db: 0 };
+
+const STATIC: Record<Exclude<Item, 'shuttle' | 'gatePlate' | 'server' | 'cache' | 'db'>, Box> = {
   // The keyboard sits in front of the case, so the client's box reaches to its front edge.
   client: [CASE.x, CASE.x + CASE.w, CASE.y, KEYBOARD.y + KEYBOARD.d, 0, CASE_H + 1],
-  server: box(CHASSIS, 0, DIAL_TOP),
   // The posts' feet are left out: they are low, and the plate and the rail never reach down to them.
   gateBack: [GATE_X - POST / 2 - 3, GATE_X + POST / 2 + 3, POST_BACK_Y, POST_BACK_Y + POST, 0, POST_H],
-  cache: box(CACHE_BOX, 0, CACHE_H + 1),
-  // Room for a drawer pulled all the way out, with its front and handle.
-  db: [CABINET.x, CABINET.x + CABINET.w, CABINET.y, CABINET.y + CABINET.d + DRAWER_OUT + 5, 0, CABINET_H + 2],
   // The track only: its end stops stand where nothing else reaches.
   rail: box(RAIL, 0, RAIL_H),
   gateBeam: [GATE_X - 5, GATE_X + 5, POST_BACK_Y - 1, POST_FRONT_Y + POST + 1, BEAM_Z, BEAM_Z + BEAM_H],
   gateFront: [GATE_X - POST / 2 - 3, GATE_X + POST / 2 + 3, POST_FRONT_Y, POST_FRONT_Y + POST + 4, 0, POST_H]
 };
 
-function boxesAt(shuttleX: number, gate: number): Record<Item, Box> {
+function boxesAt(shuttleX: number, gate: number, apart: Apart): Record<Item, Box> {
   const lift = gate * GATE_LIFT;
   return {
     ...STATIC,
+    // Taken apart, a machine stands taller by its top's rise, and the cabinet reaches as far as its drawers come out.
+    server: box(CHASSIS, 0, DIAL_TOP + liftOf(UNITS, apart.server)),
+    cache: box(CACHE_BOX, 0, CACHE_H + 1 + liftOf(1, apart.cache)),
+    // Room for a drawer pulled all the way out, with its front and handle.
+    db: [CABINET.x, CABINET.x + CABINET.w, CABINET.y, CABINET.y + CABINET.d + Math.max(DRAWER_OUT, DRAWER_REACH * apart.db) + 5, 0, CABINET_H + 2 + LID_LIFT * apart.db],
     shuttle: [shuttleX + SHUTTLE.x - 2, shuttleX + SHUTTLE.x + SHUTTLE.w + 2, SHUTTLE.y, SHUTTLE.y + SHUTTLE.d, 1, DECK_TOP + 4],
     gatePlate: box(GATE_PLATE, GATE_Z + lift, GATE_Z + GATE_PLATE_H + lift)
   };
@@ -111,11 +125,11 @@ function compare(a: Box, b: Box, view: [number, number, number], P: Projection) 
   return verdict;
 }
 
-/** The groups back to front for this camera, with the shuttle at `shuttleX` and the gate lifted by `gate` (0..1). */
-export function orderOf(P: Projection, shuttleX: number, gate: number): Item[] {
+/** The groups back to front for this camera, with the shuttle at `shuttleX`, the gate lifted by `gate` (0..1) and the machines `apart`. */
+export function orderOf(P: Projection, shuttleX: number, gate: number, apart: Apart = TOGETHER): Item[] {
   const origin = depthOf([0, 0, 0], P);
   const view: [number, number, number] = [depthOf([1, 0, 0], P) - origin, depthOf([0, 1, 0], P) - origin, depthOf([0, 0, 1], P) - origin];
-  const boxes = boxesAt(shuttleX, gate);
+  const boxes = boxesAt(shuttleX, gate, apart);
   const after = new Map<Item, Set<Item>>(ITEMS.map((item) => [item, new Set<Item>()]));
   const before = new Map<Item, number>(ITEMS.map((item) => [item, 0]));
   const edge = (from: Item, to: Item) => {

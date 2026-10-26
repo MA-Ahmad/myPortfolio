@@ -33,6 +33,7 @@ import {
   CABINET_H,
   CACHE_BOX,
   CACHE_H,
+  CACHE_SPLIT,
   CARD,
   CARD_H,
   CASE,
@@ -406,6 +407,8 @@ export function geometryOf(P: Projection) {
     ),
     vents: sideVents(),
     topScrews: screwsOn(CHASSIS, 5, SERVER_TOP),
+    /** Screws on the tops of the lower units, hidden under the unit above until the server comes apart. */
+    unitScrews: [0, 1].map((unit) => screwsOn(CHASSIS, 5, unitZ(unit) + UNIT_H - UNIT_GAP)),
     dialBase: round(DIAL_C[0], DIAL_C[1], DIAL_R + 2, SERVER_TOP, 1.6, 56),
     dial: round(DIAL_C[0], DIAL_C[1], DIAL_R, SERVER_TOP + 1.6, DIAL_H - 1.6, 64),
     dialKnurl: knurl(DIAL_C[0], DIAL_C[1], DIAL_R, DIAL_TOP - 2.6, DIAL_TOP, 72, P),
@@ -415,16 +418,17 @@ export function geometryOf(P: Projection) {
     hub: ring(DIAL_C[0], DIAL_C[1], 1.6, DIAL_TOP, P, 16)
   };
 
-  function sideVents(): Flat[] {
-    const dots: Flat[] = [];
-    for (let unit = 0; unit < UNITS; unit++) {
+  /** The vent holes on the side, one list per unit, so each unit carries its own when the server comes apart. */
+  function sideVents(): Flat[][] {
+    return Array.from({ length: UNITS }, (_, unit) => {
+      const dots: Flat[] = [];
       for (let row = 0; row < 2; row++) {
         for (let column = 0; column < 9; column++) {
           dots.push(at([SIDE_X, CHASSIS.y + 10 + column * 5, unitZ(unit) + 5.5 + row * 4.4]));
         }
       }
-    }
-    return dots;
+      return dots;
+    });
   }
 
   function dialTicks() {
@@ -452,6 +456,7 @@ export function geometryOf(P: Projection) {
   const CACHE_FACE = CACHE_BOX.y + CACHE_BOX.d;
   const POCKET = (x: number): Plan => ({ x: x + CARD.x - 1.4, y: POCKET_Y + CARD.y - 1.4, w: CARD.w + 2.8, d: CARD.d + 2.8, r: 1.6 });
   const CACHE_LABEL: Plan = { x: CACHE_BOX.x + 6, y: CACHE_BOX.y + 3, w: 22, d: 5, r: 1 };
+  const RAM_Y = [CACHE_BOX.y + 7, CACHE_BOX.y + 17, CACHE_BOX.y + 27];
 
   const CACHE_ART = {
     halo: haloOf(CACHE_BOX, 0, 0.1, P),
@@ -470,7 +475,16 @@ export function geometryOf(P: Projection) {
     ledRings: join(POCKET_X.map((x) => sideRing([x, CACHE_FACE, 12.5], 1.4, 'y', P, 14))),
     label: solid(CACHE_LABEL, CACHE_H, 0.5, 2),
     labelRules: rules({ ...CACHE_LABEL, d: 5 }, CACHE_H + 0.5, [0.7, 0.4, 0.55]),
-    screws: [at([CACHE_BOX.x + CACHE_BOX.w - 4, CACHE_BOX.y + 4, CACHE_H]), at([CACHE_BOX.x + 4, CACHE_BOX.y + CACHE_BOX.d - 4, CACHE_H]), at([CACHE_BOX.x + CACHE_BOX.w - 4, CACHE_BOX.y + CACHE_BOX.d - 4, CACHE_H])]
+    screws: [at([CACHE_BOX.x + CACHE_BOX.w - 4, CACHE_BOX.y + 4, CACHE_H]), at([CACHE_BOX.x + 4, CACHE_BOX.y + CACHE_BOX.d - 4, CACHE_H]), at([CACHE_BOX.x + CACHE_BOX.w - 4, CACHE_BOX.y + CACHE_BOX.d - 4, CACHE_H])],
+    // Taken apart: the case as two pieces split at the seam, and what the plate covers on the body's top.
+    body: solid(CACHE_BOX, 2, CACHE_SPLIT - 2, 4, 1),
+    plate: solid(CACHE_BOX, CACHE_SPLIT, CACHE_H - CACHE_SPLIT, 4, 1),
+    /** Three memory sticks lying across the body, each with a row of chips. */
+    ramSticks: join(RAM_Y.map((y) => planOutline({ x: CACHE_BOX.x + 7, y, w: CACHE_BOX.w - 14, d: 6, r: 0.6 }, CACHE_SPLIT, P, 2))),
+    ramChips: join(
+      RAM_Y.flatMap((y) => Array.from({ length: 7 }, (_, chip) => planOutline({ x: CACHE_BOX.x + 10 + chip * 7.6, y: y + 1.5, w: 5.2, d: 3, r: 0.3 }, CACHE_SPLIT, P, 1)))
+    ),
+    bodyScrews: screwsOn(CACHE_BOX, 3.5, CACHE_SPLIT)
   };
 
   // ── Database: the filing cabinet ─────────────────────────────────────────────────────────────
@@ -505,6 +519,8 @@ export function geometryOf(P: Projection) {
     openings: join(DRAWER_Z.map((z0) => faceRect(DRAWER_FRONT.x - 0.8, DRAWER_FRONT.x + DRAWER_FRONT.w + 0.8, z0 - 0.6, z0 + DRAWER_H - 0.4, CAB_FRONT))),
     drawers: DRAWER_Z.map((_, index) => drawerArt(index)),
     topScrews: screwsOn(LIP, 4, CABINET_H + 2),
+    /** The screws that hold the lid down, on the body's top under it. */
+    bodyScrews: screwsOn(CABINET, 6, CABINET_H),
     label: topMatrix([DB_X, CABINET.y + CABINET.d - 12], CABINET_H + 2, P, 'x')
   };
 

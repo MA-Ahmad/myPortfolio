@@ -12,7 +12,7 @@ export function Education() {
         {institute.awards?.map((award) => (
           <p key={award.title} className="text-term-muted">
             <span className="mr-2 text-term-accent">+</span>
-            {award.title.toLowerCase()} — {award.description.toLowerCase()}
+            {award.title.toLowerCase()}
           </p>
         ))}
       </>

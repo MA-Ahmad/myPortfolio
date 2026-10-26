@@ -12,6 +12,7 @@ import { PLAY_EXIT_EVENT, isPlaying } from 'lib/play';
 
 const pageLinks: { name: string; path: string }[] = [
   // { name: 'Blog', path: '/blog' }
+  { name: 'Blocks', path: '/blocks' }
 ];
 
 interface NavLinkProps {
@@ -32,8 +33,8 @@ const NavLink = (props: NavLinkProps) => {
       aria-current={isActive ? 'page' : undefined}
       onClick={() => props.onClose()}
       className={cn(
-        'nav-link text-sm font-medium tracking-wide text-muted-foreground no-underline transition-[color] hover:text-foreground',
-        isActive && 'text-foreground'
+        'text-sm font-medium tracking-wide no-underline transition-[color] hover:text-foreground',
+        isActive ? 'text-foreground' : 'text-muted-foreground'
       )}
     >
       {props.name}
@@ -100,18 +101,23 @@ export default function TopNav({ wide = false }: { wide?: boolean }) {
           />
         </NextLink>
 
-        <nav className="hidden items-center gap-4 md:flex">
-          {pageLinks.map((link) => (
-            <NavLink
-              key={link.path}
-              name={link.name}
-              path={link.path}
-              onClose={onClose}
-            />
-          ))}
-        </nav>
-
         <div className="flex-1" />
+
+        {pageLinks.length > 0 ? (
+          <>
+            <nav className="hidden items-center gap-4 md:flex">
+              {pageLinks.map((link) => (
+                <NavLink
+                  key={link.path}
+                  name={link.name}
+                  path={link.path}
+                  onClose={onClose}
+                />
+              ))}
+            </nav>
+            <span className="mx-2 hidden h-5 w-px bg-line md:block" />
+          </>
+        ) : null}
 
         <div className="flex items-center gap-1">
           <a

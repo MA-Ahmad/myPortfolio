@@ -6,7 +6,7 @@ import { useTheme } from 'next-themes';
 import { MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
 import { ISO_CSS } from './iso-kit';
 import { Plate } from './iso-react';
-import { Bench, SCALE_MOST, SCALE_STEP, type BenchHandle } from './live';
+import { Bench, SCALE_MOST, SCALE_STEP, type BenchHandle, type Station } from './live';
 import { MISSING_ID, NETWORK, PROFILES, QUERY, TOTALS, ms, type Request } from './model';
 import styles from './api-lifecycle.module.css';
 
@@ -29,6 +29,7 @@ export default function ApiLifecycle() {
   const [cached, setCached] = useState<number[]>([]);
   const [zoomed, setZoomed] = useState(false);
   const [scale, setScale] = useState(1);
+  const [open, setOpen] = useState<Station | null>(null);
 
   useEffect(() => setMounted(true), []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
@@ -80,7 +81,11 @@ export default function ApiLifecycle() {
     else if (event.key === '+' || event.key === '=') zoomIn();
     else if (event.key === '-' || event.key === '_') zoomOut();
     else if (event.key === 'z' || event.key === 'Z' || event.key === 'm' || event.key === 'M') bench.current?.zoom();
+    else if (event.key === 's' || event.key === 'S') bench.current?.apart('server');
+    else if (event.key === 'k' || event.key === 'K') bench.current?.apart('cache');
+    else if (event.key === 'd' || event.key === 'D') bench.current?.apart('db');
     else if (event.key === 'Escape' && zoomed) bench.current?.zoom(false);
+    else if (event.key === 'Escape' && open) bench.current?.apart(open, false);
     else if (digit >= 1 && digit <= USERS.length) pick(USERS[digit - 1].id);
     else if (event.key === 't' || event.key === 'T') toggleToken();
     else if (event.key === 'c' || event.key === 'C') flush();
@@ -124,7 +129,13 @@ export default function ApiLifecycle() {
       <Plate
         fig="Fig 1"
         title="Fetch a user profile"
-        hint={zoomed ? 'Click or Esc to step back' : scale > 1 ? 'Drag to pan · click the monitor' : 'Drag to turn · click the monitor'}
+        hint={
+          zoomed
+            ? 'Click or Esc to step back'
+            : open
+              ? 'Click it again to put it back'
+              : `${scale > 1 ? 'Drag to pan' : 'Drag to turn'} · click any machine`
+        }
         readout="GET /users/:id · ready"
         keys={[
           { mark: 'lit', label: 'What travels: the request ticket, and the row card that answers it' },
@@ -149,10 +160,10 @@ export default function ApiLifecycle() {
           data-panning={scale > 1 && !zoomed ? '' : undefined}
           role="group"
           tabIndex={0}
-          aria-label="Request bench. Enter sends the request, 1 to 3 pick a user, T toggles the token, C flushes the cache. Left and right arrows turn the bench, plus and minus zoom, 0 or Home resets the view, Z moves in to the monitor and Escape steps back."
+          aria-label="Request bench. Enter sends the request, 1 to 3 pick a user, T toggles the token, C flushes the cache. Left and right arrows turn the bench, plus and minus zoom, 0 or Home resets the view, Z moves in to the monitor, S, K and D take the server, cache and database apart, and Escape steps back."
           onKeyDown={onKeyDown}
         >
-          <Bench ref={bench} onBusy={onBusy} onCache={setCached} onTour={onTour} onSend={send} onZoom={setZoomed} onScale={setScale} />
+          <Bench ref={bench} onBusy={onBusy} onCache={setCached} onTour={onTour} onSend={send} onZoom={setZoomed} onScale={setScale} onApart={setOpen} />
         </div>
       </Plate>
     </section>
