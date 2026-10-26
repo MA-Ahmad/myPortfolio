@@ -1,6 +1,5 @@
 import { MouseEvent, ReactElement, ReactNode, useEffect, useRef } from 'react';
 import { GetStaticProps } from 'next';
-import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ArrowLeft } from 'lucide-react';
@@ -18,10 +17,10 @@ type Props = {
 
 const CanvasPage: NextPageWithLayout<Props> = ({ contributions }) => (
   <>
-    <Meta title="Theme Studio" />
-    <Head>
-      <meta name="robots" content="noindex" />
-    </Head>
+    <Meta
+      title="Theme Studio"
+      description="Pick a theme for Muhammad Ahmad's portfolio by wiring its card into the display."
+    />
     <h1 className="sr-only">Theme Studio: open a theme by choosing its card, or wire it into the display</h1>
     <CanvasStage contributions={contributions} />
   </>

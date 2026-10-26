@@ -12,6 +12,7 @@ import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
 import { getLatestBlogPosts } from 'lib/blogPosts';
 import { getDevtoPosts } from 'lib/fetchPosts';
+import { SITE_URL } from 'data/constants';
 
 export interface AllBlogProps {
   blogDetails: BlogPost;
@@ -31,6 +32,10 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
       description={blogDetails.description}
       image={blogDetails.cover_image}
       keywords={blogDetails.tags?.join(', ')}
+      // Posts written on Dev.to are mirrored here; Dev.to keeps the original.
+      canonical={
+        blogDetails.canonical_url?.includes('dev.to') ? blogDetails.canonical_url : undefined
+      }
       animate={false}
     >
       <div className="h-12" />
@@ -99,17 +104,40 @@ const markdownToHtml = async (markdown: string) => {
   return result.toString();
 };
 
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  const latestPosts = await getLatestBlogPosts();
-  const isLatestPost = latestPosts.some((post) => post.slug === params?.slug);
+/**
+ * Where an old post URL should point now that the blog only serves its latest Dev.to posts:
+ * the local copy when one exists, otherwise the article on Dev.to.
+ */
+const movedPostURL = (slug: string, devData: BlogPost[], localSlugs: string[]) => {
+  const post =
+    devData.find((data) => data.slug === slug) ??
+    devData.find(
+      (data) =>
+        !data.canonical_url.includes('dev.to') && data.canonical_url.split('/blog/')[1] === slug
+    );
+  if (!post) return null;
 
-  if (!isLatestPost) {
-    return {
-      notFound: true
-    };
-  }
+  const localSlug = post.canonical_url.startsWith(`${SITE_URL}/blog/`)
+    ? post.canonical_url.split('/blog/')[1]
+    : undefined;
+  return localSlug && localSlugs.includes(localSlug) ? `/blog/${localSlug}` : post.url;
+};
+
+export const getStaticProps: GetStaticProps = async ({ params }) => {
+  const slug = String(params?.slug);
+  const latestPosts = await getLatestBlogPosts();
+  const isLatestPost = latestPosts.some((post) => post.slug === slug);
+  const localSlugs = fs
+    .readdirSync(path.join(root, 'data', 'posts'))
+    .map((file) => file.replace(/\.mdx/, ''));
 
   const devData: BlogPost[] = await getDevtoPosts();
+
+  // Local posts stay up after they drop out of the latest list; other old links follow the post.
+  if (!isLatestPost && !localSlugs.includes(slug)) {
+    const destination = movedPostURL(slug, devData, localSlugs);
+    return destination ? { redirect: { destination, permanent: true } } : { notFound: true };
+  }
 
   const selectedBlog = devData.filter(
     (data) => data?.slug === params?.slug && data.canonical_url.includes('dev.to')
