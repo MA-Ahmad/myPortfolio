@@ -13,6 +13,7 @@ import {
   getCategory
 } from 'blocks/registry';
 import { type BlockFile, getBlockFiles } from 'lib/block-source';
+import { SITE_URL } from 'data/constants';
 
 type Props = {
   block: BlockMeta;
@@ -27,7 +28,13 @@ const navButton =
 
 export default function BlockPage({ block, category, files, previous, next }: Props) {
   return (
-    <PageLayout title={`${block.title} - Blocks`} description={block.description} animate={false}>
+    <PageLayout
+      title={`${block.title} - Blocks`}
+      description={block.description}
+      image={block.images ? `${SITE_URL}${block.images.og}` : undefined}
+      imageAlt={block.images?.alt}
+      animate={false}
+    >
       <div className="pt-12">
         <div className="px-4 pb-2 text-sm font-medium tracking-wider text-muted-foreground">
           {category.title}

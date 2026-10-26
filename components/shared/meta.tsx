@@ -7,6 +7,8 @@ type Props = {
   description?: string;
   keywords?: string;
   image?: string;
+  /** Describes `image`, for screen readers and when it can't load. */
+  imageAlt?: string;
   /** Absolute URL of the page's original copy; defaults to this page without its query or hash. */
   canonical?: string;
   noindex?: boolean;
@@ -17,6 +19,7 @@ const Meta = ({
   keywords = 'web development, programming, web design, react js, chakra ui',
   description = 'Software Engineer. Lover of web and opensource.',
   image = SEO_IMAGE,
+  imageAlt = 'Muhammad Ahmad, drawn as an isometric MA monogram',
   canonical,
   noindex = false
 }: Props): JSX.Element => {
@@ -37,12 +40,13 @@ const Meta = ({
       <meta property="og:image" content={image} />
       <meta property="og:image:width" content="1200" />
       <meta property="og:image:height" content="630" />
-      <meta property="og:image:alt" content="Muhammad Ahmad, drawn as an isometric MA monogram" />
+      <meta property="og:image:alt" content={imageAlt} />
       <meta property="og:description" content={description} />
       <meta property="og:site_name" content={title} />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+      <meta name="twitter:image:alt" content={imageAlt} />
       <meta name="twitter:card" content="summary_large_image" />
       <title>{title.includes('Ahmad') ? title : title.concat(' | Muhammad Ahmad')}</title>
     </Head>

@@ -6,7 +6,7 @@ function BlockItem({ block }: { block: BlockMeta }) {
   return (
     <div className="group/block relative flex h-full flex-col gap-2 p-2 transition-[background-color] duration-150 ease-out hover:bg-accent-muted">
       <div className="relative">
-        <BlockThumbnail name={block.name} className="rounded-xl" />
+        <BlockThumbnail block={block} className="rounded-xl" />
         <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-black/15 dark:ring-white/15" />
       </div>
 

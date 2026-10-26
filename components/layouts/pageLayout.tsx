@@ -8,6 +8,7 @@ type Props = {
   description?: string
   keywords?: string
   image?: string
+  imageAlt?: string
   canonical?: string
   animate?: boolean
 }
@@ -24,6 +25,7 @@ const PageLayout = ({
   description,
   keywords,
   image,
+  imageAlt,
   canonical,
   animate = true,
 }: Props): JSX.Element => (
@@ -33,6 +35,7 @@ const PageLayout = ({
       description={description}
       keywords={keywords}
       image={image}
+      imageAlt={imageAlt}
       canonical={canonical}
     />
     {animate ? (

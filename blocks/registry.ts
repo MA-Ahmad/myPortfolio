@@ -29,6 +29,13 @@ export type BlockMeta = {
   /** Files the block reads from `public/` rather than ships as source (images, fonts), in Markdown:
    * where they go, and how the block behaves without them. Listed under "Assets" in its Markdown. */
   assets?: string;
+  /**
+   * Stills in `public/`. `card` is the picture on its card in the blocks list (one per color mode, or
+   * one for both when the block looks the same in each); `og` is its 1200 × 630 social preview, and
+   * `alt` describes it. Without them the card renders the live block and the page uses the site's
+   * default image.
+   */
+  images?: { card: string | { light: string; dark: string }; og: string; alt: string };
 };
 
 export const BLOCK_CATEGORIES: BlockCategory[] = [
@@ -62,7 +69,12 @@ export const BLOCKS: BlockMeta[] = [
       'iso-kit.ts'
     ],
     iframeHeight: 860,
-    dependencies: ['next-themes', 'lucide-react']
+    dependencies: ['next-themes', 'lucide-react'],
+    images: {
+      card: { light: '/blocks/api-lifecycle/card-light.webp', dark: '/blocks/api-lifecycle/card-dark.webp' },
+      og: '/blocks/api-lifecycle/og.png',
+      alt: 'An isometric request bench: a client terminal, an auth gate, an app server, a cache and a filing cabinet, with a profile card lifting out of an open drawer onto a shuttle.'
+    }
   },
   {
     name: 'movie-rack',
@@ -73,6 +85,12 @@ export const BLOCKS: BlockMeta[] = [
     files: ['movie-rack.tsx', 'rack-scene.ts', 'cover-texture.ts', 'movies.ts', 'movie-rack.module.css'],
     iframeHeight: 820,
     dependencies: ['three', 'framer-motion', 'lucide-react'],
+    // The rack draws its own dark scene in either color mode, so one card serves both.
+    images: {
+      card: '/blocks/movie-rack/card.webp',
+      og: '/blocks/movie-rack/og.jpg',
+      alt: 'A 3D rack of CD cases with film posters, with Drive pulled out of the row as tonight’s pick.'
+    },
     assets:
       'Optional film posters, one per film in `movies.ts`, at `public/blocks/movie-rack/posters/<id>.jpg` (the `poster` field holds each path; any portrait image works). They are not included here. Every case shows a painted cover until its poster loads, so the rack works without them; to leave them out entirely, remove the `poster` fields.'
   }
