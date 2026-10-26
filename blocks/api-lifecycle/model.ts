@@ -169,7 +169,7 @@ export function planOf(request: Request, cached: boolean): Plan {
       { secs: 1.4, ms: NETWORK, to: { x: STOP.client }, set: { label: 'on the wire' } },
       outcome === 'missing'
         ? { secs: 0.6, ms: RENDER, to: { gate: 0 }, set: { label: 'rendering' } }
-        : { secs: 0.9, ms: RENDER, to: { gate: 0 }, card: ['shuttle', 'terminal'], set: { label: 'rendering' } },
+        : { secs: 1.2, ms: RENDER, to: { gate: 0 }, card: ['shuttle', 'terminal'], set: { label: 'rendering' } },
       { secs: 0.1, ms: 0, set: { label: 'done', screen: outcome === 'missing' ? 'notFound' : 'profile', slip: 'none' } }
     );
   }

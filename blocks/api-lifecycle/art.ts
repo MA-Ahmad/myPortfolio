@@ -11,6 +11,12 @@ import styles from './api-lifecycle.module.css';
 export function artOf(g: Geometry) {
   const { BASE_ART, CACHE_ART, CARD_ART, CLIENT_ART, DB_ART, GATE_ART, RAIL_ART, SERVER_ART, SHUTTLE_ART } = g;
   const halo = (d: string) => `<path class="iso-halo" d="${d}"/>`;
+  /** A wheel: its tread in shade, the face toward the viewer lighter, then tyre and hub rings. */
+  const wheelSvg = (wheel: { tread: string; face: string; tyre: string; hub: string }) =>
+    `<g class="iso-solid"><path class="iso-fill" d="${wheel.tread}"/><path class="iso-shade" data-shade="1" d="${wheel.tread}"/><path class="iso-line iso-edge" data-tone="mid" d="${wheel.tread}"/><path class="iso-shade" data-shade="3" d="${wheel.face}"/><path class="iso-line" data-tone="mid" d="${wheel.face}"/>${lineSvg(
+      wheel.tyre,
+      { tone: 'lo' }
+    )}${lineSvg(wheel.hub, { tone: 'mid' })}</g>`;
 
   const base = [
     halo(BASE_ART.halo),
@@ -38,9 +44,10 @@ export function artOf(g: Geometry) {
     lineSvg(CLIENT_ART.vents, { tone: 'lo' }),
     lineSvg(CLIENT_ART.power, { tone: 'lo' }),
     dotsSvg([CLIENT_ART.powerDot], { size: 0.6, tone: 'mid' }),
-    solidSvg(CLIENT_ART.slot, { tone: 'lo', crease: 'none', flat: true }),
-    lineSvg(CLIENT_ART.slotLip, { tone: 'faint' }),
-    `<path class="${styles.slot}" d="${CLIENT_ART.slotLine}"/>`,
+    lineSvg(CLIENT_ART.floppyBezel, { tone: 'faint' }),
+    `<path class="${styles.slot}" d="${CLIENT_ART.floppy}"/>`,
+    lineSvg(CLIENT_ART.floppyFlap, { tone: 'lo' }),
+    lineSvg(CLIENT_ART.eject, { tone: 'lo' }),
     dotsSvg(CLIENT_ART.topScrews, { size: 0.5, tone: 'mid' }),
     wireSvg(CLIENT_ART.cord[0], CLIENT_ART.cord[1], { tone: 'lo', size: 0.9 }),
     solidSvg(CLIENT_ART.keyboard, { tone: 'mid' }),
@@ -137,9 +144,15 @@ export function artOf(g: Geometry) {
 
   const shuttle = [
     halo(SHUTTLE_ART.halo),
-    ...SHUTTLE_ART.skirts.map((paths) => solidSvg(paths, { tone: 'mid' })),
-    lineSvg(SHUTTLE_ART.wheels.join(''), { tone: 'lo' }),
-    dotsSvg(SHUTTLE_ART.hubs, { size: 0.5, tone: 'mid' }),
+    ...SHUTTLE_ART.backWheels.map((wheel) => wheelSvg(wheel)),
+    ...SHUTTLE_ART.hangers.map((paths) => solidSvg(paths, { tone: 'mid' })),
+    ...SHUTTLE_ART.frontWheels.map((wheel) => wheelSvg(wheel)),
+    // The front wheels' spokes turn as the shuttle rolls; the live component writes this path each frame.
+    `<path class="iso-line" data-tone="mid" data-spokes="" d="${g.wheelSpokesOf(0)}"/>`,
+    dotsSvg(
+      SHUTTLE_ART.frontWheels.map((wheel) => wheel.hubDot),
+      { size: 0.35, tone: 'hi' }
+    ),
     ...SHUTTLE_ART.bumpers.map((paths) => solidSvg(paths, { tone: 'lo' })),
     solidSvg(SHUTTLE_ART.deck, { tone: 'hi', crease: 'lo', inner: lineSvg(SHUTTLE_ART.seam, { tone: 'faint' }) }),
     lineSvg(SHUTTLE_ART.seat, { tone: 'faint' }),

@@ -20,14 +20,23 @@ export const FOOT_H = 5;
 
 // Rail: a flat track on the bench, with the shuttle riding over it.
 export const RAIL_Y = 40;
-export const RAIL: Plan = { x: -272, y: RAIL_Y - 4, w: 488, d: 8, r: 2 };
+/** Wide enough that the shuttle's wheels ride on its two edges. */
+export const RAIL: Plan = { x: -272, y: RAIL_Y - 6, w: 488, d: 12, r: 2 };
 export const RAIL_H = 3;
 export const STRIP: Plan = { x: -262, y: 59, w: 470, d: 6, r: 1 };
 
 // Shuttle, built at x = 0 and moved along x.
-export const SHUTTLE: Plan = { x: -15, y: RAIL_Y - 7, w: 30, d: 14, r: 2.5 };
-export const SKIRT_Z = 1;
-export const DECK_Z = 6.5;
+/** As deep as the track, so the wheels' faces are flush with the deck's front and fully in view. */
+export const SHUTTLE: Plan = { x: -15, y: RAIL_Y - 6, w: 30, d: 12, r: 2.5 };
+/** Four wheels roll on the track's top under a raised deck, two near each edge of the track. */
+export const WHEEL_R = 2.4;
+export const WHEEL_W = 1.2;
+export const WHEEL_X = [-9, 9];
+/** The outer face of the front and back wheels, in y. */
+export const WHEEL_FRONT_Y = RAIL.y + RAIL.d;
+export const WHEEL_BACK_Y = RAIL.y;
+export const WHEEL_Z = RAIL_H + WHEEL_R;
+export const DECK_Z = WHEEL_Z + WHEEL_R + 0.2;
 export const DECK_H = 3;
 export const DECK_TOP = DECK_Z + DECK_H;
 
@@ -44,7 +53,8 @@ export const CASE_H = 52;
 export const CASE_FRONT = CASE.y + CASE.d;
 export const SCREEN = { x: CLIENT_X - 26, z: 46, w: 52, h: 32 };
 export const KEYBOARD: Plan = { x: CLIENT_X - 27, y: 6, w: 54, d: 18, r: 2 };
-export const READER_SLOT: Plan = { x: CLIENT_X - 10, y: -36, w: 20, d: 3, r: 1.2 };
+/** The floppy slot on the case front, below the screen, wide enough for the card lying flat. */
+export const FLOPPY = { x: CLIENT_X - 23, w: 20, z: 5.2, h: 1.6 };
 
 // Gate: two posts straddling the rail, a beam, and a plate that lifts.
 export const POST = 8;
@@ -133,5 +143,6 @@ export const ANCHOR_POINT = {
   drawer: (drawer: number): Point3 => [DB_X, -10 + DRAWER_OUT, DRAWER_Z[drawer] + DRAWER_H - 4],
   pocket: (pocket: number): Point3 => [POCKET_X[pocket], POCKET_Y, CACHE_H + 2.2],
   shuttle: (x: number): Point3 => [x, RAIL_Y, DECK_TOP],
-  terminal: (): Point3 => [CLIENT_X, READER_SLOT.y + READER_SLOT.d / 2, CASE_H]
+  /** Inside the floppy slot, deep enough that the whole card has passed the face. */
+  terminal: (): Point3 => [FLOPPY.x + FLOPPY.w / 2, CASE_FRONT - CARD.d / 2 - 1, FLOPPY.z + 0.4]
 };

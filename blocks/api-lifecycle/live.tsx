@@ -34,6 +34,7 @@ import {
   HEIGHT,
   P0,
   SCREEN,
+  WHEEL_R,
   WIDTH,
   projectionAt
 } from './view';
@@ -63,6 +64,12 @@ const ZOOM_EASE = 0.3;
 /** Close to the monitor, the camera turns almost square to the glass. */
 const ZOOM_AZIMUTH = 84;
 const FULL = [0, 0, WIDTH, HEIGHT];
+/** The hand-over to the terminal: by these shares of it the card is lined up with the floppy slot and level
+ * with it, and this is how high it lifts on the way. Its back edge reaches the face at about 0.75. */
+const SLOT_ALIGN = 0.6;
+const SLOT_LEVEL = 0.65;
+const SLOT_LIFT = 14;
+const SLOT_CLIP = 'api-lifecycle-slot';
 /** The + and − buttons multiply the view's scale by this, between 1× and the most. */
 export const SCALE_STEP = 1.5;
 export const SCALE_MOST = 4;
@@ -202,6 +209,7 @@ export const Bench = React.memo(
     const announce = React.useRef<HTMLSpanElement>(null);
     const needle = React.useRef<SVGPathElement>(null);
     const reader = React.useRef<SVGCircleElement>(null);
+    const slotClip = React.useRef<SVGPathElement>(null);
     const groups = React.useRef({} as Groups);
     const drawerOut = React.useRef<(SVGGElement | null)[]>([]);
     const drawerFront = React.useRef<(SVGGElement | null)[]>([]);
@@ -291,6 +299,7 @@ export const Bench = React.memo(
         show(g.carried, riding);
         const flying = Boolean(plan && card && card.from !== card.to);
         show(g.card, flying);
+        g.shuttleBody?.querySelector('[data-spokes]')?.setAttribute('d', geometry.wheelSpokesOf(-scene.x / WHEEL_R));
         if (plan && card && flying) {
           const anchorPoint = (where: Anchor): Point3 => {
             if (where === 'drawer') return ANCHOR_POINT.drawer(drawerOf(plan.request.id));
@@ -300,12 +309,45 @@ export const Bench = React.memo(
           };
           const a = anchorPoint(card.from);
           const b = anchorPoint(card.to);
-          const lift = (card.to === 'terminal' ? 20 : 14) * Math.sin(Math.PI * card.t);
-          const point: Point3 = [a[0] + (b[0] - a[0]) * card.t, a[1] + (b[1] - a[1]) * card.t, a[2] + (b[2] - a[2]) * card.t + lift];
-          g.card?.setAttribute('transform', translateAlong(P, point));
+          const between = (from: Point3, to: Point3, u: number): Point3 => [from[0] + (to[0] - from[0]) * u, from[1] + (to[1] - from[1]) * u, from[2] + (to[2] - from[2]) * u];
+          let point: Point3;
+          if (card.to === 'terminal') {
+            // One smooth hop from the tray into the floppy slot, driven by the step's single eased clock: the card
+            // lines up with the slot and settles to its height early, while it travels in steadily, so it reaches
+            // the face level and square and slides straight in. Every term starts and ends with zero slope.
+            const s = card.t;
+            const along = smooth(s / SLOT_ALIGN);
+            const settle = smooth(s / SLOT_LEVEL);
+            const u = Math.min(1, s / SLOT_LEVEL);
+            point = [
+              a[0] + (b[0] - a[0]) * along,
+              a[1] + (b[1] - a[1]) * s,
+              b[2] + (a[2] - b[2]) * (1 - settle) + SLOT_LIFT * 16 * u * u * (1 - u) * (1 - u)
+            ];
+            // The line where the face meets the card's underside: anything of the card behind the face draws above it.
+            // That holds only at slot height, so the cut starts once the card has settled there (before it reaches
+            // the face); higher up in its lift, the card would be cut off in mid-air.
+            if (s >= SLOT_LEVEL) {
+              const z = b[2];
+              const left = iso([-4000, CASE_FRONT, z], P);
+              const right = iso([4000, CASE_FRONT, z], P);
+              const origin = iso([0, CASE_FRONT, z], P);
+              const ahead = iso([0, CASE_FRONT + 4000, z], P);
+              const toward = [ahead[0] - origin[0], ahead[1] - origin[1]];
+              slotClip.current?.setAttribute(
+                'd',
+                `M${left[0]} ${left[1]}L${right[0]} ${right[1]}L${right[0] + toward[0]} ${right[1] + toward[1]}L${left[0] + toward[0]} ${left[1] + toward[1]}Z`
+              );
+              g.card?.setAttribute('clip-path', `url(#${SLOT_CLIP})`);
+            } else g.card?.removeAttribute('clip-path');
+          } else {
+            point = between(a, b, card.t);
+            point[2] += 14 * Math.sin(Math.PI * card.t);
+            g.card?.removeAttribute('clip-path');
+          }
+          g.cardArt?.setAttribute('transform', translateAlong(P, point));
           const enter = card.from === 'drawer' ? smooth(card.t / 0.2) : 1;
-          const leave = card.to === 'terminal' ? 1 - smooth((card.t - 0.75) / 0.25) : 1;
-          g.card?.setAttribute('opacity', `${Math.round(enter * leave * 100) / 100}`);
+          g.card?.setAttribute('opacity', `${Math.round(enter * 100) / 100}`);
         }
 
         // The drawer for this id slides out; it is drawn last so it sits in front of the others.
@@ -680,6 +722,10 @@ export const Bench = React.memo(
             <circle ref={reader} className={styles.led} data-state="idle" cx={GEOMETRY_0.GATE_ART.led[0]} cy={GEOMETRY_0.GATE_ART.led[1]} r={0.9} />
           </g>
           <g ref={ref('gateBeam')} dangerouslySetInnerHTML={{ __html: ART_0.gateBeam }} />
+          {/* Hides the part of the card that has gone into the floppy slot: everything behind the case's front face. */}
+          <clipPath id={SLOT_CLIP}>
+            <path ref={slotClip} />
+          </clipPath>
           <g ref={ref('card')} className={styles.carried} data-hidden="">
             <g ref={ref('cardArt')} dangerouslySetInnerHTML={{ __html: ART_0.card }} />
           </g>

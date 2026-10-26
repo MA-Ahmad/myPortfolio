@@ -66,13 +66,18 @@ import {
   RAIL,
   RAIL_H,
   RAIL_Y,
-  READER_SLOT,
+  FLOPPY,
   ROUTE,
   ROUTES,
   SCREEN,
   SERVER_TOP,
   SHUTTLE,
-  SKIRT_Z,
+  WHEEL_BACK_Y,
+  WHEEL_FRONT_Y,
+  WHEEL_R,
+  WHEEL_W,
+  WHEEL_X,
+  WHEEL_Z,
   SLIP,
   STRIP,
   UNITS,
@@ -160,11 +165,55 @@ export function geometryOf(P: Projection) {
 
   // ── Shuttle (built at x = 0) ───────────────────────────────────────────────────────────────────
 
-  const SKIRTS: Plan[] = [
-    { x: SHUTTLE.x + 2, y: SHUTTLE.y, w: SHUTTLE.w - 4, d: 2.4, r: 0.8 },
-    { x: SHUTTLE.x + 2, y: SHUTTLE.y + SHUTTLE.d - 2.4, w: SHUTTLE.w - 4, d: 2.4, r: 0.8 }
-  ];
-  const WHEELS: Flat[] = [-9, 9].map((x) => [x, SHUTTLE.y + SHUTTLE.d]);
+  /** A circle on a face whose normal is ±y, as screen points. */
+  const circleY = (cx: number, y: number, cz: number, r: number, steps = 32): Flat[] =>
+    Array.from({ length: steps }, (_, index) => {
+      const angle = (index / steps) * Math.PI * 2;
+      return at([cx + r * Math.cos(angle), y, cz + r * Math.sin(angle)]);
+    });
+
+  /** The convex hull of screen points (monotone chain), for the tread a wheel shows between its two faces. */
+  const hullOf = (points: Flat[]): Flat[] => {
+    const sorted = [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o: Flat, a: Flat, b: Flat) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const half = (list: Flat[]) => {
+      const out: Flat[] = [];
+      for (const point of list) {
+        while (out.length >= 2 && cross(out[out.length - 2], out[out.length - 1], point) <= 0) out.pop();
+        out.push(point);
+      }
+      out.pop();
+      return out;
+    };
+    return [...half(sorted), ...half([...sorted].reverse())];
+  };
+
+  const TYRE = WHEEL_R * 0.7;
+  const HUB = 0.55;
+
+  /** A wheel turning about y, seen from the +y side: `face` is the y of the face toward the viewer. */
+  const wheelOf = (cx: number, face: number, back: number) => ({
+    tread: pathOf(hullOf([...circleY(cx, face, WHEEL_Z, WHEEL_R), ...circleY(cx, back, WHEEL_Z, WHEEL_R)]), true),
+    face: pathOf(circleY(cx, face, WHEEL_Z, WHEEL_R), true),
+    tyre: pathOf(circleY(cx, face, WHEEL_Z, TYRE, 28), true),
+    hub: pathOf(circleY(cx, face, WHEEL_Z, HUB, 14), true),
+    hubDot: at([cx, face, WHEEL_Z])
+  });
+
+  /** The front wheels' spokes, turned by `angle` (radians, counterclockwise as seen from the front). */
+  const wheelSpokesOf = (angle: number) =>
+    join(
+      WHEEL_X.flatMap((cx) =>
+        [0, 1, 2].map((spoke) => {
+          const a = angle + (spoke * Math.PI * 2) / 3;
+          const [c, s] = [Math.cos(a), Math.sin(a)];
+          return pathOf([at([cx + HUB * c, WHEEL_FRONT_Y, WHEEL_Z + HUB * s]), at([cx + TYRE * c, WHEEL_FRONT_Y, WHEEL_Z + TYRE * s])]);
+        })
+      )
+    );
+
+  /** The housings that carry each axle down from the deck, between the front and back wheels. */
+  const HANGERS: Plan[] = WHEEL_X.map((cx) => ({ x: cx - 1.3, y: WHEEL_BACK_Y + WHEEL_W + 0.3, w: 2.6, d: WHEEL_FRONT_Y - WHEEL_BACK_Y - WHEEL_W * 2 - 0.6, r: 0.6 }));
   const BUMPERS: Plan[] = [
     { x: SHUTTLE.x - 1.6, y: RAIL_Y - 3.5, w: 1.8, d: 7, r: 0.8 },
     { x: SHUTTLE.x + SHUTTLE.w - 0.2, y: RAIL_Y - 3.5, w: 1.8, d: 7, r: 0.8 }
@@ -174,13 +223,14 @@ export function geometryOf(P: Projection) {
 
   const SHUTTLE_ART = {
     halo: haloOf(insetPlan(SHUTTLE, 1), RAIL_H, 0.1, P),
-    skirts: SKIRTS.map((plan) => solid(plan, SKIRT_Z, DECK_Z - SKIRT_Z, 2)),
-    wheels: WHEELS.map(([x, y]) => sideRing([x, y, 3.8], 2.2, 'y', P, 18)),
-    hubs: WHEELS.map(([x, y]) => at([x, y, 3.8])),
+    // The back wheels show their inner face, toward the viewer; the front wheels their outer one.
+    backWheels: WHEEL_X.map((cx) => wheelOf(cx, WHEEL_BACK_Y + WHEEL_W, WHEEL_BACK_Y)),
+    hangers: HANGERS.map((plan) => solid(plan, WHEEL_Z - 1.2, DECK_Z - WHEEL_Z + 1.2, 2)),
+    frontWheels: WHEEL_X.map((cx) => wheelOf(cx, WHEEL_FRONT_Y, WHEEL_FRONT_Y - WHEEL_W)),
     deck: solid(SHUTTLE, DECK_Z, DECK_H, 4, 0.6),
     seam: sideSeam(SHUTTLE, DECK_Z + 1.2, P, 4),
-    seat: planOutline({ x: CARD.x - 1, y: RAIL_Y + CARD.y - 1, w: CARD.w + 2, d: CARD.d + 2, r: 1.6 }, DECK_TOP, P, 3),
-    rivets: [-12, 12].flatMap((x) => [at([x, SHUTTLE.y + 1.6, DECK_TOP]), at([x, SHUTTLE.y + SHUTTLE.d - 1.6, DECK_TOP])]),
+    seat: planOutline({ x: CARD.x - 1, y: RAIL_Y + CARD.y - 0.4, w: CARD.w + 2, d: CARD.d + 0.8, r: 1.2 }, DECK_TOP, P, 3),
+    rivets: [-12, 12].flatMap((x) => [at([x, SHUTTLE.y + 0.9, DECK_TOP]), at([x, SHUTTLE.y + SHUTTLE.d - 0.9, DECK_TOP])]),
     bumpers: BUMPERS.map((plan) => solid(plan, DECK_Z - 1, DECK_H + 0.4, 2)),
     key: round(KEY_C[0], KEY_C[1], 2, DECK_TOP, 3.6, 20),
     keyKnurl: knurl(KEY_C[0], KEY_C[1], 2, DECK_TOP, DECK_TOP + 3.6, 16, P),
@@ -250,9 +300,11 @@ export function geometryOf(P: Projection) {
     powerDot: at([SX1 - 2, CASE_FRONT, 6]),
     led: at([SX1 - 9, CASE_FRONT, 6]),
     vents: join(VENTS_Y.map((y) => sideRect(y, y + 4, 18, 40, CASE_SIDE))),
-    slot: solid(READER_SLOT, CASE_H, 0.01, 2),
-    slotLine: planOutline(READER_SLOT, CASE_H, P, 2),
-    slotLip: planOutline(insetPlan(READER_SLOT, -1.6), CASE_H, P, 3),
+    /** The floppy slot: a bezel, the dark opening, its dust flap edge to edge, and an eject button. */
+    floppyBezel: faceRect(FLOPPY.x - 1.6, FLOPPY.x + FLOPPY.w + 1.6, FLOPPY.z - 1.3, FLOPPY.z + FLOPPY.h + 1.3, CASE_FRONT),
+    floppy: faceRect(FLOPPY.x, FLOPPY.x + FLOPPY.w, FLOPPY.z, FLOPPY.z + FLOPPY.h, CASE_FRONT),
+    floppyFlap: line([FLOPPY.x, CASE_FRONT, FLOPPY.z + FLOPPY.h * 0.45], [FLOPPY.x + FLOPPY.w, CASE_FRONT, FLOPPY.z + FLOPPY.h * 0.45]),
+    eject: faceRect(FLOPPY.x + FLOPPY.w + 3, FLOPPY.x + FLOPPY.w + 6.4, FLOPPY.z + 0.1, FLOPPY.z + FLOPPY.h - 0.1, CASE_FRONT),
     topScrews: screwsOn(CASE, 5, CASE_H),
     keyboard: solid(KEYBOARD, 0, 3, 3, 0.6),
     keys: keys(),
@@ -271,7 +323,8 @@ export function geometryOf(P: Projection) {
   // ── Gate ──────────────────────────────────────────────────────────────────────────────────────
 
   const POSTS: Plan[] = [POST_BACK_Y, POST_FRONT_Y].map((y) => ({ x: GATE_X - POST / 2, y, w: POST, d: POST, r: 1.2 }));
-  const POST_FEET: Plan[] = POSTS.map((plan) => insetPlan(plan, -3));
+  // The front foot reaches back only 1.5, to clear the track's front edge.
+  const POST_FEET: Plan[] = [insetPlan(POSTS[0], -3), { ...insetPlan(POSTS[1], -3), y: POSTS[1].y - 1.5, d: POSTS[1].d + 4.5 }];
   const BEAM: Plan = { x: GATE_X - 5, y: POST_BACK_Y - 1, w: 10, d: POST_FRONT_Y + POST - POST_BACK_Y + 2, r: 1.4 };
   const READER: Plan = { x: GATE_X - 4.5, y: POST_FRONT_Y + POST, w: 9, d: 4, r: 1 };
   const READER_Z = 22;
@@ -480,7 +533,7 @@ export function geometryOf(P: Projection) {
     };
   }
 
-  return { at, BASE_ART, RAIL_ART, SHUTTLE_ART, CARD_ART, CLIENT_ART, GATE_ART, SERVER_ART, needleOf, CACHE_ART, DB_ART, drawerOutOf };
+  return { at, wheelSpokesOf, BASE_ART, RAIL_ART, SHUTTLE_ART, CARD_ART, CLIENT_ART, GATE_ART, SERVER_ART, needleOf, CACHE_ART, DB_ART, drawerOutOf };
 }
 
 export type Geometry = ReturnType<typeof geometryOf>;
