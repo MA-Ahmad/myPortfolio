@@ -19,7 +19,7 @@ import {
   type Request,
   type Scene
 } from './model';
-import { orderOf, type Item } from './order';
+import { orderOf, type Apart, type Item } from './order';
 import { Screen, type ScreenHandle } from './screen';
 import {
   ANCHOR_POINT,
@@ -29,14 +29,34 @@ import {
   CASE,
   CASE_FRONT,
   CASE_H,
+  CABINET,
+  CABINET_H,
+  CACHE_BOX,
+  CACHE_H,
+  CACHE_SPLIT,
+  CHASSIS,
+  DB_X,
+  DIAL_C,
+  DIAL_R,
+  DIAL_TOP,
+  DRAWER_H,
   DRAWER_OUT,
+  DRAWER_REACH,
+  DRAWER_STAIR,
+  DRAWER_Z,
   GATE_LIFT,
   HEIGHT,
+  LID_LIFT,
   P0,
   SCREEN,
+  UNITS,
+  UNIT_GAP,
+  UNIT_H,
   WHEEL_R,
   WIDTH,
-  projectionAt
+  liftOf,
+  projectionAt,
+  unitZ
 } from './view';
 import styles from './api-lifecycle.module.css';
 
@@ -74,6 +94,102 @@ const SLOT_CLIP = 'api-lifecycle-slot';
 export const SCALE_STEP = 1.5;
 export const SCALE_MOST = 4;
 const SCALE_EASE = 0.22;
+/** How fast a machine comes apart and goes back together. */
+const APART_EASE = 0.2;
+
+/** The machines that come apart when clicked. */
+export type Station = keyof Apart;
+const STATIONS: Station[] = ['server', 'cache', 'db'];
+
+const cornersAt = (plan: { x: number; y: number; w: number; d: number }, z: number): Point3[] =>
+  [plan.x, plan.x + plan.w].flatMap((x) => [plan.y, plan.y + plan.d].map((y): Point3 => [x, y, z]));
+
+const CAB_FRONT = CABINET.y + CABINET.d;
+/** `state.drawer` while the cabinet is apart and every drawer is out. */
+const ALL_DRAWERS = -2;
+const DRAWER_ROWS = ['1–99', '100–199', '200+'];
+
+/** The users filed in a drawer, for its label. */
+const filedIn = (drawer: number) => {
+  const ids = PROFILES.filter((profile) => drawerOf(profile.id) === drawer).map((profile) => profile.id);
+  return ids.length ? `user ${ids.join(', ')} filed here` : 'no users filed yet';
+};
+
+interface Part {
+  name: string;
+  note: string;
+  /** World points on the part's outline when the machine is `apart` (0..1) and its drawers are `outs` out; its
+   * label's leader starts at the outermost. */
+  points: (apart: number, outs: number[]) => Point3[];
+}
+
+/** What each part of a machine taken apart does, bottom to top. */
+const PARTS: Record<Station, Part[]> = {
+  server: [
+    ...[
+      { name: 'Worker pool', note: '4 processes share the load' },
+      { name: 'Middleware', note: 'parses, logs, rate-limits' },
+      { name: 'Handler', note: 'loads the user, builds JSON' }
+    ].map((part, unit) => ({ ...part, points: (apart: number) => cornersAt(CHASSIS, unitZ(unit) + (UNIT_H - UNIT_GAP) / 2 + liftOf(unit, apart)) })),
+    {
+      name: 'Router',
+      note: 'matches GET /users/:id',
+      points: (apart) =>
+        Array.from({ length: 48 }, (_, index): Point3 => {
+          const angle = (index / 48) * Math.PI * 2;
+          return [DIAL_C[0] + Math.cos(angle) * DIAL_R, DIAL_C[1] + Math.sin(angle) * DIAL_R, DIAL_TOP - 2 + liftOf(UNITS, apart)];
+        })
+    }
+  ],
+  cache: [
+    { name: 'Memory', note: 'values held in RAM', points: (apart) => cornersAt(CACHE_BOX, (2 + CACHE_SPLIT) / 2 + liftOf(0, apart)) },
+    { name: 'Keys', note: 'user:<id>, kept for 60 s', points: (apart) => cornersAt(CACHE_BOX, (CACHE_SPLIT + CACHE_H) / 2 + liftOf(1, apart)) }
+  ],
+  db: [
+    ...DRAWER_ROWS.map((rows, drawer) => ({
+      name: `Rows ${rows}`,
+      note: filedIn(drawer),
+      points: (_: number, outs: number[]) => cornersAt({ x: DB_X - 33, y: CAB_FRONT, w: 66, d: 2.4 + outs[drawer] }, DRAWER_Z[drawer] + (DRAWER_H - 1) / 2)
+    })),
+    {
+      name: 'Table: users',
+      note: 'the index on id picks the drawer',
+      points: (apart) => cornersAt({ x: CABINET.x - 1, y: CABINET.y - 1, w: CABINET.w + 2, d: CABINET.d + 2 }, CABINET_H + 1 + LID_LIFT * apart)
+    }
+  ]
+};
+
+/** The box a machine fills, as tall and as deep as it is taken apart, for the click that opens it. */
+function boxOf(station: Station, apart: number) {
+  if (station === 'server') return { plan: CHASSIS, top: DIAL_TOP + liftOf(UNITS, apart) };
+  if (station === 'cache') return { plan: CACHE_BOX, top: CACHE_H + liftOf(1, apart) };
+  return { plan: { ...CABINET, d: CABINET.d + 5 + DRAWER_REACH * apart }, top: CABINET_H + 2 + LID_LIFT * apart };
+}
+
+const cross = (o: [number, number], a: [number, number], b: [number, number]) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+
+/** Whether a view-box point lies on a machine's picture: inside the outline of its box as this camera sees it. */
+function onStation(P: Projection, station: Station, apart: number, point: [number, number]) {
+  const { plan, top } = boxOf(station, apart);
+  const flat = [...cornersAt(plan, 0), ...cornersAt(plan, top)].map((corner) => iso(corner, P)).sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+  // The convex hull, by the monotone chain, then the point must lie on the same side of every edge.
+  const half = (points: [number, number][]) => {
+    const chain: [number, number][] = [];
+    for (const p of points) {
+      while (chain.length >= 2 && cross(chain[chain.length - 2], chain[chain.length - 1], p) <= 0) chain.pop();
+      chain.push(p);
+    }
+    return chain.slice(0, -1);
+  };
+  const hull = [...half(flat), ...half([...flat].reverse())];
+  return hull.every((corner, index) => cross(corner, hull[(index + 1) % hull.length], point) >= 0);
+}
+
+/** Room between a machine's edge and its labels, in view-box units, and the widest a label runs. */
+const CALLOUT_GAP = 16;
+const CALLOUT_ROOM = 118;
+/** The least height between two labels' leaders: a name, its note and some air. */
+const CALLOUT_SPACING = 24;
 
 const GEOMETRY_0 = geometryOf(P0);
 const ART_0 = artOf(GEOMETRY_0);
@@ -106,6 +222,8 @@ export interface BenchHandle {
   scaleBy: (factor: number) => void;
   /** Move in to the monitor (true), out (false), or toggle. */
   zoom: (on?: boolean) => void;
+  /** Take a machine apart (true), put it back together (false), or toggle; one is apart at a time. */
+  apart: (station: Station, on?: boolean) => void;
 }
 
 interface Props {
@@ -115,6 +233,7 @@ interface Props {
   onSend: () => void;
   onZoom: (zoomed: boolean) => void;
   onScale: (scale: number) => void;
+  onApart: (open: Station | null) => void;
 }
 
 /** The view-box rectangle that frames the terminal's screen for this camera. */
@@ -178,6 +297,8 @@ type Groups = Record<
   | 'screen'
   | 'server'
   | 'serverArt'
+  | 'dialArt'
+  | 'callouts'
   | 'gateBack'
   | 'cache'
   | 'db'
@@ -202,7 +323,7 @@ type Groups = Record<
 
 /** The bench itself. It never re-renders: every frame, and every turn of the camera, writes through refs. */
 export const Bench = React.memo(
-  React.forwardRef<BenchHandle, Props>(function Bench({ onBusy, onCache, onTour, onSend, onZoom, onScale }, handle) {
+  React.forwardRef<BenchHandle, Props>(function Bench({ onBusy, onCache, onTour, onSend, onZoom, onScale, onApart }, handle) {
     const { anchor, say } = useReadout<HTMLDivElement>();
     const inView = useInView(anchor);
     const screen = React.useRef<ScreenHandle>(null);
@@ -213,6 +334,9 @@ export const Bench = React.memo(
     const groups = React.useRef({} as Groups);
     const drawerOut = React.useRef<(SVGGElement | null)[]>([]);
     const drawerFront = React.useRef<(SVGGElement | null)[]>([]);
+    /** The server's layers, bottom to top: three units, then the dial with its needle. */
+    const serverLayer = React.useRef<(SVGGElement | null)[]>([]);
+    const callouts = React.useRef<Partial<Record<Station, SVGGElement | null>>>({});
     const drag = React.useRef<{ id: number; x: number; y: number; azimuth: number; panX: number; panY: number; pan: boolean; moved: boolean } | null>(null);
     const live = React.useRef({
       plan: null as Plan | null,
@@ -242,11 +366,17 @@ export const Bench = React.memo(
         panYTarget: 0,
         shown: ''
       },
+      /** How far each machine is taken apart (0..1), where it is heading, and what was last placed. */
+      apart: { server: 0, cache: 0, db: 0 } as Apart,
+      apartTarget: { server: 0, cache: 0, db: 0 } as Apart,
+      apartShown: { server: 0, cache: 0, db: 0 } as Apart,
+      /** How far each drawer of a cabinet taken apart is out. */
+      outs: [0, 0, 0],
       P: P0,
       geometry: GEOMETRY_0 as Geometry
     });
-    const callbacks = React.useRef({ onBusy, onCache, onTour, onSend, onZoom, onScale });
-    callbacks.current = { onBusy, onCache, onTour, onSend, onZoom, onScale };
+    const callbacks = React.useRef({ onBusy, onCache, onTour, onSend, onZoom, onScale, onApart });
+    callbacks.current = { onBusy, onCache, onTour, onSend, onZoom, onScale, onApart };
 
     const ref = (key: keyof Groups) => (node: SVGGElement | null) => {
       groups.current[key] = node;
@@ -256,7 +386,7 @@ export const Bench = React.memo(
     const sort = React.useCallback((scene: Scene) => {
       const state = live.current;
       const g = groups.current;
-      const order = orderOf(state.P, scene.x, scene.gate);
+      const order = orderOf(state.P, scene.x, scene.gate, state.apart);
       const key = order.join();
       if (key === state.order) return;
       state.order = key;
@@ -276,7 +406,129 @@ export const Bench = React.memo(
       };
       for (const item of order) for (const node of nodesOf[item]) if (node) svg.appendChild(node);
       if (g.card) svg.appendChild(g.card);
+      // The labels of a machine taken apart lie over everything.
+      if (g.callouts) svg.appendChild(g.callouts);
     }, []);
+
+    /** Lift a machine's parts apart as far as `apart` says, and lay their labels out beside it. */
+    const placeStation = React.useCallback((station: Station) => {
+      const state = live.current;
+      const g = groups.current;
+      const P = state.P;
+      const apart = state.apart[station];
+      state.apartShown[station] = apart;
+      const lift = (node: Element | null | undefined, z: number) => node?.setAttribute('transform', translateAlong(P, [0, 0, z]));
+      if (station === 'server') serverLayer.current.forEach((layer, index) => lift(layer, liftOf(index, apart)));
+      if (station === 'cache') {
+        // At rest the case is drawn whole; apart, as its two pieces.
+        show(g.cache?.querySelector('[data-whole]') ?? null, apart === 0);
+        show(g.cache?.querySelector('[data-split]') ?? null, apart > 0);
+        g.cache?.querySelectorAll('[data-split] [data-layer]').forEach((layer, index) => lift(layer, liftOf(index, apart)));
+      }
+      if (station === 'db') lift(g.dbArt?.querySelector('[data-layer="lid"]'), LID_LIFT * apart);
+
+      const node = callouts.current[station] ?? null;
+      show(node, apart > 0.5);
+      if (!node || apart <= 0.5) return;
+      node.setAttribute('opacity', `${Math.round(smooth((apart - 0.5) / 0.5) * 100) / 100}`);
+      const flat = PARTS[station].map((part) => part.points(apart, state.outs).map((point) => iso(point, P)));
+      const xs = flat.flat().map(([x]) => x);
+      // Labels go on the right, unless they would run off the drawing there.
+      const side = Math.max(...xs) + CALLOUT_GAP + CALLOUT_ROOM <= WIDTH ? 1 : -1;
+      const x = side > 0 ? Math.max(...xs) + CALLOUT_GAP : Math.min(...xs) - CALLOUT_GAP;
+      // What a label must not lie on: the other machines and the terminal, as this camera sees them.
+      const obstacles = [
+        ...STATIONS.filter((other) => other !== station).map((other) => boxOf(other, state.apart[other])),
+        { plan: CASE, top: CASE_H }
+      ].map(({ plan, top }) => {
+        const corners = [...cornersAt(plan, 0), ...cornersAt(plan, top)].map((corner) => iso(corner, P));
+        return {
+          left: Math.min(...corners.map(([cx]) => cx)),
+          right: Math.max(...corners.map(([cx]) => cx)),
+          up: Math.min(...corners.map(([, cy]) => cy)),
+          down: Math.max(...corners.map(([, cy]) => cy))
+        };
+      });
+      // Labels go bottom to top. One that would crowd the label below it, or lie on another machine, moves up, and
+      // its leader turns up to reach it; leaders of higher parts turn further out, so no two cross.
+      let below = Infinity;
+      flat.forEach((points, index) => {
+        const part = node.children[index];
+        if (!part) return;
+        const [ax, ay] = points.reduce((best, point) => (point[0] * side > best[0] * side ? point : best));
+        const width = Math.max(...Array.from(part.querySelectorAll('text'), (text) => text.getComputedTextLength())) + 3;
+        const [from, to] = side > 0 ? [x, x + width] : [x - width, x];
+        let ly = Math.min(ay, below - CALLOUT_SPACING);
+        for (let pass = 0; pass < 4; pass++) {
+          // A label runs from its name above the leader to its note below it.
+          const blocking = obstacles.filter((box) => from < box.right + 2 && to > box.left - 2 && ly - 9 < box.down && ly + 11 > box.up);
+          if (!blocking.length) break;
+          ly = Math.min(...blocking.map((box) => box.up)) - 12;
+        }
+        below = ly;
+        const turn = x - side * (3 + 3 * index);
+        part.querySelector('circle')?.setAttribute('cx', `${ax}`);
+        part.querySelector('circle')?.setAttribute('cy', `${ay}`);
+        part.querySelector('path')?.setAttribute('d', ly === ay ? `M${ax} ${ay}H${x}` : `M${ax} ${ay}H${turn}V${ly}H${x}`);
+        part.querySelectorAll('text').forEach((text, line) => {
+          text.setAttribute('x', `${x + 3 * side}`);
+          text.setAttribute('y', `${ly + (line ? 7.2 : -1.8)}`);
+          text.setAttribute('text-anchor', side > 0 ? 'start' : 'end');
+        });
+      });
+    }, []);
+
+    /** Slide a drawer out by `out` world units: its front moves, and the part out of the cabinet is rebuilt. */
+    const drawOut = React.useCallback((drawer: number, out: number) => {
+      const { P, geometry } = live.current;
+      drawerFront.current[drawer]?.setAttribute('transform', translateAlong(P, [0, out, 0]));
+      const part = geometry.drawerOutOf(drawer, out);
+      const list = part ? [part.box.fill, ...part.box.shades, part.box.top, part.box.crease, part.rim, part.tabs, part.box.outline] : [];
+      drawerOut.current[drawer]?.querySelectorAll('path').forEach((path, index) => path.setAttribute('d', list[index] ?? ''));
+    }, []);
+
+    const placeDrawers = React.useCallback(
+      (scene: Scene, plan: Plan | null) => {
+        const g = groups.current;
+        const state = live.current;
+        const drawer = plan ? drawerOf(plan.request.id) : -1;
+        const out = scene.drawer * DRAWER_OUT;
+        const apart = state.apart.db;
+        if (apart > 0) {
+          // Taken apart, the drawers step out like stairs, and a fetch eases its own out to the reach, so its open
+          // end shows past the drawer above. Drawn bottom to top, each drawer hides what lies under the one above it.
+          if (state.drawer !== ALL_DRAWERS) {
+            drawerOut.current.forEach((node) => {
+              const group = node?.parentNode;
+              if (group && g.drawers) g.drawers.appendChild(group);
+            });
+            state.drawer = ALL_DRAWERS;
+          }
+          const reach = DRAWER_OUT + (DRAWER_REACH - DRAWER_OUT) * apart;
+          const outs = DRAWER_STAIR.map((stair, index) => stair * apart + (index === drawer ? (reach - stair * apart) * scene.drawer : 0));
+          outs.forEach((value, index) => drawOut(index, value));
+          if (outs.some((value, index) => value !== state.outs[index])) {
+            state.outs = outs;
+            placeStation('db');
+          }
+          return;
+        }
+        // The drawer for this id slides out; it is drawn last so it sits in front of the others.
+        if (drawer !== state.drawer) {
+          const group = drawerOut.current[drawer]?.parentNode;
+          if (group && g.drawers) g.drawers.appendChild(group);
+          drawerFront.current.forEach((node, index) => {
+            if (index !== drawer) node?.removeAttribute('transform');
+          });
+          drawerOut.current.forEach((node, index) => {
+            if (index !== drawer) node?.querySelectorAll('path').forEach((path) => path.setAttribute('d', ''));
+          });
+          state.drawer = drawer;
+        }
+        if (drawer >= 0) drawOut(drawer, out);
+      },
+      [drawOut, placeStation]
+    );
 
     const apply = React.useCallback(
       (scene: Scene, plan: Plan | null) => {
@@ -302,8 +554,16 @@ export const Bench = React.memo(
         g.shuttleBody?.querySelector('[data-spokes]')?.setAttribute('d', geometry.wheelSpokesOf(-scene.x / WHEEL_R));
         if (plan && card && flying) {
           const anchorPoint = (where: Anchor): Point3 => {
-            if (where === 'drawer') return ANCHOR_POINT.drawer(drawerOf(plan.request.id));
-            if (where === 'pocket') return ANCHOR_POINT.pocket(Math.max(0, pocketOf(plan.request.id)));
+            if (where === 'drawer') {
+              // In a cabinet taken apart, a fetch pulls its drawer out to the reach instead of the usual distance.
+              const [x, y, z] = ANCHOR_POINT.drawer(drawerOf(plan.request.id));
+              return [x, y + (DRAWER_REACH - DRAWER_OUT) * state.apart.db, z];
+            }
+            if (where === 'pocket') {
+              // The pockets ride on the cache's plate, which rises when the cache is taken apart.
+              const [x, y, z] = ANCHOR_POINT.pocket(Math.max(0, pocketOf(plan.request.id)));
+              return [x, y, z + liftOf(1, state.apart.cache)];
+            }
             if (where === 'terminal') return ANCHOR_POINT.terminal();
             return ANCHOR_POINT.shuttle(scene.x);
           };
@@ -350,26 +610,7 @@ export const Bench = React.memo(
           g.card?.setAttribute('opacity', `${Math.round(enter * 100) / 100}`);
         }
 
-        // The drawer for this id slides out; it is drawn last so it sits in front of the others.
-        const drawer = plan ? drawerOf(plan.request.id) : -1;
-        const out = scene.drawer * DRAWER_OUT;
-        if (drawer !== state.drawer) {
-          const group = drawerOut.current[drawer]?.parentNode;
-          if (group && g.drawers) g.drawers.appendChild(group);
-          drawerFront.current.forEach((node, index) => {
-            if (index !== drawer) node?.removeAttribute('transform');
-          });
-          drawerOut.current.forEach((node, index) => {
-            if (index !== drawer) node?.querySelectorAll('path').forEach((path) => path.setAttribute('d', ''));
-          });
-          state.drawer = drawer;
-        }
-        if (drawer >= 0) {
-          drawerFront.current[drawer]?.setAttribute('transform', translateAlong(P, [0, out, 0]));
-          const part = geometry.drawerOutOf(drawer, out);
-          const list = part ? [part.box.fill, ...part.box.shades, part.box.top, part.box.crease, part.rim, part.tabs, part.box.outline] : [];
-          drawerOut.current[drawer]?.querySelectorAll('path').forEach((path, index) => path.setAttribute('d', list[index] ?? ''));
-        }
+        placeDrawers(scene, plan);
 
         const holds = new Set(state.cached);
         if (plan && scene.stored) holds.add(plan.request.id);
@@ -386,7 +627,7 @@ export const Bench = React.memo(
           screen.current?.show(scene.screen, plan);
         }
       },
-      [say, sort]
+      [placeDrawers, say, sort]
     );
 
     /** Draw the whole bench again for a camera at `azimuth`, then put every moving part back where it was. */
@@ -403,6 +644,8 @@ export const Bench = React.memo(
         html(g.base, art.base);
         html(g.client, art.client);
         html(g.serverArt, art.server);
+        art.serverUnits.forEach((markup, index) => html(serverLayer.current[index], markup));
+        html(g.dialArt, art.serverDial);
         html(g.gateBack, art.gateBack);
         html(g.cache, art.cache);
         html(g.dbArt, art.db);
@@ -422,8 +665,9 @@ export const Bench = React.memo(
         // A new camera can change who is in front of whom even if nothing moved.
         state.order = '';
         apply(state.scene, state.shown);
+        STATIONS.forEach(placeStation);
       },
-      [apply]
+      [apply, placeStation]
     );
 
     const frame = React.useCallback(() => {
@@ -467,6 +711,13 @@ export const Bench = React.memo(
       camera.scale = follow(camera.scale, camera.scaleTarget, dt, SCALE_EASE, calm);
       camera.panX = follow(camera.panX, camera.panXTarget, dt, SCALE_EASE, calm);
       camera.panY = follow(camera.panY, camera.panYTarget, dt, SCALE_EASE, calm);
+      for (const station of STATIONS) {
+        state.apart[station] = follow(state.apart[station], state.apartTarget[station], dt, APART_EASE, calm);
+        if (state.apart[station] === state.apartShown[station]) continue;
+        placeStation(station);
+        if (station === 'db') placeDrawers(state.scene, state.shown);
+        sort(state.scene);
+      }
       const turned = Math.abs(camera.azimuth - camera.drawn) > 0.01;
       if (turned) redraw(camera.azimuth);
       const shown = `${camera.zoom} ${camera.scale} ${camera.panX} ${camera.panY}`;
@@ -479,7 +730,8 @@ export const Bench = React.memo(
         camera.zoom !== camera.zoomTarget ||
         camera.scale !== camera.scaleTarget ||
         camera.panX !== camera.panXTarget ||
-        camera.panY !== camera.panYTarget;
+        camera.panY !== camera.panYTarget ||
+        STATIONS.some((station) => state.apart[station] !== state.apartTarget[station]);
 
       const plan = state.plan;
       if (plan && !state.finished) {
@@ -538,6 +790,20 @@ export const Bench = React.memo(
       [touch]
     );
 
+    const apart = React.useCallback(
+      (station: Station, on?: boolean) => {
+        const state = live.current;
+        const want = on ?? state.apartTarget[station] === 0;
+        if (want === (state.apartTarget[station] === 1)) return;
+        // One machine is apart at a time, so their labels never crowd each other.
+        for (const other of STATIONS) state.apartTarget[other] = 0;
+        state.apartTarget[station] = want ? 1 : 0;
+        callbacks.current.onApart(want ? station : null);
+        touch();
+      },
+      [touch]
+    );
+
     const setScale = React.useCallback(
       (scale: number) => {
         const camera = live.current.camera;
@@ -582,6 +848,7 @@ export const Bench = React.memo(
           if (camera.zoomTarget) zoom(false);
           camera.target = AZIMUTH;
           setScale(1);
+          STATIONS.forEach((station) => apart(station, false));
           touch();
         },
         scaleBy: (factor) => {
@@ -589,9 +856,10 @@ export const Bench = React.memo(
           if (live.current.camera.zoomTarget) zoom(false);
           setScale(live.current.camera.scaleTarget * factor);
         },
-        zoom
+        zoom,
+        apart
       }),
-      [apply, kick, setScale, start, touch, zoom]
+      [apart, apply, kick, setScale, start, touch, zoom]
     );
 
     const hover = (hovering: boolean) => () => {
@@ -653,6 +921,13 @@ export const Bench = React.memo(
       if (svg && matrix) {
         const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
         if (onTerminal(live.current.P, [point.x, point.y])) return zoom(true);
+        // Of the machines under the point, the one drawn last is in front.
+        const state = live.current;
+        const order = state.order.split(',');
+        const hit = STATIONS.filter((station) => onStation(state.P, station, state.apart[station], [point.x, point.y])).sort(
+          (a, b) => order.indexOf(b) - order.indexOf(a)
+        )[0];
+        if (hit) return apart(hit);
       }
       callbacks.current.onSend();
     };
@@ -679,7 +954,13 @@ export const Bench = React.memo(
           </g>
           <g ref={ref('server')} className={styles.server}>
             <g ref={ref('serverArt')} dangerouslySetInnerHTML={{ __html: ART_0.server }} />
-            <path ref={needle} className="iso-line" data-tone="lit" data-free="start" strokeWidth={1.1} d={GEOMETRY_0.needleOf(0)} />
+            {ART_0.serverUnits.map((markup, index) => (
+              <g key={index} ref={(node) => void (serverLayer.current[index] = node)} dangerouslySetInnerHTML={{ __html: markup }} />
+            ))}
+            <g ref={(node) => void (serverLayer.current[UNITS] = node)}>
+              <g ref={ref('dialArt')} dangerouslySetInnerHTML={{ __html: ART_0.serverDial }} />
+              <path ref={needle} className="iso-line" data-tone="lit" data-free="start" strokeWidth={1.1} d={GEOMETRY_0.needleOf(0)} />
+            </g>
           </g>
           <g ref={ref('gateBack')} dangerouslySetInnerHTML={{ __html: ART_0.gateBack }} />
           <g ref={ref('cache')} dangerouslySetInnerHTML={{ __html: ART_0.cache }} />
@@ -728,6 +1009,22 @@ export const Bench = React.memo(
           </clipPath>
           <g ref={ref('card')} className={styles.carried} data-hidden="">
             <g ref={ref('cardArt')} dangerouslySetInnerHTML={{ __html: ART_0.card }} />
+          </g>
+          <g ref={ref('callouts')} aria-hidden>
+            {STATIONS.map((station) => (
+              <g key={station} ref={(node) => void (callouts.current[station] = node)} className={styles.callouts} data-hidden="">
+                {PARTS[station].map((part) => (
+                  <g key={part.name}>
+                    <path className="iso-line" data-tone="lo" data-free="end" />
+                    <g className="iso-dots" data-tone="mid">
+                      <circle r={0.7} />
+                    </g>
+                    <text className={styles.calloutName}>{part.name}</text>
+                    <text className={styles.calloutNote}>{part.note}</text>
+                  </g>
+                ))}
+              </g>
+            ))}
           </g>
         </IsoFigure>
         <span ref={announce} className={styles.hidden} aria-live="polite" />

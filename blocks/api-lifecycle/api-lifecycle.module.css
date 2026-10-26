@@ -315,8 +315,32 @@
 }
 
 .slip[data-hidden],
-.carried[data-hidden] {
+.carried[data-hidden],
+.callouts[data-hidden],
+.piece[data-hidden] {
   display: none;
+}
+
+/* Labels of the server taken apart, in the frame's engraved style; a ring of card colour keeps them legible over parts. */
+.calloutName,
+.calloutNote {
+  font-family: var(--anatomy-mono);
+  paint-order: stroke;
+  stroke: var(--anatomy-card);
+  stroke-width: 2px;
+  stroke-linejoin: round;
+}
+
+.calloutName {
+  fill: var(--anatomy-strong);
+  font-size: 7.2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.calloutNote {
+  fill: var(--anatomy-muted);
+  font-size: 5.8px;
 }
 
 .slip[data-state='denied'] :global(.iso-edge) {

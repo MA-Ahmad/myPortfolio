@@ -81,6 +81,10 @@ export const DIAL_C: [number, number] = [SERVER_X, CHASSIS.y + 26];
 export const DIAL_R = 15;
 export const DIAL_H = 5;
 export const DIAL_TOP = SERVER_TOP + DIAL_H;
+/** Taken apart, every layer floats this far above the one below it, the bottom unit above the plinth. */
+export const EXPLODE_GAP = 22;
+/** How far a layer of the server rises when it is fully apart: 0–2 are the units from the bottom, 3 the dial. */
+export const liftOf = (layer: number, apart: number) => (layer + 1) * EXPLODE_GAP * apart;
 /** Routes engraved round the dial, clockwise from the top; the needle swings to `/users/:id`. */
 export const ROUTES = 5;
 export const ROUTE = 2;
@@ -92,6 +96,8 @@ export const CACHE_H = 18;
 export const POCKET_Y = -17;
 /** One pocket per profile in PROFILES. */
 export const POCKET_X = [CACHE_X - 11, CACHE_X + 11];
+/** Taken apart, the cache splits at its seam: a memory body below, and the plate with the key pockets on it. */
+export const CACHE_SPLIT = 8;
 
 // Database: a filing cabinet with three drawers that slide toward the viewer.
 export const DB_X = STOP.db;
@@ -101,6 +107,11 @@ export const DRAWER_H = 22;
 export const DRAWER_Z = [4, 27, 50];
 export const DRAWER_OUT = 22;
 export const DRAWER_BOX: Plan = { x: DB_X - 31, y: -48, w: 62, d: 48, r: 1.5 };
+/** Taken apart, the cabinet's lid rises this far and its drawers step out like stairs, the bottom one furthest. */
+export const LID_LIFT = 34;
+export const DRAWER_STAIR = [24, 16, 8];
+/** The furthest a drawer comes out when the cabinet is apart: a fetch pulls its drawer to here, short of the shuttle's path. */
+export const DRAWER_REACH = 29;
 
 const EXTREMES: Point3[] = [
   ...boxCorners(BASE, -BASE_H - FOOT_H, 0),
