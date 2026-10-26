@@ -12,14 +12,12 @@ import {
   getBlocks,
   getCategory
 } from 'blocks/registry';
-import { type BlockFile, blockMarkdown, getBlockFiles } from 'lib/block-source';
-import { SITE_URL } from 'data/constants';
+import { type BlockFile, getBlockFiles } from 'lib/block-source';
 
 type Props = {
   block: BlockMeta;
   category: BlockCategory;
   files: BlockFile[];
-  markdown: string;
   previous: BlockMeta | null;
   next: BlockMeta | null;
 };
@@ -27,7 +25,7 @@ type Props = {
 const navButton =
   'inline-flex size-7 items-center justify-center rounded-md bg-muted text-muted-foreground no-underline transition-[color,transform] duration-150 ease-out hover:text-foreground active:scale-[0.94]';
 
-export default function BlockPage({ block, category, files, markdown, previous, next }: Props) {
+export default function BlockPage({ block, category, files, previous, next }: Props) {
   return (
     <PageLayout title={`${block.title} - Blocks`} description={block.description} animate={false}>
       <div className="pt-12">
@@ -67,7 +65,7 @@ export default function BlockPage({ block, category, files, markdown, previous, 
 
       <div className="screen-line-top h-px" />
 
-      <BlockViewer key={block.name} block={block} files={files} markdown={markdown} />
+      <BlockViewer key={block.name} block={block} files={files} />
 
       <div className="screen-line-bottom h-4" />
     </PageLayout>
@@ -93,7 +91,6 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
       block,
       category,
       files,
-      markdown: blockMarkdown(block, files, SITE_URL),
       previous: ordered[index - 1] ?? null,
       next: ordered[index + 1] ?? null
     }

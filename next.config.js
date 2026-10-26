@@ -32,9 +32,10 @@ const nextConfig = {
       )
     ];
   },
-  // The block Markdown route reads its source files from disk at request time.
+  // The block Markdown and registry routes read their source files from disk at request time.
   outputFileTracingIncludes: {
-    '/api/agents/blocks/*': ['./blocks/**/*']
+    '/api/agents/blocks/*': ['./blocks/**/*'],
+    '/api/registry/*': ['./blocks/**/*']
   },
   async rewrites() {
     return {
@@ -70,6 +71,10 @@ const nextConfig = {
         {
           source: '/blocks/:name([a-z0-9-]+).md',
           destination: '/api/agents/blocks/:name'
+        },
+        {
+          source: '/r/:name([a-z0-9-]+).json',
+          destination: '/api/registry/:name'
         },
         {
           source: '/',

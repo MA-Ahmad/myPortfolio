@@ -101,3 +101,9 @@ export function getUsedCategories(): BlockCategory[] {
 }
 
 export const blockHref = (block: BlockMeta) => `/blocks/${block.category}/${block.name}`;
+
+/** The block as one Markdown document, for AI tools (pages/api/agents/blocks). */
+export const blockMarkdownPath = (block: BlockMeta) => `/blocks/${block.name}.md`;
+
+/** The block as a shadcn registry item, for `npx shadcn add` and "Open in v0" (pages/api/registry). */
+export const blockRegistryPath = (block: BlockMeta) => `/r/${block.name}.json`;

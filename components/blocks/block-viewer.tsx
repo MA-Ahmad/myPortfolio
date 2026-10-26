@@ -4,7 +4,6 @@ import { Menu } from '@base-ui/react/menu';
 import {
   CheckIcon,
   ChevronDownIcon,
-  ClipboardCopyIcon,
   CopyIcon,
   FileCodeIcon,
   MaximizeIcon,
@@ -13,7 +12,8 @@ import {
   SmartphoneIcon,
   TabletIcon
 } from 'lucide-react';
-import { type BlockMeta, DEFAULT_IFRAME_HEIGHT } from 'blocks/registry';
+import { type BlockMeta, DEFAULT_IFRAME_HEIGHT, blockMarkdownPath, blockRegistryPath } from 'blocks/registry';
+import { SITE_URL } from 'data/constants';
 import type { BlockFile } from 'lib/block-source';
 import { cn } from 'lib/cn';
 
@@ -38,7 +38,7 @@ const HANDLE_WIDTH = 12;
 const EASE_OUT = [0.22, 1, 0.36, 1] as const;
 
 /** A block's live preview (in an iframe, so it gets real breakpoints) and its source. */
-export function BlockViewer({ block, files, markdown }: { block: BlockMeta; files: BlockFile[]; markdown: string }) {
+export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFile[] }) {
   const [view, setView] = useState<View>('preview');
   const [width, setWidth] = useState<number | null>(null);
   const [dragging, setDragging] = useState(false);
@@ -141,7 +141,7 @@ export function BlockViewer({ block, files, markdown }: { block: BlockMeta; file
           </div>
 
           {view === 'code' && file && <CopyButton text={file.code} label={`Copy ${file.path}`} withText />}
-          <OpenInMenu block={block} markdown={markdown} />
+          <OpenInMenu block={block} />
         </div>
       </div>
 
@@ -271,75 +271,52 @@ function ToolButton({
 }
 
 /**
- * Hands the block to an AI tool. Links can only carry a short prompt, so each one points the tool
- * at the block's Markdown (/blocks/<name>.md, every file in full) instead of the code itself.
+ * "Open in" a tool that can add the block to a project. Links can only carry a short prompt, so the
+ * AI chats get the public URL of the block's Markdown (every file in full) instead, and v0 imports
+ * its shadcn registry item, every file exactly. Links always use the public site URL: an AI tool
+ * can't open localhost.
  */
-function OpenInMenu({ block, markdown }: { block: BlockMeta; markdown: string }) {
-  const [copied, setCopied] = useState(false);
-  const timer = useRef<number>(undefined);
+function OpenInMenu({ block }: { block: BlockMeta }) {
+  const count = `${block.files.length} file${block.files.length === 1 ? '' : 's'}`;
+  const dependencies = block.dependencies?.length ? ` (${block.dependencies.join(', ')})` : '';
+  const prompt =
+    `Add the "${block.title}" block to my project, install its dependencies${dependencies}, and adapt the imports and ` +
+    `styling to my codebase. Its full source is at ${SITE_URL}${blockMarkdownPath(block)}: the ${count} are listed at ` +
+    `the top, then each one in full. The page is long, so make sure you have read all ${count}; if it is cut off, ` +
+    `fetch it again.`;
 
-  useEffect(() => () => window.clearTimeout(timer.current), []);
-
-  const prompt = () =>
-    `Add the "${block.title}" block to my project. Its full source and dependencies are at ` +
-    `${window.location.origin}/blocks/${block.name}.md. Read it, install the dependencies, and ` +
-    `adapt the imports and styling to my codebase.`;
-
-  const copyForAI = async () => {
-    try {
-      await navigator.clipboard.writeText(
-        `Add this "${block.title}" block to my project, installing its dependencies and adapting ` +
-          `the imports and styling to my codebase.\n\n${markdown}`
-      );
-    } catch {
-      return;
-    }
-    setCopied(true);
-    window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => setCopied(false), 1600);
-  };
-
-  const open = (base: string) => window.open(`${base}${encodeURIComponent(prompt())}`, '_blank', 'noopener');
+  const open = (url: string) => window.open(url, '_blank', 'noopener');
+  const openWith = (base: string) => () => open(`${base}${encodeURIComponent(prompt)}`);
 
   // The same logos as the home page's stack. Cursor's mark is black and ChatGPT's white, so each is
   // inverted in the color mode where it would vanish.
   const items = [
-    { label: 'Copy for AI', icon: <ClipboardCopyIcon className="size-4 text-muted-foreground" />, onClick: copyForAI },
     {
-      label: 'Open in Cursor',
-      icon: <AppLogo src="/assets/images/skills/cursor.svg" className="dark:invert" />,
-      onClick: () => open('https://cursor.com/link/prompt?text=')
-    },
-    {
-      label: 'Open in Claude',
-      icon: <AppLogo src="/assets/images/skills/claude.svg" />,
-      onClick: () => open('https://claude.ai/new?q=')
+      label: 'Open in v0',
+      icon: <V0Logo />,
+      onClick: () => open(`https://v0.app/chat/api/open?url=${encodeURIComponent(`${SITE_URL}${blockRegistryPath(block)}`)}`)
     },
     {
       label: 'Open in ChatGPT',
       icon: <AppLogo src="/assets/images/skills/chatgpt.svg" className="invert dark:invert-0" />,
-      onClick: () => open('https://chatgpt.com/?q=')
+      onClick: openWith('https://chatgpt.com/?q=')
+    },
+    {
+      label: 'Open in Claude',
+      icon: <AppLogo src="/assets/images/skills/claude.svg" />,
+      onClick: openWith('https://claude.ai/new?q=')
+    },
+    {
+      label: 'Open in Cursor',
+      icon: <AppLogo src="/assets/images/skills/cursor.svg" className="dark:invert" />,
+      onClick: openWith('https://cursor.com/link/prompt?text=')
     }
   ];
 
   return (
     <Menu.Root>
-      <Menu.Trigger
-        className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-[0.8125rem] font-medium text-foreground outline-none transition-[background-color,transform] duration-150 ease-out hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 active:scale-[0.96] data-[popup-open]:bg-muted"
-      >
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.span
-            key={copied ? 'copied' : 'open'}
-            initial={{ opacity: 0, filter: 'blur(2px)' }}
-            animate={{ opacity: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, filter: 'blur(2px)' }}
-            transition={{ duration: 0.16, ease: EASE_OUT }}
-            className="inline-flex items-center gap-1.5"
-          >
-            {copied ? <CheckIcon className="size-3.5 text-muted-foreground" /> : null}
-            {copied ? 'Copied' : 'Open in'}
-          </motion.span>
-        </AnimatePresence>
+      <Menu.Trigger className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-border px-2.5 text-[0.8125rem] font-medium text-foreground outline-none transition-[background-color,transform] duration-150 ease-out hover:bg-muted focus-visible:ring-2 focus-visible:ring-foreground/30 active:scale-[0.96] data-[popup-open]:bg-muted">
+        Open in
         <ChevronDownIcon className="size-3.5 text-muted-foreground" />
       </Menu.Trigger>
       <Menu.Portal>
@@ -359,6 +336,22 @@ function OpenInMenu({ block, markdown }: { block: BlockMeta; markdown: string })
         </Menu.Positioner>
       </Menu.Portal>
     </Menu.Root>
+  );
+}
+
+/** v0's mark, drawn in the text color so it follows the color mode. */
+function V0Logo() {
+  return (
+    <svg viewBox="0 0 40 20" fill="none" aria-hidden="true" className="pointer-events-none size-4 shrink-0">
+      <path
+        fill="currentColor"
+        d="M23.3919 0H32.9188C36.7819 0 39.9136 3.13165 39.9136 6.99475V16.0805H36.0006V6.99475C36.0006 6.90167 35.9969 6.80925 35.9898 6.71766L26.4628 16.079C26.4949 16.08 26.5272 16.0805 26.5595 16.0805H36.0006V19.7762H26.5595C22.6964 19.7762 19.4788 16.6139 19.4788 12.7508V3.68923H23.3919V12.7508C23.3919 12.9253 23.4054 13.0977 23.4316 13.2668L33.1682 3.6995C33.0861 3.6927 33.003 3.68923 32.9188 3.68923H23.3919V0Z"
+      />
+      <path
+        fill="currentColor"
+        d="M13.7688 19.0956L0 3.68759H5.53933L13.6231 12.7337V3.68759H17.7535V17.5746C17.7535 19.6705 15.1654 20.6584 13.7688 19.0956Z"
+      />
+    </svg>
   );
 }
 

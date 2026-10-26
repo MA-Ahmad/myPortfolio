@@ -154,7 +154,8 @@ export function artOf(g: Geometry) {
       { size: 0.35, tone: 'hi' }
     ),
     ...SHUTTLE_ART.bumpers.map((paths) => solidSvg(paths, { tone: 'lo' })),
-    solidSvg(SHUTTLE_ART.deck, { tone: 'hi', crease: 'lo', inner: lineSvg(SHUTTLE_ART.seam, { tone: 'faint' }) }),
+    // The deck is structure, in the same tone as its wheels and bumpers; the ticket and card it carries are the accent.
+    solidSvg(SHUTTLE_ART.deck, { tone: 'mid', inner: lineSvg(SHUTTLE_ART.seam, { tone: 'faint' }) }),
     lineSvg(SHUTTLE_ART.seat, { tone: 'faint' }),
     dotsSvg(SHUTTLE_ART.rivets, { size: 0.45, tone: 'mid' }),
     solidSvg(SHUTTLE_ART.key, { tone: 'mid', inner: lineSvg(SHUTTLE_ART.keyKnurl, { tone: 'faint' }) }),
