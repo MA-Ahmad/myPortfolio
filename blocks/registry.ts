@@ -26,6 +26,8 @@ export type BlockMeta = {
   iframeHeight?: number;
   /** npm packages the block needs, listed in its Markdown for AI tools and anyone copying it. */
   dependencies?: string[];
+  /** npm packages it needs only to build, such as type definitions (`npm install -D`). */
+  devDependencies?: string[];
   /** Files the block reads from `public/` rather than ships as source (images, fonts), in Markdown:
    * where they go, and how the block behaves without them. Listed under "Assets" in its Markdown. */
   assets?: string;
@@ -85,6 +87,7 @@ export const BLOCKS: BlockMeta[] = [
     files: ['movie-rack.tsx', 'rack-scene.ts', 'cover-texture.ts', 'movies.ts', 'movie-rack.module.css'],
     iframeHeight: 820,
     dependencies: ['three', 'framer-motion', 'lucide-react'],
+    devDependencies: ['@types/three'],
     // The rack draws its own dark scene in either color mode, so one card serves both.
     images: {
       card: '/blocks/movie-rack/card.webp',

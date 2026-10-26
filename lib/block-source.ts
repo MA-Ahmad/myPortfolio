@@ -24,9 +24,11 @@ const LANGUAGES: Record<string, string> = { ts: 'typescript', tsx: 'tsx', js: 'j
  */
 export function blockMarkdown(block: BlockMeta, files: BlockFile[], siteUrl: string): string {
   const fence = (file: BlockFile) => (file.code.includes('```') ? '````' : '```');
-  const dependencies = block.dependencies?.length
-    ? `## Dependencies\n\n\`\`\`bash\nnpm install ${block.dependencies.join(' ')}\n\`\`\`\n\n`
-    : '';
+  const install = [
+    block.dependencies?.length ? `npm install ${block.dependencies.join(' ')}` : '',
+    block.devDependencies?.length ? `npm install -D ${block.devDependencies.join(' ')}` : ''
+  ].filter(Boolean);
+  const dependencies = install.length ? `## Dependencies\n\n\`\`\`bash\n${install.join('\n')}\n\`\`\`\n\n` : '';
   const assets = block.assets ? `## Assets\n\n${block.assets}\n\n` : '';
   return `# ${block.title}
 
@@ -49,12 +51,25 @@ ${files
 /** Where the shadcn CLI and v0 put a block's files in the project that installs it. */
 const REGISTRY_DIR = 'components/blocks';
 
+/** `movie-rack` → `MovieRack`: the name the generated page imports a block's default export as. */
+const componentName = (name: string) => name.replace(/(^|-)([a-z0-9])/g, (_, __, letter: string) => letter.toUpperCase());
+
 /**
  * A block as a shadcn registry item (https://ui.shadcn.com/schema/registry-item.json): its npm
  * dependencies and every file with its content, kept together in one folder because the files
- * import each other by relative path. Served at /r/<name>.json.
+ * import each other by relative path, plus a page that renders it. v0 opens that page; without
+ * one it guesses which file is the component, and can pick a helper module with no default export.
+ * Served at /r/<name>.json.
  */
 export function blockRegistryItem(block: BlockMeta, files: BlockFile[]) {
+  const entry = files[0]?.path.replace(/\.tsx?$/, '');
+  const Component = componentName(block.name);
+  const page = {
+    path: `blocks/${block.name}/page.tsx`,
+    type: 'registry:page',
+    target: `app/blocks/${block.name}/page.tsx`,
+    content: `import ${Component} from '@/${REGISTRY_DIR}/${block.name}/${entry}';\n\nexport default function Page() {\n  return <${Component} />;\n}\n`
+  };
   return {
     $schema: 'https://ui.shadcn.com/schema/registry-item.json',
     name: block.name,
@@ -62,12 +77,16 @@ export function blockRegistryItem(block: BlockMeta, files: BlockFile[]) {
     title: block.title,
     description: block.description,
     dependencies: block.dependencies ?? [],
-    files: files.map((file) => ({
-      path: `blocks/${block.name}/${file.path}`,
-      type: 'registry:file',
-      target: `${REGISTRY_DIR}/${block.name}/${file.path}`,
-      content: file.code
-    })),
+    devDependencies: block.devDependencies ?? [],
+    files: [
+      page,
+      ...files.map((file) => ({
+        path: `blocks/${block.name}/${file.path}`,
+        type: 'registry:file',
+        target: `${REGISTRY_DIR}/${block.name}/${file.path}`,
+        content: file.code
+      }))
+    ],
     ...(block.assets ? { docs: block.assets } : {})
   };
 }

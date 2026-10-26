@@ -1,3 +1,6 @@
+'use client';
+
+// A client component: in the App Router (v0, `npx shadcn add`) it runs in the browser. The Pages Router ignores this.
 import { type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';

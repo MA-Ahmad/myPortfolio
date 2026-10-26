@@ -1,3 +1,6 @@
+'use client';
+
+// A client component: in the App Router (v0, `npx shadcn add`) it runs in the browser. The Pages Router ignores this.
 import { type KeyboardEvent, type PointerEvent, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { BookmarkIcon, Layers3Icon, ShuffleIcon, SparklesIcon } from 'lucide-react';
