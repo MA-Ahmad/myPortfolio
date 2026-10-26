@@ -9,7 +9,7 @@ import { FACTS, PUBLISHED, SOURCE } from './facts';
 import type { Lamp, Tray } from './fleet';
 import { ISO_CSS } from './iso-kit';
 import { Plate, follow, useInView, useLoop } from './iso-react';
-import { PARTS } from './parts';
+import { listedParts } from './parts';
 import { loadAt, scenarioOf, type Scenario, type ScenarioKey } from './scenarios';
 import { DESIGNS, STANDBY_PROMOTION, STATUS_TEXT, settled, step, type Knobs, type SideKey, type SimState } from './sim';
 import { AZIMUTH, AZIMUTH_MAX, AZIMUTH_MIN, HEIGHT, ROLES, WIDTH, WORLD, projectionAt, type Kind } from './world';
@@ -79,6 +79,8 @@ const DRAG_RATE = 0.2;
 const CLICK_SLOP = 4;
 const TURN_EASE = 0.14;
 const VIEW_EASE = 0.16;
+/** How fast a machine comes apart and goes back together. */
+const APART_EASE = 0.2;
 const SCALE_STEP = 1.4;
 const SCALE_MOST = 4;
 const FOCUS_SCALE = 2.2;
@@ -110,9 +112,13 @@ type Camera = {
   panXTarget: number;
   panYTarget: number;
   shown: string;
+  /** How far the open machine is taken apart (0..1), where it is heading, and what was last drawn. */
+  apart: number;
+  apartTarget: number;
+  apartShown: number;
 };
 
-const newCamera = (): Camera => ({ azimuth: AZIMUTH, target: AZIMUTH, drawn: NaN, scale: 1, scaleTarget: 1, panX: 0, panY: 0, panXTarget: 0, panYTarget: 0, shown: '' });
+const newCamera = (): Camera => ({ azimuth: AZIMUTH, target: AZIMUTH, drawn: NaN, scale: 1, scaleTarget: 1, panX: 0, panY: 0, panXTarget: 0, panYTarget: 0, shown: '', apart: 0, apartTarget: 0, apartShown: 0 });
 
 type Hud = Partial<Record<'banner' | 'lead' | 'text', HTMLElement | null>>;
 
@@ -201,6 +207,8 @@ export default function ChatgptPostgres() {
     },
     paused: false,
     tab: 'after' as SideKey,
+    /** The role whose machine is taken apart; it stays set while the machine goes back together. */
+    apartKind: null as Kind | null,
     hovering: false
   });
   live.current.paused = paused;
@@ -256,6 +264,7 @@ export default function ChatgptPostgres() {
     camera.scaleTarget = 1;
     camera.panXTarget = 0;
     camera.panYTarget = 0;
+    camera.apartTarget = 0;
     setScale(1);
     setSelected(null);
     kick();
@@ -263,7 +272,13 @@ export default function ChatgptPostgres() {
 
   /** An open card belongs to the floor it was opened on: close it, and that view with it. */
   const switchTab = (next: SideKey | ((value: SideKey) => SideKey)) => {
-    if (selected) resetView();
+    if (selected) {
+      resetView();
+      // Only the visible floor animates, so the one being left goes back together at once.
+      const camera = live.current.camera;
+      camera.apart = camera.apartShown = 0;
+      benches.current[live.current.tab]?.apart(null, 0);
+    }
     setTab(next);
   };
 
@@ -274,6 +289,13 @@ export default function ChatgptPostgres() {
     const at = benches.current[live.current.tab]?.anchorOf(kind);
     if (!at) return;
     const camera = live.current.camera;
+    // Take it apart; another machine that was apart goes back together at once.
+    if (live.current.apartKind !== kind) {
+      if (camera.apart > 0) benches.current[live.current.tab]?.apart(null, 0);
+      camera.apart = camera.apartShown = 0;
+      live.current.apartKind = kind;
+    }
+    camera.apartTarget = 1;
     camera.scaleTarget = Math.max(camera.scaleTarget, FOCUS_SCALE);
     camera.panXTarget = at[0] - WIDTH / 2;
     camera.panYTarget = at[1] + 30 - HEIGHT / 2;
@@ -335,11 +357,17 @@ export default function ChatgptPostgres() {
       camera.shown = key;
       benches.current[state.tab]?.view(box, camera.scale);
     }
+    camera.apart = follow(camera.apart, camera.apartTarget, dt, APART_EASE, calm);
+    if (camera.apart !== camera.apartShown) {
+      camera.apartShown = camera.apart;
+      benches.current[state.tab]?.apart(state.apartKind, camera.apart);
+    }
     const moving =
       Math.abs(camera.azimuth - camera.target) > 0.04 ||
       Math.abs(camera.scale - camera.scaleTarget) > 1e-3 ||
       Math.abs(camera.panX - camera.panXTarget) > 0.05 ||
-      Math.abs(camera.panY - camera.panYTarget) > 0.05;
+      Math.abs(camera.panY - camera.panYTarget) > 0.05 ||
+      camera.apart !== camera.apartTarget;
     if (state.paused) return moving;
 
     state.t += dt;
@@ -678,7 +706,7 @@ export default function ChatgptPostgres() {
                   <p>{ROLE_TEXT[role.kind][tab]}</p>
                   {!absent ? (
                     <ol className={styles.parts}>
-                      {PARTS[role.kind]
+                      {listedParts(role.kind)
                         .filter((part) => tab === 'after' || (part.key !== 'digest' && part.key !== 'plaque' && part.key !== 'lock'))
                         .map((part) => (
                           <li key={part.key}>

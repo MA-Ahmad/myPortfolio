@@ -273,48 +273,61 @@ export function floorSvg(side: SideKey, P: Projection) {
 function appsSvg({ plan, h }: Machine, P: Projection) {
   const parts = layers();
   parts.push(`<path class="iso-halo" d="${haloOf(plan, 0, h, P)}"/>`);
+  // As on the Cosmos rack: a plinth a little wider than the frame, so every upright stands on it,
+  // with corners rounded tighter than the uprights sit from them.
+  const base: Plan = { ...insetPlan(plan, -1.2), r: 2.4 };
   parts.layer('plinth');
-  parts.push(plate(plan, 0, 3, P, 'lo'));
-  const post = 4;
-  const posts = corners(plan).map(([x, y]) => ({ x: x - (x > plan.x ? post : 0), y: y - (y > plan.y ? post : 0), w: post, d: post, r: 0.6 }));
+  parts.push(plate(base, 0, 3, P, 'lo', 0.4));
+  // Slim corner uprights, as on the Cosmos rack.
+  const post = 2.4;
+  const posts = corners(plan).map(([x, y]) => ({ x: x - (x > plan.x ? post : 0), y: y - (y > plan.y ? post : 0), w: post, d: post, r: 0.4 }));
   const backPosts = posts.filter((p) => p.y < plan.y + 1);
   const frontPosts = posts.filter((p) => p.y >= plan.y + 1);
+  // All four posts stop under the roof, which is drawn after them and rests on their tops.
+  const roofZ = h - 2.4;
   parts.layer('frame');
-  for (const p of backPosts) parts.push(plate(p, 3, h - 3, P, 'mid', 0.3));
+  for (const p of backPosts) parts.push(plate(p, 3, roofZ - 3, P, 'mid', 0.2));
   parts.layer('pods');
+  // Inside the frame, like the partitions in the Cosmos rack: three shelves between the posts, each
+  // carrying three servers that fill its bay, fronts just behind the front posts' faces.
   const shelves = 3;
-  const pitch = (h - 8) / shelves;
+  const pitch = (h - 5) / shelves;
+  const bay: Plan = { x: plan.x + post, y: plan.y + post, w: plan.w - post * 2, d: plan.d - post - 1, r: 0.6 };
+  const gap = 1;
+  const podW = (bay.w - gap * 4) / 3;
   for (let shelf = 0; shelf < shelves; shelf++) {
     const z = 3 + shelf * pitch;
-    parts.push(plate(insetPlan(plan, 1.5), z, 1.4, P, 'lo', 0.2));
+    parts.push(plate(bay, z, 1.4, P, 'lo', 0.2));
     for (let column = 0; column < 3; column++) {
-      const pod: Plan = { x: plan.x + 6 + column * ((plan.w - 12) / 3), y: plan.y + 8, w: (plan.w - 12) / 3 - 3, d: plan.d - 14, r: 1.2 };
-      const podH = pitch - 4;
+      const pod: Plan = { x: bay.x + gap + column * (podW + gap), y: bay.y + 0.6, w: podW, d: bay.d - 1.2, r: 0.8 };
+      const podH = pitch - 1.4 - 1;
       const front = pod.y + pod.d;
       const inner = lineSvg(
         frontSlot(pod, pod.x + 2, pod.x + pod.w - 6, z + 1.4 + podH * 0.35, P, 0.4) + frontSlot(pod, pod.x + 2, pod.x + pod.w - 6, z + 1.4 + podH * 0.65, P, 0.4),
         { tone: 'faint' }
       );
-      parts.push(solidSvg(slabOf(pod, z + 1.4, podH, P, 6, 0.4), { tone: 'hi', inner }));
+      parts.push(solidSvg(slabOf(pod, z + 1.4, podH, P, 4, 0.4), { tone: 'hi', inner }));
       parts.push(led(iso([pod.x + pod.w - 3, front, z + 1.4 + podH * 0.5], P), 0.9, { 'data-led': `pod-${shelf * 3 + column}` }));
     }
   }
-  parts.layer('cap');
-  parts.push(plate(insetPlan(plan, -0.5), h - 2, 2.4, P, 'mid', 0.6));
-  parts.push(screws(insetPlan(plan, -0.5), h + 0.4, P, 2.4));
   parts.layer('frame');
-  for (const p of frontPosts) parts.push(plate(p, 3, h - 5, P, 'mid', 0.3));
+  for (const p of frontPosts) parts.push(plate(p, 3, roofZ - 3, P, 'mid', 0.2));
+  parts.layer('cap');
+  const roof: Plan = { ...insetPlan(plan, -1), r: 2.2 };
+  parts.push(plate(roof, roofZ, 2.4, P, 'mid', 0.6));
+  parts.push(screws(roof, h, P, 2.4));
   parts.layer('ports');
-  // Port strip along the foot of the front: where the connections leave.
-  const strip: Plan = { x: plan.x + 8, y: plan.y + plan.d, w: plan.w - 16, d: 3, r: 0.6 };
-  parts.push(plate(strip, 0.5, 2.6, P, 'lo', 0.2));
-  parts.push(dotsSvg(Array.from({ length: 8 }, (_, i) => iso([strip.x + 3 + i * ((strip.w - 6) / 7), strip.y + strip.d, 1.8], P)), { size: 0.45, tone: 'mid' }));
+  // Port strip on the plinth's front face: where the connections leave.
+  const strip: Plan = { x: plan.x + 8, y: base.y + base.d, w: plan.w - 16, d: 1.4, r: 0.4 };
+  parts.push(plate(strip, 0.5, 2, P, 'lo', 0.2));
+  parts.push(dotsSvg(Array.from({ length: 8 }, (_, i) => iso([strip.x + 3 + i * ((strip.w - 6) / 7), strip.y + strip.d, 1.5], P)), { size: 0.45, tone: 'mid' }));
   return parts.join();
 }
 
 /**
  * The rate-limit gate on the lane: two posts, a beam, and an arm that drops when it sheds. Trays
- * pass between the posts and under the beam, so it comes in three pieces for the painter's sort.
+ * pass between the posts and under the beam, so it comes in four pieces for the painter's sort,
+ * whose boxes only touch: back post, the arm between the posts, front post, and the beam on top.
  */
 export function gatePartsOf({ plan, h }: Machine, P: Projection) {
   const parts: string[] = [];
@@ -336,7 +349,7 @@ export function gatePartsOf({ plan, h }: Machine, P: Projection) {
   parts.push(plate(beam, h, 4, P, 'mid', 0.6));
   parts.push(led(iso([beam.x + beam.w, beam.y + beam.d / 2, h + 2], P), 1, { 'data-led': 'gate' }));
   const wrap = (key: string, index: number, markup: string) => `<g class="cp-layer" data-layer="${index}" data-part-name="${key}">${markup}</g>`;
-  return { back: wrap('posts', 0, parts[0]), top: wrap('arm', 1, parts[1]) + wrap('beam', 2, parts[3] + parts[4]), front: wrap('posts', 0, parts[2]) };
+  return { back: wrap('posts', 0, parts[0]), arm: wrap('arm', 1, parts[1]), front: wrap('posts', 0, parts[2]), beam: wrap('beam', 2, parts[3] + parts[4]) };
 }
 
 /** The cache: a memory body with a key plate on top, eight key pockets, and (after) a lease lock. */
@@ -426,9 +439,9 @@ function bouncerSvg({ plan, h }: Machine, P: Projection, deployments: number) {
     parts.push(group(pods + led(iso([tray.x + tray.w, tray.y + tray.d / 2, z + 1], P), 0.6, { 'data-led': `deploy-${index}` }), { 'data-part': `deploy-${index}` }));
   }
   parts.layer('switch');
-  // The pooling-mode switch: a toggle on the right face.
-  const toggle: Plan = { x: plan.x + plan.w, y: plan.y + plan.d * 0.3, w: 2, d: 7, r: 0.5 };
-  parts.push(plate(toggle, (h - 6) * 0.35, 3, P, 'mid', 0.2));
+  // The pooling-mode switch: a toggle on the front, between the gauge and the outlets.
+  const toggle: Plan = { x: plan.x + plan.w - 15, y: plan.y + plan.d, w: 6, d: 1.6, r: 0.4 };
+  parts.push(plate(toggle, (h - 6) * 0.58, 3, P, 'mid', 0.2));
   return parts.join();
 }
 
@@ -536,6 +549,7 @@ function standbySvg({ plan, h }: Machine, P: Projection, primary: Machine) {
   parts.push(led(iso([plan.x + plan.w - 4, plan.y + plan.d, h - 5], P), 1.2, { 'data-led': 'role' }));
   parts.layer('lid');
   parts.push(plate(insetPlan(plan, -0.5), h, 2, P, 'mid', 0.5));
+  parts.layer('cable');
   // The sync cable: from the primary's lid, over the gap, onto the standby's lid.
   const from: Point3 = [primary.plan.x + primary.plan.w - 3, primary.plan.y + primary.plan.d * 0.7, primary.h + 2];
   const to: Point3 = [plan.x + 4, plan.y + plan.d * 0.7, h + 2];
@@ -557,6 +571,10 @@ function cosmosSvg({ plan, h }: Machine, P: Projection) {
   parts.push(`<path class="iso-halo" d="${haloOf(plan, 0, h, P)}"/>`);
   parts.layer('plinth');
   parts.push(plate(insetPlan(plan, -1.2), 0, 3, P, 'lo', 0.4));
+  // The back uprights first: the partitions stand in front of them.
+  const upright = (x: number, y: number): Plan => ({ x, y, w: 2.4, d: 2.4, r: 0.4 });
+  parts.layer('frame');
+  for (const x of [plan.x, plan.x + plan.w - 2.4]) parts.push(plate(upright(x, plan.y), 3, h - 3, P, 'mid', 0.2));
   parts.layer('modules');
   const rows = 4;
   const columns = 3;
@@ -571,8 +589,8 @@ function cosmosSvg({ plan, h }: Machine, P: Projection) {
     }
   }
   parts.layer('frame');
-  // Frame uprights at the front corners, and a cap.
-  for (const x of [plan.x, plan.x + plan.w - 2.4]) parts.push(plate({ x, y: plan.y + plan.d - 2.4, w: 2.4, d: 2.4, r: 0.4 }, 3, h - 3, P, 'mid', 0.2));
+  // The front uprights, and the cap on all four.
+  for (const x of [plan.x, plan.x + plan.w - 2.4]) parts.push(plate(upright(x, plan.y + plan.d - 2.4), 3, h - 3, P, 'mid', 0.2));
   parts.push(plate(insetPlan(plan, -0.6), h, 2.4, P, 'mid', 0.6));
   parts.push(rules(insetPlan(plan, 6), h + 2.4, P));
   return parts.join();
@@ -652,7 +670,7 @@ export function machineSvg(side: SideKey, machine: Machine, P: Projection) {
       return appsSvg(machine, P);
     case 'gate': {
       const gate = gatePartsOf(machine, P);
-      return gate.back + gate.top + gate.front;
+      return gate.back + gate.arm + gate.front + gate.beam;
     }
     case 'cache':
       return cacheSvg(machine, P, side === 'after');

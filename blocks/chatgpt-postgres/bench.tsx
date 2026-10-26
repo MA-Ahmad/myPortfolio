@@ -7,6 +7,7 @@ import { iso, translateAlong, type Projection } from './iso-kit';
 import { orderOf, type Box } from './order';
 import { BODY_R, DECK_LIFT, TRAY_TOP, columnOf, eyeOf, lampOf, robotArt, type RobotArt } from './robot';
 import { PUBLISHED } from './facts';
+import { PARTS, listedParts } from './parts';
 import type { SideKey } from './sim';
 import { HEIGHT, ROLES, WIDTH, WORLD, projectionAt, type Kind, type Machine } from './world';
 
@@ -37,6 +38,8 @@ export type BenchHandle = {
   anchorOf: (kind: Kind) => [number, number] | null;
   /** The visible floor paints every frame; the hidden one only keeps its fleet moving. */
   setActive: (active: boolean) => void;
+  /** Take a role's machine apart, `amount` of the way (0..1), with a numbered tag on each part. */
+  apart: (kind: Kind | null, amount: number) => void;
 };
 
 type Item = { key: string; node: SVGGElement; box: () => Box };
@@ -118,6 +121,7 @@ export const Bench = React.memo(
     const floorRef = React.useRef<SVGGElement>(null);
     const itemsRef = React.useRef<SVGGElement>(null);
     const pinsRef = React.useRef<SVGGElement>(null);
+    const tagsRef = React.useRef<SVGGElement>(null);
     const fleet = React.useRef<Fleet | null>(null);
     if (!fleet.current) fleet.current = new Fleet(side);
     const state = React.useRef({
@@ -130,7 +134,10 @@ export const Bench = React.memo(
       pins: [] as { kind: Kind; node: SVGGElement; at: [number, number] }[],
       pinScale: 1,
       active: true,
-      focus: null as Kind | null
+      focus: null as Kind | null,
+      box: [0, 0, WIDTH, HEIGHT] as [number, number, number, number],
+      /** The machine taken apart (its role's pinned one), how far, and the one last moved. */
+      apart: { id: null as string | null, amount: 0, shown: null as string | null }
     });
 
     const draw = React.useCallback(
@@ -166,9 +173,11 @@ export const Bench = React.memo(
             const { plan, h } = machine;
             const holder = make('g', { 'data-machine': machine.id }) as SVGGElement;
             const pieces: [string, string, Box][] = [
-              ['back', parts.back, [plan.x, plan.x + plan.w, plan.y - 2, plan.y + 6, 0, h]],
-              ['front', parts.front, [plan.x, plan.x + plan.w, plan.y + plan.d - 6, plan.y + plan.d + 2, 0, h]],
-              ['top', parts.top, [plan.x, plan.x + plan.w, plan.y, plan.y + plan.d, h - 13, h + 5]]
+              // The arm hangs between the posts at rest, above the trays; the beam sits on both posts.
+              ['back', parts.back, [plan.x, plan.x + plan.w, plan.y - 2, plan.y + 4, 0, h]],
+              ['arm', parts.arm, [plan.x, plan.x + plan.w, plan.y + 4, plan.y + plan.d - 4, h - 12, h]],
+              ['front', parts.front, [plan.x, plan.x + plan.w, plan.y + plan.d - 4, plan.y + plan.d + 2, 0, h]],
+              ['beam', parts.beam, [plan.x, plan.x + plan.w, plan.y - 2, plan.y + plan.d + 2, h, h + 5]]
             ];
             for (const [key, markup, box] of pieces) {
               const node = make('g', { 'data-machine': `${machine.id}-${key}` }) as SVGGElement;
@@ -232,7 +241,9 @@ export const Bench = React.memo(
           placePins();
         }
         s.order = '';
+        s.apart.shown = null;
         applyFocus();
+        placeApart();
         paint();
       },
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -258,7 +269,7 @@ export const Bench = React.memo(
         node.querySelectorAll?.('[data-machine]').forEach((piece) => put(piece, 'data-focused', lit ? '' : null));
       }
       for (const item of s.items) {
-        const id = item.key.replace(/-(back|front|top)$/, '');
+        const id = item.key.replace(/-(back|arm|front|beam)$/, '');
         const machine = WORLD[side].find((m) => m.id === id);
         put(item.node, 'data-focused', machine && s.focus === machine.kind ? '' : null);
       }
@@ -304,6 +315,8 @@ export const Bench = React.memo(
       const P = s.P;
       const items = itemsRef.current;
       if (!P || !items) return;
+      // A machine taken apart keeps its place in the order: its parts lift or slide toward the
+      // viewer, or sideways only within the gap beside it, so what was in front of it still is.
       const order = orderOf(
         s.items.map((item) => item.box()),
         P
@@ -312,6 +325,101 @@ export const Bench = React.memo(
       if (key === s.order) return;
       s.order = key;
       for (const index of order) items.appendChild(s.items[index].node);
+    };
+
+    /** A machine's layers, wherever its pieces are drawn: the floor, the items, or the gate's three pieces. */
+    const layersOf = (id: string) => {
+      const s = state.current;
+      const holders = new Set<Element>(s.items.filter((item) => item.key === id || item.key.startsWith(`${id}-`)).map((item) => item.node));
+      const own = s.machines.get(id)?.node;
+      if (own) holders.add(own);
+      return Array.from(holders).flatMap((holder) => Array.from(holder.querySelectorAll<SVGGElement>('.cp-layer')));
+    };
+
+    /**
+     * Move each part of the machine taken apart out along its own direction, and tag it with its
+     * number in the card's list, on a leader to a column beside the machine.
+     */
+    const placeApart = () => {
+      const s = state.current;
+      const P = s.P;
+      const tags = tagsRef.current;
+      if (!P || !tags) return;
+      const { id, amount } = s.apart;
+      if (s.apart.shown && s.apart.shown !== id) for (const layer of layersOf(s.apart.shown)) put(layer, 'transform', null);
+      s.apart.shown = id;
+      tags.textContent = '';
+      for (const pin of s.pins) put(pin.node, 'data-apart', null);
+      const machine = id ? s.machines.get(id)?.machine : undefined;
+      if (!id || !machine) return;
+      const origin = iso([0, 0, 0], P);
+      const shiftOf = (v: [number, number, number] | undefined): [number, number] => {
+        if (!v) return [0, 0];
+        const at = iso([v[0] * amount, v[1] * amount, v[2] * amount], P);
+        return [at[0] - origin[0], at[1] - origin[1]];
+      };
+      const layers = layersOf(id);
+      const parts = PARTS[machine.kind];
+      for (const layer of layers) {
+        const part = parts.find((p) => p.key === layer.getAttribute('data-part-name'));
+        put(layer, 'transform', part?.apart && amount > 0 ? translateAlong(P, part.apart.map((v) => v * amount) as [number, number, number]) : null);
+      }
+      if (amount < 0.35) return;
+      // The pin would sit on the parts: the tags take its place.
+      for (const pin of s.pins) put(pin.node, 'data-apart', pin.kind === machine.kind ? '' : null);
+
+      // Each part's outline on screen as it now stands, numbered as the card lists them.
+      const boxes: { n: number; left: number; right: number; at: number }[] = [];
+      for (const part of listedParts(machine.kind)) {
+        const own = layers.filter((layer) => layer.getAttribute('data-part-name') === part.key);
+        if (!own.length) continue;
+        const [dx, dy] = shiftOf(part.apart);
+        let left = Infinity;
+        let right = -Infinity;
+        let up = Infinity;
+        let down = -Infinity;
+        for (const layer of own) {
+          const b = layer.getBBox();
+          if (!b.width && !b.height) continue;
+          left = Math.min(left, b.x + dx);
+          right = Math.max(right, b.x + b.width + dx);
+          up = Math.min(up, b.y + dy);
+          down = Math.max(down, b.y + b.height + dy);
+        }
+        boxes.push({ n: boxes.length + 1, left, right, at: up + (down - up) * 0.45 });
+      }
+      if (!boxes.length) return;
+      const k = 1 / s.pinScale;
+      const [vx, vy, vw] = s.box;
+      const gap = 14 * k;
+      const room = 24 * k;
+      const edge = Math.max(...boxes.map((b) => b.right));
+      // Tags go on the right, unless they would run off the view there.
+      const side = edge + gap + room <= vx + vw ? 1 : -1;
+      const x = side > 0 ? edge + gap : Math.min(...boxes.map((b) => b.left)) - gap;
+      const opacity = Math.min(1, (amount - 0.35) / 0.5);
+      tags.setAttribute('opacity', opacity.toFixed(2));
+      // Top to bottom, never closer than a tag's height, and clear of the view buttons in the
+      // corner: about 44 px of screen, whatever the zoom and the width.
+      const perUnit = svgRef.current?.getScreenCTM()?.a || 1;
+      let above = vy + 44 / perUnit - 10 * k;
+      const markup = [...boxes]
+        .sort((a, b) => a.at - b.at)
+        .map((b) => {
+          // Tagged on its upper middle: an outer edge can lie behind a neighbour in front.
+          const ax = (b.left + b.right) / 2;
+          const ay = b.at;
+          const ty = Math.max(ay, above + 18 * k);
+          above = ty;
+          const tx = x + side * 8 * k;
+          return (
+            `<path class="cp-tag-leader" d="M${ax.toFixed(1)} ${ay.toFixed(1)}L${(x - side * 4 * k).toFixed(1)} ${ty.toFixed(1)}H${x.toFixed(1)}"/>` +
+            `<g class="cp-tag-dot" transform="translate(${ax.toFixed(1)} ${ay.toFixed(1)}) scale(${k.toFixed(3)})"><circle r="1.4"/></g>` +
+            `<g class="cp-tag" transform="translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${k.toFixed(3)})"><circle r="8"/><text y="3.4" text-anchor="middle">${String(b.n).padStart(2, '0')}</text></g>`
+          );
+        })
+        .join('');
+      tags.innerHTML = markup;
     };
 
     /** How each machine is doing, for its ring and its pin: fine, strained, down, or promoted. */
@@ -465,7 +573,7 @@ export const Bench = React.memo(
             if (!item || item.key.startsWith('tray-')) continue;
             const box = item.node.getBBox();
             if (point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height) {
-              const id = item.key.replace(/-(back|front|top)$/, '');
+              const id = item.key.replace(/-(back|arm|front|beam)$/, '');
               const machine = WORLD[side].find((m) => m.id === id);
               if (machine && !machine.ghost) return machine;
             }
@@ -492,10 +600,12 @@ export const Bench = React.memo(
           const text = box.map((value) => Math.round(value * 100) / 100).join(' ');
           put(svgRef.current, 'viewBox', text);
           const s = state.current;
+          s.box = box;
           if (Math.abs(s.pinScale - scale) > 1e-3) {
             s.pinScale = scale;
             placePins();
           }
+          if (s.apart.id) placeApart();
         },
         focus: (kind) => {
           state.current.focus = kind;
@@ -518,6 +628,16 @@ export const Bench = React.memo(
           return best;
         },
         anchorOf: (kind) => state.current.pins.find((pin) => pin.kind === kind)?.at ?? null,
+        apart: (kind, amount) => {
+          const s = state.current;
+          const role = ROLES.find((r) => r.kind === kind);
+          const machine = role ? WORLD[side].find((m) => m.id === role.pin[side]) : undefined;
+          s.apart.id = machine && !machine.ghost && amount > 0 ? machine.id : null;
+          s.apart.amount = amount;
+          placeApart();
+          s.order = '';
+          sort();
+        },
         setActive: (active) => {
           const s = state.current;
           s.active = active;
@@ -536,6 +656,7 @@ export const Bench = React.memo(
         <g ref={floorRef} className="cp-floor" />
         <g ref={itemsRef} className="cp-items" />
         <g ref={pinsRef} className="cp-pins" aria-hidden="true" />
+        <g ref={tagsRef} className="cp-tags" aria-hidden="true" />
       </svg>
     );
   })

@@ -1199,6 +1199,39 @@
   transform: scale(1.15);
 }
 
+/* A machine taken apart: its pin steps aside, and each part gets its number from the card on a leader. */
+.root :global(.cp-pin[data-apart]) {
+  display: none;
+}
+
+.root :global(.cp-tags) {
+  pointer-events: none;
+}
+
+.root :global(.cp-tag-leader) {
+  fill: none;
+  stroke: var(--anatomy-mid);
+  stroke-width: 0.8;
+  vector-effect: non-scaling-stroke;
+}
+
+.root :global(.cp-tag-dot circle) {
+  fill: var(--anatomy-strong);
+}
+
+.root :global(.cp-tag circle) {
+  fill: var(--anatomy-card);
+  stroke: var(--anatomy-strong);
+  stroke-width: 1;
+}
+
+.root :global(.cp-tag text) {
+  fill: var(--anatomy-strong);
+  font-family: var(--anatomy-mono);
+  font-size: 8.5px;
+  font-weight: 500;
+}
+
 /*
  * A role picked from the legend or the floor: its machines stay as drawn, the rest step back into
  * the paper. A filter, not opacity, so every solid still hides what is behind it.
@@ -1276,6 +1309,17 @@
 @media (max-width: 640px) {
   .cards {
     grid-template-columns: 1fr;
+  }
+
+  /* A phone has no room beside the machine: its card follows the figure, so the parts stay in view. */
+  .card {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    max-height: none;
+    margin-top: 6px;
+    box-shadow: 0 0 0 1px var(--anatomy-faint);
   }
 
   .root {
