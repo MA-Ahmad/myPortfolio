@@ -56,9 +56,8 @@ export const BLOCK_CATEGORIES: BlockCategory[] = [
 export const BLOCKS: BlockMeta[] = [
   {
     name: 'chatgpt-postgres',
-    title: 'Scaling Postgres for ChatGPT',
-    description:
-      'OpenAI’s PostgreSQL setup for 800 million ChatGPT users: the initial design and today’s, a tab each on one clock, with robot trays carrying queries through cache failures, connection storms, a primary failover and the ImageGen launch.',
+    title: 'ChatGPT Postgres',
+    description: 'How OpenAI scaled PostgreSQL for 800 million ChatGPT users, animated: the first design and today’s, in normal traffic, a cache-miss spike and a primary failure.',
     category: 'interactive',
     createdAt: '2026-10-27',
     files: [

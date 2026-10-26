@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { HashIcon, InfoIcon, MaximizeIcon, MinimizeIcon, MinusIcon, PauseIcon, PlayIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
 import { Bench, prepare, type BenchHandle } from './bench';
-import { FACTS, PUBLISHED, SOURCE } from './facts';
+import { PUBLISHED, SOURCE, SUMMARY } from './facts';
 import type { Lamp, Tray } from './fleet';
 import { ISO_CSS } from './iso-kit';
 import { Plate, follow, useInView, useLoop } from './iso-react';
@@ -583,7 +583,7 @@ export default function ChatgptPostgres() {
       <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
       <header className={styles.header}>
         <div className={styles.title}>
-          <h2 className={styles.heading}>Scaling PostgreSQL for ChatGPT</h2>
+          <h2 className={styles.heading}>ChatGPT Postgres</h2>
           <ul className={styles.headline} aria-label="From the post">
             {HEADLINE.map((item) => (
               <li key={item.label}>
@@ -605,19 +605,25 @@ export default function ChatgptPostgres() {
       {sources ? (
         <aside className={styles.sources} aria-label="Sources">
           <div className={styles.sourcesHead}>
-            <strong>What the post says</strong>
-            <a href={SOURCE.url} target="_blank" rel="noreferrer">
-              Read the post
-            </a>
+            <strong>In short</strong>
           </div>
-          <ol>
-            {FACTS.map((fact, index) => (
-              <li key={index}>
-                <span className={styles.muted}>{fact.section}</span>
-                {fact.text}
-              </li>
-            ))}
-          </ol>
+          <div className={styles.summary}>
+            <section>
+              <span className={styles.muted}>The problem</span>
+              <p>{SUMMARY.problem}</p>
+            </section>
+            <section>
+              <span className={styles.muted}>How they fixed it</span>
+              <ul>
+                {SUMMARY.fixes.map((fix) => (
+                  <li key={fix}>{fix}</li>
+                ))}
+              </ul>
+            </section>
+          </div>
+          <p className={styles.result}>
+            <span className={styles.muted}>Result</span> {SUMMARY.result}
+          </p>
         </aside>
       ) : null}
 

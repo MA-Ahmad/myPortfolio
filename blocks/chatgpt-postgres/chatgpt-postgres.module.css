@@ -117,8 +117,7 @@
 
 
 .iconButton:focus-visible,
-.cardClose:focus-visible,
-.sources a:focus-visible {
+.cardClose:focus-visible {
   outline: 1px solid var(--anatomy-muted);
   outline-offset: 3px;
 }
@@ -719,24 +718,39 @@
   color: var(--anatomy-strong);
 }
 
-.sources a {
-  color: var(--anatomy-strong);
-  text-underline-offset: 3px;
-}
-
-.sources ol {
+.summary {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 10px 20px;
-  margin: 0;
-  padding-left: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px 28px;
 }
 
-.sources li span {
+.summary p,
+.summary ul {
+  margin: 0;
+}
+
+.summary ul {
+  padding-left: 16px;
+  list-style: disc;
+}
+
+.summary li::marker {
+  color: var(--anatomy-muted);
+}
+
+.summary span,
+.result span {
   display: block;
+  margin-bottom: 2px;
   font-size: 10px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
+}
+
+.result {
+  margin: 12px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--anatomy-faint);
 }
 
 /* ── Cards over the floor ─────────────────────────────────────────────────── */
