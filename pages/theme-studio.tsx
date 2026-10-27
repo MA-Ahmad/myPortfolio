@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { ArrowLeft } from 'lucide-react';
 import Meta from 'components/shared/meta';
+import { SITE_URL } from 'data/constants';
 import { CanvasStage } from 'components/canvas/canvas-stage';
 import { Multiplayer, PresenceToggle } from 'components/canvas/multiplayer';
 import styles from 'components/canvas/canvas.module.css';
@@ -20,6 +21,8 @@ const CanvasPage: NextPageWithLayout<Props> = ({ contributions }) => (
     <Meta
       title="Theme Studio"
       description="Pick a theme for Muhammad Ahmad's portfolio by wiring its card into the display."
+      image={`${SITE_URL}/og/theme-studio.png`}
+      imageAlt="Theme Studio in dark mode: a wire from the Classic theme card reaches the display, with sparks jumping to its input, between the Notebook and Terminal cards."
     />
     <h1 className="sr-only">Theme Studio: open a theme by choosing its card, or wire it into the display</h1>
     <CanvasStage contributions={contributions} />
