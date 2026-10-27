@@ -58,6 +58,10 @@ export type Tray = {
   served: boolean;
   /** Seconds since it last saw the apps, for the hover card. */
   age: number;
+  /** The lamp it had before it stopped in a queue on the lane, to show again when it moves on. */
+  queued: Lamp | null;
+  /** Seconds it has been held up behind another tray. */
+  heldFor: number;
 };
 
 export type FleetContext = { sim: SimState; load: Load; design: Design; cascading: boolean };
@@ -67,7 +71,11 @@ const ACCEL = 220;
 const GAP = 17;
 const ENTER = 0.28;
 const LIFT = 0.18;
-export const FLEET = 16;
+export const FLEET = 13;
+/** Seconds a request waits on a dead primary before it times out (illustrative). */
+const DOWN_TIMEOUT = 5;
+/** Seconds a query waits on a saturated primary before it times out (illustrative). */
+const OVERLOAD_TIMEOUT = 3.5;
 
 /** A small seeded generator, so a scenario plays the same each time. */
 function random(seed: number) {
@@ -93,6 +101,10 @@ export class Fleet {
   side: SideKey;
   trays: Tray[] = [];
   pending: Job[] = [];
+  /** Whether the floor was failing on the last step, to notice the moment it recovers. */
+  wasFailing = false;
+  /** The trays spread round the loop at the start still need their first slips. */
+  seeding = true;
   machines: Machine[];
   docks = new Map<string, { s: number; bays: number; taken: (number | null)[] }>();
   rand: () => number;
@@ -120,6 +132,8 @@ export class Fleet {
   reset() {
     this.trays = [];
     this.pending = [];
+    this.wasFailing = false;
+    this.seeding = true;
     this.leaseHolder = null;
     this.counts = { done: 0, failed: 0, shed: 0, retries: 0, waited: 0 };
     this.docks.forEach((dock) => dock.taken.fill(null));
@@ -147,6 +161,8 @@ export class Fleet {
         dockId: null,
         hops: 0,
         served: false,
+        queued: null,
+        heldFor: 0,
         age: 0
       };
       if (parked) {
@@ -184,10 +200,22 @@ export class Fleet {
     return job;
   }
 
-  planJob({ sim, load, design }: FleetContext, retry: boolean): Job {
+  /** How long a busy primary holds a tray: past saturation the wait grows fast, so its bays turn
+   * over slowly and the trays behind queue on the lane. */
+  heldAt(cpu: number) {
+    return Math.max(0, cpu - 0.5) * 1.6 + Math.max(0, cpu - 1) * 16;
+  }
+
+  /** Where a read that missed the cache goes next: the primary or a replica. */
+  missStop({ sim, design }: FleetContext, tier: Tier) {
+    if (this.rand() < design.primaryReads) return this.stop('primary', 0.3 + this.heldAt(sim.cpu));
+    return this.replicaStop(tier, 0.3 + Math.min(1.4, (tier === 'low' ? sim.lowCpu : sim.replicaCpu) * 0.8));
+  }
+
+  planJob(ctx: FleetContext, retry: boolean): Job {
+    const { sim, load, design } = ctx;
     const r = this.rand;
-    // An overloaded primary keeps every tray waiting; past saturation the wait grows fast.
-    const held = (cpu: number) => Math.max(0, cpu - 0.5) * 1.6 + Math.max(0, cpu - 1) * 3;
+    const held = (cpu: number) => this.heldAt(cpu);
     const after = this.side === 'after';
     const writes = 8 * load.write;
     const reads = 120 * load.read;
@@ -215,8 +243,7 @@ export class Fleet {
       if (miss) {
         job.hot = load.miss > 0.2 && r() < 0.8;
         if (after) job.stops.push(this.stop('bouncer', 0.18));
-        if (r() < design.primaryReads) job.stops.push(this.stop('primary', 0.3 + held(sim.cpu)));
-        else job.stops.push(this.replicaStop(job.tier, 0.3 + Math.min(1.4, (job.tier === 'low' ? sim.lowCpu : sim.replicaCpu) * 0.8)));
+        job.stops.push(this.missStop(ctx, job.tier));
       }
     }
     job.retry = retry;
@@ -294,6 +321,13 @@ export class Fleet {
     }
   }
 
+  /** Whether a tray coming back to the apps finds every bay taken and has to wait on the lane. */
+  appsWanted() {
+    const dock = this.docks.get('apps')!;
+    if (dock.taken.includes(null)) return false;
+    return this.trays.some((t) => t.phase === 'lane' && (!t.job || t.next >= t.job.stops.length) && ahead(t.s, dock.s) < 40);
+  }
+
   /**
    * What happens while a tray stands in a bay: 'wait' keeps it there, 'go' lets it leave for its
    * next stop, 'reroute' sends it on to a different machine for this same stop.
@@ -302,6 +336,14 @@ export class Fleet {
     const job = tray.job;
     if (!job) return 'go';
     const { design, load, sim } = ctx;
+
+    // No lease: a read that was to be a hit finds the cache failing when it gets there, misses, and
+    // goes on to the database like every other miss, failing as often as the floor is failing.
+    if (stop.id === 'cache' && !design.lease && !tray.served && job.kind === 'read' && tray.next === job.stops.length - 1 && load.miss > 0.2 && this.rand() < Math.min(1, load.miss * 2.2)) {
+      const next = this.missStop(ctx, job.tier);
+      job.stops.push(next);
+      if (!job.fail && this.rand() < sim.errors * 1.15) job.fail = { at: next.id, how: 'timeout' };
+    }
 
     // A hot key with a lease: one tray fetches the row, the others wait at the cache for the refill.
     if (stop.id === 'cache' && job.hot && design.lease) {
@@ -340,9 +382,25 @@ export class Fleet {
       this.pulse(stop.id);
     }
 
+    // A slip doomed to time out or be refused when it was handed out gets its answer if the
+    // database has recovered by the time it arrives.
+    if (job.fail?.at === stop.id && (job.fail.how === 'timeout' || job.fail.how === 'refused') && sim.errors < 0.01) job.fail = undefined;
+
+    // A saturated primary decides a query's fate when it gets there, from how it is doing now, not
+    // when the slip was handed out: under overload, a share of queries time out.
+    if (stop.id === 'primary' && !tray.served && sim.primaryUp && sim.cpu > 1) {
+      if (job.fail?.at === 'primary' && job.fail.how === 'timeout') job.fail = undefined;
+      if (!job.fail && this.rand() < sim.errors) job.fail = { at: 'primary', how: 'timeout' };
+    }
+
     // A failure isn't instant: the tray waits for an answer until it times out, then gives up.
     if (job.fail && job.fail.at === stop.id) {
-      const patience = job.fail.how === 'blocked' ? 0.3 : 1.3;
+      // A dead primary with no standby answers nothing, so a request holds its bay until it times
+      // out: the bays stay full and the trays behind queue on the lane, the pile-up the post describes.
+      // A query on a saturated primary waits out its timeout before giving up, as does one on a dead
+      // primary with no standby: the bays stay full and the trays behind queue on the lane.
+      const patience =
+        job.fail.how === 'blocked' ? 0.3 : job.fail.how === 'down' && !design.standby ? DOWN_TIMEOUT : job.fail.how === 'timeout' && stop.id === 'primary' && sim.cpu > 1 ? OVERLOAD_TIMEOUT : 1.3;
       if (tray.timer < patience) {
         tray.lamp = 'wait';
         return 'wait';
@@ -367,6 +425,37 @@ export class Fleet {
 
   step(dt: number, ctx: FleetContext) {
     this.time += dt;
+    // The trays that start out on the lane are already on a job, as if they had just left the apps.
+    if (this.seeding) {
+      this.seeding = false;
+      for (const tray of this.trays) {
+        if (tray.phase !== 'lane' || tray.job) continue;
+        tray.job = this.makeJob(ctx);
+        tray.next = 1;
+        tray.slip = tray.job.kind;
+        tray.lamp = 'run';
+      }
+    }
+    // The primary is back: a request that was doomed only because it was down gets its answer
+    // now, on its way, waiting in a bay or still queued at the apps, so the backlog drains.
+    // A request doomed only because the primary was down gets its answer once it is back: on its
+    // way, waiting in a bay or still queued at the apps, so the backlog drains.
+    if (ctx.load.primaryDown <= 0.5) {
+      for (const job of this.pending) if (job.fail?.how === 'down') job.fail = undefined;
+      for (const tray of this.trays) if (tray.job?.fail?.how === 'down') tray.job.fail = undefined;
+    }
+    // The moment the floor recovers from any trouble, the backlog starts clean: requests the trouble
+    // had doomed get answered, and trays still heading home from a failure stop showing red (their
+    // slips stay void, since those requests did fail).
+    const failing = ctx.load.primaryDown > 0.5 || ctx.sim.errors > 0.02;
+    if (this.wasFailing && !failing && ctx.sim.errors < 0.01) {
+      for (const job of this.pending) job.fail = undefined;
+      for (const tray of this.trays) {
+        if (tray.job) tray.job.fail = undefined;
+        if (tray.lamp === 'fail' || tray.lamp === 'wait') tray.lamp = tray.job?.retry ? 'retry' : 'run';
+      }
+      this.wasFailing = false;
+    } else if (failing) this.wasFailing = true;
     // The apps hand out slips at a pace that follows traffic; a full queue just waits.
     const pace = 1.6 / Math.min(2.4, Math.max(0.6, ctx.load.read * 0.6 + ctx.load.write * 0.08 + 0.3));
     this.spawnIn -= dt;
@@ -397,7 +486,10 @@ export class Fleet {
       switch (tray.phase) {
         case 'parked': {
           tray.lamp = 'charge';
-          if (this.pending.length > this.trays.filter((t) => t.phase === 'lane').length * 0.15 || this.pending.length >= 3) {
+          // Leave to fetch work only when no empty tray is already waiting for it at the apps, and
+          // the queue is long enough that the trays coming back won't clear it.
+          const idleAtApps = this.trays.some((t) => t.dockId === 'apps' && !t.job && (t.phase === 'enter' || t.phase === 'lift' || t.phase === 'dwell'));
+          if (!idleAtApps && this.pending.length >= 3) {
             tray.phase = 'exit';
             tray.timer = 0;
             tray.lamp = 'idle';
@@ -436,12 +528,27 @@ export class Fleet {
           const want = Math.min(SPEED, brake);
           tray.v = want > tray.v ? Math.min(want, tray.v + ACCEL * dt) : want;
           tray.s = (tray.s + tray.v * dt) % LOOP;
+          // Held up behind the tray in front for more than a moment: a queue on the lane, lit as
+          // waiting until it moves on. Trays bunching briefly at the apps don't count.
+          tray.heldFor = gap < GAP + 2 && tray.v < 2 && toStop >= 1 ? tray.heldFor + dt : 0;
+          const held = tray.heldFor > 1;
+          if (held && !tray.queued && (tray.lamp === 'run' || tray.lamp === 'retry')) {
+            tray.queued = tray.lamp;
+            tray.lamp = 'wait';
+          } else if (!held && tray.queued) {
+            if (tray.lamp === 'wait') tray.lamp = tray.queued;
+            tray.queued = null;
+          }
           if (toStop < 1 && tray.v < 4) {
             // At the stop: take a free bay, or wait here (and hold up the lane) until one frees.
             const dock = this.docks.get(target_id)!;
             const free = dock.taken.indexOf(null);
             if (free >= 0) {
               dock.taken[free] = tray.id;
+              if (tray.queued) {
+                if (tray.lamp === 'wait') tray.lamp = tray.queued;
+                tray.queued = null;
+              }
               tray.dockId = target_id;
               tray.slot = this.slotOffset(dock, free);
               tray.s = target;
@@ -485,9 +592,16 @@ export class Fleet {
         }
         case 'dwell': {
           tray.timer += dt;
+          // Empty at the apps: wait in the bay for the next request rather than lap the floor to the
+          // depot, unless a tray coming in needs the bay.
+          if (tray.dockId === 'apps' && !tray.job) {
+            if (this.pending.length) this.board(tray);
+            else if (!this.appsWanted()) break;
+          }
           const job = tray.job;
           const stop = job && tray.dockId !== 'apps' ? job.stops[tray.next] : null;
-          const dwell = stop ? stop.dwell : 0.22;
+          // The primary takes as long as its load says now: slow when saturated.
+          const dwell = stop ? (stop.id === 'primary' ? Math.max(stop.dwell, 0.3 + this.heldAt(ctx.sim.cpu)) : stop.dwell) : 0.22;
           const verdict = stop ? this.serve(tray, stop, ctx) : 'go';
           if (verdict === 'wait') break;
           if (verdict === 'reroute') {

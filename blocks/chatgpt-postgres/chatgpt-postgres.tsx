@@ -141,13 +141,13 @@ function bannerOf(side: SideKey, scenario: Scenario, sim: SimState, t: number): 
   if (scenario.key === 'cache') {
     if (side === 'before') {
       return sim.status === 'sev0' || sim.status === 'sev'
-        ? { lead: 'Primary overloaded', text: `Every miss lands on the primary and saturates its CPU: ${failing}, and retries add load.`, tone: 'bad' }
+        ? { lead: 'Primary overloaded', text: `The misses flood the database and saturate the primary: queries queue, ${failing}, and retries add load.`, tone: 'bad' }
         : { lead: 'Cache misses', text: 'The cache misses almost every read, and each miss goes straight to the primary…', tone: 'warn' };
     }
     return { lead: 'Cache misses, handled', text: 'One request per missed key takes a lease and refills it; the rest wait. Far fewer reads reach the database.', tone: 'good' };
   }
   if (scenario.key === 'primary') {
-    if (side === 'before') return { lead: 'Full outage', text: `The primary is down and everything needs it, reads included: ${failing}. Trays wait, give up and retry.`, tone: 'bad' };
+    if (side === 'before') return { lead: 'Full outage', text: `The primary is down and everything needs it, reads included: ${failing}. Requests pile up at it, time out and retry.`, tone: 'bad' };
     if (sim.promoting > 0) return { lead: `Failing over · ${Math.max(0, STANDBY_PROMOTION - t).toFixed(1)} s`, text: 'The primary is down. Reads carry on from the replicas; writes fail until the hot standby is promoted.', tone: 'warn' };
     return { lead: 'Recovered', text: 'The hot standby is the primary now and takes the writes; reads never stopped. Not a SEV0.', tone: 'good' };
   }
