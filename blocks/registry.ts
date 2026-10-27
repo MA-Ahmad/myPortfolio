@@ -83,7 +83,7 @@ export const BLOCKS: BlockMeta[] = [
     images: {
       card: { light: '/blocks/chatgpt-postgres/card-light.webp', dark: '/blocks/chatgpt-postgres/card-dark.webp' },
       og: '/blocks/chatgpt-postgres/og.png',
-      alt: 'Two isometric server floors side by side: on the left the initial design, with apps cabled straight to one PostgreSQL primary and three replicas; on the right today’s, with a rate-limit gate, a leased cache, PgBouncer, a primary with a hot standby, Azure Cosmos DB and replicas in three regions. Robot trays carry query slips between them.'
+      alt: 'An isometric server floor showing today’s PostgreSQL setup for ChatGPT: app servers behind a rate-limit gate, a cache, PgBouncer, one primary with a hot standby, Azure Cosmos DB and six read replicas, with small robot trays carrying queries along a lane between them.'
     }
   },
   {
