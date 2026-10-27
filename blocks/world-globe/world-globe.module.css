@@ -140,14 +140,10 @@
 .stageFrame {
   position: relative;
   cursor: grab;
-  touch-action: pan-y;
+  /* A drag turns the globe in every direction, so touch must not scroll the page under it. */
+  touch-action: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
-}
-
-/* Off the stand a drag turns the globe in every direction, so touch must not scroll the page under it. */
-.stageFrame[data-free] {
-  touch-action: none;
 }
 
 .stageFrame:active {
@@ -196,20 +192,6 @@
 
 .viewButton:not(:disabled):active svg {
   transform: scale(0.88);
-}
-
-.viewText {
-  width: auto;
-  padding: 0 10px;
-  font-family: var(--anatomy-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--anatomy-muted);
-}
-
-.viewText[aria-pressed='true'] {
-  color: var(--anatomy-strong);
-  background: var(--anatomy-page);
 }
 
 .viewButton:disabled {
@@ -353,6 +335,73 @@
 
 .find[aria-invalid='true'] {
   box-shadow: 0 0 0 1px var(--anatomy-red);
+}
+
+/* The country list under the field, in the block's own look: square, ringed like the chips, mono. */
+.findBox {
+  position: relative;
+}
+
+.findList {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  width: max(100%, 248px);
+  max-height: 284px;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  background: var(--anatomy-card);
+  box-shadow:
+    0 0 0 1px var(--anatomy-mid),
+    0 12px 28px -12px rgba(0, 0, 0, 0.35);
+  scrollbar-width: thin;
+  scrollbar-color: var(--anatomy-lo) transparent;
+}
+
+.findOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  height: 30px;
+  padding: 0 8px;
+  color: var(--anatomy-text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.findOption[aria-selected='true'] {
+  background: var(--anatomy-page);
+  box-shadow: inset 2px 0 0 var(--anatomy-strong);
+  color: var(--anatomy-strong);
+}
+
+.findName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The part of the name that matches what was typed. */
+.findMark {
+  background: none;
+  color: var(--anatomy-strong);
+  font-weight: 600;
+}
+
+.findParts {
+  flex: none;
+  color: var(--anatomy-muted);
+  font-size: 10.5px;
+  font-variant-numeric: tabular-nums;
+}
+
+.findEmpty {
+  padding: 8px;
+  color: var(--anatomy-muted);
 }
 
 /* ── The globe ────────────────────────────────────────────────────────────── */

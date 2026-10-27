@@ -7,7 +7,7 @@ import divisionIndex from './divisions/index.json';
 import { cameraOf, type Point3, type Projection } from './iso-kit';
 
 /**
- * The model behind the globe: its size, its stand, the countries cut from Natural Earth's 1:110m
+ * The model behind the globe: its size, the countries cut from Natural Earth's 1:110m
  * outlines, and the camera maths that turns the kit's isometric view into a d3 orthographic rotation.
  * Everything the figure draws or reads out comes from here.
  */
@@ -16,22 +16,14 @@ import { cameraOf, type Point3, type Projection } from './iso-kit';
 export const R = 100;
 /** How thick each country's plate is. */
 export const PLATE = 3.2;
-/** The meridian ring: a flat brass band around the ball, in the plane y = 0. */
-export const RING_IN = R + 12;
-export const RING_OUT = R + 20;
-export const RING_H = 5;
-/** The top of the stand's column, the cradle that holds the ring, and the ball's centre above it. */
-export const COLUMN_TOP = 112;
-export const CRADLE_BASE = 6;
-export const CENTER: Point3 = [0, 0, COLUMN_TOP + CRADLE_BASE + RING_OUT];
+/** The ball's centre. */
+export const CENTER: Point3 = [0, 0, 0];
 
-/** How far a plate rises: a hover, and pulled out or broken apart (clear of the ring and the pole caps). */
+/** How far a plate rises: a hover, and pulled out or broken apart. */
 export const HOVER = 2.4;
 export const LIFT = 34;
 
-/** The axis tilt the ring can slide through in its cradle, and Earth's own. */
-export const TILT_MIN = 12;
-export const TILT_MAX = 50;
+/** Earth's axial tilt: the ball starts with its axis leaning this far, as Earth's does. */
 export const EARTH_TILT = 23.44;
 
 const EARTH_KM = 6371.0088;
@@ -117,6 +109,9 @@ export const DIVISIONS_URL = '/blocks/world-globe/divisions/';
 
 export const hasDivisions = (country: Country) => country.name in DIVISION_INDEX;
 
+/** How many pieces a country splits into, or 0 if it does not split. */
+export const partsOf = (country: Country) => DIVISION_INDEX[country.name]?.count ?? 0;
+
 /** What a country splits into, in words: "4 provinces, 1 federal territory and 2 administrative territories". */
 export function piecesPhrase(pieces: Division[]) {
   const kinds = new Map<string, number>();
@@ -168,8 +163,8 @@ export function basisOf(P: Projection) {
 }
 
 /**
- * The ball's frame in the world for a tilt (degrees): the axis `a` leans toward +x inside the ring's
- * plane, `b` is the equator's direction in that plane, and `n` is the ring's normal (+y).
+ * A frame for the ball with its axis leaning `tilt` degrees: the axis `a` leans toward +x in the plane
+ * y = 0, `b` is the equator's direction in that plane, and `n` is that plane's normal (+y).
  */
 export function frameOf(tilt: number) {
   const t = tilt * RADIANS;
@@ -188,19 +183,10 @@ export function worldOf(g: Vec, spin: number, tilt: number): Vec {
   return [b[0] * x - n[0] * y + a[0] * g[2], b[1] * x - n[1] * y + a[1] * g[2], b[2] * x - n[2] * y + a[2] * g[2]];
 }
 
-/** A world direction back in the globe's frame: the inverse of `worldOf`. */
-export function globeOf(w: Vec, spin: number, tilt: number): Vec {
-  const { a, b, n } = frameOf(tilt);
-  const x = dot(w, b);
-  const y = -dot(w, n);
-  const s = spin * RADIANS;
-  return [x * Math.cos(s) + y * Math.sin(s), -x * Math.sin(s) + y * Math.cos(s), dot(w, a)];
-}
-
 export type Matrix = number[]; // 3 × 3, row major
 
-/** The ball's orientation on the stand: globe directions to world directions, column by column. */
-export function standMatrix(spin: number, tilt: number): Matrix {
+/** The ball spun `spin` degrees east about an axis leaning `tilt` degrees: globe directions to world directions, column by column. */
+export function tiltedMatrix(spin: number, tilt: number): Matrix {
   const [x, y, z] = [worldOf([1, 0, 0], spin, tilt), worldOf([0, 1, 0], spin, tilt), worldOf([0, 0, 1], spin, tilt)];
   return [x[0], y[0], z[0], x[1], y[1], z[1], x[2], y[2], z[2]];
 }
@@ -256,8 +242,6 @@ export function rotationFrom(P: Projection, M: Matrix, extra?: Matrix): [number,
   return [lambda / RADIANS, phi / RADIANS, gamma / RADIANS];
 }
 
-export const rotationOf = (P: Projection, spin: number, tilt: number, extra?: Matrix) => rotationFrom(P, standMatrix(spin, tilt), extra);
-
 /** Latitude and longitude of the point of the ball nearest the viewer. */
 export function facingPoint(P: Projection, M: Matrix) {
   const [x, y, z] = applyT(M, basisOf(P).toward);
@@ -281,20 +265,6 @@ export function faceMatrix(P: Projection, g: Vec): Matrix {
   for (let k = 0; k < 3; k++) for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) M[r * 3 + c] += to[k][r] * from[k][c];
   return M;
 }
-
-/** The spin that turns a longitude to face the viewer. */
-export function spinToFace(P: Projection, lon: number, tilt: number) {
-  const { toward } = basisOf(P);
-  const { b, n } = frameOf(tilt);
-  return Math.atan2(-dot(n, toward), dot(b, toward)) / RADIANS - lon;
-}
-
-/** The longitude that faces the viewer at this spin. */
-export function facing(P: Projection, spin: number, tilt: number) {
-  return wrap(spinToFace(P, 0, tilt) - spin);
-}
-
-export const wrap = (degrees: number) => ((((degrees + 180) % 360) + 360) % 360) - 180;
 
 // ── Words ────────────────────────────────────────────────────────────────────
 

@@ -4,23 +4,16 @@ import * as React from 'react';
 import { geoGraticule, geoOrthographic, geoPath } from 'd3-geo';
 import { useInView, useLoop, useReadout } from './iso-react';
 import {
-  CENTER,
   COUNTRIES,
   EARTH_TILT,
   HOVER,
   LIFT,
   PLATE,
   R,
-  RING_H,
-  RING_IN,
-  RING_OUT,
-  TILT_MAX,
-  TILT_MIN,
   add,
   apply,
   applyT,
   basisOf,
-  cross,
   describe,
   describePiece,
   dot,
@@ -36,24 +29,20 @@ import {
   rotationAbout,
   rotationFrom,
   scale,
-  spinToFace,
-  standMatrix,
   tidy,
+  tiltedMatrix,
   turnBetween,
-  wrap,
   type Divisions,
   type Matrix,
   type Vec
 } from './globe';
-import { CENTER_FLAT, HEIGHT, K, P, STAND_BACK, STAND_FRONT, WIDTH, pointerPath, poleParts, ringPieces } from './stand';
+import { CENTER_FLAT, HEIGHT, K, P, WIDTH } from './camera';
 import styles from './world-globe.module.css';
 
-/** Idle spin, degrees a second: one turn a minute. */
+/** Idle turn about the ball's own axis, degrees a second: one turn a minute. */
 const IDLE_RATE = 6;
 export const SCALE_MOST = 2.4;
 export const SCALE_STEP = 1.35;
-/** With the stand gone, the view closes in on the ball until it and its plates pulled all the way out fill the frame. */
-const GLOBE_ONLY_SCALE = Math.min(WIDTH, HEIGHT) / (2 * (R + PLATE + LIFT + 6) * K);
 /** Seconds of quiet before the globe starts showing countries on its own, and between them. */
 const TOUR_AFTER = 6;
 const TOUR_EVERY = 4.2;
@@ -61,10 +50,7 @@ const TOUR_MIN_AREA = 4e5;
 
 const BASIS = basisOf(P);
 const LIGHT = norm(add(add(scale(BASIS.toward, 0.55), scale(BASIS.up, 0.7)), scale(BASIS.right, -0.45)));
-const C = CENTER as Vec;
 const RADIANS = Math.PI / 180;
-/** How far past the ring's flat faces a plate keeps when it slides by. */
-const CLEAR = RING_H / 2 + 1.5;
 
 const smoothstep = (a: number, b: number, x: number) => {
   const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
@@ -136,8 +122,6 @@ export interface GlobeState {
   pulled: number;
   scale: number;
   selected: number;
-  /** The globe alone, off its stand, turning freely. */
-  free: boolean;
   /** What a click on the picked country does next, when that is not the usual. */
   hint: string;
 }
@@ -148,11 +132,12 @@ export interface GlobeHandle {
   /** Turn a country to face the viewer and pull it out. */
   find(index: number): void;
   putBack(): void;
+  /** Turn the near side right (positive) or left, about the screen's vertical. */
   turn(degrees: number): void;
-  tiltBy(degrees: number): void;
+  /** Roll the near side down (positive) or up, about the screen's horizontal. */
+  roll(degrees: number): void;
   scaleBy(factor: number): void;
   home(): void;
-  setFree(on: boolean): void;
 }
 
 interface Props {
@@ -368,38 +353,24 @@ export const Globe = React.memo(
     const inView = useInView(anchor);
     const svg = React.useRef<SVGSVGElement>(null);
     const sorted = React.useRef<SVGGElement>(null);
-    const standBack = React.useRef<SVGGElement>(null);
-    const standFront = React.useRef<SVGGElement>(null);
     const labelLayer = React.useRef<SVGGElement>(null);
     const announce = React.useRef<HTMLSpanElement>(null);
     const gradient = React.useId().replace(/:/g, '');
-    const dragging = React.useRef<{ id: number; x: number; y: number; moved: boolean; t: number; v: number; plate: [number, number] } | null>(null);
+    const dragging = React.useRef<{ id: number; x: number; y: number; moved: boolean; t: number; plate: [number, number] } | null>(null);
     const callbacks = React.useRef({ onState });
     callbacks.current = { onState };
 
     const live = React.useRef({
       built: false,
-      spin: 0,
-      rate: IDLE_RATE,
-      spinTarget: null as number | null,
-      tilt: EARTH_TILT,
-      tiltTarget: EARTH_TILT,
-      tiltDrawn: Number.NaN,
       broken: false,
       spinning: true,
-      /** The ball's orientation, globe to world; on the stand it follows spin and tilt. */
-      orient: standMatrix(0, EARTH_TILT) as Matrix,
-      free: false,
-      /** 0 on the stand, 1 alone; the stand fades and the view closes in as it eases between. */
-      mix: 0,
-      mixDrawn: -1,
-      /** Whether the ball sits on its axis again after turning freely. */
-      settled: true,
-      /** Turning speed off the stand, as a world rotation vector in radians a second. */
+      /** The ball's orientation, globe to world. It starts with its axis leaning as Earth's does. */
+      orient: tiltedMatrix(0, EARTH_TILT) as Matrix,
+      /** Turning speed, as a world rotation vector in radians a second. */
       omega: [0, 0, 0] as Vec,
-      /** Turns asked for by the keys off the stand, still to be made. */
+      /** Turns asked for by the keys, still to be made. */
       nudge: [0, 0, 0] as Vec,
-      /** A country being turned to face the viewer off the stand. */
+      /** A country being turned to face the viewer. */
       faceTarget: -1,
       lift: new Float64Array(COUNTRIES.length),
       speed: new Float64Array(COUNTRIES.length),
@@ -425,10 +396,8 @@ export const Globe = React.memo(
       cssHeight: 0,
       /** The +/− buttons while a country is framed scale the framing rather than the whole view. */
       focusZoom: 1,
-      /** Splitting a southern country took the globe off its stand; joining it puts it back. */
-      autoFree: false,
       loading: new Set<number>(),
-      /** Countries whose pieces failed to load. */
+      /** Countries whose pieces failed to load while they were out (cleared when put back, to try again). */
       unsplit: new Set<number>(),
       tour: -1,
       quiet: 0,
@@ -439,28 +408,17 @@ export const Globe = React.memo(
       order: '',
       dirty: true,
       plates: [] as PlateNodes[],
-      pieces: [] as SVGGElement[],
-      pieceDepth: [] as number[],
-      pieceTheta: [] as number[],
       core: null as SVGGElement | null,
       graticule: null as SVGPathElement | null,
       sockets: null as SVGPathElement | null,
       shadows: null as SVGPathElement | null,
       seatedWalls: null as SVGPathElement | null,
       seatedBase: null as SVGPathElement | null,
-      northInner: null as SVGGElement | null,
-      northOuter: null as SVGGElement | null,
-      northStatic: null as SVGGElement | null,
-      northCap: null as SVGGElement | null,
-      pointer: null as SVGPathElement | null,
-      southInner: null as SVGGElement | null,
-      southOuter: null as SVGGElement | null,
       tone: new Int8Array(COUNTRIES.length).fill(-1),
       drawnLit: new Int8Array(COUNTRIES.length),
       /** What each plate drew last, reused while the ball and that plate hold still. */
-      memo: [] as ({ d: number; empty: boolean; socket: string; shadow: string; walls: string; base: string; list: 'backBefore' | 'backAfter' | 'frontBefore' | 'frontAfter'; depth: number } | undefined)[],
+      memo: [] as ({ d: number; empty: boolean; socket: string; shadow: string; walls: string; base: string; list: 'back' | 'front'; depth: number } | undefined)[],
       drawnOrient: null as Matrix | null,
-      drawnMix: -1,
       readout: ''
     });
 
@@ -487,14 +445,14 @@ export const Globe = React.memo(
             : split
               ? `Click ${picked.name} again to split it into its ${piecesPhrase(split.data.pieces).length <= 34 ? piecesPhrase(split.data.pieces) : `${split.data.pieces.length} parts`}`
               : `Click ${picked.name} again to split it`;
-      callbacks.current.onState({ broken: state.broken, spinning: state.spinning, pulled: state.pulled.size, scale: state.focus >= 0 ? 1.5 : state.scaleTarget, selected: state.selected, free: state.free, hint });
+      callbacks.current.onState({ broken: state.broken, spinning: state.spinning, pulled: state.pulled.size, scale: state.focus >= 0 ? 1.5 : state.scaleTarget, selected: state.selected, hint });
     }, []);
 
     const speak = (text: string) => {
       if (announce.current) announce.current.textContent = text;
     };
 
-    /** Make the DOM nodes once: the plates, the ring pieces, the ball and the pole parts. */
+    /** Make the DOM nodes once: the ball and the plates. */
     const build = React.useCallback(() => {
       const state = live.current;
       const root = sorted.current;
@@ -512,33 +470,7 @@ export const Globe = React.memo(
       core.appendChild(make('circle', { class: 'iso-line', 'data-tone': 'mid', cx: String(cx), cy: String(cy), r: String(R * K) }));
       state.core = core;
       state.plates = COUNTRIES.map((country) => plateNodes({ 'data-i': String(country.index) }));
-      state.pieces = Array.from({ length: 72 }, () => make<SVGGElement>('g'));
-      state.northInner = make<SVGGElement>('g');
-      state.northOuter = make<SVGGElement>('g');
-      state.northStatic = state.northOuter.appendChild(make<SVGGElement>('g'));
-      state.pointer = state.northOuter.appendChild(make<SVGPathElement>('path', { class: 'iso-line', 'data-tone': 'hi', 'data-free': 'end' }));
-      state.northCap = state.northOuter.appendChild(make<SVGGElement>('g'));
-      state.southInner = make<SVGGElement>('g');
-      state.southOuter = make<SVGGElement>('g');
     }, [gradient]);
-
-    /** Rebuild the ring and the pole parts for a new tilt. */
-    const placeRing = React.useCallback((tilt: number) => {
-      const state = live.current;
-      const pieces = ringPieces(tilt);
-      pieces.forEach((piece, i) => {
-        state.pieces[i].innerHTML = piece.svg;
-        state.pieceDepth[i] = piece.depth;
-        state.pieceTheta[i] = piece.theta;
-      });
-      const parts = poleParts(tilt);
-      state.northInner!.innerHTML = parts.northInner;
-      state.northStatic!.innerHTML = parts.northOuter;
-      state.northCap!.innerHTML = parts.northCap;
-      state.southInner!.innerHTML = parts.southInner;
-      state.southOuter!.innerHTML = parts.southOuter;
-      state.tiltDrawn = tilt;
-    }, []);
 
     /**
      * Print each province's name on its piece, centred on its anchor, on one line or two, as large as fits
@@ -768,33 +700,19 @@ export const Globe = React.memo(
       }
     }, []);
 
-    /** Draw the ball at its current spin, tilt and lifts, and put everything in painter's order. */
+    /** Draw the ball at its current orientation and lifts, and put everything in painter's order. */
     const draw = React.useCallback(() => {
       const state = live.current;
       if (!state.built || !sorted.current) return;
-      if (!(Math.abs(state.tilt - state.tiltDrawn) <= 1e-3)) placeRing(state.tilt);
-      const { tilt } = state;
       const M = state.orient;
       const rotate = rotationFrom(P, M);
       const [cx, cy] = CENTER_FLAT;
-      const probe = applyT(M, [0, 1, 0]);
-      // The ring fades with the stand, and plates stop making way for it.
-      const ringShown = 1 - state.mix;
-      if (Math.abs(state.mix - state.mixDrawn) > 1e-3) {
-        state.mixDrawn = state.mix;
-        const opacity = String(f(ringShown * 100) / 100);
-        for (const node of [standBack.current, standFront.current, ...state.pieces, state.northInner, state.northOuter, state.southInner, state.southOuter]) {
-          if (node) node.style.opacity = opacity;
-        }
-      }
-      const showRing = ringShown > 1e-3;
 
       projection.rotate(rotate);
       // With the ball held still (as while a country is split open), plates whose lift has not changed
       // are drawn exactly as last time, so only what moves is projected and written again.
-      const same = state.drawnOrient !== null && state.drawnMix === state.mix && M.every((value, k) => value === state.drawnOrient![k]);
+      const same = state.drawnOrient !== null && M.every((value, k) => value === state.drawnOrient![k]);
       state.drawnOrient = M.slice();
-      state.drawnMix = state.mix;
       if (!same) {
         gridProjection.rotate(rotate);
         sink.reset();
@@ -802,7 +720,8 @@ export const Globe = React.memo(
         state.graticule!.setAttribute('d', ringsPath(sink.rings, cx, cy, R * K, false));
       }
 
-      const order = { backBefore: [] as [number, Element][], backAfter: [] as [number, Element][], frontBefore: [] as [number, Element][], frontAfter: [] as [number, Element][] };
+      // Painter's order: plates lifted behind the ball, the ball, then the plates in front of it.
+      const order = { back: [] as [number, Element][], front: [] as [number, Element][] };
       let sockets = '';
       // Seated plates all stand at one height, so their faces never overlap: their sides go down
       // first, together, and no side pokes over a neighbour's face along a shared border.
@@ -839,53 +758,16 @@ export const Globe = React.memo(
           order[memo.list].push([memo.depth, nodes.group]);
           continue;
         }
-        const center = apply(M, country.dir);
-        // The plate's spread across the ring's plane, on the unit sphere.
-        let lo = Infinity;
-        let hi = -Infinity;
-        const points = country.points;
-        for (let p = 0; p < points.length; p += 3) {
-          const y = points[p] * probe[0] + points[p + 1] * probe[1] + points[p + 2] * probe[2];
-          if (y < lo) lo = y;
-          if (y > hi) hi = y;
-        }
-
-        // While a plate passes the ring's radius, it slides along the ball until it is clear of the ring.
-        const window = smoothstep(PLATE + 0.4, RING_IN - R - PLATE - 0.6, d) * (1 - smoothstep(RING_OUT - R + 0.5, RING_OUT - R + 6, d)) * ringShown;
-        let turned: number[] | undefined;
-        let dir = center;
-        if (window > 0) {
-          const r = R + d + PLATE;
-          const need = Math.min(0.99, CLEAR / r);
-          if (lo < need && hi > -need) {
-            const up = Math.asin(need) - Math.asin(Math.max(-1, lo));
-            const down = -(Math.asin(Math.min(1, hi)) + Math.asin(need));
-            const angle = (Math.abs(up) < Math.abs(down) ? up : down) * window;
-            const axis = norm(cross(country.dir, probe));
-            turned = rotationAbout(axis, angle);
-            dir = apply(multiply(M, turned), country.dir);
-            lo += angle;
-            hi += angle;
-          }
-        }
-
+        const dir = apply(M, country.dir);
         sink.reset();
         path(country.feature);
-        const flatRings = sink.rings;
-        const socket = d > 0.3 && flatRings.length ? ringsPath(flatRings, cx, cy, R * K, true) : '';
+        const rings = sink.rings;
+        const socket = d > 0.3 && rings.length ? ringsPath(rings, cx, cy, R * K, true) : '';
         sockets += socket;
-        let rings = flatRings;
-        if (turned) {
-          projection.rotate(rotationFrom(P, M, turned));
-          sink.reset();
-          path(country.feature);
-          rings = sink.rings;
-          projection.rotate(rotate);
-        }
 
         const split = state.splits.get(i);
         if (!rings.length) {
-          state.memo[i] = { d, empty: true, socket: '', shadow: '', walls: '', base: '', list: 'frontAfter', depth: 0 };
+          state.memo[i] = { d, empty: true, socket: '', shadow: '', walls: '', base: '', list: 'front', depth: 0 };
           clearPlate(nodes);
           if (split) {
             split.borders.setAttribute('d', '');
@@ -895,17 +777,9 @@ export const Globe = React.memo(
         }
         const [ox, oy] = [cx + dot(dir, BASIS.right) * d * K, cy - dot(dir, BASIS.up) * d * K];
 
-        // Painter's order. A plate wholly on the viewer's side of the ring's plane is in front of the
-        // whole ring, and one wholly behind it is behind; one across it is inside the ring or beyond it.
-        const reach = d + PLATE;
-        const side = dot(dir, [0, 1, 0]) * d;
-        const yLo = Math.min(lo * R, lo * (R + PLATE)) + side;
-        const yHi = Math.max(hi * R, hi * (R + PLATE)) + side;
+        // A plate lifted on the far side is behind the ball; a seated one shows only its front, in front.
         const depth = dot(dir, BASIS.toward) * (R + PLATE / 2 + d);
-        const back = d > PLATE && dot(dir, BASIS.toward) < 0;
-        const inside = reach < RING_IN - R;
-        const before = yHi < -RING_H / 2 ? true : yLo > RING_H / 2 ? false : back ? !inside : inside;
-        const listName: keyof typeof order = back ? (before ? 'backBefore' : 'backAfter') : before ? 'frontBefore' : 'frontAfter';
+        const listName: keyof typeof order = d > PLATE && dot(dir, BASIS.toward) < 0 ? 'back' : 'front';
         const list = order[listName];
 
         const following = i === state.focus;
@@ -917,8 +791,7 @@ export const Globe = React.memo(
           // the ball from the country's middle, each casting its own shadow.
           clearPlate(nodes);
           split.borders.setAttribute('d', '');
-          const frame = turned ? multiply(M, turned) : M;
-          if (turned) projection.rotate(rotationFrom(P, M, turned));
+          const frame = M;
           const pieceBoxes: { box: Box; weight: number }[] = [];
           for (const piece of split.data.pieces) {
             const pieceNodes = split.nodes[piece.index];
@@ -962,7 +835,6 @@ export const Globe = React.memo(
             }
             list.push([dot(at, BASIS.toward) * (R + PLATE / 2) + dot(offset, BASIS.toward), pieceNodes.group]);
           }
-          if (turned) projection.rotate(rotate);
           if (following) state.focusBox = mainBox(pieceBoxes);
           placeLabels(split, i);
           continue;
@@ -971,11 +843,9 @@ export const Globe = React.memo(
           split.nodes.forEach(clearPlate);
           placeLabels(split, i);
           // Whole, the plate carries its provinces' borders like a printed globe.
-          if (turned) projection.rotate(rotationFrom(P, M, turned));
           sink.reset();
           path(split.data.borders);
           split.borders.setAttribute('d', ringsPath(sink.rings, ox, oy, (R + PLATE) * K, false));
-          if (turned) projection.rotate(rotate);
         }
         nodes.face.setAttribute('d', ringsPath(rings, ox, oy, (R + PLATE) * K, true));
         const walls = wallsPath(rings, ox, oy, R * K, (R + PLATE) * K);
@@ -1019,38 +889,8 @@ export const Globe = React.memo(
         if (node.getAttribute('d') !== d) node.setAttribute('d', d);
       }
 
-      // The hour circle's pointer turns with the ball: it points along the Greenwich meridian.
-      if (showRing) state.pointer!.setAttribute('d', pointerPath(tilt, apply(M, [1, 0, 0])));
-
-      const backRing: [number, Element][] = [];
-      const frontRing: [number, Element][] = [];
-      let nearNorth = -Infinity;
-      let nearSouth = Infinity;
-      if (showRing) state.pieces.forEach((piece, i) => {
-        const depth = state.pieceDepth[i];
-        (depth < 0 ? backRing : frontRing).push([depth, piece]);
-        const theta = state.pieceTheta[i];
-        if (Math.min(theta, 360 - theta) < 30) nearNorth = Math.max(nearNorth, depth);
-        if (Math.abs(theta - 180) < 30) nearSouth = Math.min(nearSouth, depth);
-      });
-      if (showRing) {
-        frontRing.push([nearNorth + 0.01, state.northOuter!]);
-        backRing.push([nearSouth - 0.01, state.southOuter!]);
-        const a = [Math.sin(tilt * RADIANS), 0, Math.cos(tilt * RADIANS)] as Vec;
-        order.frontBefore.push([dot(a, BASIS.toward) * R, state.northInner!]);
-        order.backAfter.push([-dot(a, BASIS.toward) * R, state.southInner!]);
-      }
-
       const byDepth = (p: [number, Element], q: [number, Element]) => p[0] - q[0];
-      const final = [
-        ...order.backBefore.sort(byDepth),
-        ...backRing.sort(byDepth),
-        ...order.backAfter.sort(byDepth),
-        [0, state.core!] as [number, Element],
-        ...order.frontBefore.sort(byDepth),
-        ...frontRing.sort(byDepth),
-        ...order.frontAfter.sort(byDepth)
-      ].map(([, node]) => node);
+      const final = [...order.back.sort(byDepth), [0, state.core!] as [number, Element], ...order.front.sort(byDepth)].map(([, node]) => node);
       const key = final.map((node) => { const data = (node as SVGElement).dataset; return data.i === undefined ? node.nodeName : `${data.i}.${data.p ?? ''}`; }).join();
       if (key !== state.order || sorted.current!.childNodes.length !== final.length) {
         state.order = key;
@@ -1065,38 +905,31 @@ export const Globe = React.memo(
       const text = piece
         ? describePiece(piece, COUNTRIES[litPiece![0]])
         : country
-        ? describe(country)
-        : state.free
-          ? `Facing ${latText(faces.lat)} ${lonText(faces.lon)}`
-          : `Facing ${lonText(faces.lon)} · axis ${tilt.toFixed(1)}°`;
+          ? describe(country)
+          : `Facing ${latText(faces.lat)} ${lonText(faces.lon)}`;
       if (text !== state.readout) {
         state.readout = text;
         say(text);
       }
-    }, [graticule, gridPath, gridProjection, path, placeLabels, placeRing, projection, say, sink]);
+    }, [graticule, gridPath, gridProjection, path, placeLabels, projection, say, sink]);
 
-    /** Where each plate is heading: home, a hover, or out (less for plates over the stand). */
+    /** Where each plate is heading: home, a hover, or out. */
     const targetOf = React.useCallback((i: number) => {
       const state = live.current;
       const out = state.broken || state.pulled.has(i);
       const lit = i === state.hover || i === state.tour;
       if (!out) return lit ? HOVER : 0;
       // A country split open for a close look rises only clear of its socket, so its pieces stay over
-      // the ball (and off the stand, for a country low on it) and read against the sockets they left.
+      // the ball and read against the sockets they left.
       if (i === state.focus) return FOCUS_LIFT;
-      // On the stand, plates over the column barely rise; alone, every plate comes all the way out.
-      const down = -apply(state.orient, COUNTRIES[i].dir)[2];
-      const cap = LIFT - (LIFT - HOVER) * smoothstep(0.42, 0.78, down) * (1 - state.mix);
-      return cap + (lit && state.broken ? 4 : 0);
+      return LIFT + (lit && state.broken ? 4 : 0);
     }, []);
 
     const placeView = React.useCallback(() => {
       const state = live.current;
-      const whole = state.scale * (1 + (GLOBE_ONLY_SCALE - 1) * state.mix);
-      const pull = Math.max(state.mix, Math.min(1, (state.scale - 1) / 0.6));
+      const whole = state.scale;
       let s = whole;
-      let cx = WIDTH / 2 + (CENTER_FLAT[0] - WIDTH / 2) * pull;
-      let cy = HEIGHT / 2 + (CENTER_FLAT[1] - HEIGHT / 2) * pull;
+      let [cx, cy] = CENTER_FLAT;
       // A split country is followed and framed: the view closes in until its pieces fill FOCUS_FILL of
       // it, easing the zoom in log scale so it feels even, and keeps them framed as they spread and turn.
       const frame = state.focusBox;
@@ -1130,17 +963,9 @@ export const Globe = React.memo(
         build();
         let moving = false;
 
-        // Between the stand and the globe alone.
-        const mixTarget = state.free ? 1 : 0;
-        if (state.mix !== mixTarget) {
-          const next = calm ? mixTarget : state.mix + (mixTarget - state.mix) * (1 - Math.exp(-dt / 0.4));
-          state.mix = Math.abs(next - mixTarget) < 1e-3 ? mixTarget : next;
-          moving = true;
-        }
-
-        if (state.free) {
-          // Off the stand the ball turns about any axis: toward a country being found, by the keys'
-          // nudges, by a fling, and otherwise slowly about its own axis.
+        {
+          // The ball turns about any axis: toward a country being found, by the keys' nudges, by a
+          // fling, and otherwise slowly about its own axis.
           const turnBy = (axis: Vec, angle: number) => {
             if (Math.abs(angle) < 1e-7) return;
             state.orient = tidy(multiply(rotationAbout(norm(axis), angle), state.orient));
@@ -1167,38 +992,6 @@ export const Globe = React.memo(
             const speed = Math.hypot(...state.omega);
             turnBy(state.omega, speed * dt);
           }
-          state.settled = false;
-        } else {
-        // Spin: toward a country being found, else coast back to the idle rate.
-        const before = state.spin;
-        if (state.spinTarget !== null) {
-          const next = calm ? state.spinTarget : state.spin + (state.spinTarget - state.spin) * (1 - Math.exp(-dt / 0.35));
-          state.spin = Math.abs(state.spinTarget - next) < 0.02 ? state.spinTarget : next;
-          if (state.spin === state.spinTarget) state.spinTarget = null;
-          state.rate = 0;
-        } else if (!dragging.current) {
-          const idle = state.spinning && !calm && state.focus < 0 ? IDLE_RATE : 0;
-          state.rate = calm ? idle : state.rate + (idle - state.rate) * (1 - Math.exp(-dt / 1.1));
-          if (Math.abs(state.rate - idle) < 0.01) state.rate = idle;
-          state.spin += state.rate * dt;
-        }
-        if (state.spin !== before) moving = true;
-
-        const tilt = calm ? state.tiltTarget : state.tilt + (state.tiltTarget - state.tilt) * (1 - Math.exp(-dt / 0.18));
-        state.tilt = Math.abs(tilt - state.tiltTarget) < 0.01 ? state.tiltTarget : tilt;
-        if (state.tilt !== state.tiltDrawn) moving = true;
-
-        // Back on the stand, the ball eases onto its axis before it follows spin and tilt again.
-        const home = standMatrix(state.spin, state.tilt);
-        if (state.settled) state.orient = home;
-        else {
-          const { axis, angle } = turnBetween(state.orient, home);
-          if (calm || angle < 1e-3) {
-            state.orient = home;
-            state.settled = true;
-          } else state.orient = tidy(multiply(rotationAbout(axis, angle * (1 - Math.exp(-dt / 0.3))), state.orient));
-          moving = true;
-        }
         }
 
         // The idle tour: after a quiet spell the globe lifts the country facing you, one after another.
@@ -1308,7 +1101,7 @@ export const Globe = React.memo(
           state.dirty = false;
           draw();
         }
-        const touring = !calm && (state.spinning || (state.free && Math.hypot(...state.omega) > 1e-4));
+        const touring = !calm && (state.spinning || Math.hypot(...state.omega) > 1e-4);
         return moving || touring || dragging.current !== null;
       },
       [build, draw, placeView, targetOf]
@@ -1335,7 +1128,8 @@ export const Globe = React.memo(
         if (ready) return Promise.resolve(ready);
         state.loading.add(i);
         return loadDivisions(country).catch(() => {
-          // Without its pieces (say the files were not copied) the country just does not split.
+          // Without its pieces (the files were not copied, or the network failed) the country does not
+          // split this time; it tries again the next time it is pulled out.
           state.loading.delete(i);
           state.unsplit.add(i);
           report();
@@ -1380,39 +1174,16 @@ export const Globe = React.memo(
       [kick, report]
     );
 
-    /** Take the globe off its stand (turning freely) or put it back, settling onto the axis. */
-    const placeFree = React.useCallback((on: boolean) => {
-      const state = live.current;
-      if (state.free === on) return;
-      state.free = on;
-      state.faceTarget = -1;
-      state.nudge = [0, 0, 0];
-      if (on) {
-        state.spinTarget = null;
-        state.omega = state.spinning ? scale(apply(state.orient, [0, 0, 1]), IDLE_RATE * RADIANS) : [0, 0, 0];
-      } else {
-        // Back on the stand, keep the longitude that faces you and settle onto the axis from there.
-        state.spin = spinToFace(P, facingPoint(P, state.orient).lon, state.tilt);
-        state.spinTarget = null;
-        state.rate = state.spinning ? IDLE_RATE : 0;
-        state.settled = false;
-      }
-    }, []);
-
-    /** Stop following a country; if splitting it took the globe off its stand, put it back. */
+    /** Stop following a split country. */
     const releaseFocus = React.useCallback(() => {
-      const state = live.current;
-      state.focus = -1;
-      if (state.autoFree) {
-        state.autoFree = false;
-        placeFree(false);
-      }
-    }, [placeFree]);
+      live.current.focus = -1;
+    }, []);
 
     /** Join every split country up again. */
     const joinAll = React.useCallback(() => {
       const state = live.current;
       state.splits.forEach((split) => (split.target = 0));
+      state.unsplit.clear();
       releaseFocus();
       state.selectedPiece = -1;
       state.hoverPiece = -1;
@@ -1460,18 +1231,8 @@ export const Globe = React.memo(
             const state = live.current;
             if (state.focus !== i) state.focusZoom = 1;
             state.focus = i;
-            // A country the stand cannot turn to face you (the south, low on the tilted ball) is looked
-            // at the way a person would: off the stand, turned to face you north up. Joining it up
-            // puts the globe back.
-            if (!state.free) {
-              const spin = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
-              if (dot(apply(standMatrix(spin, state.tilt), country.dir), BASIS.toward) < 0.92) {
-                state.autoFree = true;
-                placeFree(true);
-              }
-            }
-            if (state.free) state.faceTarget = i;
-            else state.spinTarget = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
+            // Turned to face you, north up.
+            state.faceTarget = i;
             speak(`${country.name} splits into its ${piecesPhrase(ready.data.pieces)}.`);
             touch();
             report();
@@ -1496,8 +1257,9 @@ export const Globe = React.memo(
           state.selected = state.selected === i ? -1 : i;
         } else if (state.pulled.has(i)) {
           state.pulled.delete(i);
+          state.unsplit.delete(i);
           if (split) split.target = 0;
-          if (state.focus === i || state.autoFree) releaseFocus();
+          if (state.focus === i) releaseFocus();
           state.rejoined = -1;
           if (state.selected === i) state.selected = -1;
           speak(`${country.name} is back in place.`);
@@ -1514,7 +1276,7 @@ export const Globe = React.memo(
         touch();
         report();
       },
-      [placeFree, prepare, releaseFocus, report, touch]
+      [prepare, releaseFocus, report, touch]
     );
 
     React.useImperativeHandle(
@@ -1529,15 +1291,7 @@ export const Globe = React.memo(
         find(index) {
           const state = live.current;
           const country = COUNTRIES[index];
-          if (!state.free) {
-            const want = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
-            // Far south, a country is out of sight on the tilted stand: take the globe off to show it.
-            if (dot(apply(standMatrix(want, state.tilt), country.dir), BASIS.toward) < 0.5) {
-              state.autoFree = true;
-              placeFree(true);
-            } else state.spinTarget = want;
-          }
-          if (state.free) state.faceTarget = index;
+          state.faceTarget = index;
           if (state.broken) {
             state.selected = index;
           } else {
@@ -1563,27 +1317,13 @@ export const Globe = React.memo(
         },
         turn(degrees) {
           const state = live.current;
-          // Off the stand, → turns the near side to the right, about the screen's vertical.
-          if (state.free) state.nudge = add(state.nudge, scale(BASIS.up, -degrees * RADIANS));
-          else state.spinTarget = (state.spinTarget ?? state.spin) + degrees;
+          state.nudge = add(state.nudge, scale(BASIS.up, -degrees * RADIANS));
           touch();
         },
-        tiltBy(degrees) {
+        roll(degrees) {
           const state = live.current;
-          // Off the stand, ↓ rolls the near side down, about the screen's horizontal, 15° a press.
-          if (state.free) state.nudge = add(state.nudge, scale(BASIS.right, -degrees * 7.5 * RADIANS));
-          else state.tiltTarget = Math.max(TILT_MIN, Math.min(TILT_MAX, state.tiltTarget + degrees));
+          state.nudge = add(state.nudge, scale(BASIS.right, -degrees * RADIANS));
           touch();
-        },
-        setFree(on) {
-          const state = live.current;
-          if (state.free === on) return;
-          // The visitor's choice: the globe stays where they put it when a split closes.
-          state.autoFree = false;
-          placeFree(on);
-          speak(on ? 'The globe is off its stand: drag to turn it any way.' : 'The globe is back on its stand.');
-          touch();
-          report();
         },
         scaleBy(factor) {
           const state = live.current;
@@ -1596,15 +1336,14 @@ export const Globe = React.memo(
           const state = live.current;
           state.scaleTarget = 1;
           releaseFocus();
-          state.tiltTarget = EARTH_TILT;
           touch();
           report();
         }
       }),
-      [joinAll, placeFree, prepare, releaseFocus, report, setBroken, toggle, touch]
+      [joinAll, prepare, releaseFocus, report, setBroken, toggle, touch]
     );
 
-    // ── Pointer: drag sideways to spin, up and down to slide the ring; click a country to pull it ──
+    // ── Pointer: drag to turn the ball any way, like a trackball; click a country to pull it ──
 
     /** The country, and the province if it is one, under the pointer. */
     const plateAt = (target: EventTarget | null): [number, number] => {
@@ -1614,8 +1353,7 @@ export const Globe = React.memo(
 
     const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
       if (event.button !== 0) return;
-      dragging.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false, t: performance.now(), v: 0, plate: plateAt(event.target) };
-      live.current.spinTarget = null;
+      dragging.current = { id: event.pointerId, x: event.clientX, y: event.clientY, moved: false, t: performance.now(), plate: plateAt(event.target) };
       touch();
     };
 
@@ -1645,22 +1383,15 @@ export const Globe = React.memo(
       // Screen pixels to view-box units, then the ball's surface follows the pointer at its middle.
       const box = svg.current?.getBoundingClientRect();
       const perPixel = box ? 1 / (state.viewScale * pixelsPerUnit(box.width, box.height)) : 1;
-      const degrees = ((dx * perPixel) / (R * K)) / RADIANS;
       const now = performance.now();
       const seconds = Math.max(1e-3, (now - drag.t) / 1000);
       drag.t = now;
-      if (state.free) {
-        // A trackball: the near side follows the pointer in any direction.
-        const turn = add(scale(BASIS.up, (-dx * perPixel) / (R * K)), scale(BASIS.right, (-dy * perPixel) / (R * K)));
-        const angle = Math.hypot(...turn);
-        if (angle > 1e-7) state.orient = tidy(multiply(rotationAbout(norm(turn), angle), state.orient));
-        state.omega = add(scale(state.omega, 0.6), scale(turn, 0.4 / seconds));
-        state.faceTarget = -1;
-      } else {
-        drag.v = drag.v * 0.6 + (degrees / seconds) * 0.4;
-        state.spin += degrees;
-        state.tiltTarget = Math.max(TILT_MIN, Math.min(TILT_MAX, state.tiltTarget + dy * perPixel * 0.25));
-      }
+      // A trackball: the near side follows the pointer in any direction.
+      const turn = add(scale(BASIS.up, (-dx * perPixel) / (R * K)), scale(BASIS.right, (-dy * perPixel) / (R * K)));
+      const angle = Math.hypot(...turn);
+      if (angle > 1e-7) state.orient = tidy(multiply(rotationAbout(norm(turn), angle), state.orient));
+      state.omega = add(scale(state.omega, 0.6), scale(turn, 0.4 / seconds));
+      state.faceTarget = -1;
       drag.x = event.clientX;
       drag.y = event.clientY;
       state.quiet = 0;
@@ -1673,11 +1404,11 @@ export const Globe = React.memo(
       if (!drag || drag.id !== event.pointerId) return;
       dragging.current = null;
       const state = live.current;
-      if (drag.moved && state.free) {
+      if (drag.moved) {
+        // A fling keeps turning, no faster than 4 radians a second, and eases back to the idle turn.
         const speed = Math.hypot(...state.omega);
         if (speed > 4) state.omega = scale(state.omega, 4 / speed);
-      } else if (drag.moved) state.rate = Math.max(-240, Math.min(240, drag.v));
-      else if (drag.plate[0] >= 0) toggle(drag.plate[0], drag.plate[1]);
+      } else if (drag.plate[0] >= 0) toggle(drag.plate[0], drag.plate[1]);
       touch();
     };
 
@@ -1715,7 +1446,7 @@ export const Globe = React.memo(
           className={`iso-svg ${styles.svg}`}
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
           role="img"
-          aria-label="A desk globe on a turned stand. Its countries are separate plates set into an ocean ball, held in a brass meridian ring with an hour circle at the North Pole. Countries lift out of their sockets when picked, and the whole map can break apart. It can also be taken off the stand and turned freely in any direction."
+          aria-label="A globe whose countries are separate plates set into an ocean ball. It turns freely in any direction; countries lift out of their sockets when picked, split into their states or provinces, and the whole map can break apart."
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -1732,9 +1463,7 @@ export const Globe = React.memo(
               <stop offset="1" style={{ stopColor: 'var(--wg-ocean-lo)' }} />
             </radialGradient>
           </defs>
-          <g ref={standBack} dangerouslySetInnerHTML={{ __html: STAND_BACK }} />
           <g ref={sorted} />
-          <g ref={standFront} dangerouslySetInnerHTML={{ __html: STAND_FRONT }} />
           <g ref={labelLayer} className={styles.labels} />
         </svg>
         <span ref={announce} className={styles.hidden} aria-live="polite" />
