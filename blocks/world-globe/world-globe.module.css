@@ -282,6 +282,50 @@
   margin-right: 3px;
 }
 
+/* ── Full screen ──────────────────────────────────────────────────────────── */
+
+.stage:focus {
+  outline: none;
+}
+
+.stage[data-expanded] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  padding: 20px 24px 24px;
+  background: var(--anatomy-page);
+}
+
+.stage[data-expanded='overlay'] {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+}
+
+/* Full screen is the controls and the globe: the legend and caption stay on the page. */
+.stage[data-expanded] :global(.iso-legend) {
+  display: none;
+}
+
+.stage[data-expanded] :global(.iso-figure) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.stage[data-expanded] :global(.iso-plate) {
+  flex: 1;
+}
+
+.stage[data-expanded] .svg {
+  max-height: calc(100dvh - 190px);
+}
+
 /* ── Find a country ───────────────────────────────────────────────────────── */
 
 .find {

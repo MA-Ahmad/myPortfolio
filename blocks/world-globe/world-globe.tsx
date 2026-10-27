@@ -3,11 +3,12 @@
 // A client component: in the App Router (v0, `npx shadcn add`) it runs in the browser. The Pages Router ignores this.
 import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useTheme } from 'next-themes';
-import { MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
+import { MaximizeIcon, MinimizeIcon, MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
 import { ISO_CSS } from './iso-kit';
 import { Plate } from './iso-react';
 import { BY_NAME, COUNTRIES, EARTH_TILT } from './globe';
 import { Globe, SCALE_MOST, SCALE_STEP, type GlobeHandle, type GlobeState } from './live';
+import { useFullscreen } from './use-fullscreen';
 import styles from './world-globe.module.css';
 
 const CAPTION = `${COUNTRIES.length} countries cut from Natural Earth’s 1:110m outlines, each a plate set into its own socket in the ocean ball. Areas are measured on those outlines over a sphere of Earth’s mean radius (6,371 km), so they are close to the official figures, not equal to them. The axis leans ${EARTH_TILT.toFixed(1)}° in the meridian ring, as Earth’s does; the ring is graduated in degrees of latitude, and the hour circle at the North Pole turns with the ball, 15° to the hour, its pointer on the Greenwich meridian.`;
@@ -21,7 +22,8 @@ const KEYS: [string[], string][] = [
   [['B'], 'break apart or make whole'],
   [['Esc'], 'put every country back'],
   [['+', '−'], 'zoom'],
-  [['0'], 'reset the view']
+  [['0'], 'reset the view'],
+  [['F'], 'full screen']
 ];
 
 /**
@@ -32,6 +34,9 @@ export default function WorldGlobe() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const globe = useRef<GlobeHandle>(null);
+  // Full screen takes the controls and the globe, not the legend under them.
+  const stage = useRef<HTMLDivElement>(null);
+  const { expanded, toggle: toggleFullscreen, mode } = useFullscreen(stage);
   const [state, setState] = useState<GlobeState>({ broken: false, spinning: true, pulled: 0, scale: 1, selected: -1, free: false });
   const [query, setQuery] = useState('');
   const [missing, setMissing] = useState(false);
@@ -68,6 +73,8 @@ export default function WorldGlobe() {
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    // Typing a country's name is not a shortcut.
+    if ((event.target as HTMLElement).closest('input, textarea, select')) return;
     const step = event.shiftKey ? 45 : 15;
     if (event.key === 'ArrowLeft') globe.current?.turn(-step);
     else if (event.key === 'ArrowRight') globe.current?.turn(step);
@@ -80,6 +87,7 @@ export default function WorldGlobe() {
     else if (event.key === '+' || event.key === '=') globe.current?.scaleBy(SCALE_STEP);
     else if (event.key === '-' || event.key === '_') globe.current?.scaleBy(1 / SCALE_STEP);
     else if (event.key === '0' || event.key === 'Home') globe.current?.home();
+    else if (event.key === 'f' || event.key === 'F') void toggleFullscreen();
     else return;
     event.preventDefault();
   };
@@ -104,6 +112,7 @@ export default function WorldGlobe() {
           <script dangerouslySetInnerHTML={{ __html: `try{localStorage.getItem('world-globe:seen')&&(document.currentScript.previousElementSibling.style.display='none')}catch(e){}` }} />
         </>
       )}
+      <div ref={stage} className={styles.stage} data-expanded={expanded ? mode : undefined} tabIndex={-1} onKeyDown={onKeyDown}>
       <div className={styles.toolbar}>
         <div className={styles.group} role="group" aria-label="The map">
           <button type="button" className={styles.chip} aria-pressed={!state.broken} onClick={() => globe.current?.setBroken(false)}>
@@ -194,6 +203,9 @@ export default function WorldGlobe() {
           <button type="button" className={styles.viewButton} onClick={() => globe.current?.home()} aria-label="Reset view" title="Reset view (0)">
             <RotateCcwIcon aria-hidden="true" />
           </button>
+          <button type="button" className={styles.viewButton} onClick={() => void toggleFullscreen()} aria-label={expanded ? 'Exit full screen' : 'Full screen'} title={expanded ? 'Exit full screen (F)' : 'Full screen (F)'}>
+            {expanded ? <MinimizeIcon aria-hidden="true" /> : <MaximizeIcon aria-hidden="true" />}
+          </button>
         </div>
         <div
           className={styles.stageFrame}
@@ -201,11 +213,11 @@ export default function WorldGlobe() {
           role="group"
           tabIndex={0}
           aria-label="Globe. V takes it off its stand or puts it back. Left and right arrows spin it, up and down slide the ring to tilt the axis (off the stand, they turn it any way), B breaks the map apart, S starts or stops the spin, Escape puts every country back, plus and minus zoom, and 0 resets the view."
-          onKeyDown={onKeyDown}
-        >
+                  >
           <Globe ref={globe} onState={onState} />
         </div>
       </Plate>
+      </div>
     </section>
   );
 }
