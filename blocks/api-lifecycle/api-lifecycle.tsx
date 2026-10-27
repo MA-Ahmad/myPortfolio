@@ -35,7 +35,15 @@ export default function ApiLifecycle() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
     setMounted(true);
-    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setReady(true))));
+    let frame = requestAnimationFrame(
+      () =>
+        (frame = requestAnimationFrame(() => {
+          setReady(true);
+          try {
+            localStorage.setItem('api-lifecycle:seen', '1');
+          } catch {}
+        }))
+    );
     return () => cancelAnimationFrame(frame);
   }, []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
@@ -104,16 +112,20 @@ export default function ApiLifecycle() {
     <section className={`iso ${styles.root}`} data-theme={theme} data-booting={ready ? undefined : ''} aria-busy={!ready}>
       <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
       {ready ? null : (
-        <div className={styles.skeleton} aria-hidden="true">
-          <div className={styles.skeletonRow}>
-            <span />
-            <span />
-            <span />
+        <>
+          <div className={styles.skeleton} aria-hidden="true" suppressHydrationWarning>
+            <div className={styles.skeletonRow}>
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className={styles.skeletonFigure}>
+              <span />
+            </div>
           </div>
-          <div className={styles.skeletonFigure}>
-            <span />
-          </div>
-        </div>
+          {/* A visitor who has seen the block before skips the skeleton: it is drawn again in a blink. */}
+          <script dangerouslySetInnerHTML={{ __html: `try{localStorage.getItem('api-lifecycle:seen')&&(document.currentScript.previousElementSibling.style.display='none')}catch(e){}` }} />
+        </>
       )}
       <div className={styles.toolbar}>
         <div className={styles.group} role="group" aria-label="User to fetch">

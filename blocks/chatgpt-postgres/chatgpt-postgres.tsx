@@ -170,7 +170,15 @@ export default function ChatgptPostgres() {
   const [ready, setReady] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
-    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setReady(true))));
+    let frame = requestAnimationFrame(
+      () =>
+        (frame = requestAnimationFrame(() => {
+          setReady(true);
+          try {
+            localStorage.setItem('chatgpt-postgres:seen', '1');
+          } catch {}
+        }))
+    );
     return () => cancelAnimationFrame(frame);
   }, []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
@@ -591,16 +599,20 @@ export default function ChatgptPostgres() {
     >
       <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
       {ready ? null : (
-        <div className={styles.skeleton} aria-hidden="true">
-          <div className={styles.skeletonRow}>
-            <span />
-            <span />
-            <span />
+        <>
+          <div className={styles.skeleton} aria-hidden="true" suppressHydrationWarning>
+            <div className={styles.skeletonRow}>
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className={styles.skeletonFigure}>
+              <span />
+            </div>
           </div>
-          <div className={styles.skeletonFigure}>
-            <span />
-          </div>
-        </div>
+          {/* A visitor who has seen the block before skips the skeleton: it is drawn again in a blink. */}
+          <script dangerouslySetInnerHTML={{ __html: `try{localStorage.getItem('chatgpt-postgres:seen')&&(document.currentScript.previousElementSibling.style.display='none')}catch(e){}` }} />
+        </>
       )}
       <header className={styles.header}>
         <div className={styles.title}>

@@ -48,7 +48,7 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const fitRef = useRef<() => void>(undefined);
   const frameRef = useRef<HTMLIFrameElement>(null);
-  // The frame stays transparent until its page has loaded, so its blank white document never shows.
+  // The frame stays transparent until its page is styled, so its blank white document never shows.
   const [loaded, setLoaded] = useState(false);
 
   const height = block.iframeHeight ?? DEFAULT_IFRAME_HEIGHT;
@@ -70,11 +70,22 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
     fitRef.current = () => observer.disconnect();
   };
 
-  // The iframe can finish loading before hydration attaches `onLoad`.
+  // Show the frame once its page has parsed, with its stylesheets: `load` comes much later, after
+  // every image and script. The iframe can also finish loading before hydration attaches `onLoad`.
   useEffect(() => {
+    let raf = 0;
+    const watch = () => {
+      const doc = frameRef.current?.contentDocument;
+      if (doc && doc.URL !== 'about:blank' && doc.readyState !== 'loading') setLoaded(true);
+      else raf = requestAnimationFrame(watch);
+    };
+    watch();
     const frame = frameRef.current;
     if (frame?.contentDocument?.readyState === 'complete') fitToContent(frame);
-    return () => fitRef.current?.();
+    return () => {
+      cancelAnimationFrame(raf);
+      fitRef.current?.();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeKey]);
 
@@ -195,11 +206,10 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
               src={src}
               title={`${block.title} preview`}
               allow="fullscreen"
-              loading="lazy"
               height={contentHeight ?? height}
               onLoad={(event) => fitToContent(event.currentTarget)}
               className={cn(
-                'block w-full bg-background transition-opacity duration-200 ease-out motion-reduce:transition-none',
+                'block w-full bg-background',
                 !loaded && 'opacity-0',
                 dragging && 'pointer-events-none'
               )}

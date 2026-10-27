@@ -1465,6 +1465,8 @@
   gap: 16px;
   padding: inherit;
   visibility: visible;
+  /* Only shown if loading takes a moment, so a quick load never flashes it. */
+  animation: skeleton-in 200ms ease-out 250ms backwards;
 }
 
 :global(.dark) .skeleton {
@@ -1513,6 +1515,12 @@
   animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
 
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+}
+
 @keyframes skeleton-pulse {
   50% {
     opacity: 0.45;
@@ -1520,6 +1528,10 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation-duration: 1ms;
+  }
+
   .skeletonRow span,
   .skeletonFigure span {
     animation: none;
