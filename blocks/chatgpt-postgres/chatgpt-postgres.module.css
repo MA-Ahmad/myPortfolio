@@ -1439,3 +1439,89 @@
     grid-column: span 2;
   }
 }
+
+/* ── Loading ──────────────────────────────────────────────────────────────── */
+
+/* Until it is ready the block is hidden behind a skeleton, with no transitions, so applying the
+   theme doesn't animate every control from light to dark. The skeleton follows the page's theme
+   class, which is set before the first paint. */
+.root[data-booting] {
+  visibility: hidden;
+}
+
+.root[data-booting] *,
+.root[data-booting] *::before,
+.root[data-booting] *::after {
+  transition: none !important;
+}
+
+.skeleton {
+  --sk-fill: rgba(0, 0, 0, 0.07);
+  --sk-line: rgba(0, 0, 0, 0.1);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: inherit;
+  visibility: visible;
+}
+
+:global(.dark) .skeleton {
+  --sk-fill: rgba(255, 255, 255, 0.07);
+  --sk-line: rgba(255, 255, 255, 0.08);
+}
+
+.skeletonRow {
+  display: flex;
+  gap: 8px;
+}
+
+.skeletonRow span {
+  height: 32px;
+  width: 96px;
+  border-radius: 999px;
+  background: var(--sk-fill);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeletonRow span:first-child {
+  width: 160px;
+}
+
+.skeletonFigure {
+  position: relative;
+  flex: 0 1 auto;
+  aspect-ratio: 16 / 10;
+  max-height: 100%;
+  min-height: 0;
+  border: 1px solid var(--sk-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* The floor plate, as a flat isometric diamond. */
+.skeletonFigure span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(56%, 520px);
+  aspect-ratio: 1;
+  background: var(--sk-fill);
+  border-radius: 8%;
+  transform: translate(-50%, -50%) scaleY(0.5774) rotate(45deg);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeletonRow span,
+  .skeletonFigure span {
+    animation: none;
+  }
+}

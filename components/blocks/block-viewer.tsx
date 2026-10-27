@@ -48,6 +48,8 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
   const [contentHeight, setContentHeight] = useState<number | null>(null);
   const fitRef = useRef<() => void>(undefined);
   const frameRef = useRef<HTMLIFrameElement>(null);
+  // The frame stays transparent until its page has loaded, so its blank white document never shows.
+  const [loaded, setLoaded] = useState(false);
 
   const height = block.iframeHeight ?? DEFAULT_IFRAME_HEIGHT;
   const src = `/preview/${block.name}`;
@@ -57,6 +59,7 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
   // the page scrolls rather than the iframe. The preview page's wrapper is `min-h-screen`, so this
   // measures the block's own wrapper, not that one.
   const fitToContent = (frame: HTMLIFrameElement) => {
+    setLoaded(true);
     fitRef.current?.();
     fitRef.current = undefined;
     if (!block.fitContent) return;
@@ -158,6 +161,7 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
               label="Refresh preview"
               onClick={() => {
                 setView('preview');
+                setLoaded(false);
                 setIframeKey((key) => key + 1);
               }}
             >
@@ -194,7 +198,11 @@ export function BlockViewer({ block, files }: { block: BlockMeta; files: BlockFi
               loading="lazy"
               height={contentHeight ?? height}
               onLoad={(event) => fitToContent(event.currentTarget)}
-              className={cn('block w-full bg-background', dragging && 'pointer-events-none')}
+              className={cn(
+                'block w-full bg-background transition-opacity duration-200 ease-out motion-reduce:transition-none',
+                !loaded && 'opacity-0',
+                dragging && 'pointer-events-none'
+              )}
             />
           </div>
 

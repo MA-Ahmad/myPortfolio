@@ -31,7 +31,13 @@ export default function ApiLifecycle() {
   const [scale, setScale] = useState(1);
   const [open, setOpen] = useState<Station | null>(null);
 
-  useEffect(() => setMounted(true), []);
+  // Ready two frames after mounting, once the bench has drawn with the right theme.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setReady(true))));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
   // The bench never re-renders, so it reads the request to send from a ref.
@@ -94,8 +100,21 @@ export default function ApiLifecycle() {
   };
 
   return (
-    <section className={`iso ${styles.root}`} data-theme={theme}>
+    // Behind a skeleton until ready: before then the theme isn't known, and a dark page would flash light.
+    <section className={`iso ${styles.root}`} data-theme={theme} data-booting={ready ? undefined : ''} aria-busy={!ready}>
       <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
+      {ready ? null : (
+        <div className={styles.skeleton} aria-hidden="true">
+          <div className={styles.skeletonRow}>
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className={styles.skeletonFigure}>
+            <span />
+          </div>
+        </div>
+      )}
       <div className={styles.toolbar}>
         <div className={styles.group} role="group" aria-label="User to fetch">
           <span className={styles.groupLabel}>User</span>

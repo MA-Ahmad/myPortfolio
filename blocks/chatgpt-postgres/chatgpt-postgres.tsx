@@ -166,7 +166,13 @@ const missing = (side: SideKey, kind: Kind) => WORLD[side].filter((m) => m.kind 
 export default function ChatgptPostgres() {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
-  React.useEffect(() => setMounted(true), []);
+  // Ready two frames after mounting, once the floors have drawn with the right theme.
+  const [ready, setReady] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+    let frame = requestAnimationFrame(() => (frame = requestAnimationFrame(() => setReady(true))));
+    return () => cancelAnimationFrame(frame);
+  }, []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
   const root = React.useRef<HTMLElement>(null);
@@ -575,12 +581,27 @@ export default function ChatgptPostgres() {
       ref={root}
       className={`iso ${styles.root}`}
       data-theme={theme}
+      // Behind a skeleton until ready: before then the theme isn't known, and a dark page would flash light.
+      data-booting={ready ? undefined : ''}
+      aria-busy={!ready}
       data-pins={pins ? '' : undefined}
       tabIndex={-1}
       onKeyDown={onKeyDown}
       aria-label="How ChatGPT’s PostgreSQL scaled: the initial design and today"
     >
       <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
+      {ready ? null : (
+        <div className={styles.skeleton} aria-hidden="true">
+          <div className={styles.skeletonRow}>
+            <span />
+            <span />
+            <span />
+          </div>
+          <div className={styles.skeletonFigure}>
+            <span />
+          </div>
+        </div>
+      )}
       <header className={styles.header}>
         <div className={styles.title}>
           <h2 className={styles.heading}>ChatGPT Postgres</h2>
