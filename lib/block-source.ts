@@ -16,7 +16,7 @@ export type BlockFile = {
   lines: number;
 };
 
-const LANGUAGES: Record<string, string> = { ts: 'typescript', tsx: 'tsx', js: 'jsx', jsx: 'jsx', css: 'css' };
+const LANGUAGES: Record<string, string> = { ts: 'typescript', tsx: 'tsx', js: 'jsx', mjs: 'jsx', jsx: 'jsx', css: 'css' };
 
 /**
  * A block as one Markdown document: what it is, what it needs, and every file in full. Served at

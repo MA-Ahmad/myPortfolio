@@ -1,6 +1,6 @@
 import { geoArea, geoCentroid } from 'd3-geo';
-import type { Feature, Geometry } from 'geojson';
-import { feature } from 'topojson-client';
+import type { Feature, Geometry, MultiLineString } from 'geojson';
+import { feature, mesh } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import world from 'world-atlas/countries-110m.json';
 import { cameraOf, type Point3, type Projection } from './iso-kit';
@@ -83,6 +83,59 @@ export const COUNTRIES: Country[] = feature(topology, topology.objects.countries
 });
 
 export const BY_NAME = [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name));
+
+// ── Divisions: the provinces a country's plate splits into ───────────────────
+
+export interface Division {
+  index: number;
+  name: string;
+  /** Province, federal territory, and so on. */
+  kind: string;
+  /** The name printed on its plate (shorter where the full name is long), and where it goes, in degrees. */
+  label: string;
+  anchor: [number, number];
+  anchorDir: Vec;
+  feature: Feature<Geometry>;
+  dir: Vec;
+  area: number;
+}
+
+export interface Divisions {
+  pieces: Division[];
+  /** The borders between them, printed on the whole plate. */
+  borders: MultiLineString;
+}
+
+/**
+ * Countries whose plate splits, each loaded only when first pulled out. The pieces are built by
+ * `divisions/build.mjs` from Natural Earth's 1:10m provinces, clipped to tile the 1:110m plate exactly.
+ */
+const DIVISION_SOURCES: Record<string, () => Promise<{ default: unknown }>> = {
+  Pakistan: () => import('./divisions/pakistan.json')
+};
+
+export const hasDivisions = (country: Country) => country.name in DIVISION_SOURCES;
+
+export async function loadDivisions(country: Country): Promise<Divisions> {
+  const data = (await DIVISION_SOURCES[country.name]()).default as Topology<{
+    units: GeometryCollection<{ name: string; kind: string; label: string; anchor: [number, number] }>;
+  }>;
+  const pieces = feature(data, data.objects.units).features.map((shape, index) => {
+    const [lon, lat] = geoCentroid(shape);
+    return {
+      index,
+      name: shape.properties?.name ?? 'Unknown',
+      kind: shape.properties?.kind ?? '',
+      label: shape.properties?.label ?? shape.properties?.name ?? '',
+      anchor: shape.properties?.anchor ?? [lon, lat],
+      anchorDir: unit(...((shape.properties?.anchor ?? [lon, lat]) as [number, number])),
+      feature: shape as Feature<Geometry>,
+      dir: unit(lon, lat),
+      area: geoArea(shape) * EARTH_KM * EARTH_KM
+    };
+  });
+  return { pieces, borders: mesh(data, data.objects.units, (a, b) => a !== b) };
+}
 
 // ── Vectors ──────────────────────────────────────────────────────────────────
 
@@ -199,6 +252,24 @@ export function facingPoint(P: Projection, M: Matrix) {
   return { lat: Math.asin(Math.max(-1, Math.min(1, z))) / RADIANS, lon: Math.atan2(y, x) / RADIANS };
 }
 
+/**
+ * The orientation that shows the globe direction `g` straight at the viewer with north up and east to
+ * the right: g goes to the viewer, local north to screen up, and west to screen left. (The kit's camera
+ * is a mirror image, so the map's frame maps to [toward, up, −right].)
+ */
+export function faceMatrix(P: Projection, g: Vec): Matrix {
+  const { toward, right, up } = basisOf(P);
+  const north = norm(add([0, 0, 1], scale(g, -g[2])));
+  // At a pole there is no local north: keep 0° longitude up instead.
+  const upward = Math.hypot(...add([0, 0, 1], scale(g, -g[2]))) < 1e-6 ? norm(add([1, 0, 0], scale(g, -g[0]))) : north;
+  const west = cross(g, upward);
+  const from = [g, upward, west];
+  const to = [toward, up, scale(right, -1)];
+  const M: Matrix = new Array(9).fill(0);
+  for (let k = 0; k < 3; k++) for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) M[r * 3 + c] += to[k][r] * from[k][c];
+  return M;
+}
+
 /** The spin that turns a longitude to face the viewer. */
 export function spinToFace(P: Projection, lon: number, tilt: number) {
   const { toward } = basisOf(P);
@@ -223,5 +294,7 @@ export function areaText(km2: number) {
   if (km2 >= 1e3) return `${Math.round(km2 / 1e3)}k km²`;
   return `${Math.round(km2 / 10) * 10} km²`;
 }
+
+export const describePiece = (piece: Division, country: Country) => `${piece.name} · ${piece.kind} · ${areaText(piece.area)} · ${country.name}`;
 
 export const describe = (country: Country) => `${country.name} · ${areaText(country.area)} · ${latText(country.lat)} ${lonText(country.lon)}`;

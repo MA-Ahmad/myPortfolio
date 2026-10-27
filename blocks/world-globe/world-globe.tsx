@@ -11,7 +11,7 @@ import { Globe, SCALE_MOST, SCALE_STEP, type GlobeHandle, type GlobeState } from
 import { useFullscreen } from './use-fullscreen';
 import styles from './world-globe.module.css';
 
-const CAPTION = `${COUNTRIES.length} countries cut from Natural Earth’s 1:110m outlines, each a plate set into its own socket in the ocean ball. Areas are measured on those outlines over a sphere of Earth’s mean radius (6,371 km), so they are close to the official figures, not equal to them. The axis leans ${EARTH_TILT.toFixed(1)}° in the meridian ring, as Earth’s does; the ring is graduated in degrees of latitude, and the hour circle at the North Pole turns with the ball, 15° to the hour, its pointer on the Greenwich meridian.`;
+const CAPTION = `${COUNTRIES.length} countries cut from Natural Earth’s 1:110m outlines, each a plate set into its own socket in the ocean ball. Areas are measured on those outlines over a sphere of Earth’s mean radius (6,371 km), so they are close to the official figures, not equal to them. The axis leans ${EARTH_TILT.toFixed(1)}° in the meridian ring, as Earth’s does; the ring is graduated in degrees of latitude, and the hour circle at the North Pole turns with the ball, 15° to the hour, its pointer on the Greenwich meridian. Pakistan’s plate splits along its provincial borders into four provinces, the Islamabad Capital Territory, Gilgit-Baltistan and Azad Jammu and Kashmir, cut from Natural Earth’s 1:10m provinces to fit its plate exactly, with F.A.T.A. merged into Khyber Pakhtunkhwa as it was in 2018.`;
 
 /** The keyboard shortcuts, shown under the figure. They work once the globe has focus (click it or Tab to it). */
 const KEYS: [string[], string][] = [
@@ -37,7 +37,7 @@ export default function WorldGlobe() {
   // Full screen takes the controls and the globe, not the legend under them.
   const stage = useRef<HTMLDivElement>(null);
   const { expanded, toggle: toggleFullscreen, mode } = useFullscreen(stage);
-  const [state, setState] = useState<GlobeState>({ broken: false, spinning: true, pulled: 0, scale: 1, selected: -1, free: false });
+  const [state, setState] = useState<GlobeState>({ broken: false, spinning: true, pulled: 0, scale: 1, selected: -1, free: false, hint: '' });
   const [query, setQuery] = useState('');
   const [missing, setMissing] = useState(false);
 
@@ -162,7 +162,7 @@ export default function WorldGlobe() {
       <Plate
         fig="Fig 1"
         title="A globe in pieces"
-        hint={state.free ? 'Drag to turn it any way · click a country' : 'Drag to spin · click a country'}
+        hint={state.hint || (state.free ? 'Drag to turn it any way · click a country' : 'Drag to spin · click a country')}
         readout="Facing · axis 23.4°"
         keys={[
           { mark: 'lit', label: 'The country you picked' },

@@ -22,7 +22,11 @@ import {
   basisOf,
   cross,
   describe,
+  describePiece,
   dot,
+  hasDivisions,
+  loadDivisions,
+  faceMatrix,
   facingPoint,
   latText,
   lonText,
@@ -36,6 +40,7 @@ import {
   tidy,
   turnBetween,
   wrap,
+  type Divisions,
   type Matrix,
   type Vec
 } from './globe';
@@ -132,6 +137,8 @@ export interface GlobeState {
   selected: number;
   /** The globe alone, off its stand, turning freely. */
   free: boolean;
+  /** What a click on the picked country does next, when that is not the usual. */
+  hint: string;
 }
 
 export interface GlobeHandle {
@@ -153,8 +160,154 @@ interface Props {
 
 type PlateNodes = { group: SVGGElement; walls: SVGPathElement; base: SVGPathElement; face: SVGPathElement };
 
+/** A country that splits into provinces: their plates, the borders printed on the whole plate, and how far split it is. */
+interface Split {
+  data: Divisions;
+  nodes: PlateNodes[];
+  borders: SVGPathElement;
+  /** 0 whole, 1 split: the pieces spread apart along the ball as it rises. */
+  at: number;
+  speed: number;
+  target: number;
+  /** How high each piece stands above the others: the one picked, and the one under the pointer. */
+  raise: Float64Array;
+  tone: Int8Array;
+  lit: Int8Array;
+  /** The name printed on each piece, and where each piece and its name's anchor last landed on screen. */
+  labels: LabelNodes[];
+  boxes: Box[];
+  shapes: (Shape | null)[];
+  /** Where each name was last fitted, relative to its piece's box, so it is searched for again only when the piece or the zoom changes. */
+  plans: (Plan | null)[];
+  anchors: ([number, number] | null)[];
+}
+
+/** How far the pieces of a split country move apart, and how much they rise above the plate's height. */
+const SPREAD = 4.5;
+const PIECE_RISE = 1.2;
+const PIECE_PICKED = 3.5;
+/** A split country fills this share of the view, however small it is, up to this zoom. */
+const FOCUS_FILL = 0.66;
+const FOCUS_MOST = 16;
+/** Province names: their size on screen in CSS pixels, and the smallest they shrink to before going outside. */
+const LABEL_PX = 11;
+const LABEL_MIN_PX = 8.5;
+/** Width of one character of the mono face, with its letter spacing, per unit of font size. */
+const CHAR_EM = 0.64;
+
+type Box = [number, number, number, number];
+
+/** A piece's outline on screen: unit rings scaled by `size` about `[ox, oy]`. */
+type Shape = { rings: number[][]; ox: number; oy: number; size: number };
+
+/**
+ * How far a line of text centred at `[x, y]` and running along `[ux, uy]` can reach each way and stay
+ * inside the shape: the nearer of the outline's crossings ahead and behind (0 if the point is outside).
+ */
+function reachAlong({ rings, ox, oy, size }: Shape, x: number, y: number, ux: number, uy: number) {
+  let back = Infinity;
+  let ahead = Infinity;
+  let behind = 0;
+  for (const ring of rings) {
+    const n = ring.length / 2;
+    for (let i = 0, j = n - 1; i < n; j = i++) {
+      const ax = ox + ring[j * 2] * size;
+      const ay = oy + ring[j * 2 + 1] * size;
+      const ex = ox + ring[i * 2] * size - ax;
+      const ey = oy + ring[i * 2 + 1] * size - ay;
+      const denom = ux * ey - uy * ex;
+      if (Math.abs(denom) < 1e-12) continue;
+      const wx = ax - x;
+      const wy = ay - y;
+      const along = (wx * uy - wy * ux) / denom;
+      if (along < 0 || along >= 1) continue;
+      const t = (wx * ey - wy * ex) / denom;
+      if (t < 0) {
+        behind++;
+        back = Math.min(back, -t);
+      } else ahead = Math.min(ahead, t);
+    }
+  }
+  return behind % 2 === 1 ? Math.min(back, ahead) : 0;
+}
+
+/** Grow `box` to take in rings of unit points scaled by `size` about `[ox, oy]`. */
+function growBox(box: Box, rings: number[][], ox: number, oy: number, size: number) {
+  for (const ring of rings) {
+    for (let i = 0; i < ring.length; i += 2) {
+      const x = ox + ring[i] * size;
+      const y = oy + ring[i + 1] * size;
+      if (x < box[0]) box[0] = x;
+      if (y < box[1]) box[1] = y;
+      if (x > box[2]) box[2] = x;
+      if (y > box[3]) box[3] = y;
+    }
+  }
+  return box;
+}
+
+const emptyBox = (): Box => [Infinity, Infinity, -Infinity, -Infinity];
+
+/**
+ * CSS pixels per view-box unit at zoom 1. The drawing's height is capped on the page, so its box can be
+ * wider than the view box's proportions; the browser then fits the view box by the tighter side.
+ */
+const pixelsPerUnit = (cssWidth: number, cssHeight: number) => (cssWidth ? Math.min(cssWidth / WIDTH, cssHeight ? cssHeight / HEIGHT : Infinity) : 1);
+
+/** A name split over two lines at the space or hyphen nearest its middle (a hyphen stays on the first line). */
+function twoLines(text: string): [string, string] | null {
+  const breaks: number[] = [];
+  for (let index = 0; index < text.length; index++) if (text[index] === ' ' || text[index] === '-') breaks.push(index);
+  if (!breaks.length) return null;
+  const middle = text.length / 2;
+  const at = breaks.reduce((best, index) => (Math.abs(index - middle) < Math.abs(best - middle) ? index : best));
+  return text[at] === '-' ? [text.slice(0, at + 1), text.slice(at + 1)] : [text.slice(0, at), text.slice(at + 1)];
+}
+
+/** Points inside a box to try a name at when its anchor is too tight, nearest the anchor first. */
+function candidates(box: Box, anchor: [number, number]): [number, number][] {
+  const points: [number, number][] = [anchor];
+  const columns = 16;
+  const rows = 12;
+  for (let i = 1; i < columns; i++) {
+    for (let j = 1; j < rows; j++) points.push([box[0] + ((box[2] - box[0]) * i) / columns, box[1] + ((box[3] - box[1]) * j) / rows]);
+  }
+  return points.sort((a, b) => Math.hypot(a[0] - anchor[0], a[1] - anchor[1]) - Math.hypot(b[0] - anchor[0], b[1] - anchor[1]));
+}
+
+/** A name's fitted place: a point as fractions of its piece's box, its angle in degrees, lines and size, and what it was fitted for. */
+type Plan = { fx: number; fy: number; angle: number; lines: string[]; px: number; inside: boolean; width: number; height: number; unit: number };
+
+const LABEL_ANGLES = [0, 15, -15, 30, -30, 45, -45];
+
+type LabelNodes = { group: SVGGElement; wire: SVGPathElement; dots: SVGPathElement; text: SVGTextElement; first: SVGTSpanElement; second: SVGTSpanElement };
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const make = <T extends SVGElement>(tag: string, attrs: Record<string, string> = {}) => {
+  const node = document.createElementNS(SVG_NS, tag) as T;
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
+  return node;
+};
+
+const plateNodes = (attrs: Record<string, string>): PlateNodes => {
+  const group = make<SVGGElement>('g', { class: styles.plate, ...attrs });
+  const walls = group.appendChild(make<SVGPathElement>('path', { class: styles.walls }));
+  const base = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo' }));
+  const face = group.appendChild(make<SVGPathElement>('path', { class: styles.face }));
+  return { group, walls, base, face };
+};
+
+const clearPlate = (nodes: PlateNodes) => {
+  if (!nodes.face.getAttribute('d')) return;
+  nodes.face.setAttribute('d', '');
+  nodes.walls.setAttribute('d', '');
+  nodes.base.setAttribute('d', '');
+};
+
 /** Where a lifted plate's shadow falls on the ball, per unit of lift: away from the light, down and right. */
 const SHADOW: [number, number] = [0.55, 0.8];
+/** The light is high and soft, so a shadow travels no further than this however high its plate rises. */
+const SHADOW_REACH = 12;
 
 export const Globe = React.memo(
   React.forwardRef<GlobeHandle, Props>(function Globe({ onState }, handle) {
@@ -164,9 +317,10 @@ export const Globe = React.memo(
     const sorted = React.useRef<SVGGElement>(null);
     const standBack = React.useRef<SVGGElement>(null);
     const standFront = React.useRef<SVGGElement>(null);
+    const labelLayer = React.useRef<SVGGElement>(null);
     const announce = React.useRef<HTMLSpanElement>(null);
     const gradient = React.useId().replace(/:/g, '');
-    const dragging = React.useRef<{ id: number; x: number; y: number; moved: boolean; t: number; v: number; plate: number } | null>(null);
+    const dragging = React.useRef<{ id: number; x: number; y: number; moved: boolean; t: number; v: number; plate: [number, number] } | null>(null);
     const callbacks = React.useRef({ onState });
     callbacks.current = { onState };
 
@@ -200,6 +354,25 @@ export const Globe = React.memo(
       pulled: new Set<number>(),
       hover: -1,
       selected: -1,
+      /** Provinces of a split country: under the pointer, and picked (with `hover` and `selected` their country). */
+      hoverPiece: -1,
+      selectedPiece: -1,
+      /** A split country joined up again: the next click puts it back. */
+      rejoined: -1,
+      splits: new Map<number, Split>(),
+      /** A split country the view closes in on and follows; the spin waits while it is open. */
+      focus: -1,
+      focusMix: 0,
+      /** Where the country being followed sits on screen, in view-box units, and the zoom that frames it. */
+      focusBox: null as Box | null,
+      /** The view's zoom as drawn, and how wide the drawing is on the page, for sizing names in pixels. */
+      viewScale: 1,
+      viewCenter: [WIDTH / 2, HEIGHT / 2] as [number, number],
+      cssWidth: 0,
+      cssHeight: 0,
+      /** The +/− buttons while a country is framed scale the framing rather than the whole view. */
+      focusZoom: 1,
+      loading: new Set<number>(),
       tour: -1,
       quiet: 0,
       tourWait: 0,
@@ -227,6 +400,10 @@ export const Globe = React.memo(
       southOuter: null as SVGGElement | null,
       tone: new Int8Array(COUNTRIES.length).fill(-1),
       drawnLit: new Int8Array(COUNTRIES.length),
+      /** What each plate drew last, reused while the ball and that plate hold still. */
+      memo: [] as ({ d: number; empty: boolean; socket: string; shadow: string; walls: string; base: string; list: 'backBefore' | 'backAfter' | 'frontBefore' | 'frontAfter'; depth: number } | undefined)[],
+      drawnOrient: null as Matrix | null,
+      drawnMix: -1,
       readout: ''
     });
 
@@ -241,7 +418,17 @@ export const Globe = React.memo(
 
     const report = React.useCallback(() => {
       const state = live.current;
-      callbacks.current.onState({ broken: state.broken, spinning: state.spinning, pulled: state.pulled.size, scale: state.scaleTarget, selected: state.selected, free: state.free });
+      const picked = state.selected >= 0 ? COUNTRIES[state.selected] : null;
+      const split = picked ? state.splits.get(picked.index) : undefined;
+      const out = picked && (state.broken || state.pulled.has(picked.index));
+      const hint = !picked || !out || !hasDivisions(picked)
+        ? ''
+        : split && split.target === 1
+          ? 'Click a province · click it again to join them up'
+          : state.rejoined === picked.index
+            ? `Click ${picked.name} again to put it back`
+            : `Click ${picked.name} again to split it into provinces`;
+      callbacks.current.onState({ broken: state.broken, spinning: state.spinning, pulled: state.pulled.size, scale: state.focus >= 0 ? 1.5 : state.scaleTarget, selected: state.selected, free: state.free, hint });
     }, []);
 
     const speak = (text: string) => {
@@ -254,12 +441,6 @@ export const Globe = React.memo(
       const root = sorted.current;
       if (!root || state.built) return;
       state.built = true;
-      const ns = 'http://www.w3.org/2000/svg';
-      const make = <T extends SVGElement>(tag: string, attrs: Record<string, string> = {}) => {
-        const node = document.createElementNS(ns, tag) as T;
-        for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, value);
-        return node;
-      };
       const core = make<SVGGElement>('g', { class: styles.core });
       const [cx, cy] = CENTER_FLAT;
       core.appendChild(make('circle', { cx: String(cx), cy: String(cy), r: String(R * K), fill: `url(#${gradient})` }));
@@ -271,13 +452,7 @@ export const Globe = React.memo(
       state.seatedBase = core.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo' }));
       core.appendChild(make('circle', { class: 'iso-line', 'data-tone': 'mid', cx: String(cx), cy: String(cy), r: String(R * K) }));
       state.core = core;
-      state.plates = COUNTRIES.map((country) => {
-        const group = make<SVGGElement>('g', { class: styles.plate, 'data-i': String(country.index) });
-        const walls = group.appendChild(make<SVGPathElement>('path', { class: styles.walls }));
-        const base = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo' }));
-        const face = group.appendChild(make<SVGPathElement>('path', { class: styles.face }));
-        return { group, walls, base, face };
-      });
+      state.plates = COUNTRIES.map((country) => plateNodes({ 'data-i': String(country.index) }));
       state.pieces = Array.from({ length: 72 }, () => make<SVGGElement>('g'));
       state.northInner = make<SVGGElement>('g');
       state.northOuter = make<SVGGElement>('g');
@@ -306,6 +481,159 @@ export const Globe = React.memo(
       state.tiltDrawn = tilt;
     }, []);
 
+    /**
+     * Print each province's name on its piece, centred on its anchor, on one line or two, as large as fits
+     * up to LABEL_PX. A piece too small for its name gets it beside the country instead, on a wire whose
+     * dot lands on the piece. Names show only while their country is split open and followed.
+     */
+    const placeLabels = React.useCallback((split: Split, i: number) => {
+      const state = live.current;
+      // Names fade in once the view has nearly closed in and the pieces have spread, so they are fitted
+      // once, at the size they will be read at, rather than searched for on every frame of the zoom.
+      const shown = state.focus === i ? smoothstep(0.85, 1, split.at) * smoothstep(0.85, 1, state.focusMix) : 0;
+      const unit = 1 / (state.viewScale * pixelsPerUnit(state.cssWidth, state.cssHeight));
+      const all = state.focusBox;
+      const litPiece = state.hover === i && state.hoverPiece >= 0 ? state.hoverPiece : state.hover < 0 && state.selected === i ? state.selectedPiece : -1;
+      type Placed = { p: number; x: number; y: number; ay: number; ax: number; px: number; lines: string[]; side: number; angle: number };
+      const placed: Placed[] = [];
+      // Fitting a name is the costly part, so at most two are fitted a frame; the rest wait their turn.
+      let budget = 2;
+      split.data.pieces.forEach((piece, p) => {
+        const nodes = split.labels[p];
+        const anchor = split.anchors[p];
+        if (shown < 0.01 || !anchor || !split.boxes[p] || !all) {
+          if (nodes.group.style.display !== 'none') nodes.group.style.display = 'none';
+          return;
+        }
+        const box = split.boxes[p];
+        const width = box[2] - box[0];
+        const height = box[3] - box[1];
+        let plan = split.plans[p];
+        // Refitted only when the name's size against its piece changes, as after the +/− buttons.
+        const ratio = (value: Plan) => (unit / width) * (value.width / value.unit);
+        const stale = !plan || Math.abs(ratio(plan) - 1) > 0.06 || Math.abs(height / width - plan.height / plan.width) > 0.06 * (height / width);
+        if (stale && !budget && plan) {
+          // Keep the old fit until this name's turn comes.
+        } else if (stale && !budget) {
+          if (nodes.group.style.display !== 'none') nodes.group.style.display = 'none';
+          return;
+        } else if (stale) {
+          budget--;
+          const shape = split.shapes[p];
+          // A name fits at a point when, on every row it covers (its top, middle and bottom), half its
+          // width plus a margin stays inside the piece either way along its baseline. Horizontal first,
+          // at each size, then turned to follow the piece.
+          const fitsAt = ([x, y]: [number, number], lines: string[], px: number, angle: number) => {
+            if (!shape) return false;
+            const ux = Math.cos((angle * Math.PI) / 180);
+            const uy = Math.sin((angle * Math.PI) / 180);
+            const half = (Math.max(...lines.map((line) => line.length)) * CHAR_EM * px * unit) / 2 + 2 * unit;
+            const tall = (lines.length * px * 1.25 * unit) / 2;
+            return [0, -tall, tall].every((d) => reachAlong(shape, x - uy * d, y + ux * d, ux, uy) >= half);
+          };
+          const halves = twoLines(piece.label);
+          const spots = shape ? candidates(box, anchor).filter((spot) => reachAlong(shape, spot[0], spot[1], 1, 0) > 0) : [];
+          let found: Plan | null = null;
+          for (const angles of [[0], LABEL_ANGLES.slice(1)]) {
+            for (let size = LABEL_PX; size >= LABEL_MIN_PX && !found; size -= 0.5) {
+              for (const lines of halves ? [[piece.label], halves] : [[piece.label]]) {
+                for (const angle of angles) {
+                  const at = spots.find((spot) => fitsAt(spot, lines, size, angle));
+                  if (at) {
+                    found = { fx: (at[0] - box[0]) / width, fy: (at[1] - box[1]) / height, angle, lines, px: size, inside: true, width, height, unit };
+                    break;
+                  }
+                }
+                if (found) break;
+              }
+            }
+            if (found) break;
+          }
+          plan = found ?? { fx: 0, fy: 0, angle: 0, lines: [piece.label], px: LABEL_PX, inside: false, width, height, unit };
+          split.plans[p] = plan;
+        }
+        if (plan!.inside) {
+          placed.push({ p, x: box[0] + plan!.fx * width, y: box[1] + plan!.fy * height, ax: anchor[0], ay: anchor[1], px: plan!.px, lines: plan!.lines, side: 0, angle: plan!.angle });
+        } else {
+          // Too small: set beside the country, level with the piece, on the side it is nearer if the name
+          // fits there in the view, else the other side, else in a row under the country.
+          const wide = piece.label.length * CHAR_EM * LABEL_PX * unit;
+          const seenHalf = (state.cssWidth * unit) / 2;
+          const seen = [state.viewCenter[0] - seenHalf + 6 * unit, state.viewCenter[0] + seenHalf - 6 * unit];
+          const near = anchor[0] >= (all[0] + all[2]) / 2 ? 1 : -1;
+          const room = (side: number) => (side > 0 ? all[2] + 14 * unit + wide <= seen[1] : all[0] - 14 * unit - wide >= seen[0]);
+          const side = room(near) ? near : room(-near) ? -near : 2;
+          const x = side === 1 ? all[2] + 14 * unit : side === -1 ? all[0] - 14 * unit : Math.min(Math.max(anchor[0], seen[0] + wide / 2), seen[1] - wide / 2);
+          placed.push({ p, x, y: side === 2 ? all[3] + 16 * unit : anchor[1], ax: anchor[0], ay: anchor[1], px: LABEL_PX, lines: [piece.label], side, angle: 0 });
+        }
+      });
+      // Names under the country take a row each. Each wire drops straight down from its piece to a dot,
+      // with the name beside it, to the right if every name fits there, else to the left. Rows are
+      // ordered so every wire passes beside the names above it, never through one.
+      const seenHalf = (state.cssWidth * unit) / 2;
+      const seenLeft = state.viewCenter[0] - seenHalf + 6 * unit;
+      const seenRight = state.viewCenter[0] + seenHalf - 6 * unit;
+      const below = placed.filter((label) => label.side === 2);
+      const wideOf = (label: Placed) => label.lines[0].length * CHAR_EM * LABEL_PX * unit;
+      const rightward = below.every((label) => label.ax + 4 * unit + wideOf(label) <= seenRight) || !below.every((label) => label.ax - 4 * unit - wideOf(label) >= seenLeft);
+      below
+        .sort((a, b) => (rightward ? b.ax - a.ax : a.ax - b.ax))
+        .forEach((label, k) => {
+          label.y += k * LABEL_PX * 1.5 * unit;
+          label.x = rightward ? label.ax + 4 * unit : label.ax - 4 * unit;
+          label.side = rightward ? 2 : -2;
+        });
+      // Names set outside stack down each side, a line and a half apart, in the order of their pieces.
+      for (const side of [-1, 1]) {
+        const stack = placed.filter((label) => label.side === side).sort((a, b) => a.ay - b.ay);
+        const gap = LABEL_PX * 1.5 * unit;
+        stack.forEach((label, k) => {
+          if (k) label.y = Math.max(label.y, stack[k - 1].y + gap);
+        });
+        // Then centre the stack on its pieces, so it does not drift down.
+        if (stack.length > 1) {
+          const shift = (stack.reduce((sum, label) => sum + label.ay, 0) - stack.reduce((sum, label) => sum + label.y, 0)) / stack.length;
+          stack.forEach((label) => (label.y += shift));
+        }
+      }
+      for (const { p, x, y, ax, ay, px, lines, side, angle } of placed) {
+        const nodes = split.labels[p];
+        nodes.group.style.display = '';
+        nodes.group.style.opacity = String(f(shown * 100) / 100);
+        if ((p === litPiece) !== (nodes.group.dataset.lit !== undefined)) {
+          if (p === litPiece) nodes.group.setAttribute('data-lit', '');
+          else nodes.group.removeAttribute('data-lit');
+        }
+        if (side) {
+          // The wire runs to just short of the name: its side, or its top when it sits underneath.
+          const [ex, ey] = Math.abs(side) === 2 ? [ax, y] : [x - side * 3 * unit, y];
+          const r = 1.6 * unit;
+          const dot = (cx: number, cy: number) => `M${f(cx - r)} ${f(cy)}a${f(r)} ${f(r)} 0 1 0 ${f(2 * r)} 0a${f(r)} ${f(r)} 0 1 0 ${f(-2 * r)} 0`;
+          nodes.wire.setAttribute('d', `M${f(ax)} ${f(ay)}L${f(ex)} ${f(ey)}`);
+          nodes.dots.setAttribute('d', dot(ax, ay) + dot(ex, ey));
+          nodes.text.setAttribute('data-outside', '');
+        } else {
+          if (nodes.wire.getAttribute('d')) {
+            nodes.wire.setAttribute('d', '');
+            nodes.dots.setAttribute('d', '');
+          }
+          nodes.text.removeAttribute('data-outside');
+        }
+        const size = px * unit;
+        nodes.text.setAttribute('font-size', String(f(size * 100) / 100));
+        nodes.text.setAttribute('text-anchor', side > 0 ? 'start' : side < 0 ? 'end' : 'middle');
+        [nodes.first, nodes.second].forEach((span, k) => {
+          const text = lines[k] ?? '';
+          if (span.textContent !== text) span.textContent = text;
+          span.setAttribute('x', String(f(x)));
+        });
+        nodes.first.setAttribute('y', String(f(lines.length === 2 ? y - size * 0.62 : y)));
+        nodes.second.setAttribute('y', String(f(y + size * 0.62)));
+        if (angle) nodes.text.setAttribute('transform', `rotate(${angle} ${f(x)} ${f(y)})`);
+        else nodes.text.removeAttribute('transform');
+      }
+    }, []);
+
     /** Draw the ball at its current spin, tilt and lifts, and put everything in painter's order. */
     const draw = React.useCallback(() => {
       const state = live.current;
@@ -328,10 +656,17 @@ export const Globe = React.memo(
       const showRing = ringShown > 1e-3;
 
       projection.rotate(rotate);
-      gridProjection.rotate(rotate);
-      sink.reset();
-      gridPath(graticule);
-      state.graticule!.setAttribute('d', ringsPath(sink.rings, cx, cy, R * K, false));
+      // With the ball held still (as while a country is split open), plates whose lift has not changed
+      // are drawn exactly as last time, so only what moves is projected and written again.
+      const same = state.drawnOrient !== null && state.drawnMix === state.mix && M.every((value, k) => value === state.drawnOrient![k]);
+      state.drawnOrient = M.slice();
+      state.drawnMix = state.mix;
+      if (!same) {
+        gridProjection.rotate(rotate);
+        sink.reset();
+        gridPath(graticule);
+        state.graticule!.setAttribute('d', ringsPath(sink.rings, cx, cy, R * K, false));
+      }
 
       const order = { backBefore: [] as [number, Element][], backAfter: [] as [number, Element][], frontBefore: [] as [number, Element][], frontAfter: [] as [number, Element][] };
       let sockets = '';
@@ -341,11 +676,35 @@ export const Globe = React.memo(
       let seatedWalls = '';
       let seatedBase = '';
       const lit = state.hover >= 0 ? state.hover : state.tour >= 0 ? state.tour : state.selected;
+      // The province lit: the one under the pointer, else the one picked while nothing else is hovered.
+      const litPiece = state.hover >= 0 ? (state.hoverPiece >= 0 ? [state.hover, state.hoverPiece] : null) : state.selectedPiece >= 0 ? [state.selected, state.selectedPiece] : null;
+
+      const relight = (i: number, nodes: PlateNodes) => {
+        const isLit = i === lit && !litPiece ? 1 : 0;
+        if (isLit !== state.drawnLit[i]) {
+          state.drawnLit[i] = isLit;
+          if (isLit) nodes.group.setAttribute('data-lit', '');
+          else nodes.group.removeAttribute('data-lit');
+        }
+      };
 
       for (const country of COUNTRIES) {
         const i = country.index;
         const nodes = state.plates[i];
         const d = state.lift[i];
+        const memo = state.memo[i];
+        if (same && memo && memo.d === d && !state.splits.has(i)) {
+          if (memo.empty) continue;
+          sockets += memo.socket;
+          shadows += memo.shadow;
+          if (d === 0) {
+            seatedWalls += memo.walls;
+            seatedBase += memo.base;
+          }
+          relight(i, nodes);
+          order[memo.list].push([memo.depth, nodes.group]);
+          continue;
+        }
         const center = apply(M, country.dir);
         // The plate's spread across the ring's plane, on the unit sphere.
         let lo = Infinity;
@@ -379,7 +738,8 @@ export const Globe = React.memo(
         sink.reset();
         path(country.feature);
         const flatRings = sink.rings;
-        if (d > 0.3 && flatRings.length) sockets += ringsPath(flatRings, cx, cy, R * K, true);
+        const socket = d > 0.3 && flatRings.length ? ringsPath(flatRings, cx, cy, R * K, true) : '';
+        sockets += socket;
         let rings = flatRings;
         if (turned) {
           projection.rotate(rotationFrom(P, M, turned));
@@ -389,21 +749,108 @@ export const Globe = React.memo(
           projection.rotate(rotate);
         }
 
+        const split = state.splits.get(i);
         if (!rings.length) {
-          if (nodes.face.getAttribute('d')) {
-            nodes.face.setAttribute('d', '');
-            nodes.walls.setAttribute('d', '');
-            nodes.base.setAttribute('d', '');
+          state.memo[i] = { d, empty: true, socket: '', shadow: '', walls: '', base: '', list: 'frontAfter', depth: 0 };
+          clearPlate(nodes);
+          if (split) {
+            split.borders.setAttribute('d', '');
+            split.nodes.forEach(clearPlate);
           }
           continue;
         }
         const [ox, oy] = [cx + dot(dir, BASIS.right) * d * K, cy - dot(dir, BASIS.up) * d * K];
+
+        // Painter's order. A plate wholly on the viewer's side of the ring's plane is in front of the
+        // whole ring, and one wholly behind it is behind; one across it is inside the ring or beyond it.
+        const reach = d + PLATE;
+        const side = dot(dir, [0, 1, 0]) * d;
+        const yLo = Math.min(lo * R, lo * (R + PLATE)) + side;
+        const yHi = Math.max(hi * R, hi * (R + PLATE)) + side;
+        const depth = dot(dir, BASIS.toward) * (R + PLATE / 2 + d);
+        const back = d > PLATE && dot(dir, BASIS.toward) < 0;
+        const inside = reach < RING_IN - R;
+        const before = yHi < -RING_H / 2 ? true : yLo > RING_H / 2 ? false : back ? !inside : inside;
+        const listName: keyof typeof order = back ? (before ? 'backBefore' : 'backAfter') : before ? 'frontBefore' : 'frontAfter';
+        const list = order[listName];
+
+        const following = i === state.focus;
+        // Framed by the whole plate until it splits, then by its pieces alone.
+        if (following) state.focusBox = split && split.at > 0 ? emptyBox() : growBox(emptyBox(), rings, ox, oy, (R + PLATE) * K);
+        if (split && split.at > 0) {
+          // Split: the whole plate gives way to its provinces, which rise with it and spread apart along
+          // the ball from the country's middle, each casting its own shadow.
+          clearPlate(nodes);
+          split.borders.setAttribute('d', '');
+          const frame = turned ? multiply(M, turned) : M;
+          if (turned) projection.rotate(rotationFrom(P, M, turned));
+          for (const piece of split.data.pieces) {
+            const pieceNodes = split.nodes[piece.index];
+            sink.reset();
+            path(piece.feature);
+            const pieceRings = sink.rings;
+            if (!pieceRings.length) {
+              clearPlate(pieceNodes);
+              continue;
+            }
+            const at = apply(frame, piece.dir);
+            const away = add(at, scale(dir, -dot(at, dir)));
+            const spread = Math.hypot(...away) > 1e-6 ? scale(norm(away), SPREAD * split.at) : ([0, 0, 0] as Vec);
+            const rise = d + (PIECE_RISE + split.raise[piece.index]) * split.at;
+            const offset = add(spread, scale(dir, rise));
+            const px = cx + dot(offset, BASIS.right) * K;
+            const py = cy - dot(offset, BASIS.up) * K;
+            pieceNodes.face.setAttribute('d', ringsPath(pieceRings, px, py, (R + PLATE) * K, true));
+            pieceNodes.walls.setAttribute('d', wallsPath(pieceRings, px, py, R * K, (R + PLATE) * K));
+            pieceNodes.base.setAttribute('d', ringsPath(pieceRings, px, py, R * K, true));
+            const cast = Math.min(rise, SHADOW_REACH);
+            shadows += ringsPath(pieceRings, cx + (SHADOW[0] * cast + dot(spread, BASIS.right)) * K, cy + (SHADOW[1] * cast - dot(spread, BASIS.up)) * K, R * K, true);
+            const box = growBox(emptyBox(), pieceRings, px, py, (R + PLATE) * K);
+            split.boxes[piece.index] = box;
+            split.shapes[piece.index] = { rings: pieceRings, ox: px, oy: py, size: (R + PLATE) * K };
+            if (following) {
+              const all = state.focusBox!;
+              state.focusBox = [Math.min(all[0], box[0]), Math.min(all[1], box[1]), Math.max(all[2], box[2]), Math.max(all[3], box[3])];
+            }
+            // The name's anchor, on the piece's top face; hidden when it is round the back.
+            const anchor = apply(frame, piece.anchorDir);
+            const top = add(scale(anchor, R + PLATE), offset);
+            split.anchors[piece.index] = dot(anchor, BASIS.toward) > 0.05 ? [cx + dot(top, BASIS.right) * K, cy - dot(top, BASIS.up) * K] : null;
+            const tone = Math.round(((dot(at, LIGHT) + 1) / 2) * 50) * 2;
+            if (tone !== split.tone[piece.index]) {
+              split.tone[piece.index] = tone;
+              pieceNodes.face.style.setProperty('--wg-tone', `${tone}%`);
+            }
+            const isLit = litPiece && litPiece[0] === i && litPiece[1] === piece.index ? 1 : 0;
+            if (isLit !== split.lit[piece.index]) {
+              split.lit[piece.index] = isLit;
+              if (isLit) pieceNodes.group.setAttribute('data-lit', '');
+              else pieceNodes.group.removeAttribute('data-lit');
+            }
+            list.push([dot(at, BASIS.toward) * (R + PLATE / 2) + dot(offset, BASIS.toward), pieceNodes.group]);
+          }
+          if (turned) projection.rotate(rotate);
+          placeLabels(split, i);
+          continue;
+        }
+        if (split) {
+          split.nodes.forEach(clearPlate);
+          placeLabels(split, i);
+          // Whole, the plate carries its provinces' borders like a printed globe.
+          if (turned) projection.rotate(rotationFrom(P, M, turned));
+          sink.reset();
+          path(split.data.borders);
+          split.borders.setAttribute('d', ringsPath(sink.rings, ox, oy, (R + PLATE) * K, false));
+          if (turned) projection.rotate(rotate);
+        }
         nodes.face.setAttribute('d', ringsPath(rings, ox, oy, (R + PLATE) * K, true));
         const walls = wallsPath(rings, ox, oy, R * K, (R + PLATE) * K);
         const base = ringsPath(rings, ox, oy, R * K, true);
         // A lifted plate casts its outline onto the ball: in this view a plate rising toward you would
         // otherwise not move at all.
-        if (d > 0.3) shadows += ringsPath(rings, cx + SHADOW[0] * d * K, cy + SHADOW[1] * d * K, R * K, true);
+        const shadow = d > 0.3 ? ringsPath(rings, cx + SHADOW[0] * Math.min(d, SHADOW_REACH) * K, cy + SHADOW[1] * Math.min(d, SHADOW_REACH) * K, R * K, true) : '';
+        shadows += shadow;
+        state.memo[i] = { d, empty: false, socket, shadow, walls, base, list: listName, depth };
         if (d === 0) {
           seatedWalls += walls;
           seatedBase += base;
@@ -419,30 +866,24 @@ export const Globe = React.memo(
           state.tone[i] = tone;
           nodes.face.style.setProperty('--wg-tone', `${tone}%`);
         }
-        const isLit = i === lit ? 1 : 0;
-        if (isLit !== state.drawnLit[i]) {
-          state.drawnLit[i] = isLit;
-          if (isLit) nodes.group.setAttribute('data-lit', '');
-          else nodes.group.removeAttribute('data-lit');
-        }
-
-        // Painter's order. A plate wholly on the viewer's side of the ring's plane is in front of the
-        // whole ring, and one wholly behind it is behind; one across it is inside the ring or beyond it.
-        const reach = d + PLATE;
-        const side = dot(dir, [0, 1, 0]) * d;
-        const yLo = Math.min(lo * R, lo * (R + PLATE)) + side;
-        const yHi = Math.max(hi * R, hi * (R + PLATE)) + side;
-        const depth = dot(dir, BASIS.toward) * (R + PLATE / 2 + d);
-        const back = d > PLATE && dot(dir, BASIS.toward) < 0;
-        const inside = reach < RING_IN - R;
-        const before = yHi < -RING_H / 2 ? true : yLo > RING_H / 2 ? false : back ? !inside : inside;
-        const list = back ? (before ? order.backBefore : order.backAfter) : before ? order.frontBefore : order.frontAfter;
+        relight(i, nodes);
         list.push([depth, nodes.group]);
       }
-      state.sockets!.setAttribute('d', sockets);
-      state.shadows!.setAttribute('d', shadows);
-      state.seatedWalls!.setAttribute('d', seatedWalls);
-      state.seatedBase!.setAttribute('d', seatedBase);
+      // While a country is split open, the rest of the map steps back so its provinces read.
+      const focusing = state.focus >= 0 && (state.splits.get(state.focus)?.at ?? 0) > 0.2;
+      if (focusing !== (svg.current?.dataset.focusing !== undefined)) {
+        if (focusing) svg.current?.setAttribute('data-focusing', '');
+        else svg.current?.removeAttribute('data-focusing');
+      }
+      // Written only when changed: the browser re-reads a whole path on every write.
+      for (const [node, d] of [
+        [state.sockets!, sockets],
+        [state.shadows!, shadows],
+        [state.seatedWalls!, seatedWalls],
+        [state.seatedBase!, seatedBase]
+      ] as const) {
+        if (node.getAttribute('d') !== d) node.setAttribute('d', d);
+      }
 
       // The hour circle's pointer turns with the ball: it points along the Greenwich meridian.
       if (showRing) state.pointer!.setAttribute('d', pointerPath(tilt, apply(M, [1, 0, 0])));
@@ -476,7 +917,7 @@ export const Globe = React.memo(
         ...frontRing.sort(byDepth),
         ...order.frontAfter.sort(byDepth)
       ].map(([, node]) => node);
-      const key = final.map((node) => (node as SVGElement).dataset.i ?? node.nodeName).join();
+      const key = final.map((node) => { const data = (node as SVGElement).dataset; return data.i === undefined ? node.nodeName : `${data.i}.${data.p ?? ''}`; }).join();
       if (key !== state.order || sorted.current!.childNodes.length !== final.length) {
         state.order = key;
         sorted.current!.replaceChildren(...final);
@@ -484,8 +925,12 @@ export const Globe = React.memo(
 
       // The readout: the country under the pointer or being shown, else where the ball faces.
       const country = lit >= 0 ? COUNTRIES[lit] : null;
+      const litSplit = litPiece ? state.splits.get(litPiece[0]) : undefined;
+      const piece = litPiece && litSplit ? litSplit.data.pieces[litPiece[1]] : null;
       const faces = facingPoint(P, M);
-      const text = country
+      const text = piece
+        ? describePiece(piece, COUNTRIES[litPiece![0]])
+        : country
         ? describe(country)
         : state.free
           ? `Facing ${latText(faces.lat)} ${lonText(faces.lon)}`
@@ -494,7 +939,7 @@ export const Globe = React.memo(
         state.readout = text;
         say(text);
       }
-    }, [graticule, gridPath, gridProjection, path, placeRing, projection, say, sink]);
+    }, [graticule, gridPath, gridProjection, path, placeLabels, placeRing, projection, say, sink]);
 
     /** Where each plate is heading: home, a hover, or out (less for plates over the stand). */
     const targetOf = React.useCallback((i: number) => {
@@ -510,10 +955,27 @@ export const Globe = React.memo(
 
     const placeView = React.useCallback(() => {
       const state = live.current;
-      const s = state.scale * (1 + (GLOBE_ONLY_SCALE - 1) * state.mix);
+      const whole = state.scale * (1 + (GLOBE_ONLY_SCALE - 1) * state.mix);
       const pull = Math.max(state.mix, Math.min(1, (state.scale - 1) / 0.6));
-      const cx = WIDTH / 2 + (CENTER_FLAT[0] - WIDTH / 2) * pull;
-      const cy = HEIGHT / 2 + (CENTER_FLAT[1] - HEIGHT / 2) * pull;
+      let s = whole;
+      let cx = WIDTH / 2 + (CENTER_FLAT[0] - WIDTH / 2) * pull;
+      let cy = HEIGHT / 2 + (CENTER_FLAT[1] - HEIGHT / 2) * pull;
+      // A split country is followed and framed: the view closes in until its pieces fill FOCUS_FILL of
+      // it, easing the zoom in log scale so it feels even, and keeps them framed as they spread and turn.
+      const frame = state.focusBox;
+      if (state.focusMix > 0 && frame && Number.isFinite(frame[0])) {
+        // What the page shows, in view-box units at zoom 1, then the zoom that makes the pieces fill it.
+        const m = pixelsPerUnit(state.cssWidth, state.cssHeight);
+        const seenW = state.cssWidth ? state.cssWidth / m : WIDTH;
+        const seenH = state.cssHeight ? state.cssHeight / m : HEIGHT;
+        const fit = Math.min(Math.max(Math.min(seenW / Math.max(frame[2] - frame[0], 1), seenH / Math.max(frame[3] - frame[1], 1)) * FOCUS_FILL, whole), FOCUS_MOST) * state.focusZoom;
+        const ease = smoothstep(0, 1, state.focusMix);
+        s = Math.exp(Math.log(whole) * (1 - ease) + Math.log(fit) * ease);
+        cx += ((frame[0] + frame[2]) / 2 - cx) * ease;
+        cy += ((frame[1] + frame[3]) / 2 - cy) * ease;
+      }
+      state.viewScale = s;
+      state.viewCenter = [cx, cy];
       const w = WIDTH / s;
       const h = HEIGHT / s;
       const box = `${f(cx - w / 2)} ${f(cy - h / 2)} ${f(w)} ${f(h)}`;
@@ -548,9 +1010,8 @@ export const Globe = React.memo(
             moving = true;
           };
           if (state.faceTarget >= 0) {
-            const at = apply(state.orient, COUNTRIES[state.faceTarget].dir);
-            const axis = cross(at, BASIS.toward);
-            const angle = Math.atan2(Math.hypot(...axis), dot(at, BASIS.toward));
+            // Turn the country to face you the right way up: north up, east to the right.
+            const { axis, angle } = turnBetween(state.orient, faceMatrix(P, COUNTRIES[state.faceTarget].dir));
             if (angle < 1e-3) state.faceTarget = -1;
             else turnBy(axis, calm ? angle : angle * (1 - Math.exp(-dt / 0.35)));
             state.omega = [0, 0, 0];
@@ -563,7 +1024,7 @@ export const Globe = React.memo(
             state.omega = [0, 0, 0];
           }
           if (!dragging.current && state.faceTarget < 0 && nudge <= 1e-5) {
-            const idle = state.spinning && !calm ? scale(apply(state.orient, [0, 0, 1]), IDLE_RATE * RADIANS) : ([0, 0, 0] as Vec);
+            const idle = state.spinning && !calm && state.focus < 0 ? scale(apply(state.orient, [0, 0, 1]), IDLE_RATE * RADIANS) : ([0, 0, 0] as Vec);
             const ease = calm ? 1 : 1 - Math.exp(-dt / 1.1);
             state.omega = add(state.omega, scale(add(idle, scale(state.omega, -1)), ease));
             const speed = Math.hypot(...state.omega);
@@ -579,7 +1040,7 @@ export const Globe = React.memo(
           if (state.spin === state.spinTarget) state.spinTarget = null;
           state.rate = 0;
         } else if (!dragging.current) {
-          const idle = state.spinning && !calm ? IDLE_RATE : 0;
+          const idle = state.spinning && !calm && state.focus < 0 ? IDLE_RATE : 0;
           state.rate = calm ? idle : state.rate + (idle - state.rate) * (1 - Math.exp(-dt / 1.1));
           if (Math.abs(state.rate - idle) < 0.01) state.rate = idle;
           state.spin += state.rate * dt;
@@ -623,6 +1084,40 @@ export const Globe = React.memo(
           }
         }
 
+        // Split countries: the pieces spread and close on a spring, and the picked one stands a little higher.
+        state.splits.forEach((split, i) => {
+          if (split.at !== split.target || split.speed !== 0) {
+            moving = true;
+            if (calm) {
+              split.at = split.target;
+              split.speed = 0;
+            } else {
+              const steps = Math.max(1, Math.ceil(dt * 240));
+              const slice = dt / steps;
+              for (let step = 0; step < steps; step++) {
+                split.speed += ((split.target - split.at) * 140 - split.speed * 17) * slice;
+                split.at += split.speed * slice;
+                if (split.at < 0) {
+                  split.at = 0;
+                  split.speed = 0;
+                }
+              }
+              if (Math.abs(split.target - split.at) < 1e-3 && Math.abs(split.speed) < 1e-3) {
+                split.at = split.target;
+                split.speed = 0;
+              }
+            }
+          }
+          for (const piece of split.data.pieces) {
+            const want = state.selected === i && state.selectedPiece === piece.index ? PIECE_PICKED : state.hover === i && state.hoverPiece === piece.index ? PIECE_RISE : 0;
+            const now = split.raise[piece.index];
+            if (now === want) continue;
+            const next = calm ? want : now + (want - now) * (1 - Math.exp(-dt / 0.12));
+            split.raise[piece.index] = Math.abs(next - want) < 1e-3 ? want : next;
+            moving = true;
+          }
+        });
+
         // Plates: each rides a spring to its target, after its own short wait when the map breaks.
         for (let i = 0; i < COUNTRIES.length; i++) {
           const target = targetOf(i);
@@ -661,6 +1156,12 @@ export const Globe = React.memo(
           state.speed[i] = speed;
         }
 
+        const focusTarget = state.focus >= 0 ? 1 : 0;
+        if (state.focusMix !== focusTarget) {
+          const next = calm ? focusTarget : state.focusMix + (focusTarget - state.focusMix) * (1 - Math.exp(-dt / 0.3));
+          state.focusMix = Math.abs(next - focusTarget) < 1e-3 ? focusTarget : next;
+          moving = true;
+        }
         const s = calm ? state.scaleTarget : state.scale + (state.scaleTarget - state.scale) * (1 - Math.exp(-dt / 0.16));
         state.scale = Math.abs(s - state.scaleTarget) < 1e-3 ? state.scaleTarget : s;
         if (state.scale !== state.scaleTarget) moving = true;
@@ -687,12 +1188,70 @@ export const Globe = React.memo(
       kick();
     }, [kick]);
 
+    /** Load a country's provinces, once, and make their plates and the borders printed on the whole one. */
+    const prepare = React.useCallback(
+      (i: number) => {
+        const state = live.current;
+        const country = COUNTRIES[i];
+        if (!hasDivisions(country)) return Promise.resolve(undefined);
+        const ready = state.splits.get(i);
+        if (ready) return Promise.resolve(ready);
+        state.loading.add(i);
+        return loadDivisions(country).then((data) => {
+          state.loading.delete(i);
+          const parent = state.plates[i].group;
+          const borders = parent.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.borders}`, 'data-tone': 'mid' }));
+          const labels = data.pieces.map(() => {
+            const group = labelLayer.current!.appendChild(make<SVGGElement>('g', { class: styles.label, style: 'display:none' }));
+            const wire = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.labelWire}`, 'data-tone': 'mid' }));
+            const dots = group.appendChild(make<SVGPathElement>('path', { class: styles.labelDots }));
+            const text = group.appendChild(make<SVGTextElement>('text', { class: styles.labelText }));
+            const first = text.appendChild(make<SVGTSpanElement>('tspan'));
+            const second = text.appendChild(make<SVGTSpanElement>('tspan'));
+            return { group, wire, dots, text, first, second };
+          });
+          const split: Split = {
+            data,
+            nodes: data.pieces.map((piece) => plateNodes({ 'data-i': String(i), 'data-p': String(piece.index), class: `${styles.plate} ${styles.piece}` })),
+            borders,
+            at: 0,
+            speed: 0,
+            target: 0,
+            raise: new Float64Array(data.pieces.length),
+            tone: new Int8Array(data.pieces.length).fill(-1),
+            lit: new Int8Array(data.pieces.length),
+            labels,
+            boxes: data.pieces.map(() => null as unknown as Box),
+            shapes: data.pieces.map(() => null),
+            plans: data.pieces.map(() => null),
+            anchors: data.pieces.map(() => null)
+          };
+          state.splits.set(i, split);
+          state.dirty = true;
+          kick();
+          return split;
+        });
+      },
+      [kick]
+    );
+
+    /** Join every split country up again. */
+    const joinAll = React.useCallback(() => {
+      const state = live.current;
+      state.splits.forEach((split) => (split.target = 0));
+      state.focus = -1;
+      state.selectedPiece = -1;
+      state.hoverPiece = -1;
+      state.rejoined = -1;
+    }, []);
+
     const setBroken = React.useCallback(
       (on: boolean) => {
         const state = live.current;
         if (state.broken === on) return;
         state.broken = on;
         state.pulled.clear();
+        joinAll();
         // The side facing you breaks first and comes home last, with a little scatter.
         COUNTRIES.forEach((country, i) => {
           const near = (dot(apply(state.orient, country.dir), BASIS.toward) + 1) / 2;
@@ -703,28 +1262,75 @@ export const Globe = React.memo(
         touch();
         report();
       },
-      [report, touch]
+      [joinAll, report, touch]
     );
 
+    /**
+     * A click on a country or one of its provinces. A country comes out on the first click. A country with
+     * provinces splits on the next, its provinces are then picked one by one, a second click on the picked
+     * province joins them up again, and the click after that puts the country back.
+     */
     const toggle = React.useCallback(
-      (i: number) => {
+      (i: number, p = -1) => {
         const state = live.current;
-        if (state.broken) {
+        const country = COUNTRIES[i];
+        const split = state.splits.get(i);
+        const out = state.broken || state.pulled.has(i);
+        const splitNow = () => {
+          state.selected = i;
+          state.selectedPiece = -1;
+          state.rejoined = -1;
+          void prepare(i).then((ready) => {
+            if (!ready || !(live.current.broken || live.current.pulled.has(i))) return;
+            ready.target = 1;
+            const state = live.current;
+            if (state.focus !== i) state.focusZoom = 1;
+            state.focus = i;
+            if (state.free) state.faceTarget = i;
+            else state.spinTarget = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
+            speak(`${country.name} splits into its ${ready.data.pieces.length} provinces and territories.`);
+            touch();
+            report();
+          });
+        };
+        if (p >= 0 && split && split.target === 1) {
+          if (state.selected === i && state.selectedPiece === p) {
+            split.target = 0;
+            if (state.focus === i) state.focus = -1;
+            state.selectedPiece = -1;
+            state.rejoined = i;
+            speak(`${country.name} is whole again.`);
+          } else {
+            state.selected = i;
+            state.selectedPiece = p;
+            speak(describePiece(split.data.pieces[p], country));
+          }
+        } else if (out && hasDivisions(country) && state.rejoined !== i && (!state.broken || state.selected === i)) {
+          splitNow();
+        } else if (state.broken) {
+          state.rejoined = -1;
           state.selected = state.selected === i ? -1 : i;
         } else if (state.pulled.has(i)) {
           state.pulled.delete(i);
+          if (split) split.target = 0;
+          if (state.focus === i) state.focus = -1;
+          state.rejoined = -1;
           if (state.selected === i) state.selected = -1;
-          speak(`${COUNTRIES[i].name} is back in place.`);
+          speak(`${country.name} is back in place.`);
         } else {
           state.pulled.add(i);
           state.selected = i;
+          state.selectedPiece = -1;
+          state.rejoined = -1;
           state.wait[i] = 0;
-          speak(`${describe(COUNTRIES[i])}, pulled out.`);
+          // Fetch its provinces now, so they are ready by the next click.
+          void prepare(i);
+          speak(`${describe(country)}, pulled out.`);
         }
         touch();
         report();
       },
-      [report, touch]
+      [prepare, report, touch]
     );
 
     React.useImperativeHandle(
@@ -750,6 +1356,9 @@ export const Globe = React.memo(
             state.pulled.add(index);
             state.selected = index;
           }
+          state.selectedPiece = -1;
+          state.rejoined = -1;
+          void prepare(index);
           speak(`${describe(country)}, pulled out.`);
           touch();
           report();
@@ -758,6 +1367,7 @@ export const Globe = React.memo(
           const state = live.current;
           state.broken = false;
           state.pulled.clear();
+          joinAll();
           state.selected = -1;
           speak('Every country is back on the ball.');
           touch();
@@ -799,26 +1409,29 @@ export const Globe = React.memo(
         },
         scaleBy(factor) {
           const state = live.current;
-          state.scaleTarget = Math.max(1, Math.min(SCALE_MOST, state.scaleTarget * factor));
+          if (state.focus >= 0) state.focusZoom = Math.max(0.25, Math.min(2.5, state.focusZoom * factor));
+          else state.scaleTarget = Math.max(1, Math.min(SCALE_MOST, state.scaleTarget * factor));
           touch();
           report();
         },
         home() {
           const state = live.current;
           state.scaleTarget = 1;
+          state.focus = -1;
           state.tiltTarget = EARTH_TILT;
           touch();
           report();
         }
       }),
-      [report, setBroken, toggle, touch]
+      [joinAll, prepare, report, setBroken, toggle, touch]
     );
 
     // ── Pointer: drag sideways to spin, up and down to slide the ring; click a country to pull it ──
 
-    const plateAt = (target: EventTarget | null) => {
+    /** The country, and the province if it is one, under the pointer. */
+    const plateAt = (target: EventTarget | null): [number, number] => {
       const group = (target as Element | null)?.closest?.('[data-i]') as SVGGElement | null;
-      return group ? Number(group.dataset.i) : -1;
+      return group ? [Number(group.dataset.i), group.dataset.p === undefined ? -1 : Number(group.dataset.p)] : [-1, -1];
     };
 
     const onPointerDown = (event: React.PointerEvent<SVGSVGElement>) => {
@@ -833,9 +1446,10 @@ export const Globe = React.memo(
       const drag = dragging.current;
       if (!drag || drag.id !== event.pointerId) {
         if (event.pointerType === 'mouse') {
-          const plate = plateAt(event.target);
-          if (plate !== state.hover) {
+          const [plate, piece] = plateAt(event.target);
+          if (plate !== state.hover || piece !== state.hoverPiece) {
             state.hover = plate;
+            state.hoverPiece = piece;
             touch();
           }
         }
@@ -848,10 +1462,11 @@ export const Globe = React.memo(
         drag.moved = true;
         svg.current?.setPointerCapture(event.pointerId);
         state.hover = -1;
+        state.hoverPiece = -1;
       }
       // Screen pixels to view-box units, then the ball's surface follows the pointer at its middle.
       const box = svg.current?.getBoundingClientRect();
-      const perPixel = box ? WIDTH / (state.scale * (1 + (GLOBE_ONLY_SCALE - 1) * state.mix)) / box.width : 1;
+      const perPixel = box ? 1 / (state.viewScale * pixelsPerUnit(box.width, box.height)) : 1;
       const degrees = ((dx * perPixel) / (R * K)) / RADIANS;
       const now = performance.now();
       const seconds = Math.max(1e-3, (now - drag.t) / 1000);
@@ -884,7 +1499,7 @@ export const Globe = React.memo(
         const speed = Math.hypot(...state.omega);
         if (speed > 4) state.omega = scale(state.omega, 4 / speed);
       } else if (drag.moved) state.rate = Math.max(-240, Math.min(240, drag.v));
-      else if (drag.plate >= 0) toggle(drag.plate);
+      else if (drag.plate[0] >= 0) toggle(drag.plate[0], drag.plate[1]);
       touch();
     };
 
@@ -892,6 +1507,7 @@ export const Globe = React.memo(
       const state = live.current;
       if (state.hover >= 0 && !dragging.current) {
         state.hover = -1;
+        state.hoverPiece = -1;
         touch();
       }
     };
@@ -899,6 +1515,20 @@ export const Globe = React.memo(
     React.useEffect(() => {
       report();
     }, [report]);
+
+    // Names are sized in screen pixels, so the drawing's width on the page is kept at hand.
+    React.useEffect(() => {
+      const node = svg.current;
+      if (!node) return;
+      const observer = new ResizeObserver(([entry]) => {
+        live.current.cssWidth = entry.contentRect.width;
+        live.current.cssHeight = entry.contentRect.height;
+        live.current.dirty = true;
+        kick();
+      });
+      observer.observe(node);
+      return () => observer.disconnect();
+    }, [kick]);
 
     return (
       <div ref={anchor} className={styles.stage}>
@@ -927,6 +1557,7 @@ export const Globe = React.memo(
           <g ref={standBack} dangerouslySetInnerHTML={{ __html: STAND_BACK }} />
           <g ref={sorted} />
           <g ref={standFront} dangerouslySetInnerHTML={{ __html: STAND_FRONT }} />
+          <g ref={labelLayer} className={styles.labels} />
         </svg>
         <span ref={announce} className={styles.hidden} aria-live="polite" />
       </div>

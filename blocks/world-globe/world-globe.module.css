@@ -411,6 +411,74 @@
   stroke-width: 1.1;
 }
 
+/* A country split open: its provinces carry the subject's edge, and the rest of the map steps back. */
+.piece .face {
+  stroke: var(--anatomy-hi);
+}
+
+/* The rest of the map sinks toward the ocean's tone: faces and their sides, not their opacity, so no
+   side shows through a face. No transition: plate tones change every frame as the ball turns. */
+.svg[data-focusing] .plate:not(.piece) .face {
+  fill: var(--wg-ocean-mid);
+  stroke: var(--anatomy-lo);
+}
+
+.svg[data-focusing] .plate:not(.piece) .walls,
+.svg[data-focusing] .core .walls {
+  fill: var(--wg-ocean-lo);
+}
+
+.svg[data-focusing] .plate:not(.piece) .base,
+.svg[data-focusing] .core .base {
+  stroke: var(--anatomy-faint);
+}
+
+/* Province names, printed on their pieces while a country is split open. */
+.labels {
+  pointer-events: none;
+}
+
+.labelText {
+  fill: var(--anatomy-strong);
+  font-family: var(--anatomy-mono);
+  letter-spacing: 0.04em;
+  dominant-baseline: central;
+  paint-order: stroke;
+  stroke: var(--wg-land-hi);
+  stroke-width: 0.3em;
+  stroke-linejoin: round;
+}
+
+/* Set beside the country, over whatever is there, so its halo is the card's colour. */
+.labelText[data-outside] {
+  stroke: var(--anatomy-card);
+}
+
+.label[data-lit] .labelText {
+  font-weight: 600;
+}
+
+.labelWire {
+  stroke: var(--anatomy-mid);
+}
+
+.labelDots {
+  fill: var(--anatomy-hi);
+  stroke: none;
+}
+
+/* Provincial borders printed on a whole plate that can split along them. */
+.borders {
+  stroke-width: 0.45;
+  stroke-dasharray: 1.4 1.2;
+  pointer-events: none;
+  opacity: 0.85;
+}
+
+.plate[data-lit] .borders {
+  stroke: var(--anatomy-mid);
+}
+
 .plate[data-lit] .base {
   stroke: var(--anatomy-mid);
 }
