@@ -309,7 +309,7 @@ export const Globe = React.memo(
     /** Draw the ball at its current spin, tilt and lifts, and put everything in painter's order. */
     const draw = React.useCallback(() => {
       const state = live.current;
-      if (!state.built) return;
+      if (!state.built || !sorted.current) return;
       if (!(Math.abs(state.tilt - state.tiltDrawn) <= 1e-3)) placeRing(state.tilt);
       const { tilt } = state;
       const M = state.orient;
@@ -526,6 +526,8 @@ export const Globe = React.memo(
     const tick = React.useCallback(
       (dt: number, calm: boolean) => {
         const state = live.current;
+        // Unmounting detaches the refs before the loop's cleanup cancels it, so a frame can land in between.
+        if (!sorted.current) return false;
         build();
         let moving = false;
 
