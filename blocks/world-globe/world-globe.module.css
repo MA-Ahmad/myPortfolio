@@ -1,0 +1,491 @@
+.root {
+  /* Land, ocean, plate sides and empty sockets: paper in light, near-black in dark. */
+  --wg-land-hi: #ffffff;
+  --wg-land-lo: #e4e4e0;
+  --wg-land-lit: #ffffff;
+  --wg-ocean-hi: #eeeeeb;
+  --wg-ocean-mid: #e2e2df;
+  --wg-ocean-lo: #cfcfcb;
+  --wg-wall: #c9c9c5;
+  --wg-socket: #bdbdb8;
+  --wg-shadow: rgba(40, 40, 30, 0.3);
+  position: relative;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 40px 20px 48px;
+  color: var(--anatomy-text);
+}
+
+.root[data-theme='dark'] {
+  --wg-land-hi: #303030;
+  --wg-land-lo: #1a1a1a;
+  --wg-land-lit: #3a3a3a;
+  --wg-ocean-hi: #1f1f1f;
+  --wg-ocean-mid: #131313;
+  --wg-ocean-lo: #060606;
+  --wg-wall: #0c0c0c;
+  --wg-socket: #050505;
+  --wg-shadow: rgba(0, 0, 0, 0.6);
+}
+
+.root :global(.iso-figure) {
+  margin: 0;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────────────── */
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+  margin-bottom: 14px;
+  font-family: var(--anatomy-mono);
+  font-size: 12px;
+}
+
+.group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupLabel {
+  margin-right: 4px;
+  color: var(--anatomy-muted);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-text);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    box-shadow 160ms var(--anatomy-ease),
+    color 160ms var(--anatomy-ease),
+    transform 120ms var(--anatomy-ease);
+}
+
+.chip:not(:disabled):hover {
+  box-shadow: 0 0 0 1px var(--anatomy-mid);
+  color: var(--anatomy-strong);
+}
+
+.chip:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.chip:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.chip[aria-pressed='true'] {
+  box-shadow: 0 0 0 1px var(--anatomy-hi);
+  color: var(--anatomy-strong);
+}
+
+.chip:focus-visible,
+.send:focus-visible {
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 4px;
+}
+
+/* The card's own border already frames the globe, so its focus draws no second line inside it. */
+.stageFrame:focus,
+.stageFrame:focus-visible {
+  outline: none;
+}
+
+.send {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-strong);
+  color: var(--anatomy-card);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    opacity 160ms var(--anatomy-ease),
+    transform 120ms var(--anatomy-ease);
+}
+
+.send:active {
+  transform: scale(0.97);
+}
+
+.send:disabled {
+  opacity: 0.45;
+  cursor: progress;
+}
+
+.stageFrame {
+  position: relative;
+  cursor: grab;
+  touch-action: pan-y;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Off the stand a drag turns the globe in every direction, so touch must not scroll the page under it. */
+.stageFrame[data-free] {
+  touch-action: none;
+}
+
+.stageFrame:active {
+  cursor: grabbing;
+}
+
+/* Zoom in, zoom out and reset, in the card's top right under its title. */
+.view {
+  position: absolute;
+  top: 40px;
+  right: 20px;
+  z-index: 1;
+  display: flex;
+  gap: 1px;
+  background: var(--anatomy-faint);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+}
+
+.viewButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  color: var(--anatomy-text);
+  cursor: pointer;
+  transition:
+    color 160ms var(--anatomy-ease),
+    background-color 160ms var(--anatomy-ease);
+}
+
+.viewButton svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 1.6;
+  transition: transform 120ms var(--anatomy-ease);
+}
+
+.viewButton:not(:disabled):hover {
+  background: var(--anatomy-page);
+  color: var(--anatomy-strong);
+}
+
+.viewButton:not(:disabled):active svg {
+  transform: scale(0.88);
+}
+
+.viewText {
+  width: auto;
+  padding: 0 10px;
+  font-family: var(--anatomy-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--anatomy-muted);
+}
+
+.viewText[aria-pressed='true'] {
+  color: var(--anatomy-strong);
+  background: var(--anatomy-page);
+}
+
+.viewButton:disabled {
+  color: var(--anatomy-lo);
+  cursor: not-allowed;
+}
+
+.viewButton:focus-visible {
+  position: relative;
+  z-index: 1;
+  outline: 1px solid var(--anatomy-muted);
+  outline-offset: 2px;
+}
+
+.hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+
+/* ── Keyboard shortcuts ───────────────────────────────────────────────────── */
+
+.kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  background: var(--anatomy-page);
+  color: var(--anatomy-muted);
+  font-family: var(--anatomy-mono);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.chip .kbd {
+  margin-right: -4px;
+}
+
+.send .kbd {
+  box-shadow: none;
+  background: transparent;
+  color: inherit;
+  opacity: 0.6;
+}
+
+.keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 4px;
+}
+
+.keyItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.keyItem .kbd + .kbd {
+  margin-left: -1px;
+}
+
+.keyItem .kbd:last-of-type {
+  margin-right: 3px;
+}
+
+/* ── Find a country ───────────────────────────────────────────────────────── */
+
+.find {
+  width: 168px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 0;
+  background: var(--anatomy-card);
+  box-shadow: 0 0 0 1px var(--anatomy-faint);
+  color: var(--anatomy-strong);
+  font: inherit;
+  transition: box-shadow 160ms var(--anatomy-ease);
+}
+
+.find::placeholder {
+  color: var(--anatomy-muted);
+}
+
+.find:hover,
+.find:focus {
+  box-shadow: 0 0 0 1px var(--anatomy-mid);
+  outline: none;
+}
+
+.find[aria-invalid='true'] {
+  box-shadow: 0 0 0 1px var(--anatomy-red);
+}
+
+/* ── The globe ────────────────────────────────────────────────────────────── */
+
+.stage :global(.iso-svg) {
+  overflow: hidden;
+}
+
+.svg {
+  max-height: min(78vh, 820px);
+}
+
+.core,
+.walls,
+.base {
+  pointer-events: none;
+}
+
+.graticule {
+  stroke-width: 0.45;
+}
+
+.socket {
+  fill: var(--wg-socket);
+  stroke: var(--anatomy-lo);
+  stroke-width: var(--anatomy-weight);
+  stroke-linejoin: round;
+}
+
+.plate {
+  cursor: pointer;
+}
+
+.shadow {
+  fill: var(--wg-shadow);
+  stroke: none;
+  pointer-events: none;
+}
+
+.walls {
+  fill: var(--wg-wall);
+  stroke: none;
+}
+
+.face {
+  --wg-tone: 60%;
+  fill: color-mix(in srgb, var(--wg-land-hi) var(--wg-tone), var(--wg-land-lo));
+  stroke: var(--anatomy-mid);
+  stroke-width: var(--anatomy-weight);
+  stroke-linejoin: round;
+}
+
+.plate[data-lit] .face {
+  fill: var(--wg-land-lit);
+  stroke: var(--anatomy-lit);
+  stroke-width: 1.1;
+}
+
+.plate[data-lit] .base {
+  stroke: var(--anatomy-mid);
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  .chip,
+  .send,
+  .find,
+  .viewButton,
+  .viewButton svg {
+    transition: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .root {
+    padding: 24px 12px 32px;
+  }
+
+  .find {
+    width: 132px;
+  }
+}
+
+/* ── Loading ──────────────────────────────────────────────────────────────── */
+
+/* Until it is ready the block is hidden behind a skeleton, with no transitions, so applying the
+   theme doesn't animate every control from light to dark. The skeleton follows the page's theme
+   class, which is set before the first paint. */
+.root[data-booting] {
+  visibility: hidden;
+}
+
+.root[data-booting] *,
+.root[data-booting] *::before,
+.root[data-booting] *::after {
+  transition: none !important;
+}
+
+.skeleton {
+  --sk-fill: rgba(0, 0, 0, 0.07);
+  --sk-line: rgba(0, 0, 0, 0.1);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: inherit;
+  visibility: visible;
+  /* Only shown if loading takes a moment, so a quick load never flashes it. */
+  animation: skeleton-in 200ms ease-out 250ms backwards;
+}
+
+:global(.dark) .skeleton {
+  --sk-fill: rgba(255, 255, 255, 0.07);
+  --sk-line: rgba(255, 255, 255, 0.08);
+}
+
+.skeletonRow {
+  display: flex;
+  gap: 8px;
+}
+
+.skeletonRow span {
+  height: 32px;
+  width: 96px;
+  border-radius: 999px;
+  background: var(--sk-fill);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeletonRow span:first-child {
+  width: 160px;
+}
+
+.skeletonFigure {
+  position: relative;
+  flex: 0 1 auto;
+  aspect-ratio: 16 / 10;
+  max-height: 100%;
+  min-height: 0;
+  border: 1px solid var(--sk-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* The floor plate, as a flat isometric diamond. */
+.skeletonFigure span {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(56%, 520px);
+  aspect-ratio: 1;
+  background: var(--sk-fill);
+  border-radius: 8%;
+  transform: translate(-50%, -50%) scaleY(0.5774) rotate(45deg);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes skeleton-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation-duration: 1ms;
+  }
+
+  .skeletonRow span,
+  .skeletonFigure span {
+    animation: none;
+  }
+}

@@ -1,0 +1,211 @@
+'use client';
+
+// A client component: in the App Router (v0, `npx shadcn add`) it runs in the browser. The Pages Router ignores this.
+import { type FormEvent, type KeyboardEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { useTheme } from 'next-themes';
+import { MinusIcon, PlusIcon, RotateCcwIcon } from 'lucide-react';
+import { ISO_CSS } from './iso-kit';
+import { Plate } from './iso-react';
+import { BY_NAME, COUNTRIES, EARTH_TILT } from './globe';
+import { Globe, SCALE_MOST, SCALE_STEP, type GlobeHandle, type GlobeState } from './live';
+import styles from './world-globe.module.css';
+
+const CAPTION = `${COUNTRIES.length} countries cut from Natural Earth’s 1:110m outlines, each a plate set into its own socket in the ocean ball. Areas are measured on those outlines over a sphere of Earth’s mean radius (6,371 km), so they are close to the official figures, not equal to them. The axis leans ${EARTH_TILT.toFixed(1)}° in the meridian ring, as Earth’s does; the ring is graduated in degrees of latitude, and the hour circle at the North Pole turns with the ball, 15° to the hour, its pointer on the Greenwich meridian.`;
+
+/** The keyboard shortcuts, shown under the figure. They work once the globe has focus (click it or Tab to it). */
+const KEYS: [string[], string][] = [
+  [['V'], 'on the stand or globe only'],
+  [['←', '→'], 'spin'],
+  [['↑', '↓'], 'tilt the axis, or roll it off the stand'],
+  [['S'], 'start or stop spinning'],
+  [['B'], 'break apart or make whole'],
+  [['Esc'], 'put every country back'],
+  [['+', '−'], 'zoom'],
+  [['0'], 'reset the view']
+];
+
+/**
+ * A desk globe whose countries are separate plates: spin it, pull a country out of its socket, or break
+ * the whole map apart. Drawn with the Anatomy kit (isometric SVG); the ball is projected with d3-geo.
+ */
+export default function WorldGlobe() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  const globe = useRef<GlobeHandle>(null);
+  const [state, setState] = useState<GlobeState>({ broken: false, spinning: true, pulled: 0, scale: 1, selected: -1, free: false });
+  const [query, setQuery] = useState('');
+  const [missing, setMissing] = useState(false);
+
+  // Ready two frames after mounting, once the globe has drawn with the right theme.
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    let frame = requestAnimationFrame(
+      () =>
+        (frame = requestAnimationFrame(() => {
+          setReady(true);
+          try {
+            localStorage.setItem('world-globe:seen', '1');
+          } catch {}
+        }))
+    );
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
+
+  const onState = useCallback((next: GlobeState) => setState(next), []);
+
+  const find = (event: FormEvent) => {
+    event.preventDefault();
+    const wanted = query.trim().toLowerCase();
+    if (!wanted) return;
+    const country =
+      BY_NAME.find((option) => option.name.toLowerCase() === wanted) ?? BY_NAME.find((option) => option.name.toLowerCase().startsWith(wanted)) ?? BY_NAME.find((option) => option.name.toLowerCase().includes(wanted));
+    setMissing(!country);
+    if (!country) return;
+    setQuery(country.name);
+    globe.current?.find(country.index);
+  };
+
+  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const step = event.shiftKey ? 45 : 15;
+    if (event.key === 'ArrowLeft') globe.current?.turn(-step);
+    else if (event.key === 'ArrowRight') globe.current?.turn(step);
+    else if (event.key === 'ArrowUp') globe.current?.tiltBy(-2);
+    else if (event.key === 'ArrowDown') globe.current?.tiltBy(2);
+    else if (event.key === 'b' || event.key === 'B') globe.current?.setBroken(!state.broken);
+    else if (event.key === 'v' || event.key === 'V') globe.current?.setFree(!state.free);
+    else if (event.key === 's' || event.key === 'S') globe.current?.setSpinning(!state.spinning);
+    else if (event.key === 'Escape') globe.current?.putBack();
+    else if (event.key === '+' || event.key === '=') globe.current?.scaleBy(SCALE_STEP);
+    else if (event.key === '-' || event.key === '_') globe.current?.scaleBy(1 / SCALE_STEP);
+    else if (event.key === '0' || event.key === 'Home') globe.current?.home();
+    else return;
+    event.preventDefault();
+  };
+
+  return (
+    // Behind a skeleton until ready: before then the theme isn't known, and a dark page would flash light.
+    <section className={`iso ${styles.root}`} data-theme={theme} data-booting={ready ? undefined : ''} aria-busy={!ready}>
+      <style dangerouslySetInnerHTML={{ __html: ISO_CSS }} />
+      {ready ? null : (
+        <>
+          <div className={styles.skeleton} aria-hidden="true" suppressHydrationWarning>
+            <div className={styles.skeletonRow}>
+              <span />
+              <span />
+              <span />
+            </div>
+            <div className={styles.skeletonFigure}>
+              <span />
+            </div>
+          </div>
+          {/* A visitor who has seen the block before skips the skeleton: it is drawn again in a blink. */}
+          <script dangerouslySetInnerHTML={{ __html: `try{localStorage.getItem('world-globe:seen')&&(document.currentScript.previousElementSibling.style.display='none')}catch(e){}` }} />
+        </>
+      )}
+      <div className={styles.toolbar}>
+        <div className={styles.group} role="group" aria-label="The map">
+          <button type="button" className={styles.chip} aria-pressed={!state.broken} onClick={() => globe.current?.setBroken(false)}>
+            Whole
+            <kbd className={styles.kbd}>B</kbd>
+          </button>
+          <button type="button" className={styles.chip} aria-pressed={state.broken} onClick={() => globe.current?.setBroken(true)}>
+            Broken apart
+            <kbd className={styles.kbd}>B</kbd>
+          </button>
+          <button type="button" className={styles.chip} aria-pressed={state.spinning} onClick={() => globe.current?.setSpinning(!state.spinning)}>
+            {state.spinning ? 'Spinning' : 'Still'}
+            <kbd className={styles.kbd}>S</kbd>
+          </button>
+        </div>
+        <form className={styles.group} onSubmit={find} role="search">
+          <label className={styles.groupLabel} htmlFor="world-globe-find">
+            Find
+          </label>
+          <input
+            id="world-globe-find"
+            className={styles.find}
+            list="world-globe-countries"
+            value={query}
+            placeholder="A country"
+            autoComplete="off"
+            aria-invalid={missing || undefined}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setMissing(false);
+            }}
+          />
+          <datalist id="world-globe-countries">
+            {BY_NAME.map((country) => (
+              <option key={country.index} value={country.name} />
+            ))}
+          </datalist>
+          <button type="submit" className={styles.send}>
+            Pull out
+          </button>
+          <button type="button" className={styles.chip} disabled={!state.pulled && !state.broken} onClick={() => globe.current?.putBack()}>
+            Put back
+            <kbd className={styles.kbd}>Esc</kbd>
+          </button>
+        </form>
+      </div>
+      <Plate
+        fig="Fig 1"
+        title="A globe in pieces"
+        hint={state.free ? 'Drag to turn it any way · click a country' : 'Drag to spin · click a country'}
+        readout="Facing · axis 23.4°"
+        keys={[
+          { mark: 'lit', label: 'The country you picked' },
+          { mark: 'raised', label: 'A country’s plate, set in the ball' },
+          { mark: 'flat', label: 'Its socket, once the plate is out' }
+        ]}
+        caption={
+          <>
+            <span className={styles.keys} aria-label="Keyboard shortcuts, once the globe is focused">
+              {KEYS.map(([keys, action]) => (
+                <span key={action} className={styles.keyItem}>
+                  {keys.map((key) => (
+                    <kbd key={key} className={styles.kbd}>
+                      {key}
+                    </kbd>
+                  ))}
+                  {action}
+                </span>
+              ))}
+            </span>
+            {CAPTION}
+          </>
+        }
+      >
+        <div className={styles.view} role="group" aria-label="View">
+          <button type="button" className={`${styles.viewButton} ${styles.viewText}`} aria-pressed={!state.free} onClick={() => globe.current?.setFree(false)} title="On its stand (V)">
+            Stand
+          </button>
+          <button type="button" className={`${styles.viewButton} ${styles.viewText}`} aria-pressed={state.free} onClick={() => globe.current?.setFree(true)} title="Globe only, turns any way (V)">
+            Globe
+          </button>
+          <button type="button" className={styles.viewButton} onClick={() => globe.current?.scaleBy(SCALE_STEP)} disabled={state.scale >= SCALE_MOST} aria-label="Zoom in" title="Zoom in (+)">
+            <PlusIcon aria-hidden="true" />
+          </button>
+          <button type="button" className={styles.viewButton} onClick={() => globe.current?.scaleBy(1 / SCALE_STEP)} disabled={state.scale <= 1} aria-label="Zoom out" title="Zoom out (−)">
+            <MinusIcon aria-hidden="true" />
+          </button>
+          <button type="button" className={styles.viewButton} onClick={() => globe.current?.home()} aria-label="Reset view" title="Reset view (0)">
+            <RotateCcwIcon aria-hidden="true" />
+          </button>
+        </div>
+        <div
+          className={styles.stageFrame}
+          data-free={state.free ? '' : undefined}
+          role="group"
+          tabIndex={0}
+          aria-label="Globe. V takes it off its stand or puts it back. Left and right arrows spin it, up and down slide the ring to tilt the axis (off the stand, they turn it any way), B breaks the map apart, S starts or stops the spin, Escape puts every country back, plus and minus zoom, and 0 resets the view."
+          onKeyDown={onKeyDown}
+        >
+          <Globe ref={globe} onState={onState} />
+        </div>
+      </Plate>
+    </section>
+  );
+}

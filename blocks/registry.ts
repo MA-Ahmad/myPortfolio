@@ -55,6 +55,17 @@ export const BLOCK_CATEGORIES: BlockCategory[] = [
 
 export const BLOCKS: BlockMeta[] = [
   {
+    name: 'world-globe',
+    title: 'World globe',
+    description: 'An isometric desk globe whose countries are separate plates: spin it, pull any country out of its socket, or break the whole map apart.',
+    category: 'interactive',
+    createdAt: '2026-10-27',
+    files: ['world-globe.tsx', 'live.tsx', 'globe.ts', 'stand.ts', 'world-globe.module.css', 'iso-react.tsx', 'iso-kit.ts'],
+    iframeHeight: 1040,
+    dependencies: ['d3-geo', 'topojson-client', 'world-atlas', 'next-themes', 'lucide-react'],
+    devDependencies: ['@types/d3-geo', '@types/topojson-client']
+  },
+  {
     name: 'chatgpt-postgres',
     title: 'ChatGPT Postgres',
     description: 'How OpenAI scaled PostgreSQL for 800 million ChatGPT users, animated: the first design and today’s, in normal traffic, a cache-miss spike and a primary failure.',
