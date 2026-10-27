@@ -2,7 +2,8 @@ import NextLink from 'next/link';
 import { type BlockMeta, blockHref } from 'blocks/registry';
 import { BlockThumbnail } from './block-thumbnail';
 
-function BlockItem({ block }: { block: BlockMeta }) {
+/** A block's card: its still, title and description, all one link to the block's page. */
+export function BlockItem({ block, heading: Heading = 'h2' }: { block: BlockMeta; heading?: 'h2' | 'h3' }) {
   return (
     <div className="group/block relative flex h-full flex-col gap-2 p-2 transition-[background-color] duration-150 ease-out hover:bg-accent-muted">
       <div className="relative">
@@ -11,12 +12,12 @@ function BlockItem({ block }: { block: BlockMeta }) {
       </div>
 
       <div className="flex flex-col gap-1 p-2">
-        <h2 className="text-lg font-medium leading-snug text-balance">
+        <Heading className="text-lg font-medium leading-snug text-balance">
           <NextLink href={blockHref(block)} className="text-foreground no-underline">
             <span className="absolute inset-0" aria-hidden />
             {block.title}
           </NextLink>
-        </h2>
+        </Heading>
         <p className="text-sm text-muted-foreground">{block.description}</p>
       </div>
     </div>
