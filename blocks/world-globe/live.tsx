@@ -26,6 +26,7 @@ import {
   dot,
   hasDivisions,
   loadDivisions,
+  piecesPhrase,
   faceMatrix,
   facingPoint,
   latText,
@@ -182,13 +183,23 @@ interface Split {
   anchors: ([number, number] | null)[];
 }
 
+/** "a state", "an emirate": the commonest kind of piece a country splits into, as a phrase. */
+function unitOf(pieces: { kind: string }[]) {
+  const kinds = new Map<string, number>();
+  for (const piece of pieces) kinds.set(piece.kind.toLowerCase(), (kinds.get(piece.kind.toLowerCase()) ?? 0) + 1);
+  const kind = Array.from(kinds).sort((a, b) => b[1] - a[1])[0]?.[0] ?? 'part';
+  return `${/^[aeiou]/.test(kind) ? 'an' : 'a'} ${kind}`;
+}
+
 /** How far the pieces of a split country move apart, and how much they rise above the plate's height. */
 const SPREAD = 4.5;
 const PIECE_RISE = 1.2;
 const PIECE_PICKED = 3.5;
 /** A split country fills this share of the view, however small it is, up to this zoom. */
 const FOCUS_FILL = 0.66;
-const FOCUS_MOST = 16;
+const FOCUS_MOST = 48;
+/** How high a country split open stands above its socket. */
+const FOCUS_LIFT = 12;
 /** Province names: their size on screen in CSS pixels, and the smallest they shrink to before going outside. */
 const LABEL_PX = 11;
 const LABEL_MIN_PX = 8.5;
@@ -247,6 +258,48 @@ function growBox(box: Box, rings: number[][], ox: number, oy: number, size: numb
 }
 
 const emptyBox = (): Box => [Infinity, Infinity, -Infinity, -Infinity];
+
+/**
+ * The box around a country's main landmass. Parts are gathered into clusters of parts near each other
+ * (closer than a sixth of the larger one's size, or the spread of split pieces), and the cluster holding the most area wins: the lower
+ * 48 over Alaska and Hawaii, metropolitan France over French Guiana.
+ */
+function mainBox(parts: { box: Box; weight: number }[]): Box | null {
+  const items = parts.filter((part) => Number.isFinite(part.box[0]));
+  if (!items.length) return null;
+  const root = items.map((_, k) => k);
+  const find = (k: number): number => (root[k] === k ? k : (root[k] = find(root[k])));
+  const size = ([x0, y0, x1, y1]: Box) => Math.max(x1 - x0, y1 - y0);
+  for (let a = 0; a < items.length; a++) {
+    for (let b = a + 1; b < items.length; b++) {
+      const A = items[a].box;
+      const B = items[b].box;
+      // Split pieces sit apart on purpose, so parts within the spread of each other always join.
+      const reach = Math.max(size(A) / 6, size(B) / 6, SPREAD * K * 1.6);
+      const gap = Math.max(A[0] - B[2], B[0] - A[2], A[1] - B[3], B[1] - A[3]);
+      if (gap <= reach) root[find(a)] = find(b);
+    }
+  }
+  const weight = new Map<number, number>();
+  items.forEach((item, k) => weight.set(find(k), (weight.get(find(k)) ?? 0) + item.weight));
+  const best = Array.from(weight).sort((p, q) => q[1] - p[1])[0][0];
+  const box = emptyBox();
+  items.forEach((item, k) => {
+    if (find(k) !== best) return;
+    box[0] = Math.min(box[0], item.box[0]);
+    box[1] = Math.min(box[1], item.box[1]);
+    box[2] = Math.max(box[2], item.box[2]);
+    box[3] = Math.max(box[3], item.box[3]);
+  });
+  return box;
+}
+
+/** A ring's area on screen, in view-box units, to weigh a plate's parts before it splits. */
+function ringArea(ring: number[], size: number) {
+  let sum = 0;
+  for (let i = 0, j = ring.length - 2; i < ring.length; j = i, i += 2) sum += (ring[j] - ring[i]) * (ring[j + 1] + ring[i + 1]);
+  return Math.abs(sum / 2) * size * size;
+}
 
 /**
  * CSS pixels per view-box unit at zoom 1. The drawing's height is capped on the page, so its box can be
@@ -372,7 +425,11 @@ export const Globe = React.memo(
       cssHeight: 0,
       /** The +/− buttons while a country is framed scale the framing rather than the whole view. */
       focusZoom: 1,
+      /** Splitting a southern country took the globe off its stand; joining it puts it back. */
+      autoFree: false,
       loading: new Set<number>(),
+      /** Countries whose pieces failed to load. */
+      unsplit: new Set<number>(),
       tour: -1,
       quiet: 0,
       tourWait: 0,
@@ -421,13 +478,15 @@ export const Globe = React.memo(
       const picked = state.selected >= 0 ? COUNTRIES[state.selected] : null;
       const split = picked ? state.splits.get(picked.index) : undefined;
       const out = picked && (state.broken || state.pulled.has(picked.index));
-      const hint = !picked || !out || !hasDivisions(picked)
+      const hint = !picked || !out || !hasDivisions(picked) || state.unsplit.has(picked.index)
         ? ''
         : split && split.target === 1
-          ? 'Click a province · click it again to join them up'
+          ? `Click ${unitOf(split.data.pieces)} · click it again to join them up`
           : state.rejoined === picked.index
             ? `Click ${picked.name} again to put it back`
-            : `Click ${picked.name} again to split it into provinces`;
+            : split
+              ? `Click ${picked.name} again to split it into its ${piecesPhrase(split.data.pieces).length <= 34 ? piecesPhrase(split.data.pieces) : `${split.data.pieces.length} parts`}`
+              : `Click ${picked.name} again to split it`;
       callbacks.current.onState({ broken: state.broken, spinning: state.spinning, pulled: state.pulled.size, scale: state.focus >= 0 ? 1.5 : state.scaleTarget, selected: state.selected, free: state.free, hint });
     }, []);
 
@@ -494,8 +553,18 @@ export const Globe = React.memo(
       const unit = 1 / (state.viewScale * pixelsPerUnit(state.cssWidth, state.cssHeight));
       const all = state.focusBox;
       const litPiece = state.hover === i && state.hoverPiece >= 0 ? state.hoverPiece : state.hover < 0 && state.selected === i ? state.selectedPiece : -1;
+      // Names show only while this country is split open and framed; otherwise they are all hidden.
+      if (shown < 0.01 || !all) {
+        for (const nodes of split.labels) if (nodes.group.style.display !== 'none') nodes.group.style.display = 'none';
+        return;
+      }
       type Placed = { p: number; x: number; y: number; ay: number; ax: number; px: number; lines: string[]; side: number; angle: number };
       const placed: Placed[] = [];
+      // What the page shows of the drawing, in view-box units, less a small margin.
+      const halfW = (state.cssWidth * unit) / 2;
+      const halfH = (state.cssHeight * unit) / 2 || halfW;
+      const seen = { left: state.viewCenter[0] - halfW + 6 * unit, right: state.viewCenter[0] + halfW - 6 * unit, top: state.viewCenter[1] - halfH + 6 * unit, bottom: state.viewCenter[1] + halfH - 6 * unit };
+
       // Fitting a name is the costly part, so at most two are fitted a frame; the rest wait their turn.
       let budget = 2;
       split.data.pieces.forEach((piece, p) => {
@@ -532,7 +601,11 @@ export const Globe = React.memo(
             return [0, -tall, tall].every((d) => reachAlong(shape, x - uy * d, y + ux * d, ux, uy) >= half);
           };
           const halves = twoLines(piece.label);
-          const spots = shape ? candidates(box, anchor).filter((spot) => reachAlong(shape, spot[0], spot[1], 1, 0) > 0) : [];
+          // No angle can fit a name longer than the piece's diagonal: skip the search for those, which is
+          // most of a country of many small units, and the costly case (a search that finds nothing).
+          const shortest = Math.min(piece.label.length, halves ? Math.max(halves[0].length, halves[1].length) : Infinity) * CHAR_EM * LABEL_MIN_PX * unit;
+          const roomy = Math.hypot(width, height) >= shortest;
+          const spots = shape && roomy ? candidates(box, anchor).filter((spot) => reachAlong(shape, spot[0], spot[1], 1, 0) > 0) : [];
           let found: Plan | null = null;
           for (const angles of [[0], LABEL_ANGLES.slice(1)]) {
             for (let size = LABEL_PX; size >= LABEL_MIN_PX && !found; size -= 0.5) {
@@ -552,49 +625,110 @@ export const Globe = React.memo(
           plan = found ?? { fx: 0, fy: 0, angle: 0, lines: [piece.label], px: LABEL_PX, inside: false, width, height, unit };
           split.plans[p] = plan;
         }
-        if (plan!.inside) {
-          placed.push({ p, x: box[0] + plan!.fx * width, y: box[1] + plan!.fy * height, ax: anchor[0], ay: anchor[1], px: plan!.px, lines: plan!.lines, side: 0, angle: plan!.angle });
+        // A name fitted on its piece but cut off by the edge of the view goes beside the country instead.
+        const at = [box[0] + plan!.fx * width, box[1] + plan!.fy * height];
+        const reachX = (Math.max(...plan!.lines.map((line) => line.length)) * CHAR_EM * plan!.px * unit) / 2;
+        const reachY = plan!.lines.length * plan!.px * 0.75 * unit;
+        const reach = plan!.angle ? Math.max(reachX, reachY) : 0;
+        const visible = at[0] - (reach || reachX) >= seen.left && at[0] + (reach || reachX) <= seen.right && at[1] - (reach || reachY) >= seen.top && at[1] + (reach || reachY) <= seen.bottom;
+        if (plan!.inside && visible) {
+          placed.push({ p, x: at[0], y: at[1], ax: anchor[0], ay: anchor[1], px: plan!.px, lines: plan!.lines, side: 0, angle: plan!.angle });
         } else {
-          // Too small: set beside the country, level with the piece, on the side it is nearer if the name
-          // fits there in the view, else the other side, else in a row under the country.
-          const wide = piece.label.length * CHAR_EM * LABEL_PX * unit;
-          const seenHalf = (state.cssWidth * unit) / 2;
-          const seen = [state.viewCenter[0] - seenHalf + 6 * unit, state.viewCenter[0] + seenHalf - 6 * unit];
-          const near = anchor[0] >= (all[0] + all[2]) / 2 ? 1 : -1;
-          const room = (side: number) => (side > 0 ? all[2] + 14 * unit + wide <= seen[1] : all[0] - 14 * unit - wide >= seen[0]);
-          const side = room(near) ? near : room(-near) ? -near : 2;
-          const x = side === 1 ? all[2] + 14 * unit : side === -1 ? all[0] - 14 * unit : Math.min(Math.max(anchor[0], seen[0] + wide / 2), seen[1] - wide / 2);
-          placed.push({ p, x, y: side === 2 ? all[3] + 16 * unit : anchor[1], ax: anchor[0], ay: anchor[1], px: LABEL_PX, lines: [piece.label], side, angle: 0 });
+          // Too small for its name: it is named beside the country, laid out below with the others.
+          placed.push({ p, x: anchor[0], y: anchor[1], ax: anchor[0], ay: anchor[1], px: LABEL_PX, lines: [piece.label], side: 9, angle: 0 });
         }
       });
-      // Names under the country take a row each. Each wire drops straight down from its piece to a dot,
-      // with the name beside it, to the right if every name fits there, else to the left. Rows are
-      // ordered so every wire passes beside the names above it, never through one.
-      const seenHalf = (state.cssWidth * unit) / 2;
-      const seenLeft = state.viewCenter[0] - seenHalf + 6 * unit;
-      const seenRight = state.viewCenter[0] + seenHalf - 6 * unit;
-      const below = placed.filter((label) => label.side === 2);
-      const wideOf = (label: Placed) => label.lines[0].length * CHAR_EM * LABEL_PX * unit;
-      const rightward = below.every((label) => label.ax + 4 * unit + wideOf(label) <= seenRight) || !below.every((label) => label.ax - 4 * unit - wideOf(label) >= seenLeft);
-      below
-        .sort((a, b) => (rightward ? b.ax - a.ax : a.ax - b.ax))
-        .forEach((label, k) => {
-          label.y += k * LABEL_PX * 1.5 * unit;
-          label.x = rightward ? label.ax + 4 * unit : label.ax - 4 * unit;
-          label.side = rightward ? 2 : -2;
-        });
-      // Names set outside stack down each side, a line and a half apart, in the order of their pieces.
-      for (const side of [-1, 1]) {
-        const stack = placed.filter((label) => label.side === side).sort((a, b) => a.ay - b.ay);
-        const gap = LABEL_PX * 1.5 * unit;
-        stack.forEach((label, k) => {
-          if (k) label.y = Math.max(label.y, stack[k - 1].y + gap);
-        });
-        // Then centre the stack on its pieces, so it does not drift down.
-        if (stack.length > 1) {
-          const shift = (stack.reduce((sum, label) => sum + label.ay, 0) - stack.reduce((sum, label) => sum + label.y, 0)) / stack.length;
-          stack.forEach((label) => (label.y += shift));
+
+      // Every piece in view is named. Those whose name will not go on them are set in a column beside
+      // the country, each as near the height of its own piece as the others allow, on the side its
+      // piece is nearer; a side too full for its names passes its middlemost to the other. A crowded
+      // column sets its names smaller (down to LABEL_MIN_PX) and closer. Where neither side has room
+      // (a narrow phone), they go in rows under the country. Pieces out of view are not named.
+      const pending: Placed[] = [];
+      for (const label of placed.filter((item) => item.side === 9)) {
+        placed.splice(placed.indexOf(label), 1);
+        const out = (x: number, y: number) => x < seen.left || x > seen.right || y < seen.top || y > seen.bottom;
+        if (out(label.ax, label.ay)) {
+          // Its anchor is out of view, but part of the piece may not be (Alaska on a phone): anchor the
+          // name at a point inside the piece within the part in view, else leave the piece unnamed.
+          const box = split.boxes[label.p];
+          const shape = split.shapes[label.p];
+          const part: Box = [Math.max(box[0], seen.left), Math.max(box[1], seen.top), Math.min(box[2], seen.right), Math.min(box[3], seen.bottom)];
+          const spot =
+            shape && part[0] < part[2] && part[1] < part[3]
+              ? candidates(part, [(part[0] + part[2]) / 2, (part[1] + part[3]) / 2]).find(([x, y]) => !out(x, y) && reachAlong(shape, x, y, 1, 0) > 0)
+              : undefined;
+          if (!spot) {
+            const nodes = split.labels[label.p];
+            if (nodes.group.style.display !== 'none') nodes.group.style.display = 'none';
+            continue;
+          }
+          [label.ax, label.ay] = spot;
+          [label.x, label.y] = spot;
         }
+        pending.push(label);
+      }
+      const middle = (all[0] + all[2]) / 2;
+      const wideOf = (label: Placed, px: number) => label.lines[0].length * CHAR_EM * px * unit;
+      const widest = (labels: Placed[], px: number) => Math.max(0, ...labels.map((label) => wideOf(label, px)));
+      const roomLeft = all[0] - 14 * unit - widest(pending, LABEL_MIN_PX) >= seen.left;
+      const roomRight = all[2] + 14 * unit + widest(pending, LABEL_MIN_PX) <= seen.right;
+      const height = seen.bottom - seen.top;
+      /** The name size and spacing that fit `n` names in `span`, as large as allowed. */
+      const fit = (n: number, span: number) => {
+        const px = Math.max(LABEL_MIN_PX, Math.min(LABEL_PX, span / Math.max(n, 1) / (1.5 * unit)));
+        return { px, pitch: Math.min(px * 1.5 * unit, span / Math.max(n - 1, 1)) };
+      };
+      /** Spread names down a column: each at its piece's height if it can be, never closer than `pitch`, all within [top, bottom]. */
+      const spread = (labels: Placed[], pitch: number, top: number, bottom: number) => {
+        labels.sort((a, b) => a.ay - b.ay);
+        labels.forEach((label, k) => (label.y = Math.max(Math.min(label.ay, bottom), top, k ? labels[k - 1].y + pitch : top)));
+        for (let k = labels.length - 1; k >= 0; k--) labels[k].y = Math.min(labels[k].y, k < labels.length - 1 ? labels[k + 1].y - pitch : bottom);
+        labels.forEach((label, k) => (label.y = Math.max(label.y, k ? labels[k - 1].y + pitch : top)));
+      };
+      if (roomLeft || roomRight) {
+        const sides: Record<number, Placed[]> = { [-1]: [], 1: [] };
+        for (const label of pending) sides[(label.ax >= middle && roomRight) || !roomLeft ? 1 : -1].push(label);
+        const capacity = Math.floor(height / (LABEL_MIN_PX * 1.5 * unit)) + 1;
+        for (const [from, to] of [
+          [-1, 1],
+          [1, -1]
+        ]) {
+          if (!(to === 1 ? roomRight : roomLeft)) continue;
+          sides[from].sort((a, b) => Math.abs(a.ax - middle) - Math.abs(b.ax - middle));
+          while (sides[from].length > capacity && sides[to].length < capacity) sides[to].push(sides[from].shift()!);
+        }
+        for (const side of [-1, 1]) {
+          const column = sides[side];
+          if (!column.length) continue;
+          const { px, pitch } = fit(column.length, height);
+          const x = side > 0 ? Math.min(all[2] + 14 * unit, seen.right - widest(column, px)) : Math.max(all[0] - 14 * unit, seen.left + widest(column, px));
+          for (const label of column) {
+            label.side = side;
+            label.px = px;
+            label.x = x;
+          }
+          // A name reaches half a line above and below its middle, so the column stops that short of the edges.
+          const half = px * 0.75 * unit;
+          spread(column, pitch, seen.top + half, seen.bottom - half);
+          placed.push(...column);
+        }
+      } else if (pending.length) {
+        // Rows under the country, each wire dropping straight down from its piece to a dot with its
+        // name beside it, to the right if every name fits there, else the left; rows are ordered so
+        // every wire passes beside the names above it, never through one.
+        const top = Math.min(all[3] + 16 * unit, seen.bottom - LABEL_MIN_PX * 0.75 * unit);
+        const { px, pitch } = fit(pending.length, Math.max(seen.bottom - LABEL_MIN_PX * 0.75 * unit - top, LABEL_MIN_PX * unit));
+        const rightward = pending.every((label) => label.ax + 4 * unit + wideOf(label, px) <= seen.right) || !pending.every((label) => label.ax - 4 * unit - wideOf(label, px) >= seen.left);
+        pending
+          .sort((a, b) => (rightward ? b.ax - a.ax : a.ax - b.ax))
+          .forEach((label, k) => {
+            label.px = px;
+            label.y = top + k * pitch;
+            label.x = rightward ? Math.min(label.ax + 4 * unit, seen.right - wideOf(label, px)) : Math.max(label.ax - 4 * unit, seen.left + wideOf(label, px));
+            label.side = rightward ? 2 : -2;
+          });
+        placed.push(...pending);
       }
       for (const { p, x, y, ax, ay, px, lines, side, angle } of placed) {
         const nodes = split.labels[p];
@@ -776,7 +910,8 @@ export const Globe = React.memo(
 
         const following = i === state.focus;
         // Framed by the whole plate until it splits, then by its pieces alone.
-        if (following) state.focusBox = split && split.at > 0 ? emptyBox() : growBox(emptyBox(), rings, ox, oy, (R + PLATE) * K);
+        // Framed by the whole plate until it splits, then by its pieces; either way its main landmass.
+        if (following && !(split && split.at > 0)) state.focusBox = mainBox(rings.map((ring) => ({ box: growBox(emptyBox(), [ring], ox, oy, (R + PLATE) * K), weight: ringArea(ring, (R + PLATE) * K) })));
         if (split && split.at > 0) {
           // Split: the whole plate gives way to its provinces, which rise with it and spread apart along
           // the ball from the country's middle, each casting its own shadow.
@@ -784,6 +919,7 @@ export const Globe = React.memo(
           split.borders.setAttribute('d', '');
           const frame = turned ? multiply(M, turned) : M;
           if (turned) projection.rotate(rotationFrom(P, M, turned));
+          const pieceBoxes: { box: Box; weight: number }[] = [];
           for (const piece of split.data.pieces) {
             const pieceNodes = split.nodes[piece.index];
             sink.reset();
@@ -808,10 +944,7 @@ export const Globe = React.memo(
             const box = growBox(emptyBox(), pieceRings, px, py, (R + PLATE) * K);
             split.boxes[piece.index] = box;
             split.shapes[piece.index] = { rings: pieceRings, ox: px, oy: py, size: (R + PLATE) * K };
-            if (following) {
-              const all = state.focusBox!;
-              state.focusBox = [Math.min(all[0], box[0]), Math.min(all[1], box[1]), Math.max(all[2], box[2]), Math.max(all[3], box[3])];
-            }
+            pieceBoxes.push({ box, weight: piece.area });
             // The name's anchor, on the piece's top face; hidden when it is round the back.
             const anchor = apply(frame, piece.anchorDir);
             const top = add(scale(anchor, R + PLATE), offset);
@@ -830,6 +963,7 @@ export const Globe = React.memo(
             list.push([dot(at, BASIS.toward) * (R + PLATE / 2) + dot(offset, BASIS.toward), pieceNodes.group]);
           }
           if (turned) projection.rotate(rotate);
+          if (following) state.focusBox = mainBox(pieceBoxes);
           placeLabels(split, i);
           continue;
         }
@@ -947,6 +1081,9 @@ export const Globe = React.memo(
       const out = state.broken || state.pulled.has(i);
       const lit = i === state.hover || i === state.tour;
       if (!out) return lit ? HOVER : 0;
+      // A country split open for a close look rises only clear of its socket, so its pieces stay over
+      // the ball (and off the stand, for a country low on it) and read against the sockets they left.
+      if (i === state.focus) return FOCUS_LIFT;
       // On the stand, plates over the column barely rise; alone, every plate comes all the way out.
       const down = -apply(state.orient, COUNTRIES[i].dir)[2];
       const cap = LIFT - (LIFT - HOVER) * smoothstep(0.42, 0.78, down) * (1 - state.mix);
@@ -1193,16 +1330,23 @@ export const Globe = React.memo(
       (i: number) => {
         const state = live.current;
         const country = COUNTRIES[i];
-        if (!hasDivisions(country)) return Promise.resolve(undefined);
+        if (!hasDivisions(country) || state.unsplit.has(i)) return Promise.resolve(undefined);
         const ready = state.splits.get(i);
         if (ready) return Promise.resolve(ready);
         state.loading.add(i);
-        return loadDivisions(country).then((data) => {
+        return loadDivisions(country).catch(() => {
+          // Without its pieces (say the files were not copied) the country just does not split.
+          state.loading.delete(i);
+          state.unsplit.add(i);
+          report();
+          return null;
+        }).then((data) => {
+          if (!data) return undefined;
           state.loading.delete(i);
           const parent = state.plates[i].group;
           const borders = parent.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.borders}`, 'data-tone': 'mid' }));
-          const labels = data.pieces.map(() => {
-            const group = labelLayer.current!.appendChild(make<SVGGElement>('g', { class: styles.label, style: 'display:none' }));
+          const labels = data.pieces.map((piece) => {
+            const group = labelLayer.current!.appendChild(make<SVGGElement>('g', { class: styles.label, style: 'display:none', 'data-i': String(i), 'data-p': String(piece.index) }));
             const wire = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.labelWire}`, 'data-tone': 'mid' }));
             const dots = group.appendChild(make<SVGPathElement>('path', { class: styles.labelDots }));
             const text = group.appendChild(make<SVGTextElement>('text', { class: styles.labelText }));
@@ -1229,21 +1373,51 @@ export const Globe = React.memo(
           state.splits.set(i, split);
           state.dirty = true;
           kick();
+          report();
           return split;
         });
       },
-      [kick]
+      [kick, report]
     );
+
+    /** Take the globe off its stand (turning freely) or put it back, settling onto the axis. */
+    const placeFree = React.useCallback((on: boolean) => {
+      const state = live.current;
+      if (state.free === on) return;
+      state.free = on;
+      state.faceTarget = -1;
+      state.nudge = [0, 0, 0];
+      if (on) {
+        state.spinTarget = null;
+        state.omega = state.spinning ? scale(apply(state.orient, [0, 0, 1]), IDLE_RATE * RADIANS) : [0, 0, 0];
+      } else {
+        // Back on the stand, keep the longitude that faces you and settle onto the axis from there.
+        state.spin = spinToFace(P, facingPoint(P, state.orient).lon, state.tilt);
+        state.spinTarget = null;
+        state.rate = state.spinning ? IDLE_RATE : 0;
+        state.settled = false;
+      }
+    }, []);
+
+    /** Stop following a country; if splitting it took the globe off its stand, put it back. */
+    const releaseFocus = React.useCallback(() => {
+      const state = live.current;
+      state.focus = -1;
+      if (state.autoFree) {
+        state.autoFree = false;
+        placeFree(false);
+      }
+    }, [placeFree]);
 
     /** Join every split country up again. */
     const joinAll = React.useCallback(() => {
       const state = live.current;
       state.splits.forEach((split) => (split.target = 0));
-      state.focus = -1;
+      releaseFocus();
       state.selectedPiece = -1;
       state.hoverPiece = -1;
       state.rejoined = -1;
-    }, []);
+    }, [releaseFocus]);
 
     const setBroken = React.useCallback(
       (on: boolean) => {
@@ -1286,9 +1460,19 @@ export const Globe = React.memo(
             const state = live.current;
             if (state.focus !== i) state.focusZoom = 1;
             state.focus = i;
+            // A country the stand cannot turn to face you (the south, low on the tilted ball) is looked
+            // at the way a person would: off the stand, turned to face you north up. Joining it up
+            // puts the globe back.
+            if (!state.free) {
+              const spin = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
+              if (dot(apply(standMatrix(spin, state.tilt), country.dir), BASIS.toward) < 0.92) {
+                state.autoFree = true;
+                placeFree(true);
+              }
+            }
             if (state.free) state.faceTarget = i;
             else state.spinTarget = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
-            speak(`${country.name} splits into its ${ready.data.pieces.length} provinces and territories.`);
+            speak(`${country.name} splits into its ${piecesPhrase(ready.data.pieces)}.`);
             touch();
             report();
           });
@@ -1296,7 +1480,7 @@ export const Globe = React.memo(
         if (p >= 0 && split && split.target === 1) {
           if (state.selected === i && state.selectedPiece === p) {
             split.target = 0;
-            if (state.focus === i) state.focus = -1;
+            if (state.focus === i) releaseFocus();
             state.selectedPiece = -1;
             state.rejoined = i;
             speak(`${country.name} is whole again.`);
@@ -1305,7 +1489,7 @@ export const Globe = React.memo(
             state.selectedPiece = p;
             speak(describePiece(split.data.pieces[p], country));
           }
-        } else if (out && hasDivisions(country) && state.rejoined !== i && (!state.broken || state.selected === i)) {
+        } else if (out && hasDivisions(country) && !state.unsplit.has(i) && state.rejoined !== i && (!state.broken || state.selected === i)) {
           splitNow();
         } else if (state.broken) {
           state.rejoined = -1;
@@ -1313,7 +1497,7 @@ export const Globe = React.memo(
         } else if (state.pulled.has(i)) {
           state.pulled.delete(i);
           if (split) split.target = 0;
-          if (state.focus === i) state.focus = -1;
+          if (state.focus === i || state.autoFree) releaseFocus();
           state.rejoined = -1;
           if (state.selected === i) state.selected = -1;
           speak(`${country.name} is back in place.`);
@@ -1330,7 +1514,7 @@ export const Globe = React.memo(
         touch();
         report();
       },
-      [prepare, report, touch]
+      [placeFree, prepare, releaseFocus, report, touch]
     );
 
     React.useImperativeHandle(
@@ -1345,11 +1529,15 @@ export const Globe = React.memo(
         find(index) {
           const state = live.current;
           const country = COUNTRIES[index];
-          if (state.free) state.faceTarget = index;
-          else {
-            const want = spinToFace(P, country.lon, state.tilt);
-            state.spinTarget = state.spin + wrap(want - state.spin);
+          if (!state.free) {
+            const want = state.spin + wrap(spinToFace(P, country.lon, state.tilt) - state.spin);
+            // Far south, a country is out of sight on the tilted stand: take the globe off to show it.
+            if (dot(apply(standMatrix(want, state.tilt), country.dir), BASIS.toward) < 0.5) {
+              state.autoFree = true;
+              placeFree(true);
+            } else state.spinTarget = want;
           }
+          if (state.free) state.faceTarget = index;
           if (state.broken) {
             state.selected = index;
           } else {
@@ -1390,19 +1578,9 @@ export const Globe = React.memo(
         setFree(on) {
           const state = live.current;
           if (state.free === on) return;
-          state.free = on;
-          state.faceTarget = -1;
-          state.nudge = [0, 0, 0];
-          if (on) {
-            state.spinTarget = null;
-            state.omega = state.spinning ? scale(apply(state.orient, [0, 0, 1]), IDLE_RATE * RADIANS) : [0, 0, 0];
-          } else {
-            // Back on the stand, keep the longitude that faces you and settle onto the axis from there.
-            state.spin = spinToFace(P, facingPoint(P, state.orient).lon, state.tilt);
-            state.spinTarget = null;
-            state.rate = state.spinning ? IDLE_RATE : 0;
-            state.settled = false;
-          }
+          // The visitor's choice: the globe stays where they put it when a split closes.
+          state.autoFree = false;
+          placeFree(on);
           speak(on ? 'The globe is off its stand: drag to turn it any way.' : 'The globe is back on its stand.');
           touch();
           report();
@@ -1417,13 +1595,13 @@ export const Globe = React.memo(
         home() {
           const state = live.current;
           state.scaleTarget = 1;
-          state.focus = -1;
+          releaseFocus();
           state.tiltTarget = EARTH_TILT;
           touch();
           report();
         }
       }),
-      [joinAll, prepare, report, setBroken, toggle, touch]
+      [joinAll, placeFree, prepare, releaseFocus, report, setBroken, toggle, touch]
     );
 
     // ── Pointer: drag sideways to spin, up and down to slide the ring; click a country to pull it ──

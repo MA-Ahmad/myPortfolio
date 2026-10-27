@@ -57,13 +57,15 @@ export const BLOCKS: BlockMeta[] = [
   {
     name: 'world-globe',
     title: 'World globe',
-    description: 'An isometric desk globe whose countries are separate plates: spin it, pull any country out of its socket, split Pakistan into its provinces, or break the whole map apart.',
+    description: 'An isometric desk globe whose countries are separate plates: spin it, pull any country out of its socket, split it into its states or provinces, or break the whole map apart.',
     category: 'interactive',
     createdAt: '2026-10-27',
-    files: ['world-globe.tsx', 'live.tsx', 'globe.ts', 'stand.ts', 'use-fullscreen.ts', 'world-globe.module.css', 'divisions/pakistan.json', 'divisions/build.mjs', 'iso-react.tsx', 'iso-kit.ts'],
+    files: ['world-globe.tsx', 'live.tsx', 'globe.ts', 'stand.ts', 'use-fullscreen.ts', 'world-globe.module.css', 'divisions/index.json', 'divisions/build.mjs', 'iso-react.tsx', 'iso-kit.ts'],
     iframeHeight: 1040,
     dependencies: ['d3-geo', 'topojson-client', 'world-atlas', 'next-themes', 'lucide-react'],
-    devDependencies: ['@types/d3-geo', '@types/topojson-client', 'polygon-clipping', 'polylabel', 'topojson-server', 'topojson-simplify']
+    devDependencies: ['@types/d3-geo', '@types/topojson-client', 'clipper-lib', 'polylabel', 'topojson-server', 'topojson-simplify'],
+    assets:
+      'The pieces each country splits into, one TopoJSON file per country at `public/blocks/world-globe/divisions/<code>.json` (about 1.4 MB for all 169 together), listed in `divisions/index.json`. Each is fetched only when its country is first pulled out. Rebuild them with `node blocks/world-globe/divisions/build.mjs <ne_10m_admin_1_states_provinces.geojson> <ne_110m_admin_0_countries.geojson>` (Natural Earth, public domain). Without them the globe works as before, and countries simply do not split.'
   },
   {
     name: 'chatgpt-postgres',

@@ -3,6 +3,7 @@ import type { Feature, Geometry, MultiLineString } from 'geojson';
 import { feature, mesh } from 'topojson-client';
 import type { GeometryCollection, Topology } from 'topojson-specification';
 import world from 'world-atlas/countries-110m.json';
+import divisionIndex from './divisions/index.json';
 import { cameraOf, type Point3, type Projection } from './iso-kit';
 
 /**
@@ -107,17 +108,28 @@ export interface Divisions {
 }
 
 /**
- * Countries whose plate splits, each loaded only when first pulled out. The pieces are built by
- * `divisions/build.mjs` from Natural Earth's 1:10m provinces, clipped to tile the 1:110m plate exactly.
+ * Countries whose plate splits, and the file each one's pieces are in. The pieces are built by
+ * `divisions/build.mjs` from Natural Earth's 1:10m admin-1 layer, clipped to tile each 1:110m plate
+ * exactly, and served from `public/`, so a country's pieces load only when it is first pulled out.
  */
-const DIVISION_SOURCES: Record<string, () => Promise<{ default: unknown }>> = {
-  Pakistan: () => import('./divisions/pakistan.json')
-};
+const DIVISION_INDEX = divisionIndex as Record<string, { file: string; count: number }>;
+export const DIVISIONS_URL = '/blocks/world-globe/divisions/';
 
-export const hasDivisions = (country: Country) => country.name in DIVISION_SOURCES;
+export const hasDivisions = (country: Country) => country.name in DIVISION_INDEX;
+
+/** What a country splits into, in words: "4 provinces, 1 federal territory and 2 administrative territories". */
+export function piecesPhrase(pieces: Division[]) {
+  const kinds = new Map<string, number>();
+  for (const piece of pieces) kinds.set(piece.kind.toLowerCase(), (kinds.get(piece.kind.toLowerCase()) ?? 0) + 1);
+  const plural = (word: string) => (/(s|sh|ch|x)$/.test(word) ? `${word}es` : /[^aeiou]y$/.test(word) ? `${word.slice(0, -1)}ies` : `${word}s`);
+  const parts = Array.from(kinds).sort((a, b) => b[1] - a[1]).map(([kind, n]) => `${n} ${n === 1 ? kind : plural(kind)}`);
+  return parts.length > 1 ? `${parts.slice(0, -1).join(', ')} and ${parts[parts.length - 1]}` : parts[0];
+}
 
 export async function loadDivisions(country: Country): Promise<Divisions> {
-  const data = (await DIVISION_SOURCES[country.name]()).default as Topology<{
+  const response = await fetch(`${DIVISIONS_URL}${DIVISION_INDEX[country.name].file}`);
+  if (!response.ok) throw new Error(`${country.name}: divisions failed to load (${response.status})`);
+  const data = (await response.json()) as Topology<{
     units: GeometryCollection<{ name: string; kind: string; label: string; anchor: [number, number] }>;
   }>;
   const pieces = feature(data, data.objects.units).features.map((shape, index) => {

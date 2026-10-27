@@ -1,0 +1,847 @@
+{
+  "Fiji": {
+    "file": "fji.json",
+    "count": 3,
+    "noun": "divisions"
+  },
+  "Tanzania": {
+    "file": "tza.json",
+    "count": 25,
+    "noun": "regions"
+  },
+  "Canada": {
+    "file": "can.json",
+    "count": 13,
+    "noun": "provinces"
+  },
+  "United States of America": {
+    "file": "usa.json",
+    "count": 51,
+    "noun": "states"
+  },
+  "Kazakhstan": {
+    "file": "kaz.json",
+    "count": 14,
+    "noun": "regions"
+  },
+  "Uzbekistan": {
+    "file": "uzb.json",
+    "count": 14,
+    "noun": "regions"
+  },
+  "Papua New Guinea": {
+    "file": "png.json",
+    "count": 19,
+    "noun": "provinces"
+  },
+  "Indonesia": {
+    "file": "idn.json",
+    "count": 31,
+    "noun": "provinces"
+  },
+  "Argentina": {
+    "file": "arg.json",
+    "count": 24,
+    "noun": "provinces"
+  },
+  "Chile": {
+    "file": "chl.json",
+    "count": 16,
+    "noun": "regions"
+  },
+  "Dem. Rep. Congo": {
+    "file": "cod.json",
+    "count": 11,
+    "noun": "provinces"
+  },
+  "Somalia": {
+    "file": "som.json",
+    "count": 12,
+    "noun": "regions"
+  },
+  "Kenya": {
+    "file": "ken.json",
+    "count": 8,
+    "noun": "provinces"
+  },
+  "Sudan": {
+    "file": "sdn.json",
+    "count": 17,
+    "noun": "states"
+  },
+  "Chad": {
+    "file": "tcd.json",
+    "count": 21,
+    "noun": "prefectures"
+  },
+  "Haiti": {
+    "file": "hti.json",
+    "count": 10,
+    "noun": "departments"
+  },
+  "Dominican Rep.": {
+    "file": "dom.json",
+    "count": 32,
+    "noun": "provinces"
+  },
+  "Russia": {
+    "file": "rus.json",
+    "count": 85,
+    "noun": "regions"
+  },
+  "Bahamas": {
+    "file": "bhs.json",
+    "count": 9,
+    "noun": "districts"
+  },
+  "Norway": {
+    "file": "nor.json",
+    "count": 20,
+    "noun": "counties"
+  },
+  "Greenland": {
+    "file": "grl.json",
+    "count": 6,
+    "noun": "divisions"
+  },
+  "Timor-Leste": {
+    "file": "tls.json",
+    "count": 12,
+    "noun": "districts"
+  },
+  "South Africa": {
+    "file": "zaf.json",
+    "count": 9,
+    "noun": "provinces"
+  },
+  "Lesotho": {
+    "file": "lso.json",
+    "count": 10,
+    "noun": "districts"
+  },
+  "Mexico": {
+    "file": "mex.json",
+    "count": 32,
+    "noun": "states"
+  },
+  "Uruguay": {
+    "file": "ury.json",
+    "count": 19,
+    "noun": "departments"
+  },
+  "Brazil": {
+    "file": "bra.json",
+    "count": 27,
+    "noun": "states"
+  },
+  "Bolivia": {
+    "file": "bol.json",
+    "count": 9,
+    "noun": "departments"
+  },
+  "Peru": {
+    "file": "per.json",
+    "count": 25,
+    "noun": "departments"
+  },
+  "Colombia": {
+    "file": "col.json",
+    "count": 32,
+    "noun": "departments"
+  },
+  "Panama": {
+    "file": "pan.json",
+    "count": 12,
+    "noun": "provinces"
+  },
+  "Costa Rica": {
+    "file": "cri.json",
+    "count": 7,
+    "noun": "provinces"
+  },
+  "Nicaragua": {
+    "file": "nic.json",
+    "count": 17,
+    "noun": "departments"
+  },
+  "Honduras": {
+    "file": "hnd.json",
+    "count": 17,
+    "noun": "departments"
+  },
+  "El Salvador": {
+    "file": "slv.json",
+    "count": 14,
+    "noun": "departments"
+  },
+  "Guatemala": {
+    "file": "gtm.json",
+    "count": 22,
+    "noun": "departments"
+  },
+  "Belize": {
+    "file": "blz.json",
+    "count": 6,
+    "noun": "districts"
+  },
+  "Venezuela": {
+    "file": "ven.json",
+    "count": 23,
+    "noun": "states"
+  },
+  "Guyana": {
+    "file": "guy.json",
+    "count": 10,
+    "noun": "regions"
+  },
+  "Suriname": {
+    "file": "sur.json",
+    "count": 10,
+    "noun": "districts"
+  },
+  "France": {
+    "file": "fra.json",
+    "count": 14,
+    "noun": "regions"
+  },
+  "Ecuador": {
+    "file": "ecu.json",
+    "count": 23,
+    "noun": "provinces"
+  },
+  "Jamaica": {
+    "file": "jam.json",
+    "count": 14,
+    "noun": "parishes"
+  },
+  "Cuba": {
+    "file": "cub.json",
+    "count": 15,
+    "noun": "provinces"
+  },
+  "Zimbabwe": {
+    "file": "zwe.json",
+    "count": 10,
+    "noun": "provinces"
+  },
+  "Botswana": {
+    "file": "bwa.json",
+    "count": 12,
+    "noun": "districts"
+  },
+  "Namibia": {
+    "file": "nam.json",
+    "count": 13,
+    "noun": "regions"
+  },
+  "Senegal": {
+    "file": "sen.json",
+    "count": 14,
+    "noun": "regions"
+  },
+  "Mali": {
+    "file": "mli.json",
+    "count": 8,
+    "noun": "regions"
+  },
+  "Mauritania": {
+    "file": "mrt.json",
+    "count": 13,
+    "noun": "regions"
+  },
+  "Benin": {
+    "file": "ben.json",
+    "count": 12,
+    "noun": "departments"
+  },
+  "Niger": {
+    "file": "ner.json",
+    "count": 8,
+    "noun": "departments"
+  },
+  "Nigeria": {
+    "file": "nga.json",
+    "count": 37,
+    "noun": "states"
+  },
+  "Cameroon": {
+    "file": "cmr.json",
+    "count": 10,
+    "noun": "provinces"
+  },
+  "Togo": {
+    "file": "tgo.json",
+    "count": 5,
+    "noun": "regions"
+  },
+  "Ghana": {
+    "file": "gha.json",
+    "count": 10,
+    "noun": "regions"
+  },
+  "Côte d'Ivoire": {
+    "file": "civ.json",
+    "count": 19,
+    "noun": "departments"
+  },
+  "Guinea": {
+    "file": "gin.json",
+    "count": 33,
+    "noun": "prefectures"
+  },
+  "Guinea-Bissau": {
+    "file": "gnb.json",
+    "count": 9,
+    "noun": "regions"
+  },
+  "Liberia": {
+    "file": "lbr.json",
+    "count": 15,
+    "noun": "counties"
+  },
+  "Sierra Leone": {
+    "file": "sle.json",
+    "count": 4,
+    "noun": "provinces"
+  },
+  "Burkina Faso": {
+    "file": "bfa.json",
+    "count": 13,
+    "noun": "regions"
+  },
+  "Central African Rep.": {
+    "file": "caf.json",
+    "count": 17,
+    "noun": "prefectures"
+  },
+  "Congo": {
+    "file": "cog.json",
+    "count": 12,
+    "noun": "regions"
+  },
+  "Gabon": {
+    "file": "gab.json",
+    "count": 9,
+    "noun": "provinces"
+  },
+  "Eq. Guinea": {
+    "file": "gnq.json",
+    "count": 4,
+    "noun": "provinces"
+  },
+  "Zambia": {
+    "file": "zmb.json",
+    "count": 10,
+    "noun": "provinces"
+  },
+  "Malawi": {
+    "file": "mwi.json",
+    "count": 27,
+    "noun": "districts"
+  },
+  "Mozambique": {
+    "file": "moz.json",
+    "count": 11,
+    "noun": "provinces"
+  },
+  "eSwatini": {
+    "file": "swz.json",
+    "count": 4,
+    "noun": "districts"
+  },
+  "Angola": {
+    "file": "ago.json",
+    "count": 18,
+    "noun": "provinces"
+  },
+  "Burundi": {
+    "file": "bdi.json",
+    "count": 17,
+    "noun": "provinces"
+  },
+  "Israel": {
+    "file": "isr.json",
+    "count": 6,
+    "noun": "districts"
+  },
+  "Lebanon": {
+    "file": "lbn.json",
+    "count": 6,
+    "noun": "provinces"
+  },
+  "Madagascar": {
+    "file": "mdg.json",
+    "count": 22,
+    "noun": "autonomous provinces"
+  },
+  "Gambia": {
+    "file": "gmb.json",
+    "count": 6,
+    "noun": "divisions"
+  },
+  "Tunisia": {
+    "file": "tun.json",
+    "count": 23,
+    "noun": "governorates"
+  },
+  "Algeria": {
+    "file": "dza.json",
+    "count": 48,
+    "noun": "provinces"
+  },
+  "Jordan": {
+    "file": "jor.json",
+    "count": 12,
+    "noun": "provinces"
+  },
+  "United Arab Emirates": {
+    "file": "are.json",
+    "count": 8,
+    "noun": "emirates"
+  },
+  "Qatar": {
+    "file": "qat.json",
+    "count": 7,
+    "noun": "municipalities"
+  },
+  "Kuwait": {
+    "file": "kwt.json",
+    "count": 6,
+    "noun": "provinces"
+  },
+  "Iraq": {
+    "file": "irq.json",
+    "count": 18,
+    "noun": "provinces"
+  },
+  "Oman": {
+    "file": "omn.json",
+    "count": 11,
+    "noun": "regions"
+  },
+  "Vanuatu": {
+    "file": "vut.json",
+    "count": 2,
+    "noun": "provinces"
+  },
+  "Cambodia": {
+    "file": "khm.json",
+    "count": 24,
+    "noun": "provinces"
+  },
+  "Thailand": {
+    "file": "tha.json",
+    "count": 77,
+    "noun": "provinces"
+  },
+  "Laos": {
+    "file": "lao.json",
+    "count": 17,
+    "noun": "provinces"
+  },
+  "Myanmar": {
+    "file": "mmr.json",
+    "count": 14,
+    "noun": "states"
+  },
+  "Vietnam": {
+    "file": "vnm.json",
+    "count": 63,
+    "noun": "provinces"
+  },
+  "North Korea": {
+    "file": "prk.json",
+    "count": 11,
+    "noun": "provinces"
+  },
+  "South Korea": {
+    "file": "kor.json",
+    "count": 16,
+    "noun": "metropolitan cities"
+  },
+  "Mongolia": {
+    "file": "mng.json",
+    "count": 22,
+    "noun": "provinces"
+  },
+  "India": {
+    "file": "ind.json",
+    "count": 34,
+    "noun": "states"
+  },
+  "Bangladesh": {
+    "file": "bgd.json",
+    "count": 7,
+    "noun": "divisions"
+  },
+  "Bhutan": {
+    "file": "btn.json",
+    "count": 20,
+    "noun": "districts"
+  },
+  "Nepal": {
+    "file": "npl.json",
+    "count": 14,
+    "noun": "administrative zones"
+  },
+  "Pakistan": {
+    "file": "pak.json",
+    "count": 7,
+    "noun": "provinces"
+  },
+  "Afghanistan": {
+    "file": "afg.json",
+    "count": 34,
+    "noun": "provinces"
+  },
+  "Tajikistan": {
+    "file": "tjk.json",
+    "count": 5,
+    "noun": "regions"
+  },
+  "Kyrgyzstan": {
+    "file": "kgz.json",
+    "count": 8,
+    "noun": "regions"
+  },
+  "Turkmenistan": {
+    "file": "tkm.json",
+    "count": 5,
+    "noun": "provinces"
+  },
+  "Iran": {
+    "file": "irn.json",
+    "count": 31,
+    "noun": "provinces"
+  },
+  "Syria": {
+    "file": "syr.json",
+    "count": 15,
+    "noun": "provinces"
+  },
+  "Armenia": {
+    "file": "arm.json",
+    "count": 11,
+    "noun": "provinces"
+  },
+  "Sweden": {
+    "file": "swe.json",
+    "count": 20,
+    "noun": "counties"
+  },
+  "Belarus": {
+    "file": "blr.json",
+    "count": 7,
+    "noun": "regions"
+  },
+  "Ukraine": {
+    "file": "ukr.json",
+    "count": 25,
+    "noun": "regions"
+  },
+  "Poland": {
+    "file": "pol.json",
+    "count": 16,
+    "noun": "voivodeships"
+  },
+  "Austria": {
+    "file": "aut.json",
+    "count": 9,
+    "noun": "states"
+  },
+  "Hungary": {
+    "file": "hun.json",
+    "count": 7,
+    "noun": "regions"
+  },
+  "Moldova": {
+    "file": "mda.json",
+    "count": 39,
+    "noun": "districts"
+  },
+  "Romania": {
+    "file": "rou.json",
+    "count": 42,
+    "noun": "counties"
+  },
+  "Lithuania": {
+    "file": "ltu.json",
+    "count": 10,
+    "noun": "counties"
+  },
+  "Latvia": {
+    "file": "lva.json",
+    "count": 5,
+    "noun": "planning regions"
+  },
+  "Estonia": {
+    "file": "est.json",
+    "count": 13,
+    "noun": "counties"
+  },
+  "Germany": {
+    "file": "deu.json",
+    "count": 16,
+    "noun": "states"
+  },
+  "Bulgaria": {
+    "file": "bgr.json",
+    "count": 28,
+    "noun": "provinces"
+  },
+  "Greece": {
+    "file": "grc.json",
+    "count": 11,
+    "noun": "regions"
+  },
+  "Turkey": {
+    "file": "tur.json",
+    "count": 81,
+    "noun": "provinces"
+  },
+  "Albania": {
+    "file": "alb.json",
+    "count": 12,
+    "noun": "counties"
+  },
+  "Croatia": {
+    "file": "hrv.json",
+    "count": 21,
+    "noun": "counties"
+  },
+  "Switzerland": {
+    "file": "che.json",
+    "count": 25,
+    "noun": "cantons"
+  },
+  "Luxembourg": {
+    "file": "lux.json",
+    "count": 2,
+    "noun": "districts"
+  },
+  "Belgium": {
+    "file": "bel.json",
+    "count": 11,
+    "noun": "provinces"
+  },
+  "Netherlands": {
+    "file": "nld.json",
+    "count": 12,
+    "noun": "provinces"
+  },
+  "Portugal": {
+    "file": "prt.json",
+    "count": 18,
+    "noun": "districts"
+  },
+  "Spain": {
+    "file": "esp.json",
+    "count": 15,
+    "noun": "autonomous communities"
+  },
+  "Ireland": {
+    "file": "irl.json",
+    "count": 34,
+    "noun": "counties"
+  },
+  "New Caledonia": {
+    "file": "ncl.json",
+    "count": 2,
+    "noun": "provinces"
+  },
+  "Solomon Is.": {
+    "file": "slb.json",
+    "count": 6,
+    "noun": "provinces"
+  },
+  "New Zealand": {
+    "file": "nzl.json",
+    "count": 16,
+    "noun": "regional councils"
+  },
+  "Australia": {
+    "file": "aus.json",
+    "count": 9,
+    "noun": "states"
+  },
+  "Sri Lanka": {
+    "file": "lka.json",
+    "count": 25,
+    "noun": "districts"
+  },
+  "China": {
+    "file": "chn.json",
+    "count": 31,
+    "noun": "provinces"
+  },
+  "Taiwan": {
+    "file": "twn.json",
+    "count": 19,
+    "noun": "counties"
+  },
+  "Italy": {
+    "file": "ita.json",
+    "count": 20,
+    "noun": "regions"
+  },
+  "Denmark": {
+    "file": "dnk.json",
+    "count": 5,
+    "noun": "regions"
+  },
+  "United Kingdom": {
+    "file": "gbr.json",
+    "count": 4,
+    "noun": "countries"
+  },
+  "Iceland": {
+    "file": "isl.json",
+    "count": 9,
+    "noun": "regions"
+  },
+  "Azerbaijan": {
+    "file": "aze.json",
+    "count": 10,
+    "noun": "economic regions"
+  },
+  "Georgia": {
+    "file": "geo.json",
+    "count": 12,
+    "noun": "regions"
+  },
+  "Philippines": {
+    "file": "phl.json",
+    "count": 17,
+    "noun": "regions"
+  },
+  "Malaysia": {
+    "file": "mys.json",
+    "count": 15,
+    "noun": "states"
+  },
+  "Brunei": {
+    "file": "brn.json",
+    "count": 4,
+    "noun": "districts"
+  },
+  "Slovenia": {
+    "file": "svn.json",
+    "count": 12,
+    "noun": "statistical regions"
+  },
+  "Finland": {
+    "file": "fin.json",
+    "count": 18,
+    "noun": "provinces"
+  },
+  "Slovakia": {
+    "file": "svk.json",
+    "count": 8,
+    "noun": "regions"
+  },
+  "Czechia": {
+    "file": "cze.json",
+    "count": 14,
+    "noun": "regions"
+  },
+  "Eritrea": {
+    "file": "eri.json",
+    "count": 6,
+    "noun": "regions"
+  },
+  "Japan": {
+    "file": "jpn.json",
+    "count": 46,
+    "noun": "prefectures"
+  },
+  "Paraguay": {
+    "file": "pry.json",
+    "count": 18,
+    "noun": "departments"
+  },
+  "Yemen": {
+    "file": "yem.json",
+    "count": 21,
+    "noun": "governorates"
+  },
+  "Saudi Arabia": {
+    "file": "sau.json",
+    "count": 13,
+    "noun": "regions"
+  },
+  "Cyprus": {
+    "file": "cyp.json",
+    "count": 5,
+    "noun": "districts"
+  },
+  "Morocco": {
+    "file": "mar.json",
+    "count": 16,
+    "noun": "regions"
+  },
+  "Egypt": {
+    "file": "egy.json",
+    "count": 26,
+    "noun": "governorates"
+  },
+  "Libya": {
+    "file": "lby.json",
+    "count": 22,
+    "noun": "municipalities"
+  },
+  "Ethiopia": {
+    "file": "eth.json",
+    "count": 11,
+    "noun": "administrative states"
+  },
+  "Djibouti": {
+    "file": "dji.json",
+    "count": 5,
+    "noun": "regions"
+  },
+  "Uganda": {
+    "file": "uga.json",
+    "count": 4,
+    "noun": "regions"
+  },
+  "Rwanda": {
+    "file": "rwa.json",
+    "count": 5,
+    "noun": "provinces"
+  },
+  "Bosnia and Herz.": {
+    "file": "bih.json",
+    "count": 18,
+    "noun": "cantons"
+  },
+  "Macedonia": {
+    "file": "mkd.json",
+    "count": 9,
+    "noun": "statistical regions"
+  },
+  "Serbia": {
+    "file": "srb.json",
+    "count": 25,
+    "noun": "districts"
+  },
+  "Montenegro": {
+    "file": "mne.json",
+    "count": 21,
+    "noun": "municipalities"
+  },
+  "Kosovo": {
+    "file": "kos.json",
+    "count": 30,
+    "noun": "districts"
+  },
+  "Trinidad and Tobago": {
+    "file": "tto.json",
+    "count": 13,
+    "noun": "regions"
+  },
+  "S. Sudan": {
+    "file": "sds.json",
+    "count": 10,
+    "noun": "states"
+  }
+}
