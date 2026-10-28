@@ -18,7 +18,8 @@ const KEYS: [string[], string][] = [
   [['↑', '↓'], 'turn it up or down'],
   [['S'], 'start or stop spinning'],
   [['B'], 'break apart or make whole'],
-  [['Esc'], 'put every country back'],
+  [['D'], 'split the picked country, or join it up'],
+  [['P'], 'put every country back'],
   [['+', '−'], 'zoom'],
   [['0'], 'reset the view'],
   [['F'], 'full screen']
@@ -67,7 +68,8 @@ export default function WorldGlobe() {
     else if (event.key === 'ArrowDown') globe.current?.roll(step);
     else if (event.key === 'b' || event.key === 'B') globe.current?.setBroken(!state.broken);
     else if (event.key === 's' || event.key === 'S') globe.current?.setSpinning(!state.spinning);
-    else if (event.key === 'Escape') globe.current?.putBack();
+    else if (event.key === 'd' || event.key === 'D') globe.current?.split();
+    else if (event.key === 'p' || event.key === 'P' || event.key === 'Escape') globe.current?.putBack();
     else if (event.key === '+' || event.key === '=') globe.current?.scaleBy(SCALE_STEP);
     else if (event.key === '-' || event.key === '_') globe.current?.scaleBy(1 / SCALE_STEP);
     else if (event.key === '0' || event.key === 'Home') globe.current?.home();
@@ -111,7 +113,7 @@ export default function WorldGlobe() {
         <CountryFind onFind={(index) => globe.current?.find(index)}>
           <button type="button" className={styles.chip} disabled={!state.pulled && !state.broken} onClick={() => globe.current?.putBack()}>
             Put back
-            <kbd className={styles.kbd}>Esc</kbd>
+            <kbd className={styles.kbd}>P</kbd>
           </button>
         </CountryFind>
       </div>
@@ -160,7 +162,7 @@ export default function WorldGlobe() {
           className={styles.stageFrame}
           role="group"
           tabIndex={0}
-          aria-label="Globe. Arrow keys turn it any way, B breaks the map apart, S starts or stops its turning, Escape puts every country back, plus and minus zoom, F goes full screen, and 0 resets the view."
+          aria-label="Globe. Arrow keys turn it any way, B breaks the map apart, D splits the picked country into its provinces or joins it up, S starts or stops its turning, P puts every country back, plus and minus zoom, F goes full screen, and 0 resets the view."
                   >
           <Globe ref={globe} onState={onState} />
         </div>

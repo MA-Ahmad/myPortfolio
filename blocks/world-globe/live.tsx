@@ -211,6 +211,8 @@ export interface GlobeHandle {
   /** Turn a country to face the viewer and pull it out. */
   find(index: number): void;
   putBack(): void;
+  /** Split the picked country into its provinces, or join them up again if it is split. */
+  split(): void;
   /** Turn the near side right (positive) or left, about the screen's vertical. */
   turn(degrees: number): void;
   /** Roll the near side down (positive) or up, about the screen's horizontal. */
@@ -1361,6 +1363,25 @@ export const Globe = React.memo(
           speak(`${describe(country)}, pulled out.`);
           touch();
           report();
+        },
+        split() {
+          const state = live.current;
+          const i = state.selected;
+          if (i < 0) return;
+          const country = COUNTRIES[i];
+          const split = state.splits.get(i);
+          if (split && split.target === 1) {
+            split.target = 0;
+            if (state.focus === i) releaseFocus();
+            state.selectedPiece = -1;
+            state.rejoined = i;
+            speak(`${country.name} is whole again.`);
+            touch();
+            report();
+          } else if ((state.broken || state.pulled.has(i)) && hasDivisions(country) && !state.unsplit.has(i)) {
+            state.rejoined = -1;
+            toggle(i);
+          }
         },
         putBack() {
           const state = live.current;
