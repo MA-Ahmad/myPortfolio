@@ -1,11 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { geoGraticule, geoOrthographic, geoPath } from 'd3-geo';
+import { geoOrthographic, geoPath } from 'd3-geo';
 import { useInView, useLoop, useReadout } from './iso-react';
 import {
   COUNTRIES,
   EARTH_TILT,
+  GRATICULE,
   HOVER,
   LIFT,
   PLATE,
@@ -43,12 +44,10 @@ import styles from './world-globe.module.css';
 const IDLE_RATE = 6;
 export const SCALE_MOST = 2.4;
 export const SCALE_STEP = 1.35;
-/** Seconds of quiet before the globe starts showing countries on its own, and between them. */
-const TOUR_AFTER = 6;
-const TOUR_EVERY = 4.2;
-const TOUR_MIN_AREA = 4e5;
 
 const BASIS = basisOf(P);
+/** Where seated plates go in painter's order: first, in a fixed order. They tile at one height and never overlap, so sorting them by depth would only reshuffle the page's nodes as the ball turns. */
+const SEATED = -1e6;
 const LIGHT = norm(add(add(scale(BASIS.toward, 0.55), scale(BASIS.up, 0.7)), scale(BASIS.right, -0.45)));
 const RADIANS = Math.PI / 180;
 
@@ -77,13 +76,89 @@ class Sink {
 
 const f = (value: number) => Math.round(value * 10) / 10;
 
+/**
+ * The view as three rows over a globe point: its screen x, screen y (down) and depth toward the viewer,
+ * for a ball in orientation `M`. d3's orthographic projection comes to the same.
+ */
+function viewRows(M: Matrix) {
+  const column = (axis: Vec, c: number) => axis[0] * M[c] + axis[1] * M[3 + c] + axis[2] * M[6 + c];
+  const row = (axis: Vec, sign: number): Vec => [sign * column(axis, 0), sign * column(axis, 1), sign * column(axis, 2)];
+  return { x: row(BASIS.right, 1), y: row(BASIS.up, -1), z: row(BASIS.toward, 1) };
+}
+
+/** A plate wholly in the front hemisphere needs no clipping: its rings are just rotated and flattened. */
+function flatten(rings: Float64Array[], rows: ReturnType<typeof viewRows>) {
+  const { x, y } = rows;
+  return rings.map((ring) => {
+    const out: number[] = new Array((ring.length / 3) * 2);
+    for (let k = 0, j = 0; k < ring.length; k += 3, j += 2) {
+      const a = ring[k];
+      const b = ring[k + 1];
+      const c = ring[k + 2];
+      out[j] = x[0] * a + x[1] * b + x[2] * c;
+      out[j + 1] = y[0] * a + y[1] * b + y[2] * c;
+    }
+    return out;
+  });
+}
+
+/** The graticule's lines, cut where they pass over the ball's edge so only the near side remains. */
+function flattenLines(lines: Float64Array[], rows: ReturnType<typeof viewRows>) {
+  const { x, y, z } = rows;
+  const out: number[][] = [];
+  for (const line of lines) {
+    let current: number[] | null = null;
+    let px = 0;
+    let py = 0;
+    let pz = 0;
+    for (let k = 0; k < line.length; k += 3) {
+      const a = line[k];
+      const b = line[k + 1];
+      const c = line[k + 2];
+      const sx = x[0] * a + x[1] * b + x[2] * c;
+      const sy = y[0] * a + y[1] * b + y[2] * c;
+      const sz = z[0] * a + z[1] * b + z[2] * c;
+      // Where the line crosses the edge, a point on the ball's rim between the two.
+      const rim = () => {
+        const u = pz / (pz - sz);
+        const rx = px + (sx - px) * u;
+        const ry = py + (sy - py) * u;
+        const length = Math.hypot(rx, ry) || 1;
+        return [rx / length, ry / length];
+      };
+      if (sz >= 0) {
+        if (!current) {
+          current = [];
+          out.push(current);
+          if (k > 0) current.push(...rim());
+        }
+        current.push(sx, sy);
+      } else if (current) {
+        current.push(...rim());
+        current = null;
+      }
+      px = sx;
+      py = sy;
+      pz = sz;
+    }
+  }
+  return out;
+}
+
+/**
+ * Plate paths are written as whole tenths of a pixel and drawn at a tenth of their size (see TENTHS):
+ * a whole number is far cheaper to write out than a rounded decimal, and thousands are written a frame.
+ */
+const t = (value: number) => Math.round(value * 10);
+const TENTHS = 'scale(0.1)';
+
 /** Rings of unit points as an SVG path, scaled by `size` about the screen point `[ox, oy]`. */
 function ringsPath(rings: number[][], ox: number, oy: number, size: number, closed: boolean) {
   let d = '';
   for (const ring of rings) {
     if (ring.length < 4) continue;
-    d += `M${f(ox + ring[0] * size)} ${f(oy + ring[1] * size)}`;
-    for (let i = 2; i < ring.length; i += 2) d += `L${f(ox + ring[i] * size)} ${f(oy + ring[i + 1] * size)}`;
+    d += `M${t(ox + ring[0] * size)} ${t(oy + ring[1] * size)}`;
+    for (let i = 2; i < ring.length; i += 2) d += `L${t(ox + ring[i] * size)} ${t(oy + ring[i + 1] * size)}`;
     if (closed) d += 'Z';
   }
   return d;
@@ -99,18 +174,22 @@ function wallsPath(rings: number[][], ox: number, oy: number, inner: number, out
   for (const ring of rings) {
     const n = ring.length / 2;
     for (let i = 0; i < n; i++) {
-      const j = (i + 1) % n;
+      const j = i + 1 === n ? 0 : i + 1;
       const ax = ring[i * 2];
       const ay = ring[i * 2 + 1];
       const bx = ring[j * 2];
       const by = ring[j * 2 + 1];
       const turn = ax * by - ay * bx;
       if (Math.abs(turn) < 1e-7) continue;
-      const q = [ox + ax * inner, oy + ay * inner, ox + bx * inner, oy + by * inner, ox + bx * outer, oy + by * outer, ox + ax * outer, oy + ay * outer];
-      d +=
-        turn > 0
-          ? `M${f(q[0])} ${f(q[1])}L${f(q[2])} ${f(q[3])}L${f(q[4])} ${f(q[5])}L${f(q[6])} ${f(q[7])}Z`
-          : `M${f(q[6])} ${f(q[7])}L${f(q[4])} ${f(q[5])}L${f(q[2])} ${f(q[3])}L${f(q[0])} ${f(q[1])}Z`;
+      const q0 = t(ox + ax * inner);
+      const q1 = t(oy + ay * inner);
+      const q2 = t(ox + bx * inner);
+      const q3 = t(oy + by * inner);
+      const q4 = t(ox + bx * outer);
+      const q5 = t(oy + by * outer);
+      const q6 = t(ox + ax * outer);
+      const q7 = t(oy + ay * outer);
+      d += turn > 0 ? `M${q0} ${q1}L${q2} ${q3}L${q4} ${q5}L${q6} ${q7}Z` : `M${q6} ${q7}L${q4} ${q5}L${q2} ${q3}L${q0} ${q1}Z`;
     }
   }
   return d;
@@ -329,9 +408,9 @@ const make = <T extends SVGElement>(tag: string, attrs: Record<string, string> =
 
 const plateNodes = (attrs: Record<string, string>): PlateNodes => {
   const group = make<SVGGElement>('g', { class: styles.plate, ...attrs });
-  const walls = group.appendChild(make<SVGPathElement>('path', { class: styles.walls }));
-  const base = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo' }));
-  const face = group.appendChild(make<SVGPathElement>('path', { class: styles.face }));
+  const walls = group.appendChild(make<SVGPathElement>('path', { class: styles.walls, transform: TENTHS }));
+  const base = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo', transform: TENTHS }));
+  const face = group.appendChild(make<SVGPathElement>('path', { class: styles.face, transform: TENTHS }));
   return { group, walls, base, face };
 };
 
@@ -399,9 +478,6 @@ export const Globe = React.memo(
       loading: new Set<number>(),
       /** Countries whose pieces failed to load while they were out (cleared when put back, to try again). */
       unsplit: new Set<number>(),
-      tour: -1,
-      quiet: 0,
-      tourWait: 0,
       scale: 1,
       scaleTarget: 1,
       viewBox: '',
@@ -425,11 +501,6 @@ export const Globe = React.memo(
     const projection = React.useMemo(() => geoOrthographic().scale(1).translate([0, 0]).precision(0), []);
     const sink = React.useMemo(() => new Sink(), []);
     const path = React.useMemo(() => geoPath(projection, sink as unknown as CanvasRenderingContext2D), [projection, sink]);
-    const graticule = React.useMemo(() => geoGraticule().extent([[-180, -90], [180, 90]]).step([15, 15]).precision(1)(), []);
-    // The grid is drawn with d3's adaptive resampling, so meridians and parallels bend as true curves on
-    // the ball (to about a third of a pixel) instead of running as straight chords between samples.
-    const gridProjection = React.useMemo(() => geoOrthographic().scale(1).translate([0, 0]).precision(0.3 / (R * K)), []);
-    const gridPath = React.useMemo(() => geoPath(gridProjection, sink as unknown as CanvasRenderingContext2D), [gridProjection, sink]);
 
     const report = React.useCallback(() => {
       const state = live.current;
@@ -461,12 +532,14 @@ export const Globe = React.memo(
       const core = make<SVGGElement>('g', { class: styles.core });
       const [cx, cy] = CENTER_FLAT;
       core.appendChild(make('circle', { cx: String(cx), cy: String(cy), r: String(R * K), fill: `url(#${gradient})` }));
-      state.graticule = core.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.graticule}`, 'data-tone': 'faint' }));
-      state.sockets = core.appendChild(make<SVGPathElement>('path', { class: styles.socket }));
+      state.graticule = core.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.graticule}`, 'data-tone': 'faint', transform: TENTHS }));
+      state.sockets = core.appendChild(make<SVGPathElement>('path', { class: styles.socket, transform: TENTHS }));
       // Shadows of lifted plates fall on the ball and into the empty sockets, never over other plates.
-      state.shadows = core.appendChild(make<SVGPathElement>('path', { class: styles.shadow, 'clip-path': `url(#${gradient}-ball)` }));
-      state.seatedWalls = core.appendChild(make<SVGPathElement>('path', { class: styles.walls }));
-      state.seatedBase = core.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo' }));
+      // (The clip is on a group of its own: a clip follows its element's transform, which scales the path.)
+      const shadowLayer = core.appendChild(make<SVGGElement>('g', { 'clip-path': `url(#${gradient}-ball)` }));
+      state.shadows = shadowLayer.appendChild(make<SVGPathElement>('path', { class: styles.shadow, transform: TENTHS }));
+      state.seatedWalls = core.appendChild(make<SVGPathElement>('path', { class: styles.walls, transform: TENTHS }));
+      state.seatedBase = core.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.base}`, 'data-tone': 'lo', transform: TENTHS }));
       core.appendChild(make('circle', { class: 'iso-line', 'data-tone': 'mid', cx: String(cx), cy: String(cy), r: String(R * K) }));
       state.core = core;
       state.plates = COUNTRIES.map((country) => plateNodes({ 'data-i': String(country.index) }));
@@ -713,12 +786,8 @@ export const Globe = React.memo(
       // are drawn exactly as last time, so only what moves is projected and written again.
       const same = state.drawnOrient !== null && M.every((value, k) => value === state.drawnOrient![k]);
       state.drawnOrient = M.slice();
-      if (!same) {
-        gridProjection.rotate(rotate);
-        sink.reset();
-        gridPath(graticule);
-        state.graticule!.setAttribute('d', ringsPath(sink.rings, cx, cy, R * K, false));
-      }
+      const rows = viewRows(M);
+      if (!same) state.graticule!.setAttribute('d', ringsPath(flattenLines(GRATICULE, rows), cx, cy, R * K, false));
 
       // Painter's order: plates lifted behind the ball, the ball, then the plates in front of it.
       const order = { back: [] as [number, Element][], front: [] as [number, Element][] };
@@ -728,7 +797,7 @@ export const Globe = React.memo(
       let shadows = '';
       let seatedWalls = '';
       let seatedBase = '';
-      const lit = state.hover >= 0 ? state.hover : state.tour >= 0 ? state.tour : state.selected;
+      const lit = state.hover >= 0 ? state.hover : state.selected;
       // The province lit: the one under the pointer, else the one picked while nothing else is hovered.
       const litPiece = state.hover >= 0 ? (state.hoverPiece >= 0 ? [state.hover, state.hoverPiece] : null) : state.selectedPiece >= 0 ? [state.selected, state.selectedPiece] : null;
 
@@ -759,9 +828,20 @@ export const Globe = React.memo(
           continue;
         }
         const dir = apply(M, country.dir);
-        sink.reset();
-        path(country.feature);
-        const rings = sink.rings;
+        const facing = dot(dir, BASIS.toward);
+        // A plate lies within `reach` of its middle (a cap, convex below a quarter turn). Seated past a
+        // quarter turn plus that, none of it is in view; within a quarter turn less that, all of it is, and
+        // needs no clipping. Only plates over the ball's edge go through d3.
+        const capped = country.reach < 1.5;
+        const hidden = d === 0 && capped && facing < -Math.sin(country.reach) - 0.01 && !(state.splits.get(i)?.at ?? 0);
+        let rings: number[][];
+        if (hidden) rings = [];
+        else if (capped && facing > Math.sin(country.reach + 0.01)) rings = flatten(country.rings, rows);
+        else {
+          sink.reset();
+          path(country.feature);
+          rings = sink.rings;
+        }
         const socket = d > 0.3 && rings.length ? ringsPath(rings, cx, cy, R * K, true) : '';
         sockets += socket;
 
@@ -770,7 +850,7 @@ export const Globe = React.memo(
           state.memo[i] = { d, empty: true, socket: '', shadow: '', walls: '', base: '', list: 'front', depth: 0 };
           clearPlate(nodes);
           if (split) {
-            split.borders.setAttribute('d', '');
+            if (split.borders.getAttribute('d')) split.borders.setAttribute('d', '');
             split.nodes.forEach(clearPlate);
           }
           continue;
@@ -778,7 +858,7 @@ export const Globe = React.memo(
         const [ox, oy] = [cx + dot(dir, BASIS.right) * d * K, cy - dot(dir, BASIS.up) * d * K];
 
         // A plate lifted on the far side is behind the ball; a seated one shows only its front, in front.
-        const depth = dot(dir, BASIS.toward) * (R + PLATE / 2 + d);
+        const depth = d === 0 ? SEATED : dot(dir, BASIS.toward) * (R + PLATE / 2 + d);
         const listName: keyof typeof order = d > PLATE && dot(dir, BASIS.toward) < 0 ? 'back' : 'front';
         const list = order[listName];
 
@@ -858,8 +938,8 @@ export const Globe = React.memo(
         if (d === 0) {
           seatedWalls += walls;
           seatedBase += base;
-          nodes.walls.setAttribute('d', '');
-          nodes.base.setAttribute('d', '');
+          if (nodes.walls.getAttribute('d')) nodes.walls.setAttribute('d', '');
+          if (nodes.base.getAttribute('d')) nodes.base.setAttribute('d', '');
         } else {
           nodes.walls.setAttribute('d', walls);
           nodes.base.setAttribute('d', base);
@@ -911,13 +991,13 @@ export const Globe = React.memo(
         state.readout = text;
         say(text);
       }
-    }, [graticule, gridPath, gridProjection, path, placeLabels, projection, say, sink]);
+    }, [path, placeLabels, projection, say, sink]);
 
     /** Where each plate is heading: home, a hover, or out. */
     const targetOf = React.useCallback((i: number) => {
       const state = live.current;
       const out = state.broken || state.pulled.has(i);
-      const lit = i === state.hover || i === state.tour;
+      const lit = i === state.hover;
       if (!out) return lit ? HOVER : 0;
       // A country split open for a close look rises only clear of its socket, so its pieces stay over
       // the ball and read against the sockets they left.
@@ -991,26 +1071,6 @@ export const Globe = React.memo(
             state.omega = add(state.omega, scale(add(idle, scale(state.omega, -1)), ease));
             const speed = Math.hypot(...state.omega);
             turnBy(state.omega, speed * dt);
-          }
-        }
-
-        // The idle tour: after a quiet spell the globe lifts the country facing you, one after another.
-        state.quiet += dt;
-        if (!calm && state.quiet > TOUR_AFTER && !state.broken && state.hover < 0) {
-          state.tourWait -= dt;
-          if (state.tourWait <= 0) {
-            state.tourWait = TOUR_EVERY;
-            let best = -1;
-            let bestFacing = 0.55;
-            for (const country of COUNTRIES) {
-              if (country.area < TOUR_MIN_AREA || country.index === state.tour || state.pulled.has(country.index)) continue;
-              const facingBy = dot(apply(state.orient, country.dir), BASIS.toward);
-              if (facingBy > bestFacing) {
-                bestFacing = facingBy;
-                best = country.index;
-              }
-            }
-            state.tour = best;
           }
         }
 
@@ -1111,9 +1171,6 @@ export const Globe = React.memo(
 
     const touch = React.useCallback(() => {
       const state = live.current;
-      state.quiet = 0;
-      state.tourWait = 0;
-      if (state.tour >= 0) state.tour = -1;
       state.dirty = true;
       kick();
     }, [kick]);
@@ -1138,7 +1195,7 @@ export const Globe = React.memo(
           if (!data) return undefined;
           state.loading.delete(i);
           const parent = state.plates[i].group;
-          const borders = parent.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.borders}`, 'data-tone': 'mid' }));
+          const borders = parent.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.borders}`, 'data-tone': 'mid', transform: TENTHS }));
           const labels = data.pieces.map((piece) => {
             const group = labelLayer.current!.appendChild(make<SVGGElement>('g', { class: styles.label, style: 'display:none', 'data-i': String(i), 'data-p': String(piece.index) }));
             const wire = group.appendChild(make<SVGPathElement>('path', { class: `iso-line ${styles.labelWire}`, 'data-tone': 'mid' }));
@@ -1381,8 +1438,8 @@ export const Globe = React.memo(
         state.hoverPiece = -1;
       }
       // Screen pixels to view-box units, then the ball's surface follows the pointer at its middle.
-      const box = svg.current?.getBoundingClientRect();
-      const perPixel = box ? 1 / (state.viewScale * pixelsPerUnit(box.width, box.height)) : 1;
+      // The drawing's size is kept by the resize observer: measuring it here would force a layout on every move.
+      const perPixel = state.cssWidth ? 1 / (state.viewScale * pixelsPerUnit(state.cssWidth, state.cssHeight)) : 1;
       const now = performance.now();
       const seconds = Math.max(1e-3, (now - drag.t) / 1000);
       drag.t = now;
@@ -1394,7 +1451,6 @@ export const Globe = React.memo(
       state.faceTarget = -1;
       drag.x = event.clientX;
       drag.y = event.clientY;
-      state.quiet = 0;
       state.dirty = true;
       kick();
     };

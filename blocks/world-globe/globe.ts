@@ -43,6 +43,10 @@ export interface Country {
   points: Float64Array;
   /** Area in km², from the 1:110m outline, so about right rather than official. */
   area: number;
+  /** Each ring of the outline as unit vectors, xyz in a row, less the closing vertex (as d3 draws it). */
+  rings: Float64Array[];
+  /** Angle in radians from `dir` to the farthest vertex: the plate lies within this cap of the ball. */
+  reach: number;
 }
 
 const unit = (lon: number, lat: number): Vec => {
@@ -59,21 +63,57 @@ function verticesOf(geometry: Geometry): number[] {
   return out;
 }
 
+function ringsOf(geometry: Geometry): Float64Array[] {
+  const rings =
+    geometry.type === 'Polygon' ? geometry.coordinates : geometry.type === 'MultiPolygon' ? geometry.coordinates.flat() : [];
+  // d3 leaves out a ring of three points (North Korea has a sliver), so this does too.
+  return rings.filter((ring) => ring.length > 4).map((ring) => {
+    const out = new Float64Array((ring.length - 1) * 3);
+    for (let k = 0; k < ring.length - 1; k++) out.set(unit(ring[k][0], ring[k][1]), k * 3);
+    return out;
+  });
+}
+
 const topology = world as unknown as Topology<{ countries: GeometryCollection<{ name: string }> }>;
 
 export const COUNTRIES: Country[] = feature(topology, topology.objects.countries).features.map((shape, index) => {
   const [lon, lat] = geoCentroid(shape);
+  const dir = unit(lon, lat);
+  const points = new Float64Array(verticesOf(shape.geometry));
+  let nearest = 1;
+  for (let k = 0; k < points.length; k += 3) nearest = Math.min(nearest, dir[0] * points[k] + dir[1] * points[k + 1] + dir[2] * points[k + 2]);
   return {
     index,
     name: shape.properties?.name ?? 'Unknown',
     feature: shape as Feature<Geometry>,
     lon,
     lat,
-    dir: unit(lon, lat),
-    points: new Float64Array(verticesOf(shape.geometry)),
-    area: geoArea(shape) * EARTH_KM * EARTH_KM
+    dir,
+    points,
+    rings: ringsOf(shape.geometry),
+    area: geoArea(shape) * EARTH_KM * EARTH_KM,
+    reach: Math.acos(Math.max(-1, Math.min(1, nearest)))
   };
 });
+
+/**
+ * The graticule's lines as unit vectors, xyz in a row: a meridian every 15° pole to pole and a parallel
+ * every 15°, sampled every 3° (a chord that short strays under a tenth of a pixel from the ball).
+ */
+export const GRATICULE: Float64Array[] = (() => {
+  const lines: Float64Array[] = [];
+  for (let lon = -180; lon < 180; lon += 15) {
+    const line = new Float64Array(61 * 3);
+    for (let k = 0; k <= 60; k++) line.set(unit(lon, -90 + k * 3), k * 3);
+    lines.push(line);
+  }
+  for (let lat = -75; lat <= 75; lat += 15) {
+    const line = new Float64Array(121 * 3);
+    for (let k = 0; k <= 120; k++) line.set(unit(-180 + k * 3, lat), k * 3);
+    lines.push(line);
+  }
+  return lines;
+})();
 
 export const BY_NAME = [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name));
 
