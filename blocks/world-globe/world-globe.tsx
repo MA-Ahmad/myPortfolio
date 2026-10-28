@@ -99,12 +99,8 @@ export default function WorldGlobe() {
       <div ref={stage} className={styles.stage} data-expanded={expanded ? mode : undefined} tabIndex={-1} onKeyDown={onKeyDown}>
       <div className={styles.toolbar}>
         <div className={styles.group} role="group" aria-label="The map">
-          <button type="button" className={styles.chip} aria-pressed={!state.broken} onClick={() => globe.current?.setBroken(false)}>
-            Whole
-            <kbd className={styles.kbd}>B</kbd>
-          </button>
-          <button type="button" className={styles.chip} aria-pressed={state.broken} onClick={() => globe.current?.setBroken(true)}>
-            Broken apart
+          <button type="button" className={styles.chip} aria-pressed={state.broken} onClick={() => globe.current?.setBroken(!state.broken)}>
+            {state.broken ? 'Broken apart' : 'Whole'}
             <kbd className={styles.kbd}>B</kbd>
           </button>
           <button type="button" className={styles.chip} aria-pressed={state.spinning} onClick={() => globe.current?.setSpinning(!state.spinning)}>
