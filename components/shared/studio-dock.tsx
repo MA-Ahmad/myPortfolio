@@ -2,7 +2,7 @@ import { type CSSProperties, type MouseEvent, useEffect, useState } from 'react'
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, House, Monitor, NotebookPen, SquareTerminal } from 'lucide-react';
+import { ArrowUpRight, House, Monitor, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
 import { CARDS, type CardId } from 'components/canvas/nodes';
 import { packetIcon } from 'components/canvas/packets';
 import { pixelNavigate } from 'lib/pixel-transition';
@@ -14,20 +14,22 @@ const CYCLE_MS = 3800;
 const PACKETS = 3;
 const PACKET_STAGGER_MS = 220;
 
-const ICONS: Record<CardId, typeof House> = { home: House, terminal: SquareTerminal, notebook: NotebookPen };
+const ICONS: Record<CardId, typeof House> = { home: House, terminal: SquareTerminal, notebook: NotebookPen, midnight: Moon };
 
 /** Which page the card sits on; each look borrows that page's palette, type and wording. */
-export type DockLook = 'site' | 'terminal' | 'notebook';
+export type DockLook = 'site' | 'terminal' | 'notebook' | 'midnight';
 
 const LABELS: Record<DockLook, { title: string; open: string; display: string }> = {
   site: { title: 'Theme Studio', open: 'Play', display: 'display' },
   terminal: { title: '~/theme-studio', open: 'play', display: 'tty0' },
-  notebook: { title: 'theme studio', open: 'play', display: 'display' }
+  notebook: { title: 'theme studio', open: 'play', display: 'display' },
+  midnight: { title: 'Theme Studio', open: 'Play', display: 'display' }
 };
 
-// The stage is drawn 1:1 in px: three cards stacked on the left, wired into the display.
-const CARD = { w: 92, h: 28, gap: 16 };
-const DISPLAY = { x: 160, y: 22, w: 88, h: 88 };
+// The stage is drawn 1:1 in px: the cards stacked on the left, wired into the display.
+const CARD = { w: 92, h: 28, gap: 8 };
+const STAGE_H = 8 * 2 + CARDS.length * CARD.h + (CARDS.length - 1) * CARD.gap;
+const DISPLAY = { x: 160, y: (STAGE_H - 88) / 2, w: 88, h: 88 };
 const INPUT = { x: DISPLAY.x, y: DISPLAY.y + DISPLAY.h / 2 };
 const portY = (index: number) => 8 + index * (CARD.h + CARD.gap) + CARD.h / 2;
 const wire = (index: number) => {
@@ -104,8 +106,12 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
         </span>
       </span>
 
-      <span className={styles.stage} aria-hidden style={{ '--accent': `var(--dock-${active.id})` } as CSSProperties}>
-        <svg className={styles.wires} width={DISPLAY.x + DISPLAY.w} height={DISPLAY.y * 2 + DISPLAY.h}>
+      <span
+        className={styles.stage}
+        aria-hidden
+        style={{ height: STAGE_H, '--accent': `var(--dock-${active.id})` } as CSSProperties}
+      >
+        <svg className={styles.wires} width={DISPLAY.x + DISPLAY.w} height={STAGE_H}>
           {CARDS.map((card, index) => (
             <path
               key={card.id}

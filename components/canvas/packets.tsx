@@ -23,7 +23,8 @@ export const packetIcon = (file: string) => `/assets/images/skills/${file}`;
 export const GLYPHS: Record<CardId, string> = {
   home: '</>{}();=*+',
   terminal: '$>_/~|01#{}',
-  notebook: "aeiou·.,'~*"
+  notebook: "aeiou·.,'~*",
+  midnight: '◐◧●◆✎·:'
 };
 export const GLYPH_FLICKER_MS = 90;
 // Each trail glyph follows this far behind the one before, swaying across the wire.

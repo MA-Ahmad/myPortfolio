@@ -47,7 +47,7 @@ My personal portfolio, showing my skills, experience, projects and articles. It 
 ### Featured
 
 - Light/Dark themes
-- Three versions of the site: classic, terminal and notebook
+- Four versions of the site: classic, terminal, notebook and midnight
 - **Playground**: [Theme Studio](https://mahmad.me/theme-studio), where you drag a wire from a theme into a display to open it, with live cursors from other visitors
 - Blog from local MDX posts and Dev.to articles
 - GitHub contribution graph

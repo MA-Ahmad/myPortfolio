@@ -1,6 +1,6 @@
 import type { Point } from 'lib/canvas/geometry';
 
-export type CardId = 'home' | 'terminal' | 'notebook';
+export type CardId = 'home' | 'terminal' | 'notebook' | 'midnight';
 export type NodeId = CardId | 'display';
 export type Layout = 'desktop' | 'mobile';
 export type Side = 'left' | 'right';
@@ -26,13 +26,15 @@ export const SNAP_RADIUS = 18;
 const GAP_X = 120;
 const GAP_Y = 32;
 const SIDE_W = 340;
-const PREVIEW = { home: 207, terminal: 172, notebook: 446 };
+const PREVIEW = { home: 207, terminal: 172, notebook: 446, midnight: 200 };
 const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_BOTTOM;
 
-// Desktop is as tall as the right column; the notebook and the display are centered on it, so
-// the notebook port sits level with the display input and its wire runs straight.
-const DESKTOP_H = Math.max(chrome(PREVIEW.notebook), chrome(PREVIEW.home) + GAP_Y + chrome(PREVIEW.terminal));
-const NOTEBOOK_Y = (DESKTOP_H - chrome(PREVIEW.notebook)) / 2;
+// Desktop is as tall as the left column (notebook over midnight); the shorter right column and the
+// display are centered on it, so the wires meet the display from both sides.
+const LEFT_H = chrome(PREVIEW.notebook) + GAP_Y + chrome(PREVIEW.midnight);
+const RIGHT_H = chrome(PREVIEW.home) + GAP_Y + chrome(PREVIEW.terminal);
+const DESKTOP_H = Math.max(LEFT_H, RIGHT_H);
+const RIGHT_Y = (DESKTOP_H - RIGHT_H) / 2;
 const DISPLAY_Y = (DESKTOP_H - DISPLAY_H) / 2;
 
 export type CardDef = {
@@ -78,6 +80,15 @@ export const CARDS: CardDef[] = [
     width: { desktop: CARD_W, mobile: CARD_W },
     previewHeight: { desktop: PREVIEW.notebook, mobile: 240 },
     packets: ['claude.svg', 'react.png', 'nextjs.png', 'rails.png', 'typescript.png', 'cursor.svg']
+  },
+  {
+    id: 'midnight',
+    title: 'Midnight',
+    route: '/themes/midnight',
+    href: '/themes/midnight',
+    width: { desktop: CARD_W, mobile: CARD_W },
+    previewHeight: { desktop: PREVIEW.midnight, mobile: 170 },
+    packets: ['nextjs.png', 'tailwindcss.svg', 'postgresql.png', 'redis.png', 'cursor.svg', 'typescript.png']
   }
 ];
 
@@ -115,17 +126,18 @@ export const inputSide = (id: CardId, layout: Layout, positions: Positions): Sid
 export const portY = (card: CardDef, layout: Layout) => cardHeight(card, layout) / 2;
 
 /**
- * Desktop puts the display in the middle: the tall notebook on its left, home above terminal on
- * its right, each port facing the display. Mobile stacks everything in one column.
+ * Desktop puts the display in the middle: the tall notebook over midnight on its left, home above
+ * terminal on its right, each port facing the display. Mobile stacks everything in one column.
  */
 export function initialPositions(layout: Layout): Record<NodeId, Point> {
   if (layout === 'desktop') {
     const right = CARD_W + GAP_X * 2 + DISPLAY_W;
     return {
-      notebook: { x: 0, y: NOTEBOOK_Y },
+      notebook: { x: 0, y: 0 },
+      midnight: { x: 0, y: chrome(PREVIEW.notebook) + GAP_Y },
       display: { x: CARD_W + GAP_X, y: DISPLAY_Y },
-      home: { x: right, y: 0 },
-      terminal: { x: right, y: chrome(PREVIEW.home) + GAP_Y }
+      home: { x: right, y: RIGHT_Y },
+      terminal: { x: right, y: RIGHT_Y + chrome(PREVIEW.home) + GAP_Y }
     };
   }
   // The display leads the stack, so it is on screen whenever the page opens; the cards sit

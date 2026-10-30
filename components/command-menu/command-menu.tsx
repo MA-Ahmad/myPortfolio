@@ -12,6 +12,7 @@ import {
   GraduationCapIcon,
   HomeIcon,
   LayersIcon,
+  MoonIcon,
   MoonStarIcon,
   NotebookIcon,
   SearchIcon,
@@ -90,6 +91,7 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
   const panelRef = useRef<HTMLDivElement>(null);
   const terminalIconRef = useRef<SVGSVGElement>(null);
   const notebookIconRef = useRef<SVGSVGElement>(null);
+  const midnightIconRef = useRef<SVGSVGElement>(null);
   const canvasIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -100,6 +102,7 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
     if (!open) return;
     router.prefetch('/themes/terminal');
     router.prefetch('/themes/notebook');
+    router.prefetch('/themes/midnight');
     router.prefetch('/theme-studio');
   }, [open, router]);
 
@@ -174,6 +177,19 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
       // Must match --nb-ink and --nb-bg in themes/notebook/notebook.module.css.
       edge: dark ? 'oklch(94% 0.004 80)' : 'oklch(21% 0.006 70)',
       background: dark ? 'oklch(15.5% 0.004 70)' : 'oklch(98.4% 0.0025 95)'
+    });
+  };
+
+  const openMidnightTheme = () => {
+    const icon = midnightIconRef.current?.getBoundingClientRect();
+    setOpen(false);
+    pixelNavigate(router, '/themes/midnight', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --mn-ink and --mn-bg in themes/midnight/midnight.module.css.
+      edge: '#f3f3f4',
+      background: '#0b0b0d'
     });
   };
 
@@ -258,6 +274,10 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
                   <CommandItem className={s.item} onSelect={openNotebookTheme}>
                     <NotebookIcon ref={notebookIconRef} className={iconClass} />
                     <span>Notebook</span>
+                  </CommandItem>
+                  <CommandItem className={s.item} onSelect={openMidnightTheme}>
+                    <MoonIcon ref={midnightIconRef} className={iconClass} />
+                    <span>Midnight</span>
                   </CommandItem>
                   <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
                     <SwatchBookIcon className={iconClass} />

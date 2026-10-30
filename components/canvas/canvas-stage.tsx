@@ -47,6 +47,7 @@ import {
   portSide
 } from './nodes';
 import { HomePreview } from './previews/home-preview';
+import { MidnightPreview } from './previews/midnight-preview';
 import { NotebookPreview } from './previews/notebook-preview';
 import { TerminalPreview } from './previews/terminal-preview';
 import { Spark } from './spark';
@@ -108,6 +109,7 @@ function measure(stage: HTMLElement): View {
 /** The colors each page paints first, so the pixel transition hands over without a flash. */
 function transitionColors(id: CardId) {
   if (id === 'terminal') return { edge: '#b8c572', background: '#0d0e0f' };
+  if (id === 'midnight') return { edge: '#f3f3f4', background: '#0b0b0d' };
   const dark = document.documentElement.classList.contains('dark');
   if (id === 'notebook') {
     return {
@@ -127,7 +129,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View | null>(null);
   const [positions, setPositions] = useState(() => initialPositions('desktop'));
-  const [order, setOrder] = useState<NodeId[]>(['notebook', 'home', 'terminal', 'display']);
+  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'home', 'terminal', 'display']);
   const [grabbed, setGrabbed] = useState<NodeId | null>(null);
   const [wire, setWire] = useState<WireState | null>(null);
   const [burst, setBurst] = useState<number | null>(null);
@@ -768,7 +770,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const previews: Record<CardId, ReactNode> = {
     home: <HomePreview avatar={layout === 'desktop' ? 84 : 68} />,
     terminal: <TerminalPreview contributions={contributions} weeks={layout === 'desktop' ? 49 : 43} />,
-    notebook: <NotebookPreview />
+    notebook: <NotebookPreview />,
+    midnight: <MidnightPreview />
   };
 
   return (

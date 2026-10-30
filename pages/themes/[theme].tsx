@@ -1,6 +1,5 @@
-import { ReactElement, ReactNode } from 'react';
+import { ReactElement } from 'react';
 import { GetStaticPaths, GetStaticProps } from 'next';
-import { useRouter } from 'next/router';
 import Meta from 'components/shared/meta';
 import type { BlogListPost } from 'components/blog/post-item';
 import { getLatestBlogPosts } from 'lib/blogPosts';
@@ -9,6 +8,7 @@ import {
   contributionsRevalidate,
   fetchGitHubContributions
 } from 'lib/github-contributions';
+import { ThemeLayout } from 'themes/theme-layout';
 import { THEMES, THEME_NAMES, ThemeName, isThemeName } from 'themes/registry';
 import type { NextPageWithLayout } from '../_app';
 
@@ -28,14 +28,6 @@ const ThemePage: NextPageWithLayout<Props> = ({ theme, contributions, posts }) =
     </>
   );
 };
-
-/** `getLayout` doesn't receive page props, so the theme is read from the route. */
-function ThemeLayout({ children }: { children: ReactNode }) {
-  const { query } = useRouter();
-  if (!isThemeName(query.theme)) return <>{children}</>;
-  const { Layout } = THEMES[query.theme];
-  return <Layout>{children}</Layout>;
-}
 
 ThemePage.getLayout = (page: ReactElement) => <ThemeLayout>{page}</ThemeLayout>;
 
