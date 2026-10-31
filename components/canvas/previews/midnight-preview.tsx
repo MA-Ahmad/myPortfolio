@@ -30,7 +30,7 @@ export function MidnightPreview() {
       <i className={styles.bar} style={{ top: 58, width: 232 }} />
       <i className={styles.bar} style={{ top: 66, width: 184 }} />
 
-      {/* The real pipeline, as on the page, scaled down to 28px tiles and silent. */}
+      {/* The real pipeline, as on the page, scaled down to 36px tiles and silent. */}
       <div className={styles.pipe}>
         <Pipeline preview />
       </div>

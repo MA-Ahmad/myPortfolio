@@ -329,7 +329,7 @@ export function Pipeline({ preview = false }: { preview?: boolean }) {
   return (
     <div
       ref={flowRef}
-      className={styles.flow}
+      className={cn(styles.flow, preview && styles.flowPreview)}
       style={
         {
           '--w': `${width}px`,

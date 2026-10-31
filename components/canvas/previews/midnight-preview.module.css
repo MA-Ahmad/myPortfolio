@@ -33,7 +33,7 @@
 }
 
 /*
- * The page's own pipeline, scaled from 46px tiles down to 28px (28 / 46). It needs the theme's
+ * The page's own pipeline, scaled from 46px tiles down to 36px (36 / 46). It needs the theme's
  * colour tokens, which the page keeps on its root; the preview is not inside that root.
  */
 .pipe {
@@ -45,9 +45,9 @@
 
   position: absolute;
   left: 14px;
-  top: 76px;
-  width: calc((100% - 28px) / 0.6087);
-  transform: scale(0.6087);
+  top: 72px;
+  width: calc((100% - 28px) / 0.78);
+  transform: scale(0.78);
   transform-origin: 0 0;
   pointer-events: none;
 }

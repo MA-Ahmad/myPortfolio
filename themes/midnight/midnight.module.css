@@ -1310,6 +1310,32 @@
   }
 }
 
+/*
+ * The pipeline as a small picture (Theme Studio card), where the tiles are drawn at about 3/4 size.
+ * The weld effects are drawn in 46px tile units, so they are thickened, glow a little, and the icons
+ * and status light are brightened, so they still read.
+ */
+.flowPreview .weld {
+  filter: drop-shadow(0 0 1.2px rgba(255, 190, 110, 0.85));
+}
+.flowPreview .sparkLine {
+  stroke-width: 0.95;
+}
+.flowPreview .weld .arcBolt {
+  stroke-width: 0.95;
+}
+.flowPreview .weld .spotRing {
+  stroke-width: 1;
+}
+.flowPreview .tile [stroke='#5a5a62'] {
+  stroke: #9a9aa0;
+  stroke-width: 2;
+}
+.flowPreview .dot {
+  width: 5px;
+  height: 5px;
+}
+
 /* ---------- heatmap ---------- */
 
 .heat {
