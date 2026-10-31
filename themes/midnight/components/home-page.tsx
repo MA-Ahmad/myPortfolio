@@ -1,10 +1,11 @@
-import { Heart, Mail } from 'lucide-react';
+import { Mail } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import type { Activity } from 'lib/github-contributions';
 import { cn } from 'lib/cn';
 import { MIDNIGHT_CONTENT } from '../content';
 import { XIcon } from './icons';
 import { ExperienceRail } from './experience-rail';
+import { BrokenHeart } from './broken-heart';
 import { Heatmap } from './heatmap';
 import { LinkChips } from './link-chips';
 import { Pipeline } from './pipeline';
@@ -67,7 +68,7 @@ export function HomePage({ contributions }: { contributions: Activity[] }) {
       <ProjectCards />
 
       <footer className={styles.footer}>
-        <Heart size={20} strokeWidth={1.5} />
+        <BrokenHeart />
         <p>Thanks for stopping by.</p>
         <p className={styles.subtitle}>
           © {new Date().getFullYear()} {PROFILE.displayName}. All rights reserved.

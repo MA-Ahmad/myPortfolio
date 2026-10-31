@@ -39,7 +39,7 @@ type SparkOptions = {
  * A burst of sparks. Each one flies out on its own angle (an ease-out in x), rises and then falls
  * under gravity (an ease-out to its peak, then an ease-in), cools from white to orange and fades.
  */
-function Sparks({
+export function Sparks({
   seed,
   x,
   y,

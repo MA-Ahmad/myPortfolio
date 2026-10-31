@@ -611,13 +611,16 @@
   stroke: #fff;
   stroke-width: 0.55;
 }
-.node[data-state='welding'] .sparkX {
+.node[data-state='welding'] .sparkX,
+.heart[data-stage='3'] .sparkX {
   animation: spark-x var(--t) cubic-bezier(0.15, 0.6, 0.35, 1) var(--d) both;
 }
-.node[data-state='welding'] .sparkY {
+.node[data-state='welding'] .sparkY,
+.heart[data-stage='3'] .sparkY {
   animation: spark-y var(--t) linear var(--d) both;
 }
-.node[data-state='welding'] .sparkLine {
+.node[data-state='welding'] .sparkLine,
+.heart[data-stage='3'] .sparkLine {
   animation: spark-cool var(--t) linear var(--d) both;
 }
 @keyframes spark-x {
@@ -1788,6 +1791,246 @@
   margin: 10px 0 0;
 }
 
+/*
+ * The footer heart, built like the pipeline tiles: a solid heart torn down the middle, each half a
+ * clipped copy of the same art, dimmed and twisted open about the heart's point (12, 21.3), with a
+ * shadow into the gap. Presses 1 and 2 (data-stage) bring the halves closer; press 3 welds them
+ * like the molten tile: a bead runs up the seam from the point, the gap closing under it and the
+ * whole heart uncovered behind it, sparks thrown as it passes. Then the heart warms, grows and
+ * glows. Tearing is quick and sharp (ease-out); closing is ease-in-out. Only transform, opacity,
+ * clip-path and stroke-dashoffset move.
+ */
+.heart {
+  --ease-close: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-tear: cubic-bezier(0.23, 1, 0.32, 1);
+
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 150ms var(--ease-tear);
+}
+.heart::before {
+  content: '';
+  position: absolute;
+  inset: -6px; /* hit area 44px */
+}
+.heart:active {
+  transform: scale(0.96);
+}
+.heart:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+.heart svg {
+  display: block;
+  overflow: visible;
+  transform-origin: 50% 60%;
+  transition:
+    transform 200ms var(--ease-tear),
+    filter 150ms ease-out;
+}
+
+/* The halves: open like a book about the point, a little apart, dimmed. */
+.heartL,
+.heartR {
+  transform-box: view-box;
+  transform-origin: 12px 21.3px;
+  opacity: 0.7;
+  filter: drop-shadow(0 0.4px 0.5px rgba(0, 0, 0, 0.9));
+  transition:
+    transform 260ms var(--ease-tear),
+    opacity 200ms ease-out;
+}
+.heartL {
+  transform: translate(-0.5px, 0) rotate(-11deg);
+}
+.heartR {
+  transform: translate(0.5px, 0) rotate(9deg);
+}
+.heart[data-stage='1'] .heartL {
+  transform: translate(-0.3px, 0) rotate(-6.5deg);
+}
+.heart[data-stage='1'] .heartR {
+  transform: translate(0.3px, 0) rotate(5.5deg);
+}
+.heart[data-stage='2'] .heartL {
+  transform: translate(-0.1px, 0) rotate(-2.5deg);
+}
+.heart[data-stage='2'] .heartR {
+  transform: translate(0.1px, 0) rotate(2deg);
+}
+.heart[data-stage='1'] .heartL,
+.heart[data-stage='1'] .heartR {
+  opacity: 0.8;
+}
+.heart[data-stage='2'] .heartL,
+.heart[data-stage='2'] .heartR {
+  opacity: 0.9;
+}
+.heart[data-stage='1'] .heartL,
+.heart[data-stage='1'] .heartR,
+.heart[data-stage='2'] .heartL,
+.heart[data-stage='2'] .heartR {
+  transition:
+    transform 320ms var(--ease-close),
+    opacity 200ms ease-out;
+}
+/* Welding: the halves close over the length of the zip, then step aside under the whole heart. */
+.heart[data-stage='3'] .heartL,
+.heart[data-stage='3'] .heartR {
+  transform: translate(0, 0) rotate(0deg);
+  transition: transform var(--zip) var(--ease-close);
+  animation: heart-halves calc(var(--zip) + 40ms) linear both;
+}
+/* Brought to full strength at once, so they match the whole heart rising over them; gone once
+   it covers them, so no anti-aliased seam can show through. */
+@keyframes heart-halves {
+  0% {
+    opacity: 0.9;
+  }
+  18%,
+  97% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* The whole heart, uncovered from the point up, level with the bead (negative side insets keep
+   its outline whole). */
+.heartWhole {
+  opacity: 0;
+  transition: opacity 80ms ease-out;
+}
+.heart[data-stage='3'] .heartWhole {
+  opacity: 1;
+  transition: none;
+  animation: heart-zip calc(var(--zip) + 60ms) linear both;
+}
+@keyframes heart-zip {
+  from {
+    clip-path: inset(100% -20% -20% -20%);
+  }
+  to {
+    clip-path: inset(-20% -20% -20% -20%);
+  }
+}
+
+/* Mended: it warms from inside, grows a little past its size and settles, and glows. */
+.heartLit {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+.heart[data-stage='3'] .heartLit {
+  opacity: 1;
+  transition: opacity 260ms ease-out calc(var(--zip) + 40ms);
+}
+.heart[data-stage='3'] svg {
+  transform: scale(1.22);
+  filter: drop-shadow(0 0 3px rgba(245, 165, 36, 0.45)) drop-shadow(0 0 10px rgba(245, 165, 36, 0.25));
+  transition: filter 300ms ease-out calc(var(--zip) + 40ms);
+  animation: heart-beat 760ms linear calc(var(--zip) + 20ms) both;
+}
+/*
+ * Once it's whole it swells up with a heartbeat, lub-dub, and settles a little larger. Each swell
+ * eases out (quick to fill, slowing at its peak); each relax eases in-out back down.
+ */
+@keyframes heart-beat {
+  0% {
+    transform: scale(1);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  26% {
+    transform: scale(1.34);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  44% {
+    transform: scale(1.12);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  62% {
+    transform: scale(1.28);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  100% {
+    transform: scale(1.22);
+  }
+}
+
+/* Sparks are drawn in the tiles' 46 unit space; the heart's box is 24, so thinner. */
+.heart .sparkLine {
+  stroke-width: 0.3;
+}
+
+/* The weld: a white-hot bead runs up the seam; behind it the seam glows orange and cools. */
+.heartWeld {
+  pointer-events: none;
+}
+.heartWeld * {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.heartBead,
+.heartHeat {
+  opacity: 0;
+}
+.heartBead {
+  stroke: #fff;
+  stroke-width: 0.9;
+  stroke-dasharray: 6 200;
+  filter: drop-shadow(0 0 0.6px #ffd28a) drop-shadow(0 0 1.6px #ff8a2a);
+}
+.heartHeat {
+  stroke: #ff9a3c;
+  stroke-width: 0.6;
+  stroke-dasharray: 100 200;
+}
+.heart[data-stage='3'] .heartBead {
+  animation: heart-bead var(--zip) linear both;
+}
+.heart[data-stage='3'] .heartHeat {
+  animation: heart-heat calc(var(--zip) + 520ms) linear both;
+}
+@keyframes heart-bead {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -94;
+  }
+}
+@keyframes heart-heat {
+  0% {
+    opacity: 1;
+    stroke-dashoffset: 100;
+    stroke: #ffd28a;
+  }
+  52% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+    stroke: #ff9a3c;
+  }
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+    stroke: #c2410c;
+  }
+}
+
 /* ---------- work ---------- */
 
 .jobs {
@@ -1996,6 +2239,28 @@
   .tornPill:focus-visible .pillFace {
     transition-duration: 1ms;
     transition-delay: 0ms;
+  }
+  .heart svg,
+  .heartL,
+  .heartR,
+  .heartWhole,
+  .heartLit,
+  .heart[data-stage] svg,
+  .heart[data-stage] .heartL,
+  .heart[data-stage] .heartR,
+  .heart[data-stage] .heartWhole,
+  .heart[data-stage] .heartLit {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+  .heartWeld {
+    display: none;
+  }
+  .heart[data-stage] .heartWhole,
+  .heart[data-stage] .heartL,
+  .heart[data-stage] .heartR,
+  .heart[data-stage] svg {
+    animation: none;
   }
   .halfL,
   .halfR,
