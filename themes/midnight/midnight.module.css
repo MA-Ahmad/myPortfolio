@@ -4,7 +4,7 @@
   --mn-tile-hi: #1a1a1e;
   --mn-ink: #f3f3f4;
   --mn-body: #9a9aa0;
-  --mn-faint: #5c5c62;
+  --mn-faint: #7a7a82;
   --mn-line: rgba(255, 255, 255, 0.08);
   --mn-line-hi: rgba(255, 255, 255, 0.16);
   --mn-orange: #f5a524;
@@ -78,8 +78,13 @@
   color: var(--mn-faint);
   transition: color 150ms ease-out;
 }
-.back:hover {
+.back:focus-visible {
   color: var(--mn-ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    color: var(--mn-ink);
+  }
 }
 
 .column {
@@ -114,7 +119,7 @@
 .dock {
   position: fixed;
   left: 50%;
-  bottom: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
   z-index: 50;
   display: flex;
   gap: 4px;
@@ -162,6 +167,8 @@
   align-items: center;
   gap: 2px;
   min-width: 46px;
+  min-height: 44px;
+  justify-content: center;
   padding: 4px 8px;
   border-radius: 16px;
   color: var(--mn-faint);
@@ -169,12 +176,13 @@
   line-height: 1.2;
   transition: color 150ms ease-out, background-color 150ms ease-out;
 }
-.dockItem:hover {
-  color: var(--mn-body);
+@media (hover: hover) and (pointer: fine) {
+  .dockItem:hover {
+    color: var(--mn-body);
+  }
 }
 .dockItem[aria-current='page'] {
   color: var(--mn-ink);
-  font-weight: 600;
 }
 .dockItem[aria-current='page'] svg {
   fill: currentColor;
@@ -243,7 +251,7 @@
 .surface::before {
   content: '';
   position: absolute;
-  inset: -7px -4px; /* hit area: 28px controls reach 42px */
+  inset: -9px -4px; /* hit area: 26px controls reach 44px */
 }
 .surface::after {
   content: '';
@@ -294,13 +302,37 @@
 }
 .pill svg {
   flex: none;
-  color: #77777e;
+  color: #8a8a92;
   transition: color 180ms ease-out;
 }
 @media (hover: hover) and (pointer: fine) {
   .pill:hover {
     color: #fff;
   }
+}
+
+.heroHead {
+  position: relative;
+}
+
+/* The sound switch sits at the top right of the page, level with the name. */
+.soundToggle {
+  composes: bevel surface;
+  position: absolute;
+  right: 0;
+  top: 20px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: #8a8a92;
+  cursor: pointer;
+}
+.soundToggle[aria-pressed='true'] {
+  color: var(--mn-ink);
 }
 
 .flow {
@@ -334,7 +366,7 @@
   line-height: var(--label-h);
   text-align: center;
   white-space: nowrap;
-  color: #45454b;
+  color: #7a7a82;
   letter-spacing: 0.01em;
   transition: color 300ms ease-out;
 }
@@ -1271,13 +1303,17 @@
   padding: 4px 0;
   border: 0;
   background: none;
-  color: #6b6b72;
+  color: #7a7a82;
   text-align: left;
   transition: color 160ms ease-out;
 }
-.stop:hover,
 .stop[data-on='true'] {
   color: var(--mn-ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .stop:hover {
+    color: var(--mn-ink);
+  }
 }
 .stopHead {
   display: flex;
@@ -1294,7 +1330,7 @@
   margin-top: 12px;
   font-size: 11px;
   letter-spacing: 0.02em;
-  color: #5c5c62;
+  color: var(--mn-faint);
 }
 
 .logo {
@@ -1319,11 +1355,16 @@
   opacity: 0.7;
   transition: filter 200ms ease-out, opacity 200ms ease-out;
 }
-.stop:hover .logo img,
 .stop[data-on='true'] .logo img,
 .jobLogo img {
   filter: none;
   opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .stop:hover .logo img {
+    filter: none;
+    opacity: 1;
+  }
 }
 
 .all {
@@ -1338,8 +1379,13 @@
   color: #8a8a90;
   transition: color 150ms ease-out;
 }
-.all:hover {
+.all:focus-visible {
   color: var(--mn-ink);
+}
+@media (hover: hover) and (pointer: fine) {
+  .all:hover {
+    color: var(--mn-ink);
+  }
 }
 
 /* ---------- links + projects ---------- */
@@ -1399,7 +1445,7 @@
   flex: none;
   width: 13px;
   height: 13px;
-  color: #77777e;
+  color: #8a8a92;
   transition: color 180ms ease-out;
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1473,10 +1519,15 @@
   filter: saturate(0.2);
   transition: opacity 250ms ease-out, filter 250ms ease-out;
 }
-.card:hover .cardPreview,
 .card:focus-visible .cardPreview {
   opacity: 1;
   filter: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .cardPreview {
+    opacity: 1;
+    filter: none;
+  }
 }
 .cardPreview img {
   width: 100%;
@@ -1526,9 +1577,13 @@
   opacity: 0;
   transition: opacity 200ms ease-out;
 }
-.card:hover .corner,
 .card:focus-visible .corner {
   opacity: 1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .corner {
+    opacity: 1;
+  }
 }
 .corner:nth-of-type(1) {
   left: -1px;

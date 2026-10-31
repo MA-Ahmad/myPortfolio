@@ -5,6 +5,7 @@ import { cn } from 'lib/cn';
 import { PIPELINE_LABELS, type NodeKind } from '../content';
 import styles from '../midnight.module.css';
 import { Weld, noise, type WeldKind } from './welds';
+import { playTear, playWeld, unlockAudio } from '../lib/weld-sound';
 
 const NODES: NodeKind[] = ['design', 'build', 'test', 'ship'];
 
@@ -109,15 +110,50 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
           <rect x=".5" y=".5" width="45" height="45" rx="10.5" />
         </clipPath>
         <g id={`${name}-edge`} className={styles.edge} clipPath={`url(#${name}-shape)`}>
-          <polyline points={points} fill="none" stroke="#2a2a2f" strokeWidth="2" strokeLinejoin="bevel" />
-          <polyline points={points} fill="none" stroke="#3c3c43" strokeWidth=".5" strokeLinejoin="bevel" />
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#2a2a2f"
+            strokeWidth="2"
+            strokeLinejoin="bevel"
+          />
+          <polyline
+            points={points}
+            fill="none"
+            stroke="#3c3c43"
+            strokeWidth=".5"
+            strokeLinejoin="bevel"
+          />
           {fibres.map((f, i) => (
-            <line key={i} {...f} stroke="#45454c" strokeWidth=".35" strokeLinecap="round" opacity=".5" />
+            <line
+              key={i}
+              {...f}
+              stroke="#45454c"
+              strokeWidth=".35"
+              strokeLinecap="round"
+              opacity=".5"
+            />
           ))}
         </g>
         <g id={`${name}-art`}>
-          <rect x=".5" y=".5" width="45" height="45" rx="10.5" fill={`url(#${name}-fill)`} stroke="#2b2b30" />
-          <rect x="1.5" y="1.5" width="43" height="43" rx="9.5" fill="none" stroke="rgba(255,255,255,.035)" />
+          <rect
+            x=".5"
+            y=".5"
+            width="45"
+            height="45"
+            rx="10.5"
+            fill={`url(#${name}-fill)`}
+            stroke="#2b2b30"
+          />
+          <rect
+            x="1.5"
+            y="1.5"
+            width="43"
+            height="43"
+            rx="9.5"
+            fill="none"
+            stroke="rgba(255,255,255,.035)"
+          />
           <circle cx="38" cy="8" r="2.1" fill="#3a3a40" />
           <Icon x={8} y={25} size={14} strokeWidth={1.7} color="#5a5a62" />
         </g>
@@ -141,7 +177,17 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
   );
 }
 
-function Node({ id, index, state, run }: { id: NodeKind; index: number; state: NodeState; run: boolean }) {
+function Node({
+  id,
+  index,
+  state,
+  run
+}: {
+  id: NodeKind;
+  index: number;
+  state: NodeState;
+  run: boolean;
+}) {
   const last = index === NODES.length - 1;
   return (
     <div
@@ -162,8 +208,16 @@ function Node({ id, index, state, run }: { id: NodeKind; index: number; state: N
         <span className={styles.boxWrap}>
           <TornTile id={id} index={index} />
           <span className={styles.dot} aria-hidden />
-          <span className={cn(styles.port, styles.port_l)} aria-hidden data-hide={index === 0 || undefined} />
-          <span className={cn(styles.port, styles.port_r)} aria-hidden data-hide={last || undefined} />
+          <span
+            className={cn(styles.port, styles.port_l)}
+            aria-hidden
+            data-hide={index === 0 || undefined}
+          />
+          <span
+            className={cn(styles.port, styles.port_r)}
+            aria-hidden
+            data-hide={last || undefined}
+          />
         </span>
         {last ? null : (
           <span className={styles.wire} aria-hidden>
@@ -209,13 +263,18 @@ export function Pipeline() {
   }, []);
 
   const set = useCallback((index: number | 'all', state: NodeState) => {
-    setStates((current) => current.map((value, i) => (index === 'all' || i === index ? state : value)));
+    setStates((current) =>
+      current.map((value, i) => (index === 'all' || i === index ? state : value))
+    );
   }, []);
 
   const loop = useCallback(() => {
     let t = START_MS;
     NODES.forEach((_, index) => {
-      at(t, () => set(index, 'welding'));
+      at(t, () => {
+        set(index, 'welding');
+        playWeld(WELDS[index].kind);
+      });
       at(t + WELD_MS, () => set(index, 'fixed'));
       t += WELD_MS;
       if (index < NODES.length - 1) {
@@ -224,11 +283,16 @@ export function Pipeline() {
         at(t, () => setPulse(null));
       }
     });
-    at(t + HOLD_MS, () => set('all', 'broken'));
+    at(t + HOLD_MS, () => {
+      set('all', 'broken');
+      playTear();
+    });
     at(t + HOLD_MS + BREAK_MS, loop);
   }, [set]);
 
   const toggle = () => {
+    // A click is the gesture that lets the browser play sound.
+    unlockAudio();
     clear();
     setPulse(null);
     if (reduced) {
@@ -240,6 +304,7 @@ export function Pipeline() {
     if (playing) {
       setPlaying(false);
       set('all', 'broken');
+      playTear();
       return;
     }
     setPlaying(true);

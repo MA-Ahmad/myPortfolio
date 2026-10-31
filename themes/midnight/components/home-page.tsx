@@ -8,6 +8,7 @@ import { ExperienceRail } from './experience-rail';
 import { Heatmap } from './heatmap';
 import { LinkChips } from './link-chips';
 import { Pipeline } from './pipeline';
+import { SoundToggle } from './sound-toggle';
 import { PixelHeading } from './pixel-heading';
 import { ProjectCards } from './project-cards';
 import styles from '../midnight.module.css';
@@ -34,10 +35,13 @@ export function HomePage({ contributions }: { contributions: Activity[] }) {
   const [first, second] = MIDNIGHT_CONTENT.intro;
   return (
     <>
-      <p className={cn(styles.eyebrow, styles.mono)}>{MIDNIGHT_CONTENT.greeting}</p>
-      <PixelHeading subtitle={`/ ${MIDNIGHT_CONTENT.handle}`}>
-        {PROFILE.displayName.toUpperCase()}
-      </PixelHeading>
+      <div className={styles.heroHead}>
+        <p className={cn(styles.eyebrow, styles.mono)}>{MIDNIGHT_CONTENT.greeting}</p>
+        <PixelHeading subtitle={`/ ${MIDNIGHT_CONTENT.handle}`}>
+          {PROFILE.displayName.toUpperCase()}
+        </PixelHeading>
+        <SoundToggle />
+      </div>
       <Paragraph parts={first} />
 
       <div>
@@ -63,9 +67,7 @@ export function HomePage({ contributions }: { contributions: Activity[] }) {
 
       <footer className={styles.footer}>
         <Heart size={20} strokeWidth={1.5} />
-        <p>
-          Thanks for stopping by.
-        </p>
+        <p>Thanks for stopping by.</p>
         <p className={styles.subtitle}>
           © {new Date().getFullYear()} {PROFILE.displayName}. All rights reserved.
         </p>
