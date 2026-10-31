@@ -236,7 +236,6 @@ function Node({
  */
 export function Pipeline() {
   const reduced = useReducedMotion();
-  const [playing, setPlaying] = useState(false);
   const [states, setStates] = useState<NodeState[]>(() => NODES.map(() => 'broken'));
   const [pulse, setPulse] = useState<number | null>(null);
   const [width, setWidth] = useState(0);
@@ -290,7 +289,18 @@ export function Pipeline() {
     at(t + HOLD_MS + BREAK_MS, loop);
   }, [set]);
 
-  const toggle = () => {
+  // The animation starts as soon as the page is shown, tiles torn, and then loops. (Browsers keep
+  // sound off until the first click, so the first loop plays silently.)
+  useEffect(() => {
+    if (reduced !== false) return;
+    const timer = window.setTimeout(loop, 350);
+    return () => {
+      window.clearTimeout(timer);
+      clear();
+    };
+  }, [reduced, loop]);
+
+  const replay = () => {
     // A click is the gesture that lets the browser play sound.
     unlockAudio();
     clear();
@@ -301,14 +311,10 @@ export function Pipeline() {
       set('all', whole ? 'broken' : 'fixed');
       return;
     }
-    if (playing) {
-      setPlaying(false);
-      set('all', 'broken');
-      playTear();
-      return;
-    }
-    setPlaying(true);
-    loop();
+    // Start again from the top: tear everything, then weld the tiles one after another.
+    if (states.some((state) => state !== 'broken')) playTear();
+    set('all', 'broken');
+    at(BREAK_MS, loop);
   };
 
   return (
@@ -318,13 +324,12 @@ export function Pipeline() {
       style={{ '--w': `${width}px` } as CSSProperties}
       role="button"
       tabIndex={0}
-      aria-pressed={playing}
-      aria-label="Weld the torn pipeline together: design, build, test, ship"
-      onClick={toggle}
+      aria-label="Replay the weld animation: design, build, test, ship"
+      onClick={replay}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
-          toggle();
+          replay();
         }
       }}
     >

@@ -162,11 +162,10 @@ export function playWeld(kind: WeldKind) {
   const now = n.ctx.currentTime + 0.01;
 
   if (kind === 'torch') {
-    // A light welding sizzle for as long as the bead runs down the seam (260-900ms): a thin, airy
-    // fizz with fine crackle through it. Everything sits above ~2 kHz and nothing wobbles, so it
-    // stays soft and never turns into a drum. It fades in and out, then one small tick as it shuts.
-    hiss(n, now + 0.26, 0.66, 0.045, 5200, 6800, 0.8, 'highpass');
-    hiss(n, now + 0.26, 0.66, 0.03, 2800, 4200, 2);
+    // Fine crackle for as long as the bead runs down the seam (260-900ms), then one small tick as it
+    // shuts. Everything sits above ~2 kHz and nothing wobbles. The continuous layers (a very high thin
+    // hiss, then a light 2.8-4.2 kHz fizz under the crackle) were both removed on request, the fizz as
+    // a test: to bring it back, add hiss(n, now + 0.26, 0.66, 0.03, 2800, 4200, 2) before the crackle.
     crackle(n, now + 0.27, 0.62, 28, 0.05);
     hiss(n, now + 0.9, 0.012, 0.09, 3200, 2200, 2);
   } else if (kind === 'spot') {
