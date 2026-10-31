@@ -311,6 +311,151 @@
   }
 }
 
+/*
+ * Torn pill: the contact buttons rest torn down the middle (same look as the pipeline tiles) and
+ * join on hover or focus. The face stays in flow, so the link keeps its size and text; it is hidden
+ * while torn. The halves are aria-hidden copies, each clipped along the same ragged tear.
+ */
+.tornPill {
+  position: relative;
+  display: inline-flex;
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.tornPill::before {
+  content: '';
+  position: absolute;
+  inset: -9px -4px; /* hit area: 26px controls reach 44px */
+}
+.tornPill:active {
+  transform: scale(0.96);
+}
+.pillFace,
+.pillHalfL,
+.pillHalfR {
+  composes: bevel;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #d4d4d8;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.pillFace svg,
+.pillHalfL svg,
+.pillHalfR svg {
+  flex: none;
+  color: #8a8a92;
+}
+.pillHalfL,
+.pillHalfR {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.9));
+  /* Tearing is quick and sharp. */
+  transition:
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms ease-out;
+}
+.pillHalfL {
+  transform: translate(-2.2px, 0.5px) rotate(-2deg);
+  transform-origin: 0 100%;
+}
+.pillHalfR {
+  transform: translate(2.2px, -0.4px) rotate(1.6deg);
+  transform-origin: 100% 0;
+}
+.pillEdge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  transition: opacity 120ms ease-out;
+}
+/* The whole pill, seamless: fades in over the halves once they touch. */
+.pillFace {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition:
+    opacity 80ms ease-out,
+    color 180ms ease-out;
+}
+.pillFace::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tornPill:hover .pillHalfL,
+  .tornPill:hover .pillHalfR {
+    transform: none;
+    opacity: 1;
+    transition:
+      transform 340ms cubic-bezier(0.65, 0, 0.35, 1),
+      opacity 180ms ease-out 300ms;
+  }
+  .tornPill:hover .pillEdge {
+    opacity: 0;
+    transition-delay: 300ms;
+  }
+  .tornPill:hover .pillFace {
+    opacity: 1;
+    color: #fff;
+    transition:
+      opacity 150ms ease-out 320ms,
+      color 180ms ease-out 320ms;
+  }
+  .tornPill:hover .pillFace::after {
+    opacity: 1;
+    transition-delay: 320ms;
+  }
+}
+.tornPill:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  outline-offset: 3px;
+  border-radius: 8px;
+}
+.tornPill:focus-visible .pillHalfL,
+.tornPill:focus-visible .pillHalfR {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 340ms cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 180ms ease-out 300ms;
+}
+.tornPill:focus-visible .pillEdge {
+  opacity: 0;
+  transition-delay: 300ms;
+}
+.tornPill:focus-visible .pillFace {
+  opacity: 1;
+  color: #fff;
+  transition:
+    opacity 150ms ease-out 320ms,
+    color 180ms ease-out 320ms;
+}
+/* Touch has no hover: the buttons stay whole. */
+@media (hover: none), (pointer: coarse) {
+  .pillHalfL,
+  .pillHalfR {
+    display: none;
+  }
+  .pillFace {
+    opacity: 1;
+  }
+}
+
 .heroHead {
   position: relative;
 }
@@ -1813,6 +1958,18 @@
   .cardPreview,
   .spark {
     animation: none;
+  }
+  .pillHalfL,
+  .pillHalfR,
+  .pillFace,
+  .tornPill:hover .pillHalfL,
+  .tornPill:hover .pillHalfR,
+  .tornPill:hover .pillFace,
+  .tornPill:focus-visible .pillHalfL,
+  .tornPill:focus-visible .pillHalfR,
+  .tornPill:focus-visible .pillFace {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
   }
   .halfL,
   .halfR,

@@ -9,6 +9,7 @@ import { Heatmap } from './heatmap';
 import { LinkChips } from './link-chips';
 import { Pipeline } from './pipeline';
 import { SoundToggle } from './sound-toggle';
+import { TornPill } from './torn-pill';
 import { PixelHeading } from './pixel-heading';
 import { ProjectCards } from './project-cards';
 import styles from '../midnight.module.css';
@@ -48,13 +49,13 @@ export function HomePage({ contributions }: { contributions: Activity[] }) {
         <div>
           <Paragraph parts={second} />
           <div className={styles.pillRow}>
-            <a className={styles.pill} href={twitter.href} target="_blank" rel="noreferrer">
+            <TornPill seed={11} href={twitter.href} target="_blank" rel="noreferrer">
               <XIcon width={12} height={12} /> Message me on X
-            </a>
+            </TornPill>
             <span className={cn(styles.or, styles.mono)}>OR</span>
-            <a className={styles.pill} href={`mailto:${PROFILE.email}`}>
+            <TornPill seed={17} href={`mailto:${PROFILE.email}`}>
               <Mail size={13} strokeWidth={1.75} /> Send an email
-            </a>
+            </TornPill>
           </div>
         </div>
         <Pipeline />
