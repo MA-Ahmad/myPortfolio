@@ -47,8 +47,27 @@ export function unlockAudio() {
   if (ctx.state === 'suspended') void ctx.resume();
 }
 
+/**
+ * Sound is on by default, but browsers only let audio start after a visit has had a click, tap or
+ * key press. Try straight away (this works when the visitor just clicked through to this page) and
+ * otherwise wake the context on the first gesture anywhere, so the sounds start with the first
+ * interaction instead of waiting for a click on the tiles.
+ */
+export function armAudio() {
+  if (typeof window === 'undefined') return () => {};
+  unlockAudio();
+  const events = ['pointerdown', 'keydown', 'touchend'] as const;
+  const wake = () => {
+    unlockAudio();
+    if (ctx && ctx.state === 'running') off();
+  };
+  const off = () => events.forEach((event) => window.removeEventListener(event, wake, true));
+  events.forEach((event) => window.addEventListener(event, wake, true));
+  return off;
+}
+
 type Nodes = { ctx: AudioContext; out: GainNode; noise: AudioBuffer };
-const ready = (): Nodes | null => (!muted && ctx && master && noise ? { ctx, out: master, noise } : null);
+const ready = (): Nodes | null => (!muted && ctx && ctx.state === 'running' && master && noise ? { ctx, out: master, noise } : null);
 
 /** A burst of filtered noise: band-passed, its centre sweeping from `from` to `to` Hz. */
 function hiss(n: Nodes, at: number, length: number, peak: number, from: number, to: number, q = 1.2, type: BiquadFilterType = 'bandpass') {

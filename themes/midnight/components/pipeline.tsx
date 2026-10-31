@@ -5,7 +5,7 @@ import { cn } from 'lib/cn';
 import { PIPELINE_LABELS, type NodeKind } from '../content';
 import styles from '../midnight.module.css';
 import { Weld, noise, type WeldKind } from './welds';
-import { playTear, playWeld, unlockAudio } from '../lib/weld-sound';
+import { armAudio, playTear, playWeld, unlockAudio } from '../lib/weld-sound';
 
 const NODES: NodeKind[] = ['design', 'build', 'test', 'ship'];
 
@@ -289,8 +289,11 @@ export function Pipeline() {
     at(t + HOLD_MS + BREAK_MS, loop);
   }, [set]);
 
-  // The animation starts as soon as the page is shown, tiles torn, and then loops. (Browsers keep
-  // sound off until the first click, so the first loop plays silently.)
+  // Sound is on by default: wake audio now if the browser allows, else on the first gesture.
+  useEffect(() => armAudio(), []);
+
+  // The animation starts as soon as the page is shown, tiles torn, and then loops. (If the browser
+  // still blocks audio, the loop plays silently until the first click, tap or key press.)
   useEffect(() => {
     if (reduced !== false) return;
     const timer = window.setTimeout(loop, 350);
