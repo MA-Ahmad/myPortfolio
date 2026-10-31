@@ -118,22 +118,51 @@
   z-index: 50;
   display: flex;
   gap: 4px;
-  padding: 8px 10px;
-  border: 1px solid var(--mn-line);
-  border-radius: 26px;
+  padding: 4px 8px;
+  border: 1px dashed var(--mn-line-hi);
+  border-radius: 14px;
   background: rgba(20, 20, 23, 0.78);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   transform: translateX(-50%);
 }
 
+/* Corner brackets, as on the project cards: four white L-shaped corners around a dashed frame. */
+.bracket {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 0 solid #f3f3f4;
+  pointer-events: none;
+}
+.bracketTl {
+  left: -1px;
+  top: -1px;
+  border-width: 1px 0 0 1px;
+}
+.bracketTr {
+  right: -1px;
+  top: -1px;
+  border-width: 1px 1px 0 0;
+}
+.bracketBl {
+  left: -1px;
+  bottom: -1px;
+  border-width: 0 0 1px 1px;
+}
+.bracketBr {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 1px 1px 0;
+}
+
 .dockItem {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
   min-width: 46px;
-  padding: 6px 8px;
+  padding: 4px 8px;
   border-radius: 16px;
   color: var(--mn-faint);
   font-size: 10.5px;
@@ -1389,8 +1418,23 @@
   color: var(--mn-body);
 }
 .chipInline {
-  margin: 0 2px;
-  vertical-align: 1px;
+  height: 20px;
+  margin: 0 1px;
+  padding: 0 7px 0 6px;
+  gap: 5px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1;
+  vertical-align: middle;
+  /* Optical: the label sits level with the sentence's own text, not a hair below it. */
+  position: relative;
+  top: -1.5px;
+}
+.chipInline img,
+.chipInline svg,
+.chipInline .chipLetter {
+  width: 12px;
+  height: 12px;
 }
 .chipLetter {
   display: grid;

@@ -109,14 +109,16 @@
   --dock-bg: var(--mn-tile);
   --dock-fg: var(--mn-ink);
   --dock-muted: var(--mn-faint);
-  --dock-border: var(--mn-line);
   --dock-card: var(--mn-tile-hi);
   --dock-dot: transparent;
   --dock-wire: color-mix(in oklab, var(--mn-faint) 60%, transparent);
   --dock-token: var(--mn-tile-hi);
-  --dock-radius: 16px;
+  --dock-radius: 14px;
   --dock-radius-inner: 8px;
   --dock-shadow: 0 16px 40px -18px rgb(0 0 0 / 0.9);
+  /* Dashed frame, like the project cards. */
+  border-style: dashed;
+  --dock-border: var(--mn-line-hi);
   --dock-home: var(--mn-ink);
   --dock-terminal: var(--mn-ink);
   --dock-notebook: var(--mn-ink);
@@ -462,4 +464,33 @@
 .dock[data-reduced] .screen,
 .dock[data-reduced] .screenTitle::after {
   animation: none;
+}
+
+/* Corner brackets, as on the project cards: four white L-shaped corners around a dashed frame. */
+.bracket {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border: 0 solid #f3f3f4;
+  pointer-events: none;
+}
+.bracketTl {
+  left: -1px;
+  top: -1px;
+  border-width: 1px 0 0 1px;
+}
+.bracketTr {
+  right: -1px;
+  top: -1px;
+  border-width: 1px 1px 0 0;
+}
+.bracketBl {
+  left: -1px;
+  bottom: -1px;
+  border-width: 0 0 1px 1px;
+}
+.bracketBr {
+  right: -1px;
+  bottom: -1px;
+  border-width: 0 1px 1px 0;
 }

@@ -98,6 +98,11 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
       data-look={look}
       data-reduced={reduced || undefined}
     >
+      {look === 'midnight'
+        ? (['Tl', 'Tr', 'Bl', 'Br'] as const).map((corner) => (
+            <span key={corner} className={`${styles.bracket} ${styles[`bracket${corner}`]}`} aria-hidden />
+          ))
+        : null}
       <span className={styles.head}>
         <span className={styles.title}>{labels.title}</span>
         <span className={styles.open}>

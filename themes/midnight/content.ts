@@ -118,8 +118,7 @@ export const MIDNIGHT_CONTENT = {
   nav: [
     { label: 'Home', href: '/themes/midnight' },
     { label: 'Work', href: '/themes/midnight/work' },
-    { label: 'Skills', href: '/themes/midnight/skills' },
-    { label: 'Blog', href: '/blog' }
+    { label: 'Skills', href: '/themes/midnight/skills' }
   ],
   /** Two of the interactive blocks on /blocks, shown on the home page. */
   projects: [
