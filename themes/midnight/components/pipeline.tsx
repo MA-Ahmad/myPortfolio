@@ -4,6 +4,7 @@ import { FlaskConical, Hammer, PenTool, Rocket } from 'lucide-react';
 import { cn } from 'lib/cn';
 import { PIPELINE_LABELS, type NodeKind } from '../content';
 import styles from '../midnight.module.css';
+import { Weld, noise, type WeldKind } from './welds';
 
 const NODES: NodeKind[] = ['design', 'build', 'test', 'ship'];
 
@@ -15,7 +16,7 @@ const ICONS = {
 };
 
 /** One loop of the animation, in ms: a box is welded, the glow line crosses to the next, and so on. */
-const WELD_MS = 1100;
+const WELD_MS = 1300;
 const PULSE_MS = 560;
 const HOLD_MS = 1600;
 const BREAK_MS = 900;
@@ -23,12 +24,17 @@ const START_MS = 250;
 
 type NodeState = 'broken' | 'welding' | 'fixed';
 
-/** Deterministic noise in [0, 1), so every tear is identical on the server and in the browser. */
-function noise(a: number, b: number) {
-  let h = (Math.imul(a + 1, 374761393) + Math.imul(b + 1, 668265263)) >>> 0;
-  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
-  return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
-}
+/**
+ * One weld per tile, to compare. `joinAt` is when the halves have fully met (the torn edges fade
+ * from then); `closeMs` is how long they take when they simply slide shut. The torch and molten welds
+ * zip instead: see "Zip" in midnight.module.css.
+ */
+const WELDS: { kind: WeldKind; joinAt: number; closeMs: number }[] = [
+  { kind: 'torch', joinAt: 900, closeMs: 260 },
+  { kind: 'spot', joinAt: 730, closeMs: 0 },
+  { kind: 'arc', joinAt: 520, closeMs: 0 },
+  { kind: 'molten', joinAt: 820, closeMs: 300 }
+];
 
 /**
  * A tear down the middle of a 46px tile: a slow wander across the centre, an irregular zigzag on
@@ -73,7 +79,7 @@ function fibresOf(seed: number, tear: [number, number][]) {
 const TEARS = NODES.map((_, index) => {
   const tear = tearOf(index);
   const points = tear.map(([x, y]) => `${x.toFixed(2)},${y.toFixed(2)}`).join(' ');
-  return { points, fibres: fibresOf(index, tear) };
+  return { tear, points, fibres: fibresOf(index, tear) };
 });
 
 /**
@@ -83,7 +89,7 @@ const TEARS = NODES.map((_, index) => {
  */
 function TornTile({ id, index }: { id: NodeKind; index: number }) {
   const Icon = ICONS[id];
-  const { points, fibres } = TEARS[index];
+  const { tear, points, fibres } = TEARS[index];
   const name = `mn-tile-${index}`;
   return (
     <svg className={styles.tile} viewBox="0 0 46 46" width={46} height={46} aria-hidden>
@@ -128,6 +134,9 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
           <use href={`#${name}-edge`} />
         </g>
       </g>
+      {/* Once the halves meet, one unclipped tile fades in over them, so no seam is left behind. */}
+      <use href={`#${name}-art`} className={styles.joined} />
+      <Weld kind={WELDS[index].kind} tear={tear} seed={index + 1} shape={`${name}-shape`} />
     </svg>
   );
 }
@@ -135,7 +144,19 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
 function Node({ id, index, state, run }: { id: NodeKind; index: number; state: NodeState; run: boolean }) {
   const last = index === NODES.length - 1;
   return (
-    <div className={styles.node} data-state={state}>
+    <div
+      className={styles.node}
+      data-state={state}
+      data-weld={WELDS[index].kind}
+      style={
+        {
+          // Tiles tear apart right to left, a beat apart.
+          '--break-delay': `${(NODES.length - 1 - index) * 50}ms`,
+          '--join-at': `${WELDS[index].joinAt}ms`,
+          '--close-ms': `${WELDS[index].closeMs}ms`
+        } as CSSProperties
+      }
+    >
       <span className={cn(styles.label, styles.mono)}>{PIPELINE_LABELS[id]}</span>
       <span className={styles.tileRow}>
         <span className={styles.boxWrap}>

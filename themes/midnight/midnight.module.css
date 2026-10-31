@@ -278,8 +278,13 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr) 46px;
   margin-top: 28px;
+  border-radius: 12px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+.flow:focus-visible {
+  outline: 1px solid var(--mn-ink);
+  outline-offset: 6px;
 }
 
 .node {
@@ -327,14 +332,18 @@
   overflow: visible;
 }
 
-/* Torn: each half pulled a little away and twisted, dimmed, with its own shadow into the gap. */
+/*
+ * Torn: each half pulled a little away and twisted, dimmed, with its own shadow into the gap.
+ * Tearing is quick and sharp; joining accelerates the halves into each other, and only once they
+ * touch do the torn edges fade, the joined tile fade in and the tile brighten.
+ */
 .halfL,
 .halfR {
   opacity: 0.6;
   filter: drop-shadow(0 1px 1.2px rgba(0, 0, 0, 0.9));
   transition:
-    transform 700ms cubic-bezier(0.23, 1, 0.32, 1),
-    opacity 400ms ease-out;
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1) var(--break-delay, 0ms),
+    opacity 200ms ease-out var(--break-delay, 0ms);
 }
 .halfL {
   transform: translate(-2.8px, 0.6px) rotate(-3deg);
@@ -345,18 +354,655 @@
   transform-origin: 46px 0;
 }
 .edge {
-  transition: opacity 400ms ease-out;
+  transition: opacity 120ms ease-out var(--break-delay, 0ms);
 }
+.joined {
+  opacity: 0;
+  transition: opacity 80ms ease-out var(--break-delay, 0ms);
+}
+
 .node[data-state='welding'] .halfL,
 .node[data-state='welding'] .halfR,
 .node[data-state='fixed'] .halfL,
 .node[data-state='fixed'] .halfR {
   transform: none;
   opacity: 1;
+  transition:
+    transform var(--close-ms, 380ms) cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 180ms ease-out var(--join-at, 340ms);
 }
 .node[data-state='welding'] .edge,
 .node[data-state='fixed'] .edge {
   opacity: 0;
+  transition: opacity 160ms ease-out var(--join-at, 340ms);
+}
+.node[data-state='welding'] .joined,
+.node[data-state='fixed'] .joined {
+  opacity: 1;
+  transition: opacity 150ms ease-out calc(var(--join-at, 340ms) + 20ms);
+}
+/* ---------- welds: one kind per tile, see components/welds.tsx ---------- */
+
+.weld {
+  pointer-events: none;
+}
+.weld * {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sparks: x flies out and slows, y rises then falls under gravity, colour cools as they go. */
+.sparkX,
+.sparkY,
+.sparkLine {
+  transform-box: view-box;
+}
+.sparkX {
+  opacity: 0;
+}
+.sparkLine {
+  stroke: #fff;
+  stroke-width: 0.55;
+}
+.node[data-state='welding'] .sparkX {
+  animation: spark-x var(--t) cubic-bezier(0.15, 0.6, 0.35, 1) var(--d) both;
+}
+.node[data-state='welding'] .sparkY {
+  animation: spark-y var(--t) linear var(--d) both;
+}
+.node[data-state='welding'] .sparkLine {
+  animation: spark-cool var(--t) linear var(--d) both;
+}
+@keyframes spark-x {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  3% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--dx));
+  }
+}
+@keyframes spark-y {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  30% {
+    transform: translateY(var(--up));
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.55);
+  }
+  100% {
+    transform: translateY(var(--down));
+  }
+}
+@keyframes spark-cool {
+  0% {
+    stroke: #fff;
+  }
+  35% {
+    stroke: #ffd28a;
+  }
+  100% {
+    stroke: #ff5a1f;
+  }
+}
+
+/* Torch: a white-hot bead runs down the seam (260-900ms); the seam behind it glows and cools. */
+.torchHeat,
+.torchHalo,
+.torchHead {
+  opacity: 0;
+}
+.torchHeat {
+  stroke: #ff9440;
+  stroke-width: 1.2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.torchHalo {
+  stroke: rgba(255, 196, 120, 0.22);
+  stroke-width: 4;
+  stroke-dasharray: 9 200;
+  stroke-dashoffset: 9;
+}
+.torchHead {
+  stroke: #fff;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 4px #ff9a3c);
+  stroke-dasharray: 3 200;
+  stroke-dashoffset: 3;
+}
+.node[data-state='welding'] .torchHeat {
+  animation: torch-heat 1300ms linear both;
+}
+.node[data-state='welding'] .torchHalo {
+  animation: torch-halo 1300ms linear both;
+}
+.node[data-state='welding'] .torchHead {
+  animation: torch-head 1300ms linear both;
+}
+@keyframes torch-heat {
+  0%,
+  20% {
+    opacity: 1;
+    stroke: #ffd38a;
+    stroke-dashoffset: 100;
+  }
+  69% {
+    opacity: 1;
+    stroke: #ff9440;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    opacity: 0;
+    stroke: #7a2e10;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes torch-halo {
+  0%,
+  20% {
+    opacity: 1;
+    stroke-dashoffset: 9;
+  }
+  69% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  74%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+@keyframes torch-head {
+  0%,
+  19% {
+    opacity: 0;
+    stroke-dashoffset: 3;
+  }
+  20% {
+    opacity: 1;
+    stroke-dashoffset: 3;
+  }
+  69% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  72%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Spot: four flashes down the seam, each with a ring and a rivet mark that cools. */
+.spotFlash,
+.spotRing,
+.spotMark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.weld .spotFlash {
+  fill: #fff;
+  stroke: none;
+}
+.weld .spotRing {
+  stroke: #ffc77a;
+  stroke-width: 0.6;
+}
+.weld .spotMark {
+  fill: #ffab4a;
+  stroke: none;
+}
+.node[data-state='welding'] .spotFlash {
+  animation: spot-flash 260ms ease-out var(--d) both;
+}
+.node[data-state='welding'] .spotRing {
+  animation: spot-ring 420ms cubic-bezier(0.23, 1, 0.32, 1) var(--d) both;
+}
+.node[data-state='welding'] .spotMark {
+  animation: spot-mark calc(1300ms - var(--d)) linear var(--d) both;
+}
+@keyframes spot-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes spot-ring {
+  0% {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+@keyframes spot-mark {
+  0% {
+    opacity: 0;
+    fill: #fff3d6;
+  }
+  2% {
+    opacity: 1;
+  }
+  15% {
+    fill: #ffab4a;
+  }
+  60% {
+    opacity: 0.9;
+    fill: #8a3a18;
+  }
+  100% {
+    opacity: 0;
+    fill: #3a3a40;
+  }
+}
+/* The halves close a step with every spot weld. */
+.node[data-weld='spot'][data-state='welding'] .halfL {
+  animation: stitch-l 1300ms linear both;
+}
+.node[data-weld='spot'][data-state='welding'] .halfR {
+  animation: stitch-r 1300ms linear both;
+}
+@keyframes stitch-l {
+  0%,
+  11.5% {
+    transform: translate(-2.8px, 0.6px) rotate(-3deg);
+  }
+  15%,
+  25.4% {
+    transform: translate(-2.1px, 0.45px) rotate(-2.25deg);
+  }
+  29%,
+  39.2% {
+    transform: translate(-1.4px, 0.3px) rotate(-1.5deg);
+  }
+  43%,
+  53% {
+    transform: translate(-0.7px, 0.15px) rotate(-0.75deg);
+  }
+  56.5%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes stitch-r {
+  0%,
+  11.5% {
+    transform: translate(2.8px, -0.5px) rotate(2.4deg);
+  }
+  15%,
+  25.4% {
+    transform: translate(2.1px, -0.38px) rotate(1.8deg);
+  }
+  29%,
+  39.2% {
+    transform: translate(1.4px, -0.25px) rotate(1.2deg);
+  }
+  43%,
+  53% {
+    transform: translate(0.7px, -0.12px) rotate(0.6deg);
+  }
+  56.5%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* Arc: bolts flicker across the gap while the halves are dragged in, then a flash on contact. */
+.weld .arcBolt {
+  stroke: #e3f2ff;
+  stroke-width: 0.6;
+  opacity: 0;
+  filter: drop-shadow(0 0 1.2px #8ccaff) drop-shadow(0 0 3px #3b9dff);
+}
+.weld .arcFlash {
+  fill: #d6ecff;
+  stroke: none;
+  opacity: 0;
+}
+.node[data-state='welding'] .arcBolt {
+  animation: arc-flicker 520ms linear var(--d) both;
+}
+.node[data-state='welding'] .arcFlash {
+  animation: arc-flash 1300ms linear both;
+}
+@keyframes arc-flicker {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0.15;
+  }
+  22% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0;
+  }
+  46% {
+    opacity: 0.9;
+  }
+  52% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 0.1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes arc-flash {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  41% {
+    opacity: 0.45;
+  }
+  62%,
+  100% {
+    opacity: 0;
+  }
+}
+.node[data-weld='arc'][data-state='welding'] .halfL {
+  animation: arc-pull-l 1300ms linear both;
+}
+.node[data-weld='arc'][data-state='welding'] .halfR {
+  animation: arc-pull-r 1300ms linear both;
+}
+@keyframes arc-pull-l {
+  0% {
+    transform: translate(-2.8px, 0.6px) rotate(-3deg);
+  }
+  10% {
+    transform: translate(-2.4px, 0.4px) rotate(-2.6deg);
+  }
+  16% {
+    transform: translate(-2.6px, 0.7px) rotate(-2.8deg);
+  }
+  24% {
+    transform: translate(-1.8px, 0.35px) rotate(-2deg);
+  }
+  30% {
+    transform: translate(-2px, 0.5px) rotate(-2.2deg);
+  }
+  37% {
+    transform: translate(-1.1px, 0.2px) rotate(-1.2deg);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4);
+  }
+  40%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes arc-pull-r {
+  0% {
+    transform: translate(2.8px, -0.5px) rotate(2.4deg);
+  }
+  10% {
+    transform: translate(2.5px, -0.6px) rotate(2.1deg);
+  }
+  16% {
+    transform: translate(2.3px, -0.3px) rotate(2.2deg);
+  }
+  24% {
+    transform: translate(1.9px, -0.45px) rotate(1.6deg);
+  }
+  30% {
+    transform: translate(1.7px, -0.2px) rotate(1.7deg);
+  }
+  37% {
+    transform: translate(1px, -0.15px) rotate(0.9deg);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4);
+  }
+  40%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/*
+ * Zip (torch and molten): the halves swing into a V hinged where the weld starts, then close as the
+ * weld travels, while the joined tile is uncovered exactly up to the weld front. Above the bead the
+ * tile is whole; below it the tear is still open, narrowing to the bead. Every transform keeps the
+ * same function list, translate(A) rotate(r) translate(B), so the browser interpolates each part.
+ */
+.node[data-weld='torch'][data-state='welding'] .halfL {
+  animation: zip-top-l 1300ms both;
+}
+.node[data-weld='torch'][data-state='welding'] .halfR {
+  animation: zip-top-r 1300ms both;
+}
+.node[data-weld='torch'][data-state='welding'] .joined {
+  animation: reveal-down 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .halfL {
+  animation: zip-bottom-l 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .halfR {
+  animation: zip-bottom-r 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .joined {
+  animation: reveal-up 1300ms both;
+}
+
+/* Torch: hinge at the top centre (23, 0). Left half's origin is (0, 46); right half's is (46, 0). */
+@keyframes zip-top-l {
+  0% {
+    opacity: 0.6;
+    transform: translate(-2.8px, 0.6px) rotate(-3deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(23px, -46px) rotate(1.8deg) translate(-23px, 46px);
+    animation-timing-function: linear;
+  }
+  69%,
+  100% {
+    opacity: 1;
+    transform: translate(23px, -46px) rotate(0deg) translate(-23px, 46px);
+  }
+}
+@keyframes zip-top-r {
+  0% {
+    opacity: 0.6;
+    transform: translate(2.8px, -0.5px) rotate(2.4deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-23px, 0) rotate(-1.8deg) translate(23px, 0);
+    animation-timing-function: linear;
+  }
+  69%,
+  100% {
+    opacity: 1;
+    transform: translate(-23px, 0) rotate(0deg) translate(23px, 0);
+  }
+}
+/* The welded tile follows the bead down (20-69%, linear like the bead). */
+@keyframes reveal-down {
+  0%,
+  20% {
+    opacity: 1;
+    clip-path: inset(0 0 100% 0);
+  }
+  69%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Molten: hinge at the bottom centre (23, 46). */
+@keyframes zip-bottom-l {
+  0% {
+    opacity: 0.6;
+    transform: translate(-2.8px, 0.6px) rotate(-3deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  23% {
+    opacity: 1;
+    transform: translate(23px, 0) rotate(-1.8deg) translate(-23px, 0);
+    animation-timing-function: linear;
+  }
+  62%,
+  100% {
+    opacity: 1;
+    transform: translate(23px, 0) rotate(0deg) translate(-23px, 0);
+  }
+}
+@keyframes zip-bottom-r {
+  0% {
+    opacity: 0.6;
+    transform: translate(2.8px, -0.5px) rotate(2.4deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  23% {
+    opacity: 1;
+    transform: translate(-23px, 46px) rotate(1.8deg) translate(23px, -46px);
+    animation-timing-function: linear;
+  }
+  62%,
+  100% {
+    opacity: 1;
+    transform: translate(-23px, 46px) rotate(0deg) translate(23px, -46px);
+  }
+}
+/* The welded tile rises with the molten front (23-62%). */
+@keyframes reveal-up {
+  0%,
+  23% {
+    opacity: 1;
+    clip-path: inset(100% 0 0 0);
+  }
+  62%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Molten: the seam fills from the bottom behind a white-hot front, then cools. */
+.moltenGlow,
+.moltenCore,
+.moltenFront {
+  opacity: 0;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.weld .moltenGlow {
+  stroke: rgba(255, 120, 30, 0.35);
+  stroke-width: 4.5;
+}
+.weld .moltenCore {
+  stroke: #ff8a2b;
+  stroke-width: 1.5;
+}
+.weld .moltenFront {
+  stroke: #fff;
+  stroke-width: 1.7;
+  stroke-dasharray: 2.5 200;
+  stroke-dashoffset: 2.5;
+}
+.node[data-state='welding'] .moltenGlow {
+  animation: molten-glow 1300ms linear both;
+}
+.node[data-state='welding'] .moltenCore {
+  animation: molten-core 1300ms linear both;
+}
+.node[data-state='welding'] .moltenFront {
+  animation: molten-front 1300ms linear both;
+}
+@keyframes molten-glow {
+  0%,
+  23% {
+    opacity: 1;
+    stroke-dashoffset: 100;
+  }
+  62% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  85%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes molten-core {
+  0%,
+  23% {
+    opacity: 1;
+    stroke: #ffc46b;
+    stroke-dashoffset: 100;
+  }
+  62% {
+    opacity: 1;
+    stroke: #ff8a2b;
+    stroke-dashoffset: 0;
+  }
+  82% {
+    opacity: 0.9;
+    stroke: #b4380e;
+  }
+  100% {
+    opacity: 0;
+    stroke: #4a2416;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes molten-front {
+  0%,
+  22% {
+    opacity: 0;
+    stroke-dashoffset: 2.5;
+  }
+  23% {
+    opacity: 1;
+    stroke-dashoffset: 2.5;
+  }
+  62% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  65%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
 }
 
 /* The status light: orange while a box is being joined, green once it is whole. */
@@ -1071,7 +1717,20 @@
   }
   .halfL,
   .halfR,
-  .edge {
+  .edge,
+  .joined,
+  .node[data-state] .halfL,
+  .node[data-state] .halfR,
+  .node[data-state] .edge,
+  .node[data-state] .joined {
     transition: none;
+  }
+  .weld {
+    display: none;
+  }
+  .node[data-state] .halfL,
+  .node[data-state] .halfR,
+  .node[data-state] .joined {
+    animation: none;
   }
 }
