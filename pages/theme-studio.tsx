@@ -6,7 +6,7 @@ import { ArrowLeft } from 'lucide-react';
 import Meta from 'components/shared/meta';
 import { SITE_URL } from 'data/constants';
 import { CanvasStage } from 'components/canvas/canvas-stage';
-import { Multiplayer, PresenceToggle } from 'components/canvas/multiplayer';
+import { Multiplayer } from 'components/canvas/multiplayer';
 import styles from 'components/canvas/canvas.module.css';
 import { Activity, contributionsRevalidate, fetchGitHubContributions } from 'lib/github-contributions';
 import { pixelNavigate } from 'lib/pixel-transition';
@@ -83,7 +83,6 @@ function CanvasLayout({ children }: { children: ReactNode }) {
             Theme Studio
             <span className={styles.hint}>Tap a theme, or drag its wire into the display</span>
           </div>
-          <PresenceToggle />
         </header>
         <main>{children}</main>
       </div>
