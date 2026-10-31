@@ -2,6 +2,8 @@ import { CSSProperties, useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import { FlaskConical, Hammer, PenTool, Rocket } from 'lucide-react';
 import { cn } from 'lib/cn';
+import { screenCleared } from 'lib/canvas/screen';
+import { pixelTransitionSettled } from 'lib/pixel-transition';
 import { PIPELINE_LABELS, type NodeKind } from '../content';
 import styles from '../midnight.module.css';
 import { Weld, noise, type WeldKind } from './welds';
@@ -298,16 +300,26 @@ export function Pipeline({ preview = false }: { preview?: boolean }) {
   // Sound is on by default: wake audio now if the browser allows, else on the first gesture.
   useEffect(() => (preview ? undefined : armAudio()), [preview]);
 
-  // The animation starts as soon as the page is shown, tiles torn, and then loops. (If the browser
-  // still blocks audio, the loop plays silently until the first click, tap or key press.)
+  // The animation starts once the page is shown, tiles torn, and then loops. Arriving from the
+  // Theme Studio, the page is still covered by the studio's screen or pixel transition, so the
+  // page's loop (and its sound) waits for that to clear. (If the browser still blocks audio, the
+  // loop plays silently until the first click, tap or key press.)
   useEffect(() => {
     if (reduced !== false) return;
-    const timer = window.setTimeout(loop, 350);
+    let timer = 0;
+    let live = true;
+    const shown = preview
+      ? Promise.resolve()
+      : Promise.all([pixelTransitionSettled(), screenCleared()]);
+    shown.then(() => {
+      if (live) timer = window.setTimeout(loop, 350);
+    });
     return () => {
+      live = false;
       window.clearTimeout(timer);
       clear();
     };
-  }, [reduced, loop]);
+  }, [reduced, loop, preview]);
 
   const replay = () => {
     // A click is the gesture that lets the browser play sound.

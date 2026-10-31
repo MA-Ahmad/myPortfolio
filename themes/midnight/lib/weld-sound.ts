@@ -23,9 +23,14 @@ export function setMuted(value: boolean) {
   }
 }
 
-/** Create or wake the audio context. Call it from a click handler. */
+/**
+ * Create or wake the audio context. Call it from a click handler.
+ *
+ * Never inside a frame: the Theme Studio loads this page ahead, hidden in a frame, while its
+ * display grows into a screen, and that copy must stay silent.
+ */
 export function unlockAudio() {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || window.self !== window.top) return;
   const Ctor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return;
   if (!ctx) {
@@ -52,6 +57,9 @@ export function unlockAudio() {
  * key press. Try straight away (this works when the visitor just clicked through to this page) and
  * otherwise wake the context on the first gesture anywhere, so the sounds start with the first
  * interaction instead of waiting for a click on the tiles.
+ *
+ * The returned cleanup belongs to the page: it stops listening and closes the audio context, so
+ * hits already scheduled on the audio clock don't carry on playing on the next page.
  */
 export function armAudio() {
   if (typeof window === 'undefined') return () => {};
@@ -63,7 +71,19 @@ export function armAudio() {
   };
   const off = () => events.forEach((event) => window.removeEventListener(event, wake, true));
   events.forEach((event) => window.addEventListener(event, wake, true));
-  return off;
+  return () => {
+    off();
+    releaseAudio();
+  };
+}
+
+/** Close the audio context and drop everything scheduled on it. The next unlock starts afresh. */
+function releaseAudio() {
+  const closing = ctx;
+  ctx = null;
+  master = null;
+  noise = null;
+  if (closing && closing.state !== 'closed') void closing.close();
 }
 
 type Nodes = { ctx: AudioContext; out: GainNode; noise: AudioBuffer };

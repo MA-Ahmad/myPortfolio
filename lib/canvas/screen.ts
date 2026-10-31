@@ -47,6 +47,14 @@ let arrivedAt = -Infinity;
 /** Whether the current page was just opened out of a Theme Studio screen. */
 export const openedFromScreen = () => performance.now() - arrivedAt < ARRIVAL_MS;
 
+let cleared: Promise<void> = Promise.resolve();
+
+/**
+ * Resolves once a screen opening a page has faded off it (at once when none is). Pages hold
+ * anything the visitor should hear or see start, such as sound, until then.
+ */
+export const screenCleared = () => cleared;
+
 const wait = (ms: number) => new Promise<void>((resolve) => window.setTimeout(resolve, ms));
 
 function element<K extends keyof HTMLElementTagNameMap>(
@@ -171,6 +179,7 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
   document.body.appendChild(root);
 
   let stage: 'idle' | 'running' | 'leaving' | 'gone' = 'idle';
+  let clear = () => {};
   let full: Rect = { left: 0, top: 0, width: vw, height: vh };
   let stopStatic = () => {};
 
@@ -179,11 +188,13 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
     stopStatic();
     window.removeEventListener('keydown', onKey);
     root.remove();
+    clear();
   };
 
   /** Opens the page under the screen, then lets the screen fade off once the page has settled. */
   const leave = async () => {
     stage = 'leaving';
+    cleared = new Promise((resolve) => (clear = resolve));
     window.removeEventListener('keydown', onKey);
     root.style.pointerEvents = 'none';
     arrivedAt = performance.now();
