@@ -72,12 +72,14 @@
   left: 50%;
   bottom: 9px;
   display: flex;
-  gap: 12px;
-  padding: 3px 10px;
+  gap: 8px;
+  padding: 2px 7px;
   border: 1px dashed rgba(255, 255, 255, 0.16);
-  border-radius: 8px;
+  border-radius: 6px;
   background: rgba(20, 20, 23, 0.9);
   color: #7a7a82;
+  font-size: 8px;
+  line-height: 1.5;
   transform: translateX(-50%);
 }
 .dock span:first-child {
@@ -85,7 +87,7 @@
 }
 .corner {
   position: absolute;
-  width: 4px;
-  height: 4px;
+  width: 3px;
+  height: 3px;
   border: 0 solid #f3f3f4;
 }

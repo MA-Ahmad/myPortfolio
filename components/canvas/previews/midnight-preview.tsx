@@ -27,8 +27,8 @@ export function MidnightPreview() {
       <span className={styles.name} style={{ fontFamily: GeistPixelSquare.style.fontFamily }}>
         {PROFILE.displayName.toUpperCase()}
       </span>
-      <i className={styles.bar} style={{ top: 58, width: 232 }} />
-      <i className={styles.bar} style={{ top: 66, width: 184 }} />
+      <i className={styles.bar} style={{ top: 50, width: 232 }} />
+      <i className={styles.bar} style={{ top: 57, width: 184 }} />
 
       {/* The real pipeline, as on the page, scaled down to 36px tiles and silent. */}
       <div className={styles.pipe}>
