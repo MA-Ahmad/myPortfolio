@@ -16,15 +16,18 @@ const FRAME_MS = 1000 / 30;
 const STILL_T = 6;
 const PAD = 12;
 const LINE_H = 15;
-const CAPTION_H = 24;
+/** Room kept under the galaxy, like the PAD above the passage. */
+const BOTTOM = PAD;
+/** Lines of the passage shown at once; it scrolls to keep the current word in view. */
+const MAX_LINES = 1;
 
 const show = (token: string) => (token.startsWith(' ') ? `·${token.slice(1)}` : token);
 const rgb = ([r, g, b]: number[], alpha = 1) =>
   `rgb(${Math.round(r * 255)} ${Math.round(g * 255)} ${Math.round(b * 255)} / ${alpha})`;
 
 /**
- * The notebook's embedding galaxy drawn flat on a 2D canvas: the passage on top with the current
- * token inked, and below it the same token positions slowly turning, a short trail walking the
+ * The notebook's embedding galaxy drawn flat on a 2D canvas: the passage on top, one line at a
+ * time, with the current token inked (it scrolls as the walk moves on), and below it the same token positions slowly turning, a short trail walking the
  * passage word by word. No WebGL, so it stays cheap next to the other previews, and it only runs
  * while on screen.
  */
@@ -56,7 +59,8 @@ export function NotebookPreview() {
     let height = 0;
     let galaxyTop = 0;
     let galaxyHeight = 0;
-    let placed: { text: string; x: number; y: number }[] = [];
+    let placed: { text: string; x: number; line: number }[] = [];
+    let lines = 1;
 
     // Wraps the passage token by token, breaking only before whole words.
     const layout = () => {
@@ -73,12 +77,13 @@ export function NotebookPreview() {
           text = token.trimStart();
           w = ctx.measureText(text).width;
         }
-        const at = { text, x: PAD + x, y: PAD + line * LINE_H + LINE_H / 2 };
+        const at = { text, x: PAD + x, line };
         x += w;
         return at;
       });
-      galaxyTop = PAD + (line + 1) * LINE_H + 8;
-      galaxyHeight = height - galaxyTop - CAPTION_H;
+      lines = line + 1;
+      galaxyTop = PAD + Math.min(lines, MAX_LINES) * LINE_H + 4;
+      galaxyHeight = height - galaxyTop - BOTTOM;
     };
 
     const resize = () => {
@@ -128,7 +133,11 @@ export function NotebookPreview() {
 
       ctx.font = `11px ${family}`;
       ctx.textBaseline = 'middle';
-      placed.forEach(({ text, x, y }, k) => {
+      // Only MAX_LINES lines fit above the galaxy: the passage scrolls to the current word's line.
+      const first = Math.max(0, Math.min(placed[current].line - (MAX_LINES - 1), lines - MAX_LINES));
+      placed.forEach(({ text, x, line }, k) => {
+        if (line < first || line >= first + MAX_LINES) return;
+        const y = PAD + (line - first) * LINE_H + LINE_H / 2;
         const behind = wrap(current - k);
         ctx.fillStyle = behind < TRAIL ? rgb(ink, behind === 0 ? 0.4 + 0.6 * glide : 1 - behind / TRAIL) : rgb(faint, 0.55);
         ctx.fillText(text, x, y);
@@ -230,7 +239,6 @@ export function NotebookPreview() {
       style={{ minHeight: 0, height: '100%' }}
     >
       <canvas ref={canvasRef} className={styles.galaxy} />
-      <span className={styles.galaxyCaption}>embeddings · walking the passage</span>
     </div>
   );
 }

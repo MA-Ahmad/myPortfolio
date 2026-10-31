@@ -26,11 +26,11 @@ export const SNAP_RADIUS = 18;
 const GAP_X = 120;
 const GAP_Y = 32;
 const SIDE_W = 340;
-const PREVIEW = { home: 207, terminal: 172, notebook: 446, midnight: 200 };
+const PREVIEW = { home: 207, terminal: 172, notebook: 200, midnight: 200 };
 const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_BOTTOM;
 
-// Desktop is as tall as the left column (notebook over midnight); the shorter right column and the
-// display are centered on it, so the wires meet the display from both sides.
+// Desktop is as tall as the taller column; the other column and the display are centered on it, so
+// the wires meet the display from both sides.
 const LEFT_H = chrome(PREVIEW.notebook) + GAP_Y + chrome(PREVIEW.midnight);
 const RIGHT_H = chrome(PREVIEW.home) + GAP_Y + chrome(PREVIEW.terminal);
 const DESKTOP_H = Math.max(LEFT_H, RIGHT_H);
@@ -78,7 +78,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/notebook',
     href: '/themes/notebook',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW.notebook, mobile: 240 },
+    previewHeight: { desktop: PREVIEW.notebook, mobile: 170 },
     packets: ['claude.svg', 'react.png', 'nextjs.png', 'rails.png', 'typescript.png', 'cursor.svg']
   },
   {
@@ -126,7 +126,7 @@ export const inputSide = (id: CardId, layout: Layout, positions: Positions): Sid
 export const portY = (card: CardDef, layout: Layout) => cardHeight(card, layout) / 2;
 
 /**
- * Desktop puts the display in the middle: the tall notebook over midnight on its left, home above
+ * Desktop puts the display in the middle: notebook over midnight on its left, home above
  * terminal on its right, each port facing the display. Mobile stacks everything in one column.
  */
 export function initialPositions(layout: Layout): Record<NodeId, Point> {

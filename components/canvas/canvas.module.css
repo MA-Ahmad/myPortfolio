@@ -708,15 +708,6 @@
   height: 100%;
 }
 
-.galaxyCaption {
-  position: absolute;
-  left: 10px;
-  bottom: 8px;
-  font-size: 10px;
-  line-height: 1;
-  color: var(--nb-faint);
-}
-
 /* Page chrome */
 
 .bar {
