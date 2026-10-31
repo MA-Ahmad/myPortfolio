@@ -12,6 +12,7 @@
   --accent-home: #2563eb;
   --accent-terminal: #6f7d1f;
   --accent-notebook: #d43d8f;
+  --accent-midnight: #d97706;
 
   position: relative;
   min-height: 100dvh;
@@ -37,6 +38,7 @@
   --accent-home: #7db4ff;
   --accent-terminal: #b8c572;
   --accent-notebook: #f27ab9;
+  --accent-midnight: #f5a524;
 }
 
 @media (max-width: 767px) {

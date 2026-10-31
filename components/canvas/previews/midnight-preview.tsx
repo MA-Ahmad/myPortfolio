@@ -1,76 +1,92 @@
+import type { CSSProperties } from 'react';
 import { GeistMono } from 'geist/font/mono';
 import { GeistPixelSquare } from 'geist/font/pixel';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
+import styles from './midnight-preview.module.css';
 
-const TOP = [
-  { id: 'canvas', left: 150, on: false },
-  { id: 'concept', left: 244, on: true }
-];
-const BOTTOM = [24, 98, 172, 244];
+const TILES = [0, 1, 2, 3];
 const LEVELS = ['#1a1a1d', '#38383c', '#58585d', '#85858b'];
 
-/** The midnight home page in miniature: pixel name, the little pipeline, a strip of commits and the dock. */
-export function MidnightPreview() {
-  return (
-    <div
-      className={cn(GeistMono.className, 'relative size-full overflow-hidden text-[10px]')}
-      style={{ background: '#0b0b0d', color: '#9a9aa0' }}
-    >
-      <div className="px-3 pt-3">
-        <p style={{ color: '#5c5c62' }}>Hey It&apos;s me</p>
-        <p
-          className="text-[15px] leading-tight"
-          style={{ color: '#f3f3f4', fontFamily: GeistPixelSquare.style.fontFamily }}
-        >
-          {PROFILE.displayName.toUpperCase()}
-        </p>
-      </div>
+/** The four white corners of the dashed nav, as on the real page. */
+const CORNERS: CSSProperties[] = [
+  { left: -1, top: -1, borderWidth: '1px 0 0 1px' },
+  { right: -1, top: -1, borderWidth: '1px 1px 0 0' },
+  { left: -1, bottom: -1, borderWidth: '0 0 1px 1px' },
+  { right: -1, bottom: -1, borderWidth: '0 1px 1px 0' }
+];
 
-      <div className="absolute inset-x-0 top-[56px] h-[70px]">
-        <div className="absolute left-[170px] right-[48px] top-[9px] border-t border-dotted" style={{ borderColor: '#2a2a2f' }} />
-        <div className="absolute left-[34px] right-[48px] top-[59px] border-t border-dotted" style={{ borderColor: '#2a2a2f' }} />
-        {TOP.map((node) => (
-          <Tile key={node.id} left={node.left} top={0} on={node.on} />
-        ))}
-        {BOTTOM.map((left) => (
-          <Tile key={left} left={left} top={50} />
-        ))}
-      </div>
-
-      <div className="absolute inset-x-3 top-[136px] grid grid-flow-col grid-rows-3 gap-[2px]">
-        {Array.from({ length: 78 }, (_, i) => (
-          <span
-            key={i}
-            className="aspect-square rounded-[1px]"
-            style={{ background: LEVELS[(i * 7 + (i % 5)) % 4] }}
-          />
-        ))}
-      </div>
-
-      <div
-        className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-3 rounded-full border px-3 py-1"
-        style={{ borderColor: '#25252a', background: '#141417', color: '#5c5c62' }}
-      >
-        <span style={{ color: '#f3f3f4' }}>Home</span>
-        <span>Work</span>
-        <span>Skills</span>
-        <span>Blog</span>
-      </div>
-    </div>
-  );
+/** A ragged tear down a 28px tile: the same zigzag in both halves, different for each tile. */
+function tear(seed: number) {
+  const xs = [14, 12.4, 15.6, 12.8, 15.2, 13.2, 14.6, 13, 14.4];
+  return xs.map((x, i) => [x + ((seed * 7 + i * 3) % 5) * 0.3 - 0.6, (i * 28) / (xs.length - 1)] as const);
 }
 
-function Tile({ left, top, on }: { left: number; top: number; on?: boolean }) {
+/**
+ * The midnight home page in miniature, as it ships: the pixel name, the row of four tiles torn
+ * down the middle and mended one after another, the heatmap and the dashed nav with its corners.
+ */
+export function MidnightPreview() {
   return (
-    <span
-      className="absolute size-[18px] rounded-[5px] border"
-      style={{ left, top, borderColor: '#2a2a2f', background: '#131316' }}
-    >
-      <span
-        className="absolute right-[3px] top-[3px] size-[3px] rounded-full"
-        style={{ background: on ? '#f5a524' : '#2b2b30' }}
-      />
-    </span>
+    <div className={cn(styles.root, GeistMono.className)}>
+      <span className={styles.eyebrow}>Nice to meet you</span>
+      <span className={styles.name} style={{ fontFamily: GeistPixelSquare.style.fontFamily }}>
+        {PROFILE.displayName.toUpperCase()}
+      </span>
+      <i className={styles.bar} style={{ top: 58, width: 232 }} />
+      <i className={styles.bar} style={{ top: 66, width: 184 }} />
+
+      <div className={styles.row}>
+        {TILES.map((seed) => {
+          const points = tear(seed)
+            .map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`)
+            .join(' ');
+          const id = `mn-prev-${seed}`;
+          return (
+            <span key={seed} style={{ display: 'contents', '--delay': `${seed * 0.9}s` } as CSSProperties}>
+              <span className={styles.tile}>
+                <svg viewBox="0 0 28 28" width={28} height={28} aria-hidden>
+                  <defs>
+                    <linearGradient id={`${id}-f`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0" stopColor="#25252a" />
+                      <stop offset="1" stopColor="#17171a" />
+                    </linearGradient>
+                    <clipPath id={`${id}-l`}>
+                      <polygon points={`-6,-6 ${points} -6,34`} />
+                    </clipPath>
+                    <clipPath id={`${id}-r`}>
+                      <polygon points={`34,-6 ${points} 34,34`} />
+                    </clipPath>
+                  </defs>
+                  <g className={styles.halfL}>
+                    <rect clipPath={`url(#${id}-l)`} x=".5" y=".5" width="27" height="27" rx="7" fill={`url(#${id}-f)`} stroke="#2b2b30" />
+                  </g>
+                  <g className={styles.halfR}>
+                    <rect clipPath={`url(#${id}-r)`} x=".5" y=".5" width="27" height="27" rx="7" fill={`url(#${id}-f)`} stroke="#2b2b30" />
+                  </g>
+                </svg>
+                <i className={styles.dot} />
+              </span>
+              {seed < TILES.length - 1 ? <span className={styles.wire} /> : null}
+            </span>
+          );
+        })}
+      </div>
+
+      <div className={styles.cells} style={{ gridTemplateColumns: 'repeat(26, 1fr)' }}>
+        {Array.from({ length: 78 }, (_, i) => (
+          <i key={i} style={{ background: LEVELS[(i * 7 + (i % 5)) % 4] }} />
+        ))}
+      </div>
+
+      <div className={styles.dock}>
+        <span>Home</span>
+        <span>Work</span>
+        <span>Skills</span>
+        {CORNERS.map((corner, i) => (
+          <i key={i} className={styles.corner} style={corner} />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,0 +1,169 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0b0b0d;
+  color: #9a9aa0;
+  font-size: 10px;
+}
+
+.eyebrow {
+  position: absolute;
+  left: 14px;
+  top: 8px;
+  font-size: 9px;
+  color: #7a7a82;
+}
+.name {
+  position: absolute;
+  left: 14px;
+  top: 27px;
+  font-size: 15px;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  color: #f3f3f4;
+}
+.bar {
+  position: absolute;
+  left: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: #1c1c20;
+}
+
+/* The four tiles, torn and then mended one after another, on a loop. */
+.row {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 76px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.tile {
+  position: relative;
+  flex: none;
+  width: 28px;
+  height: 28px;
+}
+.tile svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+.wire {
+  flex: 1;
+  height: 0;
+  margin: 0 3px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.14);
+}
+.halfL,
+.halfR {
+  opacity: 0.6;
+  animation: mend 7.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  animation-delay: var(--delay);
+}
+.halfL {
+  transform: translate(-1.8px, 0.4px) rotate(-3deg);
+  transform-origin: 0 28px;
+}
+.halfR {
+  transform: translate(1.8px, -0.3px) rotate(2.4deg);
+  transform-origin: 28px 0;
+  --dir: 1;
+}
+.dot {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #34c759;
+  box-shadow: 0 0 6px #34c759;
+  opacity: 0;
+  animation: lit 7.2s ease-out infinite;
+  animation-delay: var(--delay);
+}
+@keyframes mend {
+  0%,
+  6% {
+    opacity: 0.6;
+  }
+  22%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  92%,
+  100% {
+    opacity: 0.6;
+  }
+}
+@keyframes lit {
+  0%,
+  22% {
+    opacity: 0;
+  }
+  28%,
+  80% {
+    opacity: 1;
+  }
+  90%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cells {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  top: 126px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(3, 1fr);
+  gap: 2px;
+}
+.cells i {
+  aspect-ratio: 1;
+  border-radius: 1px;
+}
+
+.dock {
+  position: absolute;
+  left: 50%;
+  bottom: 9px;
+  display: flex;
+  gap: 12px;
+  padding: 3px 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(20, 20, 23, 0.9);
+  color: #7a7a82;
+  transform: translateX(-50%);
+}
+.dock span:first-child {
+  color: #f3f3f4;
+}
+.corner {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border: 0 solid #f3f3f4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .halfL,
+  .halfR {
+    animation: none;
+    transform: none;
+    opacity: 1;
+  }
+  .dot {
+    animation: none;
+    opacity: 1;
+  }
+}
