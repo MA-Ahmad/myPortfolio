@@ -32,89 +32,24 @@
   background: #1c1c20;
 }
 
-/* The four tiles, torn and then mended one after another, on a loop. */
-.row {
+/*
+ * The page's own pipeline, scaled from 46px tiles down to 28px (28 / 46). It needs the theme's
+ * colour tokens, which the page keeps on its root; the preview is not inside that root.
+ */
+.pipe {
+  --mn-ink: #f3f3f4;
+  --mn-body: #9a9aa0;
+  --mn-faint: #7a7a82;
+  --mn-orange: #f5a524;
+  --mn-green: #30d158;
+
   position: absolute;
   left: 14px;
-  right: 14px;
   top: 76px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.tile {
-  position: relative;
-  flex: none;
-  width: 28px;
-  height: 28px;
-}
-.tile svg {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-}
-.wire {
-  flex: 1;
-  height: 0;
-  margin: 0 3px;
-  border-top: 1px dashed rgba(255, 255, 255, 0.14);
-}
-.halfL,
-.halfR {
-  opacity: 0.6;
-  animation: mend 7.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
-  animation-delay: var(--delay);
-}
-.halfL {
-  transform: translate(-1.8px, 0.4px) rotate(-3deg);
-  transform-origin: 0 28px;
-}
-.halfR {
-  transform: translate(1.8px, -0.3px) rotate(2.4deg);
-  transform-origin: 28px 0;
-  --dir: 1;
-}
-.dot {
-  position: absolute;
-  right: 4px;
-  top: 4px;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: #34c759;
-  box-shadow: 0 0 6px #34c759;
-  opacity: 0;
-  animation: lit 7.2s ease-out infinite;
-  animation-delay: var(--delay);
-}
-@keyframes mend {
-  0%,
-  6% {
-    opacity: 0.6;
-  }
-  22%,
-  80% {
-    opacity: 1;
-    transform: none;
-  }
-  92%,
-  100% {
-    opacity: 0.6;
-  }
-}
-@keyframes lit {
-  0%,
-  22% {
-    opacity: 0;
-  }
-  28%,
-  80% {
-    opacity: 1;
-  }
-  90%,
-  100% {
-    opacity: 0;
-  }
+  width: calc((100% - 28px) / 0.6087);
+  transform: scale(0.6087);
+  transform-origin: 0 0;
+  pointer-events: none;
 }
 
 .cells {
@@ -153,17 +88,4 @@
   width: 4px;
   height: 4px;
   border: 0 solid #f3f3f4;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .halfL,
-  .halfR {
-    animation: none;
-    transform: none;
-    opacity: 1;
-  }
-  .dot {
-    animation: none;
-    opacity: 1;
-  }
 }

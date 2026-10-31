@@ -181,12 +181,14 @@ function Node({
   id,
   index,
   state,
-  run
+  run,
+  preview
 }: {
   id: NodeKind;
   index: number;
   state: NodeState;
   run: boolean;
+  preview?: boolean;
 }) {
   const last = index === NODES.length - 1;
   return (
@@ -203,7 +205,9 @@ function Node({
         } as CSSProperties
       }
     >
-      <span className={cn(styles.label, styles.mono)}>{PIPELINE_LABELS[id]}</span>
+      {preview ? null : (
+        <span className={cn(styles.label, styles.mono)}>{PIPELINE_LABELS[id]}</span>
+      )}
       <span className={styles.tileRow}>
         <span className={styles.boxWrap}>
           <TornTile id={id} index={index} />
@@ -233,8 +237,10 @@ function Node({
  * Hero illustration. Every tile starts torn down the middle and dimmed. Click and the tiles close
  * one at a time, with a glow line carrying on along the wire to the next. When the last is whole
  * they all tear again and the loop restarts. (The weld itself comes later.)
+ *
+ * `preview` is the same animation as a silent, non-interactive, label-less picture (the Theme Studio card).
  */
-export function Pipeline() {
+export function Pipeline({ preview = false }: { preview?: boolean }) {
   const reduced = useReducedMotion();
   const [states, setStates] = useState<NodeState[]>(() => NODES.map(() => 'broken'));
   const [pulse, setPulse] = useState<number | null>(null);
@@ -272,7 +278,7 @@ export function Pipeline() {
     NODES.forEach((_, index) => {
       at(t, () => {
         set(index, 'welding');
-        playWeld(WELDS[index].kind);
+        if (!preview) playWeld(WELDS[index].kind);
       });
       at(t + WELD_MS, () => set(index, 'fixed'));
       t += WELD_MS;
@@ -284,13 +290,13 @@ export function Pipeline() {
     });
     at(t + HOLD_MS, () => {
       set('all', 'broken');
-      playTear();
+      if (!preview) playTear();
     });
     at(t + HOLD_MS + BREAK_MS, loop);
-  }, [set]);
+  }, [set, preview]);
 
   // Sound is on by default: wake audio now if the browser allows, else on the first gesture.
-  useEffect(() => armAudio(), []);
+  useEffect(() => (preview ? undefined : armAudio()), [preview]);
 
   // The animation starts as soon as the page is shown, tiles torn, and then loops. (If the browser
   // still blocks audio, the loop plays silently until the first click, tap or key press.)
@@ -324,20 +330,36 @@ export function Pipeline() {
     <div
       ref={flowRef}
       className={styles.flow}
-      style={{ '--w': `${width}px` } as CSSProperties}
-      role="button"
-      tabIndex={0}
-      aria-label="Replay the weld animation: design, build, test, ship"
-      onClick={replay}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          replay();
-        }
-      }}
+      style={
+        {
+          '--w': `${width}px`,
+          ...(preview ? { marginTop: 0, cursor: 'inherit' } : null)
+        } as CSSProperties
+      }
+      {...(preview
+        ? { 'aria-hidden': true }
+        : {
+            role: 'button',
+            tabIndex: 0,
+            'aria-label': 'Replay the weld animation: design, build, test, ship',
+            onClick: replay,
+            onKeyDown: (event: React.KeyboardEvent) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                replay();
+              }
+            }
+          })}
     >
       {NODES.map((id, index) => (
-        <Node key={id} id={id} index={index} state={states[index]} run={pulse === index} />
+        <Node
+          key={id}
+          id={id}
+          index={index}
+          state={states[index]}
+          run={pulse === index}
+          preview={preview}
+        />
       ))}
     </div>
   );
