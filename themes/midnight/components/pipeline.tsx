@@ -78,8 +78,8 @@ const TEARS = NODES.map((_, index) => {
 
 /**
  * One tile, front on, as in the reference: torn down the middle into two halves that are each a
- * clipped copy of the same tile. The left half shows the torn card's light core and its fibres; the
- * right half's edge falls into shadow. While `whole`, the halves close and the edges fade.
+ * clipped copy of the same tile, and both show the same torn edge: a narrow band of the card's core
+ * with a few fibres, kept inside the tile's outline. While `whole`, the halves close and the edges fade.
  */
 function TornTile({ id, index }: { id: NodeKind; index: number }) {
   const Icon = ICONS[id];
@@ -98,6 +98,17 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
         <clipPath id={`${name}-r`}>
           <polygon points={`54,-8 ${points} 54,54`} />
         </clipPath>
+        {/* The torn edge stays on the tile: nothing it draws reaches past the tile's outline. */}
+        <clipPath id={`${name}-shape`}>
+          <rect x=".5" y=".5" width="45" height="45" rx="10.5" />
+        </clipPath>
+        <g id={`${name}-edge`} className={styles.edge} clipPath={`url(#${name}-shape)`}>
+          <polyline points={points} fill="none" stroke="#2a2a2f" strokeWidth="2" strokeLinejoin="bevel" />
+          <polyline points={points} fill="none" stroke="#3c3c43" strokeWidth=".5" strokeLinejoin="bevel" />
+          {fibres.map((f, i) => (
+            <line key={i} {...f} stroke="#45454c" strokeWidth=".35" strokeLinecap="round" opacity=".5" />
+          ))}
+        </g>
         <g id={`${name}-art`}>
           <rect x=".5" y=".5" width="45" height="45" rx="10.5" fill={`url(#${name}-fill)`} stroke="#2b2b30" />
           <rect x="1.5" y="1.5" width="43" height="43" rx="9.5" fill="none" stroke="rgba(255,255,255,.035)" />
@@ -108,19 +119,13 @@ function TornTile({ id, index }: { id: NodeKind; index: number }) {
       <g className={styles.halfL}>
         <g clipPath={`url(#${name}-l)`}>
           <use href={`#${name}-art`} />
-          <g className={styles.edge}>
-            <polyline points={points} fill="none" stroke="#3a3a41" strokeWidth="2.2" strokeLinejoin="bevel" />
-            <polyline points={points} fill="none" stroke="#5c5c64" strokeWidth=".55" strokeLinejoin="bevel" />
-            {fibres.map((f, i) => (
-              <line key={i} {...f} stroke="#6a6a72" strokeWidth=".35" strokeLinecap="round" opacity=".55" />
-            ))}
-          </g>
+          <use href={`#${name}-edge`} />
         </g>
       </g>
       <g className={styles.halfR}>
         <g clipPath={`url(#${name}-r)`}>
           <use href={`#${name}-art`} />
-          <polyline className={styles.edge} points={points} fill="none" stroke="#09090b" strokeWidth=".9" strokeLinejoin="bevel" opacity=".8" />
+          <use href={`#${name}-edge`} />
         </g>
       </g>
     </svg>
