@@ -62,7 +62,12 @@ export const BLOCKS: BlockMeta[] = [
     createdAt: '2026-11-01',
     files: ['friday-deploy.tsx', 'blast.ts', 'fracture.ts', 'config.ts', 'blast.json', 'keycap.ts', 'server.tsx', 'sound.ts', 'friday-deploy.module.css'],
     iframeHeight: 720,
-    dependencies: ['lucide-react']
+    dependencies: ['lucide-react'],
+    images: {
+      card: '/blocks/friday-deploy/card.webp',
+      og: '/blocks/friday-deploy/og.jpg',
+      alt: 'The deploy key blown apart: glass shards of the key flying out of a fireball and shockwave, the little production server above it dazed with red eyes, a status pill reading "production · 502 bad gateway", and the heading "Never deploy on a Friday."'
+    }
   },
   {
     name: 'world-globe',

@@ -59,7 +59,7 @@ export default function FridayDeploy() {
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [flinch, setFlinch] = useState(false);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(false);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -250,6 +250,7 @@ export default function FridayDeploy() {
 
     controls.current.deploy = () => {
       if (state.phase !== 'idle') return;
+      sound.wake();
       if (reducedMotion.matches) {
         key.style.opacity = '0';
         enter('blown');
@@ -278,6 +279,7 @@ export default function FridayDeploy() {
 
     controls.current.rollback = () => {
       if (state.phase !== 'blown') return;
+      sound.wake();
       if (!state.blast) {
         key.style.opacity = '';
         enter('idle');

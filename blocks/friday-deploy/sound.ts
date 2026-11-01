@@ -1,14 +1,17 @@
 /**
  * The blast's sound, synthesized with Web Audio, so there are no files to ship: a tick for each
- * crack and a rising whine while the key heats up, a boom (noise through a closing filter, a falling sub thump, a crackle
+ * crack and a rising whine while the key strains, a boom (noise through a closing filter, a falling sub thump, a crackle
  * and tinkling glass), and for the rollback the same boom played backwards, ending in the click
  * of the key snapping back together.
  *
- * The boom is rendered once into a buffer so it can be reversed. Nothing is created until sound
- * is first switched on, which is always a click, so browsers allow it to play.
+ * The boom is rendered once into a buffer so it can be reversed. Sound is on from the start, but
+ * nothing is created until the first click on the key (or the toggle), since browsers only let
+ * audio start from one.
  */
 
 export type Sound = {
+  /** Call from a click: starts the audio, if sound is on. */
+  wake(): void;
   /** Call from the click that turns sound on. */
   enable(): void;
   disable(): void;
@@ -92,7 +95,7 @@ export function createSound(): Sound {
   let master: GainNode | null = null;
   let boom: AudioBuffer | null = null;
   let reversed: AudioBuffer | null = null;
-  let on = false;
+  let on = true;
 
   const render = async () => {
     const rate = 44100;
@@ -117,19 +120,27 @@ export function createSound(): Sound {
     source.start(0, offset);
   };
 
+  const start = () => {
+    if (ac) {
+      void ac.resume();
+      return;
+    }
+    ac = new AudioContext();
+    master = ac.createGain();
+    master.gain.value = 0.6;
+    const limiter = ac.createDynamicsCompressor();
+    master.connect(limiter).connect(ac.destination);
+    void render();
+  };
+
   return {
+    wake() {
+      if (on) start();
+    },
+
     enable() {
       on = true;
-      if (ac) {
-        void ac.resume();
-        return;
-      }
-      ac = new AudioContext();
-      master = ac.createGain();
-      master.gain.value = 0.6;
-      const limiter = ac.createDynamicsCompressor();
-      master.connect(limiter).connect(ac.destination);
-      void render();
+      start();
     },
 
     charge(seconds) {
