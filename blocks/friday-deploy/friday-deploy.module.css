@@ -1,0 +1,510 @@
+.root {
+  --s: 1;
+  --heat: 0;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  position: relative;
+  isolation: isolate;
+  height: 100vh;
+  min-height: 640px;
+  overflow: hidden;
+  background: radial-gradient(ellipse 70% 60% at 50% 42%, #131316, #050506 72%);
+  color: #f4f4f5;
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 520px) {
+  .root {
+    --s: 0.84;
+  }
+}
+
+.scene {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.status {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  left: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.72);
+  font:
+    500 12px/1 ui-monospace,
+    'SF Mono',
+    Menlo,
+    monospace;
+  white-space: nowrap;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #34d399;
+  box-shadow: 0 0 8px currentColor;
+  color: #34d399;
+  transition:
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+.status[data-tone='busy'] .dot {
+  background: #fbbf24;
+  color: #fbbf24;
+}
+
+.status[data-tone='down'] .dot {
+  background: #f87171;
+  color: #f87171;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.soundToggle {
+  position: absolute;
+  z-index: 1;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.6);
+  cursor: pointer;
+  transition:
+    color 150ms ease,
+    background-color 150ms ease,
+    scale 150ms var(--ease-out);
+}
+
+.soundToggle[aria-pressed='true'] {
+  color: #fff;
+}
+
+.soundToggle:active {
+  scale: 0.97;
+}
+
+/* 44px to the touch, 30px to the eye. */
+.soundToggle::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .soundToggle:hover {
+    background: rgb(255 255 255 / 0.08);
+    color: #fff;
+  }
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 20px 48px;
+  text-align: center;
+}
+
+.title {
+  margin: 40px 0 0;
+  font-size: clamp(32px, 6vw, 56px);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  text-wrap: balance;
+  /* Lit by the blast for a moment. */
+  text-shadow: 0 0 calc(var(--heat) * 36px) rgb(255 150 60 / calc(var(--heat) * 0.9));
+}
+
+.lede {
+  max-width: 34ch;
+  margin: 14px 0 0;
+  color: rgb(255 255 255 / 0.5);
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.action {
+  display: grid;
+  place-items: center;
+  height: 34px;
+  margin-top: 22px;
+}
+
+.hint {
+  margin: 0;
+  color: rgb(255 255 255 / 0.55);
+  font-size: 14px;
+  animation: rise 220ms var(--ease-out);
+}
+
+.touchOnly {
+  display: none;
+}
+
+@media (hover: none) {
+  .desktopOnly {
+    display: none;
+  }
+
+  .touchOnly {
+    display: inline;
+  }
+}
+
+.root kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  margin: 0 2px;
+  padding: 0 5px;
+  border-radius: 5px;
+  background: rgb(255 255 255 / 0.08);
+  box-shadow:
+    inset 0 -1px 0 rgb(0 0 0 / 0.4),
+    inset 0 0 0 1px rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.8);
+  font:
+    500 12px/1 ui-rounded,
+    'SF Pro Rounded',
+    system-ui,
+    sans-serif;
+}
+
+.rollback {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 8px 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: #f4f4f5;
+  color: #0b0b0c;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  animation: rise 260ms var(--ease-out) 450ms both;
+  transition:
+    scale 150ms var(--ease-out),
+    background-color 150ms ease;
+}
+
+.rollback kbd {
+  background: rgb(0 0 0 / 0.08);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  color: rgb(0 0 0 / 0.6);
+}
+
+.rollback:active {
+  scale: 0.97;
+}
+
+.rollback::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .rollback:hover {
+    background: #fff;
+  }
+}
+
+.rollback:focus-visible,
+.soundToggle:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.7);
+  outline-offset: 3px;
+}
+
+/* The key mirrors the picture painted in keycap.ts, which the blast breaks into shards. */
+
+.key {
+  position: relative;
+  width: calc(148px * var(--s));
+  height: calc(132px * var(--s));
+  padding: 0;
+  border: 0;
+  border-radius: calc(26px * var(--s));
+  background: linear-gradient(180deg, #36363c, #141417);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 6px 0 #09090b,
+    0 14px 30px rgb(0 0 0 / 0.65);
+  color: #ececf0;
+  font-family:
+    ui-rounded,
+    'SF Pro Rounded',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  cursor: pointer;
+  transition:
+    translate 120ms var(--ease-out),
+    box-shadow 150ms ease;
+}
+
+.face {
+  position: absolute;
+  inset: calc(7px * var(--s)) calc(9px * var(--s)) calc(14px * var(--s));
+  border-radius: calc(18px * var(--s));
+  background: linear-gradient(to bottom right, #2d2d33, #1b1b1f);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  transition: background-color 150ms ease;
+}
+
+.glyph {
+  position: absolute;
+  top: calc(9px * var(--s));
+  right: calc(14px * var(--s));
+  font-size: calc(24px * var(--s));
+  font-weight: 500;
+  line-height: 1;
+}
+
+.label {
+  position: absolute;
+  bottom: calc(12px * var(--s));
+  left: calc(14px * var(--s));
+  font-size: calc(19px * var(--s));
+  font-weight: 500;
+  line-height: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .root[data-phase='idle'] .key:hover {
+    box-shadow:
+      inset 0 0 0 1px rgb(255 255 255 / 0.1),
+      inset 0 1px 0 rgb(255 255 255 / 0.16),
+      0 7px 0 #09090b,
+      0 18px 36px rgb(0 0 0 / 0.7);
+  }
+}
+
+.root[data-phase='idle'] .key:active,
+.root[data-phase='charging'] .key {
+  translate: 0 4px;
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.08),
+    inset 0 1px 0 rgb(255 255 255 / 0.12),
+    0 2px 0 #09090b,
+    0 6px 16px rgb(0 0 0 / 0.6);
+}
+
+/* Heating up: a hot rim and an orange glow. */
+.root[data-phase='charging'] .key {
+  box-shadow:
+    inset 0 0 0 1px rgb(255 170 90 / 0.45),
+    inset 0 1px 0 rgb(255 200 140 / 0.3),
+    0 2px 0 #09090b,
+    0 0 26px rgb(255 130 40 / 0.45);
+  transition:
+    translate 120ms var(--ease-out),
+    box-shadow 300ms ease;
+}
+
+.root[data-phase='blown'] .key,
+.root[data-phase='rewinding'] .key {
+  pointer-events: none;
+}
+
+.key:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.7);
+  outline-offset: 5px;
+}
+
+/* Whole again: a flash of heat on the reassembled key as it settles. */
+.key[data-restored] {
+  animation: settle 420ms var(--ease-out);
+}
+
+.duck {
+  --lx: 0;
+  --ly: 0;
+  width: calc(132px * var(--s));
+  margin-bottom: calc(10px * var(--s));
+  pointer-events: none;
+}
+
+.duckSvg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+  transform-origin: 50% 100%;
+}
+
+.pupil {
+  translate: calc(var(--lx) * 2.8px) calc(var(--ly) * 2.8px);
+  transition: translate 140ms var(--ease-out);
+}
+
+.eye {
+  transition: scale 200ms var(--ease-out);
+}
+
+.duckSvg[data-blink] .eye {
+  scale: 1 0.1;
+  transition-duration: 60ms;
+}
+
+.shut,
+.sweat {
+  opacity: 0;
+}
+
+.sweat {
+  transition: opacity 200ms ease;
+}
+
+.underlight {
+  opacity: var(--heat);
+  mix-blend-mode: screen;
+}
+
+.soot {
+  opacity: 0;
+  transition: opacity 900ms ease;
+}
+
+.duck[data-sooty] .soot {
+  opacity: 1;
+  transition-duration: 300ms;
+}
+
+.duck[data-mood='alarmed'] .eye {
+  scale: 1.14;
+}
+
+.duck[data-mood='alarmed'] .pupil {
+  translate: 0 2.6px;
+}
+
+.duck[data-mood='alarmed'] .sweat {
+  opacity: 1;
+}
+
+.duck[data-mood='flinch'] .eyes {
+  opacity: 0;
+}
+
+.duck[data-mood='flinch'] .shut {
+  opacity: 1;
+}
+
+.duck[data-mood='flinch'] .duckSvg {
+  animation: flinch 650ms var(--ease-out);
+}
+
+.duck[data-mood='stunned'] .pupil {
+  animation: dazed 1.6s linear 2;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes settle {
+  from {
+    scale: 1.05;
+    filter: brightness(1.9) saturate(0.6);
+  }
+}
+
+/* Thrown up and back by the blast, squashed on landing, then still. */
+@keyframes flinch {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  18% {
+    transform: translateY(-16px) rotate(-6deg) scale(0.92, 1.08);
+  }
+  48% {
+    transform: translateY(2px) rotate(2deg) scale(1.08, 0.92);
+  }
+  72% {
+    transform: translateY(-2px) scale(0.98, 1.02);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+/* A small circle of the pupils: knocked silly for a moment. */
+@keyframes dazed {
+  0% {
+    translate: 2px 0;
+  }
+  25% {
+    translate: 0 2px;
+  }
+  50% {
+    translate: -2px 0;
+  }
+  75% {
+    translate: 0 -2px;
+  }
+  100% {
+    translate: 2px 0;
+  }
+}
+
+/* Reduced motion: the key simply fades out and back, with no blast, shake or flinch. */
+
+@media (prefers-reduced-motion: reduce) {
+  .key {
+    transition: opacity 200ms ease;
+  }
+
+  .key[data-restored],
+  .duck .duckSvg,
+  .duck .pupil,
+  .hint,
+  .rollback,
+  .status[data-tone='down'] .dot {
+    animation: none !important;
+  }
+}

@@ -55,6 +55,16 @@ export const BLOCK_CATEGORIES: BlockCategory[] = [
 
 export const BLOCKS: BlockMeta[] = [
   {
+    name: 'friday-deploy',
+    title: 'Friday deploy',
+    description: 'A deploy key that blows up when you press it: a charge, a fireball and shockwave, and glass shards that still carry its label, with a rubber duck watching. Roll back and the blast plays in reverse.',
+    category: 'interactive',
+    createdAt: '2026-11-01',
+    files: ['friday-deploy.tsx', 'blast.ts', 'config.ts', 'blast.json', 'keycap.ts', 'duck.tsx', 'sound.ts', 'friday-deploy.module.css'],
+    iframeHeight: 720,
+    dependencies: ['lucide-react']
+  },
+  {
     name: 'world-globe',
     title: 'World globe',
     description: 'An isometric globe whose countries are separate plates: turn it any way, pull any country out of its socket, split it into its states or provinces, or break the whole map apart.',
