@@ -57,10 +57,10 @@ export const BLOCKS: BlockMeta[] = [
   {
     name: 'friday-deploy',
     title: 'Friday deploy',
-    description: 'A deploy key that blows up when you press it: a charge, a fireball and shockwave, and glass shards that still carry its label, with a rubber duck watching. Roll back and the blast plays in reverse.',
+    description: 'A deploy key that blows up when you press it: the deploy stalls in the nineties while the key cracks, then it splits along the cracks into a fireball, a shockwave and glass shards that still carry its label, with the production server watching. Roll back and it all plays in reverse until the cracks close.',
     category: 'interactive',
     createdAt: '2026-11-01',
-    files: ['friday-deploy.tsx', 'blast.ts', 'config.ts', 'blast.json', 'keycap.ts', 'duck.tsx', 'sound.ts', 'friday-deploy.module.css'],
+    files: ['friday-deploy.tsx', 'blast.ts', 'fracture.ts', 'config.ts', 'blast.json', 'keycap.ts', 'server.tsx', 'sound.ts', 'friday-deploy.module.css'],
     iframeHeight: 720,
     dependencies: ['lucide-react']
   },

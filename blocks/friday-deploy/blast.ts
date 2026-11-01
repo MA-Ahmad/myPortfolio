@@ -1,5 +1,6 @@
 import { type BlastConfig, seeded } from './config';
-import { KEY_PAD, KEY_WIDTH } from './keycap';
+import { type Piece, type Pt, type Rand, fracture, roundedRect } from './fracture';
+import { KEY_PAD, KEY_RADIUS, KEY_WIDTH } from './keycap';
 
 /**
  * The explosion, drawn on two canvases: one behind the page (shockwave, fireball, smoke, the far
@@ -11,13 +12,13 @@ import { KEY_PAD, KEY_WIDTH } from './keycap';
  * and the tuning page can scrub to any frame.
  */
 
-type Pt = { x: number; y: number };
-
 type Shard = {
-  /** Outline around its own centroid, in key pixels. */
-  poly: Pt[];
+  piece: Piece;
   /** Where the centroid sat on the key, from the key's centre. */
   home: Pt;
+  /** Where the piece had parted to at the bang, from the key's centre, and how far it had turned. */
+  from: Pt;
+  turned: number;
   vx: number;
   vy: number;
   spin: number;
@@ -28,6 +29,16 @@ type Shard = {
   fadeAt: number;
 };
 
+/** Where a deploy stands at `u`, its time from 0 to 1. See `deployStage`. */
+export type Stage = {
+  /** The progress bar, 0 to 1. It never reaches the end. */
+  progress: number;
+  /** How much of the crack pattern has spread, 0 to 1. */
+  cracks: number;
+  /** The pieces pulling apart, just before the bang. */
+  split: number;
+};
+
 type Spark = { vx: number; vy: number; life: number; width: number; hue: number };
 type Ember = { vx: number; vy: number; life: number; size: number; spin: number; phase: number };
 type Puff = { angle: number; reach: number; radius: number; rise: number; life: number };
@@ -35,20 +46,24 @@ type Puff = { angle: number; reach: number; radius: number; rise: number; life: 
 export type Blast = {
   drawBack(ctx: CanvasRenderingContext2D, t: number): void;
   drawFront(ctx: CanvasRenderingContext2D, t: number, flash: number): void;
-  /** Camera shake in px at `t`. */
-  shake(t: number): Pt;
   /** How brightly the blast lights its surroundings, 0 to 1. */
   heat(t: number): number;
   /** Re-centres the blast on the key, after the layout moves it. */
   moveTo(x: number, y: number): void;
+  /**
+   * The key before the bang, drawn whole until it cracks, then in pieces: each crack runs across
+   * its piece and opens, the pieces pulling apart, and at the end the whole key strains open.
+   * It sits exactly where the page's key does, casting the same shadows, so either can take over.
+   */
+  drawBreaking(ctx: CanvasRenderingContext2D, stage: Stage): void;
+  /** How many cracks have started at `cracks` (from `Stage`), to tick a sound for each new one. */
+  cracksStarted(cracks: number): number;
 };
 
 const TAU = Math.PI * 2;
 const SPIN_DRAG = 2.6;
 const SPARK_DRAG = 5;
 const EMBER_DRAG = 2.4;
-
-type Rand = (min: number, max: number) => number;
 
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 const easeOutCubic = (v: number) => 1 - Math.pow(1 - clamp01(v), 3);
@@ -74,110 +89,25 @@ function softDisc(r: number, g: number, b: number) {
   return canvas;
 }
 
-function roundedRect(w: number, h: number, r: number): Pt[] {
-  const corners: [number, number, number][] = [
-    [w / 2 - r, -h / 2 + r, -Math.PI / 2],
-    [w / 2 - r, h / 2 - r, 0],
-    [-w / 2 + r, h / 2 - r, Math.PI / 2],
-    [-w / 2 + r, -h / 2 + r, Math.PI]
-  ];
-  const points: Pt[] = [];
-  for (const [cx, cy, start] of corners) {
-    for (let i = 0; i <= 4; i++) {
-      const a = start + (i / 4) * (Math.PI / 2);
-      points.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) });
-    }
-  }
-  return points;
-}
-
-function area(poly: Pt[]) {
-  let sum = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    sum += a.x * b.y - b.x * a.y;
-  }
-  return Math.abs(sum) / 2;
-}
-
-/** 1 / 4π for a circle, 1/16 for a square, near 0 for a sliver. */
-function compactness(poly: Pt[]) {
-  let perimeter = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    perimeter += Math.hypot(b.x - a.x, b.y - a.y);
-  }
-  return area(poly) / (perimeter * perimeter);
-}
-
-function centroid(poly: Pt[]): Pt {
-  let x = 0;
-  let y = 0;
-  let signed = 0;
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    const cross = a.x * b.y - b.x * a.y;
-    signed += cross;
-    x += (a.x + b.x) * cross;
-    y += (a.y + b.y) * cross;
-  }
-  return { x: x / (3 * signed), y: y / (3 * signed) };
-}
-
-/** The part of a convex polygon on one side of the line through `p` with normal `n`. */
-function cut(poly: Pt[], p: Pt, n: Pt, side: 1 | -1): Pt[] {
-  const out: Pt[] = [];
-  for (let i = 0; i < poly.length; i++) {
-    const a = poly[i];
-    const b = poly[(i + 1) % poly.length];
-    const da = side * ((a.x - p.x) * n.x + (a.y - p.y) * n.y);
-    const db = side * ((b.x - p.x) * n.x + (b.y - p.y) * n.y);
-    if (da >= 0) out.push(a);
-    if (da >= 0 !== db >= 0) {
-      const k = da / (da - db);
-      out.push({ x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k });
-    }
-  }
-  return out;
-}
+const ramp = (v: number, from: number, to: number) => clamp01((v - from) / (to - from));
 
 /**
- * Cuts the key into convex pieces with straight cracks, always splitting a large piece, and
- * preferring pieces near the middle so the centre breaks finer than the corners, like glass does
- * around the point of impact.
+ * The deploy before the bang, at `u` from 0 to 1. The progress bar runs quickly, slows and stalls in
+ * the nineties. Meanwhile the key cracks: slowly at first, then faster. At the end the pieces pull
+ * apart along the cracks, and it goes.
  */
-function shatter(outline: Pt[], count: number, reach: number, rand: Rand): Pt[][] {
-  const pieces = [outline];
-  let attempts = 0;
-  while (pieces.length < count && attempts++ < count * 20) {
-    let pick = 0;
-    let best = -1;
-    pieces.forEach((piece, i) => {
-      const c = centroid(piece);
-      const score =
-        area(piece) * (1 + 0.9 * (1 - Math.min(1, Math.hypot(c.x, c.y) / reach))) * rand(0.8, 1.2);
-      if (score > best) {
-        best = score;
-        pick = i;
-      }
-    });
-    const piece = pieces[pick];
-    const c = centroid(piece);
-    const size = Math.sqrt(area(piece));
-    const p = { x: c.x + rand(-0.22, 0.22) * size, y: c.y + rand(-0.22, 0.22) * size };
-    const angle = rand(0, Math.PI);
-    const n = { x: Math.cos(angle), y: Math.sin(angle) };
-    const a = cut(piece, p, n, 1);
-    const b = cut(piece, p, n, -1);
-    if (a.length < 3 || b.length < 3 || area(a) < 60 || area(b) < 60) continue;
-    // No slivers: real shards are chunky, and slivers vanish when they tumble edge-on.
-    if (compactness(a) < 0.036 || compactness(b) < 0.036) continue;
-    pieces.splice(pick, 1, a, b);
-  }
-  return pieces;
+export function deployStage(u: number): Stage {
+  const progress =
+    u < 0.3
+      ? 0.55 * easeOutCubic(u / 0.3)
+      : u < 0.75
+        ? 0.55 + 0.35 * ((u - 0.3) / 0.45)
+        : 0.9 + 0.09 * easeOutCubic((u - 0.75) / 0.25);
+  return {
+    progress,
+    cracks: Math.pow(ramp(u, 0.3, 0.9), 1.5),
+    split: Math.pow(ramp(u, 0.9, 1), 2)
+  };
 }
 
 export function createBlast(opts: {
@@ -196,21 +126,34 @@ export function createBlast(opts: {
   let cy = opts.y;
   const s = width / KEY_WIDTH;
 
-  const shards: Shard[] = shatter(
-    roundedRect(width, height, 26 * s),
+  // The cracks have their own random numbers, so their look never changes the tuned blast.
+  const crackRandom = seeded(config.seed + 7919);
+  const crackRand: Rand = (min, max) => min + crackRandom() * (max - min);
+  const broken = fracture(
+    roundedRect(width, height, KEY_RADIUS * s),
     config.shardCount,
     width * 0.6,
-    rand
-  ).map((piece) => {
-    const home = centroid(piece);
+    s,
+    { gap: config.crackGap, twist: config.crackTwist, jag: config.crackJag },
+    rand,
+    crackRand
+  );
+  // The shards take off from wherever the pieces had parted to at the bang.
+  const parted = broken.transforms(1, 1).out;
+
+  const shards: Shard[] = broken.pieces.map((piece) => {
+    const home = piece.home;
+    const m = parted[piece.node];
     const distance = Math.hypot(home.x, home.y);
     const base = distance > 6 * s ? Math.atan2(home.y, home.x) : rand(0, TAU);
     const angle = base + rand(-0.35, 0.35);
     const z = rand(-0.45, 0.85) * config.shardDepth;
     const speed = rand(430, 900) * config.shardSpeed * s * (1 + 0.2 * z);
     return {
-      poly: piece.map((p) => ({ x: p.x - home.x, y: p.y - home.y })),
+      piece,
       home,
+      from: m.transformPoint(home),
+      turned: Math.atan2(m.b, m.a),
       vx: Math.cos(angle) * speed,
       // A little lift: debris goes up before it drifts down.
       vy: Math.sin(angle) * speed - 70 * s,
@@ -281,38 +224,41 @@ export function createBlast(opts: {
     const alpha = 1 - clamp01((t - shard.fadeAt) / 0.7);
     if (alpha <= 0) return;
     const travel = coast(config.shardDrag, t) + 0.05 * t;
-    const x = cx + shard.home.x + shard.vx * travel;
-    const y = cy + shard.home.y + shard.vy * travel + 0.5 * gravity * t * t;
     const turn = coast(SPIN_DRAG, t) + 0.08 * t;
     const phase = shard.flip * turn;
-    const squash = Math.cos(phase);
     const grow = 1 + shard.z * (1 - Math.exp(-4 * t));
-    const heat = Math.exp(-t / 0.28);
-
     ctx.save();
     ctx.globalAlpha *= alpha;
-    ctx.translate(x, y);
-    ctx.rotate(shard.spin * turn);
-    ctx.scale(squash * grow, grow);
+    ctx.translate(
+      cx + shard.from.x + shard.vx * travel,
+      cy + shard.from.y + shard.vy * travel + 0.5 * gravity * t * t
+    );
+    ctx.rotate(shard.turned + shard.spin * turn);
+    ctx.scale(Math.cos(phase) * grow, grow);
+    paintShard(ctx, shard, Math.exp(-t / 0.28), Math.pow(Math.abs(Math.sin(phase + 0.5)), 8), grow);
+    ctx.restore();
+  }
 
-    ctx.beginPath();
-    shard.poly.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-    ctx.closePath();
+  const paintKey = (ctx: CanvasRenderingContext2D) =>
+    ctx.drawImage(texture, -width / 2 - KEY_PAD, -height / 2 - KEY_PAD, texW, texH);
 
+  /** One piece of the key, in its own space: its part of the key, the light on the glass, its rim. */
+  function paintShard(
+    ctx: CanvasRenderingContext2D,
+    shard: Shard,
+    heat: number,
+    glint: number,
+    grow: number
+  ) {
     const opacity = ctx.globalAlpha;
     ctx.save();
-    ctx.clip();
+    ctx.translate(-shard.home.x, -shard.home.y);
+    broken.clip(ctx, shard.piece);
     ctx.globalAlpha = opacity * 0.9;
-    ctx.drawImage(
-      texture,
-      -width / 2 - KEY_PAD - shard.home.x,
-      -height / 2 - KEY_PAD - shard.home.y,
-      texW,
-      texH
-    );
+    paintKey(ctx);
+    ctx.translate(shard.home.x, shard.home.y);
     // Glass catches the light as it turns face-on.
-    ctx.globalAlpha =
-      opacity * (0.04 + config.glint * Math.pow(Math.abs(Math.sin(phase + 0.5)), 8));
+    ctx.globalAlpha = opacity * (0.04 + config.glint * glint);
     ctx.globalCompositeOperation = 'lighter';
     ctx.fillStyle = sheen;
     ctx.fillRect(-60 * s, -60 * s, 120 * s, 120 * s);
@@ -321,21 +267,23 @@ export function createBlast(opts: {
       ctx.fillStyle = `rgba(255,170,90,${0.85 * heat})`;
       ctx.fillRect(-60 * s, -60 * s, 120 * s, 120 * s);
     }
-    ctx.restore();
 
-    // The rim: white-hot at first, cooling to the gold of the reference.
+    // The rim, along every edge, drawn twice as wide and clipped to the piece so only its inner
+    // half shows: white-hot at first, cooling to the gold of the reference.
     const r = Math.round(222 + 33 * heat);
     const g = Math.round(166 + 84 * heat);
     const b = Math.round(96 + 150 * heat);
+    ctx.globalAlpha = opacity;
+    ctx.translate(-shard.home.x, -shard.home.y);
     ctx.lineJoin = 'round';
     ctx.globalCompositeOperation = 'lighter';
     ctx.strokeStyle = `rgba(${r},${g},${b},0.16)`;
-    ctx.lineWidth = (4 * s) / grow;
-    ctx.stroke();
+    ctx.lineWidth = (8 * s) / grow;
+    broken.strokeEdges(ctx, shard.piece);
     ctx.globalCompositeOperation = 'source-over';
     ctx.strokeStyle = `rgba(${r},${g},${b},0.95)`;
-    ctx.lineWidth = (1.4 * s) / grow;
-    ctx.stroke();
+    ctx.lineWidth = (2.8 * s) / grow;
+    broken.strokeEdges(ctx, shard.piece);
     ctx.restore();
   }
 
@@ -491,16 +439,6 @@ export function createBlast(opts: {
       }
     },
 
-    shake(t) {
-      const amount = config.shake * s * Math.exp(-t / 0.09);
-      if (amount < 0.2) return { x: 0, y: 0 };
-      // Jitter from fast sines rather than random numbers, so a scrubbed frame always shakes the same.
-      return {
-        x: Math.sin(t * 173 + config.seed) * amount,
-        y: Math.sin(t * 131 + config.seed * 1.7) * amount
-      };
-    },
-
     heat(t) {
       return Math.exp(-t / 0.3);
     },
@@ -508,38 +446,32 @@ export function createBlast(opts: {
     moveTo(x, y) {
       cx = x;
       cy = y;
+    },
+
+    drawBreaking(ctx, stage) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      // The key's shadow and base, as CSS casts them: `0 12px 28px` and `0 4px 0`. A canvas shadow
+      // is measured in the bitmap's pixels, so it is scaled by the canvas's own pixel ratio.
+      const dpr = ctx.getTransform().a;
+      ctx.fillStyle = '#08080a';
+      ctx.save();
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 28 * dpr;
+      ctx.shadowOffsetY = 12 * dpr;
+      ctx.fill(broken.outline);
+      ctx.restore();
+      ctx.save();
+      ctx.translate(0, 4);
+      ctx.fill(broken.outline);
+      ctx.restore();
+      if (stage.cracks > 0) broken.draw(ctx, stage.cracks, stage.split, paintKey);
+      else paintKey(ctx);
+      ctx.restore();
+    },
+
+    cracksStarted(spread) {
+      return broken.started(spread);
     }
   };
-}
-
-/**
- * The charge before the blast: an orange glow that swells behind the key, then collapses into it
- * in the last fifth, the breath before the bang.
- */
-export function drawCharge(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  s: number,
-  p: number
-) {
-  let alpha: number;
-  let radius: number;
-  if (p < 0.8) {
-    const k = p / 0.8;
-    alpha = 0.65 * k * k;
-    radius = (80 + 80 * k) * s;
-  } else {
-    const k = (p - 0.8) / 0.2;
-    alpha = 0.65 * (1 - k) + 0.06;
-    radius = (160 - 100 * easeOutCubic(k)) * s;
-  }
-  const glow = ctx.createRadialGradient(x, y, 0, x, y, radius);
-  glow.addColorStop(0, `rgba(255,170,70,${alpha})`);
-  glow.addColorStop(0.45, `rgba(255,118,30,${alpha * 0.5})`);
-  glow.addColorStop(1, 'rgba(255,90,10,0)');
-  ctx.fillStyle = glow;
-  ctx.beginPath();
-  ctx.arc(x, y, radius, 0, TAU);
-  ctx.fill();
 }

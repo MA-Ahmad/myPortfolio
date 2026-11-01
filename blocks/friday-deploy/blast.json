@@ -1,13 +1,16 @@
 {
   "seed": 1,
-  "chargeMs": 360,
+  "deployMs": 2600,
   "rewindMs": 1100,
-  "shardCount": 26,
+  "shardCount": 9,
   "shardSpeed": 1,
   "shardDrag": 3.4,
   "shardSpin": 1,
   "shardDepth": 1,
   "shardHold": 1,
+  "crackGap": 1.6,
+  "crackTwist": 2.4,
+  "crackJag": 1,
   "glint": 0.42,
   "fireSize": 1,
   "fireSeconds": 0.34,
@@ -16,6 +19,5 @@
   "smoke": 0.42,
   "sparks": 72,
   "embers": 44,
-  "flash": 0.5,
-  "shake": 9
+  "flash": 0.5
 }

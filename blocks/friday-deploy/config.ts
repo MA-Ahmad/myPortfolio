@@ -6,7 +6,8 @@ import saved from './blast.json';
  */
 export type BlastConfig = {
   seed: number;
-  chargeMs: number;
+  /** From the click to the bang: the progress bar, the cracks and the split. */
+  deployMs: number;
   rewindMs: number;
   shardCount: number;
   /** Multiplies the shards' launch speed. */
@@ -18,6 +19,12 @@ export type BlastConfig = {
   shardDepth: number;
   /** Seconds before the shards start to fade. */
   shardHold: number;
+  /** How wide each crack opens before the bang, in px at `--s: 1`. */
+  crackGap: number;
+  /** How far the two sides of a crack turn apart, in degrees. */
+  crackTwist: number;
+  /** How far a crack wanders off a straight line, in px at `--s: 1`. */
+  crackJag: number;
   glint: number;
   fireSize: number;
   fireSeconds: number;
@@ -27,8 +34,6 @@ export type BlastConfig = {
   sparks: number;
   embers: number;
   flash: number;
-  /** Peak camera shake in px. */
-  shake: number;
 };
 
 export const BLAST_CONFIG: BlastConfig = saved;

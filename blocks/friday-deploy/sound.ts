@@ -1,6 +1,6 @@
 /**
- * The blast's sound, synthesized with Web Audio, so there are no files to ship: a rising whine
- * while the key charges, a boom (noise through a closing filter, a falling sub thump, a crackle
+ * The blast's sound, synthesized with Web Audio, so there are no files to ship: a tick for each
+ * crack and a rising whine while the key heats up, a boom (noise through a closing filter, a falling sub thump, a crackle
  * and tinkling glass), and for the rollback the same boom played backwards, ending in the click
  * of the key snapping back together.
  *
@@ -13,6 +13,8 @@ export type Sound = {
   enable(): void;
   disable(): void;
   charge(seconds: number): void;
+  /** A crack running through the key: a dry tick and a glassy ping. */
+  crack(): void;
   boom(): void;
   rewind(seconds: number): void;
   dispose(): void;
@@ -150,6 +152,31 @@ export function createSound(): Sound {
       whine.connect(filter).connect(gain).connect(master);
       whine.start(now);
       whine.stop(now + seconds + 0.05);
+    },
+
+    crack() {
+      const live = ready();
+      if (!live) return;
+      const { ac, master } = live;
+      const now = ac.currentTime;
+      const pan = ac.createStereoPanner();
+      pan.pan.value = Math.random() * 0.8 - 0.4;
+      pan.connect(master);
+      const tick = noise(ac, 0.05);
+      const highpass = ac.createBiquadFilter();
+      highpass.type = 'highpass';
+      highpass.frequency.value = 3000;
+      tick
+        .connect(highpass)
+        .connect(envelope(ac, now, 0.22, 0.04))
+        .connect(pan);
+      tick.start(now);
+      const ping = ac.createOscillator();
+      ping.type = 'triangle';
+      ping.frequency.value = 3200 + Math.random() * 2600;
+      ping.connect(envelope(ac, now, 0.035, 0.09)).connect(pan);
+      ping.start(now);
+      ping.stop(now + 0.12);
     },
 
     disable() {

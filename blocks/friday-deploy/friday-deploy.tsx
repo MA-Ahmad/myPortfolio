@@ -3,25 +3,29 @@
 // A client component: in the App Router (v0, `npx shadcn add`) it runs in the browser. The Pages Router ignores this.
 import { type PointerEvent, useEffect, useRef, useState } from 'react';
 import { RotateCcwIcon, Volume2Icon, VolumeXIcon } from 'lucide-react';
-import { type Blast, createBlast, drawCharge } from './blast';
+import { type Blast, createBlast, deployStage } from './blast';
 import { BLAST_CONFIG, blastSeconds } from './config';
-import { KEY_WIDTH, paintKeycap } from './keycap';
-import { Duck, type DuckMood } from './duck';
+import { KEY_WIDTH, measureLabels, paintKeycap } from './keycap';
+import { Server, type ServerMood } from './server';
 import { type Sound, createSound } from './sound';
 import styles from './friday-deploy.module.css';
 
-type Phase = 'idle' | 'charging' | 'blown' | 'rewinding';
+type Phase = 'idle' | 'deploying' | 'blown' | 'rewinding';
 
-const { chargeMs: CHARGE_MS, rewindMs: REWIND_MS } = BLAST_CONFIG;
+const { deployMs: DEPLOY_MS, rewindMs: REWIND_MS } = BLAST_CONFIG;
 const BLAST_SECONDS = blastSeconds(BLAST_CONFIG);
 // A rollback rewinds from no later than this into the blast, so the shards are still in the air.
 const REWIND_FROM = 1.3;
 const FLINCH_MS = 650;
+// After the shards fly home, the cracks close up again, the newest first.
+const HEAL_MS = 640;
+// The whine builds over the last part of the deploy, from when the cracks start to glow.
+const WHINE_AT = 0.5;
 const COMMIT = 'a1f3c9e';
 
 const STATUS: Record<Phase, { text: string; tone: 'ok' | 'busy' | 'down' }> = {
   idle: { text: 'production · healthy', tone: 'ok' },
-  charging: { text: `deploying ${COMMIT}…`, tone: 'busy' },
+  deploying: { text: `deploying ${COMMIT}…`, tone: 'busy' },
   blown: { text: 'production · 502 bad gateway', tone: 'down' },
   rewinding: { text: `git revert ${COMMIT}`, tone: 'busy' }
 };
@@ -29,10 +33,12 @@ const STATUS: Record<Phase, { text: string; tone: 'ok' | 'busy' | 'down' }> = {
 const easeInOutCubic = (v: number) => (v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2);
 
 /**
- * A deploy key that blows up when you press it, after the "Hex" landing page's option key: it
- * charges, draws in a breath, then bursts into a fireball and a shockwave, and breaks into glass
- * shards that still carry its label. A rubber duck watches. Roll back and the whole blast plays
- * in reverse until the key is whole again.
+ * A deploy key that blows up when you press it, after the "Hex" landing page's option key. The
+ * deploy runs, its progress stalls in the nineties, and the key cracks: a crack right across it,
+ * then a few more. The pieces pull apart along the
+ * cracks, and it bursts into a fireball and a shockwave, the pieces flying as glass shards that
+ * still carry the label. A little server, production itself, watches. Roll back and the blast
+ * plays in reverse until the pieces meet, then the cracks close up and the key is whole again.
  */
 export default function FridayDeploy() {
   const rootRef = useRef<HTMLDivElement>(null);
@@ -41,16 +47,18 @@ export default function FridayDeploy() {
   const frontRef = useRef<HTMLCanvasElement>(null);
   const keyRef = useRef<HTMLButtonElement>(null);
   const rollbackRef = useRef<HTMLButtonElement>(null);
-  const duckRef = useRef<HTMLDivElement>(null);
-  // Where the duck's eyes are, measured on the first pointer move after each layout change, so
+  const serverRef = useRef<HTMLDivElement>(null);
+  // Where the server's eyes are, measured on the first pointer move after each layout change, so
   // moving the pointer never forces a layout.
   const eyesRef = useRef<{ x: number; y: number } | null>(null);
   const soundRef = useRef<Sound | null>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
+  const percentRef = useRef<HTMLSpanElement>(null);
+  const fillRef = useRef<HTMLSpanElement>(null);
   const controls = useRef({ deploy: () => {}, rollback: () => {} });
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [flinch, setFlinch] = useState(false);
-  const [restored, setRestored] = useState(false);
   const [muted, setMuted] = useState(true);
 
   useEffect(() => {
@@ -79,16 +87,27 @@ export default function FridayDeploy() {
       center: { x: 0, y: 0 },
       scale: 1,
       deploys: 0,
-      shake: '',
-      heat: ''
+      heat: '',
+      percent: -1,
+      whining: false,
+      cracks: 0
     };
     let dpr = 1;
     let flinchTimer = 0;
 
-    const keyCenter = () => {
-      const k = key.getBoundingClientRect();
-      const c = back.getBoundingClientRect();
-      return { x: k.left + k.width / 2 - c.left, y: k.top + k.height / 2 - c.top };
+    // The key's box on the canvases, to the fraction of a pixel, at rest: less any press of a click
+    // still easing out.
+    const keyBox = () => {
+      const box = key.getBoundingClientRect();
+      const origin = scene.getBoundingClientRect();
+      const pressed = getComputedStyle(key).translate;
+      const [tx = 0, ty = 0] = pressed === 'none' ? [] : pressed.split(' ').map(parseFloat);
+      return {
+        x: box.left - origin.left - tx + box.width / 2,
+        y: box.top - origin.top - ty + box.height / 2,
+        width: box.width,
+        height: box.height
+      };
     };
 
     const resize = () => {
@@ -100,8 +119,9 @@ export default function FridayDeploy() {
       }
       eyesRef.current = null;
       if (state.blast) {
-        const center = keyCenter();
-        state.blast.moveTo(center.x, center.y);
+        const { x, y } = keyBox();
+        state.center = { x, y };
+        state.blast.moveTo(state.center.x, state.center.y);
       }
     };
     const observer = new ResizeObserver(resize);
@@ -121,11 +141,6 @@ export default function FridayDeploy() {
     };
 
     // Style writes only when the value changes: an unchanged write still costs a style recalc.
-    const setShake = (value: string) => {
-      if (value === state.shake) return;
-      state.shake = value;
-      scene.style.translate = value;
-    };
     const setHeat = (value: string) => {
       if (value === state.heat) return;
       state.heat = value;
@@ -140,33 +155,20 @@ export default function FridayDeploy() {
       blast.drawFront(frontCtx, t, flash);
       backCtx.globalAlpha = 1;
       frontCtx.globalAlpha = 1;
-      const shake = blast.shake(t);
-      setShake(shake.x || shake.y ? `${shake.x.toFixed(1)}px ${shake.y.toFixed(1)}px` : '');
       setHeat((blast.heat(t) * appear).toFixed(2));
     };
 
-    const settle = () => {
-      setShake('');
-      setHeat('0.00');
+    // The progress bar is written straight to the DOM: React never renders a frame of it.
+    const setProgress = (progress: number) => {
+      const percent = Math.floor(progress * 100);
+      if (percent === state.percent) return;
+      state.percent = percent;
+      if (fillRef.current) fillRef.current.style.scale = `${progress} 1`;
+      if (percentRef.current) percentRef.current.textContent = `${percent}%`;
+      progressRef.current?.setAttribute('aria-valuenow', String(percent));
     };
 
     const boom = (now: number) => {
-      key.style.transform = '';
-      key.style.scale = '';
-      key.style.filter = '';
-      const center = keyCenter();
-      const width = key.offsetWidth;
-      const height = key.offsetHeight;
-      // The first blast is exactly the tuned one; each one after breaks the key differently.
-      const config = { ...BLAST_CONFIG, seed: BLAST_CONFIG.seed + state.deploys++ };
-      state.blast = createBlast({
-        ...center,
-        width,
-        height,
-        texture: paintKeycap(width, height, dpr),
-        config
-      });
-      // Hidden here, not on React's next commit, so the key and its shards never share a frame.
       key.style.opacity = '0';
       state.start = now;
       state.t = 0;
@@ -180,19 +182,27 @@ export default function FridayDeploy() {
     const step = (now: number) => {
       state.raf = 0;
       clear();
+      const blast = state.blast!;
 
-      if (state.phase === 'charging') {
-        const p = Math.min(1, (now - state.start) / CHARGE_MS);
-        drawCharge(backCtx, state.center.x, state.center.y, state.scale, p);
-        // A tremble that builds, then the key draws in and darkens just before it goes. It goes on
-        // `transform`, which nothing transitions and which adds to the pressed-in `translate`.
-        const amp = 0.3 + 2.4 * p * p;
-        const jitter = () => ((Math.random() * 2 - 1) * amp).toFixed(2);
-        key.style.transform = `translate(${jitter()}px, ${jitter()}px) rotate(${(Number(jitter()) * 0.35).toFixed(2)}deg)`;
-        const inhale = Math.max(0, (p - 0.8) / 0.2);
-        key.style.scale = String(1 - 0.07 * inhale);
-        key.style.filter = `brightness(${1 - 0.5 * inhale})`;
-        if (p >= 1) {
+      if (state.phase === 'deploying') {
+        const u = Math.min(1, (now - state.start) / DEPLOY_MS);
+        const stage = deployStage(u);
+        setProgress(stage.progress);
+        if (u >= WHINE_AT && !state.whining) {
+          state.whining = true;
+          sound.charge(((1 - WHINE_AT) * DEPLOY_MS) / 1000);
+        }
+        const started = blast.cracksStarted(stage.cracks);
+        if (started > state.cracks) {
+          state.cracks = started;
+          sound.crack();
+        }
+        // From the first crack the key is drawn in pieces, so the page's key goes in the same frame.
+        if (stage.cracks > 0) {
+          key.style.opacity = '0';
+          blast.drawBreaking(frontCtx, stage);
+        }
+        if (u >= 1) {
           boom(now);
           paint(0, 1, 1);
         }
@@ -200,24 +210,34 @@ export default function FridayDeploy() {
         const t = (now - state.start) / 1000;
         state.t = t;
         if (t >= BLAST_SECONDS) {
-          settle();
+          setHeat('0.00');
           return;
         }
         paint(t, 1, 1);
       } else if (state.phase === 'rewinding') {
-        const q = Math.min(1, (now - state.start) / REWIND_MS);
-        if (q >= 1) {
-          // The key comes back in the same frame the shards go, so there is never an empty frame.
-          settle();
-          key.style.opacity = '';
-          state.blast = null;
-          enter('idle');
-          setRestored(true);
-          return;
+        const elapsed = now - state.start;
+        if (elapsed < REWIND_MS) {
+          // If the blast had already faded, bring it back in over the first moments of the rewind.
+          const q = elapsed / REWIND_MS;
+          const appear = state.jumped ? Math.min(1, q / 0.15) : 1;
+          paint(state.from * (1 - easeInOutCubic(q)), 0.45, appear);
+        } else {
+          // The pieces close together and the cracks close up, the newest first. The key is drawn
+          // exactly as the page's, which takes over in the same frame once it's whole.
+          setHeat('0.00');
+          const h = Math.min(1, (elapsed - REWIND_MS) / HEAL_MS);
+          if (h >= 1) {
+            key.style.opacity = '';
+            state.blast = null;
+            enter('idle');
+            return;
+          }
+          blast.drawBreaking(frontCtx, {
+            progress: 1,
+            cracks: 1 - easeInOutCubic(Math.min(1, h / 0.85)),
+            split: 1 - easeInOutCubic(Math.min(1, h / 0.4))
+          });
         }
-        // If the blast had already faded, bring it back in over the first moments of the rewind.
-        const appear = state.jumped ? Math.min(1, q / 0.15) : 1;
-        paint(state.from * (1 - easeInOutCubic(q)), 0.45, appear);
       } else {
         return;
       }
@@ -230,17 +250,29 @@ export default function FridayDeploy() {
 
     controls.current.deploy = () => {
       if (state.phase !== 'idle') return;
-      setRestored(false);
       if (reducedMotion.matches) {
         key.style.opacity = '0';
         enter('blown');
         return;
       }
-      state.center = keyCenter();
-      state.scale = key.offsetWidth / KEY_WIDTH;
+      const { x, y, width, height } = keyBox();
+      state.center = { x, y };
+      state.scale = width / KEY_WIDTH;
+      // The first blast is exactly the tuned one; each one after breaks the key differently. It is
+      // made now, because the cracks are the lines it breaks along.
+      const config = { ...BLAST_CONFIG, seed: BLAST_CONFIG.seed + state.deploys++ };
+      state.blast = createBlast({
+        ...state.center,
+        width,
+        height,
+        texture: paintKeycap(width, height, dpr, measureLabels(key)),
+        config
+      });
       state.start = performance.now();
-      enter('charging');
-      sound.charge(CHARGE_MS / 1000);
+      state.percent = -1;
+      state.whining = false;
+      state.cracks = 0;
+      enter('deploying');
       run();
     };
 
@@ -311,10 +343,10 @@ export default function FridayDeploy() {
   }, [phase]);
 
   const onPointerMove = (event: PointerEvent<HTMLDivElement>) => {
-    const duck = duckRef.current;
-    if (!duck) return;
+    const server = serverRef.current;
+    if (!server) return;
     if (!eyesRef.current) {
-      const rect = duck.getBoundingClientRect();
+      const rect = server.getBoundingClientRect();
       eyesRef.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height * 0.35 };
     }
     const dx = event.clientX - eyesRef.current.x;
@@ -322,13 +354,13 @@ export default function FridayDeploy() {
     const distance = Math.hypot(dx, dy) || 1;
     // Full deflection from 220px away; closer than that the eyes turn only part of the way.
     const reach = Math.min(1, distance / 220) / distance;
-    duck.style.setProperty('--lx', (dx * reach).toFixed(2));
-    duck.style.setProperty('--ly', (dy * reach).toFixed(2));
+    server.style.setProperty('--lx', (dx * reach).toFixed(2));
+    server.style.setProperty('--ly', (dy * reach).toFixed(2));
   };
 
   const onPointerLeave = () => {
-    duckRef.current?.style.setProperty('--lx', '0');
-    duckRef.current?.style.setProperty('--ly', '0');
+    serverRef.current?.style.setProperty('--lx', '0');
+    serverRef.current?.style.setProperty('--ly', '0');
   };
 
   const toggleSound = () => {
@@ -337,7 +369,7 @@ export default function FridayDeploy() {
     setMuted(!muted);
   };
 
-  const mood: DuckMood =
+  const mood: ServerMood =
     phase === 'idle' ? 'idle' : phase === 'blown' ? (flinch ? 'flinch' : 'stunned') : 'alarmed';
   const status = STATUS[phase];
 
@@ -368,27 +400,44 @@ export default function FridayDeploy() {
         </button>
 
         <div className={styles.stage}>
-          <Duck ref={duckRef} mood={mood} sooty={phase === 'blown'} />
+          <Server ref={serverRef} mood={mood} smoking={phase === 'blown'} />
 
           <button
             ref={keyRef}
             type="button"
             className={styles.key}
-            data-restored={restored || undefined}
             onClick={() => controls.current.deploy()}
             aria-disabled={phase !== 'idle'}
             aria-label="Deploy to production"
           >
             <span className={styles.face}>
-              <span className={styles.glyph} aria-hidden>
+              <span className={styles.glyph} data-key-glyph aria-hidden>
                 ⏎
               </span>
-              <span className={styles.label}>deploy</span>
+              <span className={styles.label} data-key-label>
+                deploy
+              </span>
             </span>
           </button>
 
           <div className={styles.action}>
-            {phase === 'blown' ? (
+            {phase === 'deploying' ? (
+              <div
+                ref={progressRef}
+                className={styles.progress}
+                role="progressbar"
+                aria-label={`Deploying ${COMMIT}`}
+                aria-valuemin={0}
+                aria-valuemax={100}
+              >
+                <span className={styles.progressText}>
+                  Deploying <span ref={percentRef}>0%</span>
+                </span>
+                <span className={styles.track}>
+                  <span ref={fillRef} className={styles.fill} />
+                </span>
+              </div>
+            ) : phase === 'blown' ? (
               <button
                 ref={rollbackRef}
                 type="button"
@@ -408,8 +457,6 @@ export default function FridayDeploy() {
                     </span>
                     <span className={styles.touchOnly}>Tap</span> to deploy
                   </>
-                ) : phase === 'charging' ? (
-                  'Deploying…'
                 ) : (
                   'Rolling back…'
                 )}
@@ -418,9 +465,6 @@ export default function FridayDeploy() {
           </div>
 
           <h2 className={styles.title}>Never deploy on a Friday.</h2>
-          <p className={styles.lede}>
-            One key, straight to production. When it goes up in flames, explain it to the duck.
-          </p>
         </div>
 
         <canvas ref={frontRef} className={styles.canvas} aria-hidden />

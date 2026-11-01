@@ -2,9 +2,9 @@ import { ReactElement, useEffect, useMemo, useRef, useState } from 'react';
 import type { GetServerSideProps } from 'next';
 import dynamic from 'next/dynamic';
 import Meta from 'components/shared/meta';
-import { createBlast, drawCharge } from 'blocks/friday-deploy/blast';
+import { createBlast, deployStage } from 'blocks/friday-deploy/blast';
 import { BLAST_CONFIG, type BlastConfig, blastSeconds } from 'blocks/friday-deploy/config';
-import { KEY_PAD, paintKeycap } from 'blocks/friday-deploy/keycap';
+import { KEY_HEIGHT, KEY_WIDTH, paintKeycap } from 'blocks/friday-deploy/keycap';
 import type { NextPageWithLayout } from '../_app';
 
 /**
@@ -20,14 +20,22 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
   {
     title: 'Timing',
     knobs: [
-      { key: 'chargeMs', label: 'Charge (ms)', min: 100, max: 1000, step: 10 },
+      { key: 'deployMs', label: 'Deploy (ms)', min: 1200, max: 4000, step: 50 },
       { key: 'rewindMs', label: 'Rewind (ms)', min: 500, max: 2000, step: 50 }
+    ]
+  },
+  {
+    title: 'Cracks',
+    knobs: [
+      { key: 'crackGap', label: 'Gap (px)', min: 0, max: 4, step: 0.1 },
+      { key: 'crackTwist', label: 'Twist (°)', min: 0, max: 8, step: 0.1 },
+      { key: 'crackJag', label: 'Jag (px)', min: 0, max: 2.5, step: 0.05 }
     ]
   },
   {
     title: 'Shards',
     knobs: [
-      { key: 'shardCount', label: 'Count', min: 8, max: 40, step: 1 },
+      { key: 'shardCount', label: 'Pieces', min: 5, max: 20, step: 1 },
       { key: 'shardSpeed', label: 'Speed', min: 0.4, max: 1.8, step: 0.05 },
       { key: 'shardDrag', label: 'Drag', min: 1.5, max: 6, step: 0.1 },
       { key: 'shardSpin', label: 'Spin', min: 0, max: 2, step: 0.05 },
@@ -60,10 +68,7 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
   },
   {
     title: 'Camera',
-    knobs: [
-      { key: 'flash', label: 'Flash', min: 0, max: 1, step: 0.01 },
-      { key: 'shake', label: 'Shake (px)', min: 0, max: 20, step: 0.5 }
-    ]
+    knobs: [{ key: 'flash', label: 'Flash', min: 0, max: 1, step: 0.01 }]
   }
 ];
 
@@ -71,7 +76,7 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
 const REFERENCE_MS = [-67, 0, 33, 67, 100, 150, 200, 300, 450, 600, 800, 1000, 1300];
 
 const STAGE = 500;
-const KEY = { width: 148, height: 132 };
+const KEY = { width: KEY_WIDTH, height: KEY_HEIGHT };
 const SPEEDS = [1, 0.25, 0.1];
 const STORAGE_KEY = 'friday-deploy-lab';
 
@@ -90,7 +95,7 @@ function readRail(): BlastConfig[] {
 function Lab() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [config, setConfig] = useState<BlastConfig>(BLAST_CONFIG);
-  // Seconds from the bang; negative while the key charges.
+  // Seconds from the bang; negative while the key cracks.
   const [t, setT] = useState(0.1);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(0.25);
@@ -98,7 +103,7 @@ function Lab() {
   const [rail, setRail] = useState(readRail);
   const [dpr] = useState(() => Math.min(window.devicePixelRatio || 1, 2));
 
-  const start = -config.chargeMs / 1000;
+  const start = -config.deployMs / 1000;
   const end = blastSeconds(config);
 
   const texture = useMemo(() => paintKeycap(KEY.width, KEY.height, dpr), [dpr]);
@@ -114,28 +119,13 @@ function Lab() {
     ctx.fillStyle = '#050506';
     ctx.fillRect(0, 0, STAGE, STAGE);
     if (t < 0) {
-      // The charge, drawn the way the block does it with CSS: tremble, then draw in and darken.
-      const p = 1 + t / (config.chargeMs / 1000);
-      drawCharge(ctx, STAGE / 2, STAGE / 2, 1, p);
-      const amp = 0.3 + 2.4 * p * p;
-      const inhale = Math.max(0, (p - 0.8) / 0.2);
-      ctx.save();
-      ctx.translate(STAGE / 2 + Math.sin(t * 173) * amp, STAGE / 2 + Math.sin(t * 131) * amp);
-      ctx.scale(1 - 0.07 * inhale, 1 - 0.07 * inhale);
-      ctx.filter = `brightness(${1 - 0.5 * inhale})`;
-      ctx.drawImage(
-        texture,
-        -KEY.width / 2 - KEY_PAD,
-        -KEY.height / 2 - KEY_PAD,
-        KEY.width + KEY_PAD * 2,
-        KEY.height + KEY_PAD * 2
-      );
-      ctx.restore();
+      // The deploy, as the block draws it: the cracks over the key, then its pieces pulling apart.
+      blast.drawBreaking(ctx, deployStage(1 + t / (config.deployMs / 1000)));
     } else {
       blast.drawBack(ctx, t);
       blast.drawFront(ctx, t, 1);
     }
-  }, [blast, texture, t, config.chargeMs, dpr]);
+  }, [blast, t, config.deployMs, dpr]);
 
   useEffect(() => {
     if (!playing) return;

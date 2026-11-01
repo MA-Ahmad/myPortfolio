@@ -144,20 +144,49 @@
   text-shadow: 0 0 calc(var(--heat) * 36px) rgb(255 150 60 / calc(var(--heat) * 0.9));
 }
 
-.lede {
-  max-width: 34ch;
-  margin: 14px 0 0;
-  color: rgb(255 255 255 / 0.5);
-  font-size: 15px;
-  line-height: 1.5;
-  text-wrap: pretty;
-}
-
 .action {
   display: grid;
   place-items: center;
   height: 34px;
   margin-top: 22px;
+}
+
+/* The deploy's progress: a hairline that fills, then turns amber as it stalls and the key cracks. */
+.progress {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  animation: rise 220ms var(--ease-out);
+}
+
+.progressText {
+  color: rgb(255 255 255 / 0.55);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.progressText span {
+  display: inline-block;
+  min-width: 3.5ch;
+  color: rgb(255 255 255 / 0.85);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.track {
+  width: calc(112px * var(--s));
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.fill {
+  display: block;
+  height: 100%;
+  background: #f4f4f5;
+  scale: 0 1;
+  transform-origin: left;
 }
 
 .hint {
@@ -254,21 +283,19 @@
 
 .key {
   position: relative;
-  width: calc(148px * var(--s));
-  height: calc(132px * var(--s));
+  width: calc(112px * var(--s));
+  height: calc(96px * var(--s));
   padding: 0;
   border: 0;
-  border-radius: calc(26px * var(--s));
-  background: linear-gradient(180deg, #36363c, #141417);
+  border-radius: calc(20px * var(--s));
+  background: linear-gradient(180deg, #2c2c31, #111113);
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.08),
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    0 6px 0 #09090b,
-    0 14px 30px rgb(0 0 0 / 0.65);
-  color: #ececf0;
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 4px 0 #08080a,
+    0 12px 28px rgb(0 0 0 / 0.6);
+  color: #e4e4e7;
   font-family:
-    ui-rounded,
-    'SF Pro Rounded',
     system-ui,
     -apple-system,
     sans-serif;
@@ -280,61 +307,51 @@
 
 .face {
   position: absolute;
-  inset: calc(7px * var(--s)) calc(9px * var(--s)) calc(14px * var(--s));
-  border-radius: calc(18px * var(--s));
-  background: linear-gradient(to bottom right, #2d2d33, #1b1b1f);
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.06);
+  inset: calc(5px * var(--s)) calc(6px * var(--s)) calc(10px * var(--s));
+  border-radius: calc(14px * var(--s));
+  background: linear-gradient(to bottom right, #262629, #19191c);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.05),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
   transition: background-color 150ms ease;
 }
 
 .glyph {
   position: absolute;
-  top: calc(9px * var(--s));
-  right: calc(14px * var(--s));
-  font-size: calc(24px * var(--s));
-  font-weight: 500;
+  top: calc(8px * var(--s));
+  right: calc(10px * var(--s));
+  font-size: calc(17px * var(--s));
+  font-weight: 400;
   line-height: 1;
 }
 
 .label {
   position: absolute;
-  bottom: calc(12px * var(--s));
-  left: calc(14px * var(--s));
-  font-size: calc(19px * var(--s));
-  font-weight: 500;
+  bottom: calc(10px * var(--s));
+  left: calc(11px * var(--s));
+  font-size: calc(15px * var(--s));
+  font-weight: 400;
+  letter-spacing: 0.01em;
   line-height: 1;
 }
 
 @media (hover: hover) and (pointer: fine) {
   .root[data-phase='idle'] .key:hover {
     box-shadow:
-      inset 0 0 0 1px rgb(255 255 255 / 0.1),
-      inset 0 1px 0 rgb(255 255 255 / 0.16),
-      0 7px 0 #09090b,
-      0 18px 36px rgb(0 0 0 / 0.7);
+      inset 0 0 0 1px rgb(255 255 255 / 0.09),
+      inset 0 1px 0 rgb(255 255 255 / 0.14),
+      0 4px 0 #08080a,
+      0 16px 34px rgb(0 0 0 / 0.68);
   }
 }
 
-.root[data-phase='idle'] .key:active,
-.root[data-phase='charging'] .key {
-  translate: 0 4px;
+.root[data-phase='idle'] .key:active {
+  translate: 0 calc(3px * var(--s));
   box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.08),
-    inset 0 1px 0 rgb(255 255 255 / 0.12),
-    0 2px 0 #09090b,
-    0 6px 16px rgb(0 0 0 / 0.6);
-}
-
-/* Heating up: a hot rim and an orange glow. */
-.root[data-phase='charging'] .key {
-  box-shadow:
-    inset 0 0 0 1px rgb(255 170 90 / 0.45),
-    inset 0 1px 0 rgb(255 200 140 / 0.3),
-    0 2px 0 #09090b,
-    0 0 26px rgb(255 130 40 / 0.45);
-  transition:
-    translate 120ms var(--ease-out),
-    box-shadow 300ms ease;
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.1),
+    0 1px 0 #08080a,
+    0 5px 14px rgb(0 0 0 / 0.6);
 }
 
 .root[data-phase='blown'] .key,
@@ -344,28 +361,50 @@
 
 .key:focus-visible {
   outline: 2px solid rgb(255 255 255 / 0.7);
-  outline-offset: 5px;
+  outline-offset: 4px;
 }
 
 /* Whole again: a flash of heat on the reassembled key as it settles. */
-.key[data-restored] {
-  animation: settle 420ms var(--ease-out);
-}
-
-.duck {
+.server {
   --lx: 0;
   --ly: 0;
-  width: calc(132px * var(--s));
-  margin-bottom: calc(10px * var(--s));
+  --led: #4ade80;
+  width: calc(104px * var(--s));
+  margin-bottom: calc(14px * var(--s));
   pointer-events: none;
 }
 
-.duckSvg {
+.server[data-mood='alarmed'] {
+  --led: #fbbf24;
+}
+
+.server[data-mood='flinch'],
+.server[data-mood='stunned'] {
+  --led: #f87171;
+}
+
+.serverSvg {
   display: block;
   width: 100%;
   height: auto;
   overflow: visible;
   transform-origin: 50% 100%;
+}
+
+.led {
+  fill: var(--led);
+  transition: fill 200ms ease;
+}
+
+.mouth,
+.shut {
+  stroke: var(--led);
+  transition: stroke 200ms ease;
+}
+
+.activity {
+  fill: var(--led);
+  opacity: 0.35;
 }
 
 .pupil {
@@ -377,18 +416,16 @@
   transition: scale 200ms var(--ease-out);
 }
 
-.duckSvg[data-blink] .eye {
+.serverSvg[data-blink] .eye {
   scale: 1 0.1;
   transition-duration: 60ms;
 }
 
 .shut,
-.sweat {
+.flat,
+.zigzag,
+.smoke {
   opacity: 0;
-}
-
-.sweat {
-  transition: opacity 200ms ease;
 }
 
 .underlight {
@@ -401,37 +438,51 @@
   transition: opacity 900ms ease;
 }
 
-.duck[data-sooty] .soot {
+.server[data-smoking] .soot {
   opacity: 1;
   transition-duration: 300ms;
 }
 
-.duck[data-mood='alarmed'] .eye {
+.server[data-mood='alarmed'] .eye {
   scale: 1.14;
 }
 
-.duck[data-mood='alarmed'] .pupil {
+.server[data-mood='alarmed'] .pupil {
   translate: 0 2.6px;
 }
 
-.duck[data-mood='alarmed'] .sweat {
-  opacity: 1;
-}
-
-.duck[data-mood='flinch'] .eyes {
+.server[data-mood='alarmed'] .smile,
+.server[data-mood='flinch'] .smile,
+.server[data-mood='stunned'] .smile,
+.server[data-mood='flinch'] .eyes {
   opacity: 0;
 }
 
-.duck[data-mood='flinch'] .shut {
+.server[data-mood='alarmed'] .flat,
+.server[data-mood='flinch'] .zigzag,
+.server[data-mood='stunned'] .zigzag,
+.server[data-mood='flinch'] .shut,
+.server[data-smoking] .smoke {
   opacity: 1;
 }
 
-.duck[data-mood='flinch'] .duckSvg {
+/* Disk activity while the deploy goes out (and comes back). */
+.server[data-mood='alarmed'] .activity {
+  animation: activity 160ms steps(1) infinite;
+}
+
+.server[data-mood='flinch'] .serverSvg {
   animation: flinch 650ms var(--ease-out);
 }
 
-.duck[data-mood='stunned'] .pupil {
+.server[data-mood='stunned'] .pupil {
   animation: dazed 1.6s linear 2;
+}
+
+.smoke circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: smoke 1.8s var(--ease-out) infinite;
 }
 
 @keyframes rise {
@@ -444,13 +495,6 @@
 @keyframes pulse {
   50% {
     opacity: 0.35;
-  }
-}
-
-@keyframes settle {
-  from {
-    scale: 1.05;
-    filter: brightness(1.9) saturate(0.6);
   }
 }
 
@@ -473,6 +517,26 @@
   }
 }
 
+@keyframes activity {
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Puffs from the vents that rise, swell and thin out. */
+@keyframes smoke {
+  from {
+    opacity: 0.8;
+    translate: 0 0;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0;
+    translate: 0 -26px;
+    scale: 1.8;
+  }
+}
+
 /* A small circle of the pupils: knocked silly for a moment. */
 @keyframes dazed {
   0% {
@@ -492,17 +556,19 @@
   }
 }
 
-/* Reduced motion: the key simply fades out and back, with no blast, shake or flinch. */
+/* Reduced motion: the key simply fades out and back, with no blast or flinch. */
 
 @media (prefers-reduced-motion: reduce) {
   .key {
     transition: opacity 200ms ease;
   }
 
-  .key[data-restored],
-  .duck .duckSvg,
-  .duck .pupil,
+  .server .serverSvg,
+  .server .pupil,
+  .server .activity,
+  .smoke circle,
   .hint,
+  .progress,
   .rollback,
   .status[data-tone='down'] .dot {
     animation: none !important;
