@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 700" preserveAspectRatio="xMidYMin slice">
+  <!-- Soft clouds gathered in the top corners: fractal noise, cut to blurred shapes, white with alpha. -->
+  <defs>
+    <filter id="cloud" filterUnits="userSpaceOnUse" x="0" y="0" width="1600" height="700" color-interpolation-filters="sRGB">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="55" result="shape" />
+      <feTurbulence type="fractalNoise" baseFrequency="0.0045 0.009" numOctaves="5" seed="11" result="noise" />
+      <feColorMatrix in="noise" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  3.4 0 0 0 -1.45" result="puff" />
+      <feComposite in="puff" in2="shape" operator="arithmetic" k1="1.6" k2="0" k3="0" k4="0" />
+    </filter>
+  </defs>
+  <g filter="url(#cloud)" fill="#fff">
+    <ellipse cx="120" cy="110" rx="380" ry="120" />
+    <ellipse cx="300" cy="250" rx="200" ry="55" />
+    <ellipse cx="1480" cy="90" rx="420" ry="140" />
+    <ellipse cx="1180" cy="230" rx="230" ry="50" />
+    <ellipse cx="800" cy="40" rx="160" ry="34" />
+  </g>
+</svg>
