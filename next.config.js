@@ -9,6 +9,12 @@ const nextConfig = {
       child_process: { browser: './empty-module.js' }
     }
   },
+  async headers() {
+    return [
+      // The home page answers Markdown or HTML by Accept header, so caches must keep them apart.
+      { source: '/', headers: [{ key: 'Vary', value: 'Accept' }] }
+    ];
+  },
   async redirects() {
     return [
       {

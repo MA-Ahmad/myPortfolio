@@ -12,10 +12,15 @@ export function PersonJsonLd() {
     url: SITE_URL,
     image: PROFILE.avatar,
     email: `mailto:${PROFILE.email}`,
-    jobTitle: PROFILE.jobs[0].title,
-    worksFor: { '@type': 'Organization', name: PROFILE.jobs[0].company },
+    jobTitle: `${PROFILE.jobs[0].title} at ${PROFILE.jobs[0].company}`,
     description: PROFILE.bio[0],
     address: { '@type': 'PostalAddress', addressCountry: 'PK' },
+    contactPoint: {
+      '@type': 'ContactPoint',
+      contactType: 'professional inquiries',
+      email: PROFILE.email,
+      url: `${SITE_URL}/about.md`
+    },
     alumniOf: EDUCATION.map((item) => ({ '@type': 'CollegeOrUniversity', name: item.school })),
     knowsAbout: ['React', 'Next.js', 'TypeScript', 'Ruby on Rails', 'Web development'],
     sameAs: PROFILE.socials.filter((item) => item.name !== 'email').map((item) => item.href)

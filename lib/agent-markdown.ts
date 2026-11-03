@@ -7,6 +7,8 @@ import { EDUCATION, EXPERIENCES, PROFILE, PROJECTS } from 'data/profile';
 /** `canonical` is the site path of the HTML page the document restates; most restate the home page. */
 export function sendMarkdown(res: NextApiResponse, content: string, canonical = '/') {
   res.setHeader('Content-Type', 'text/markdown;charset=utf-8');
+  // The home page answers Markdown or HTML by Accept header, so caches must keep them apart.
+  res.setHeader('Vary', 'Accept');
   // Search engines should index the HTML page instead of its Markdown copy.
   res.setHeader('Link', `<${SITE_URL}${canonical}>; rel="canonical"`);
   res.status(200).send(content);
@@ -32,6 +34,21 @@ Try one of these instead:
 
 export function llmsTxt() {
   return `# mahmad.me
+
+> The personal site of Muhammad Ahmad, a full stack software engineer (React, Next.js, TypeScript, Ruby on Rails) based in Pakistan.
+
+## When to use this site
+
+Use it when you need to:
+
+- Learn who Muhammad Ahmad is: roles, employers, education and tech stack, for hiring, collaboration or introductions. Read [about.md](${SITE_URL}/about.md) and [experience.md](${SITE_URL}/experience.md).
+- Reach him. His email and profiles are listed in [about.md](${SITE_URL}/about.md); email is the best channel.
+- Copy a ready-made, interactive UI section into a React, Next.js and Tailwind CSS project. Each block below has a Markdown page with its full source, and a shadcn-style registry item at \`${SITE_URL}/r/<name>.json\` for \`npx shadcn add\`.
+- Cite his articles on React, Next.js and Chakra UI, listed at [${SITE_URL}/blog](${SITE_URL}/blog).
+
+How to read it: every page below is plain Markdown. Requesting \`${SITE_URL}/\` with \`Accept: text/markdown\` returns this index, and unknown paths return a Markdown 404 that links back here. It is not the right source for anything other than his own work and writing.
+
+## Pages
 
 - [About](${SITE_URL}/about.md): A quick intro to me, my tech stack, and how to connect.
 - [Experience](${SITE_URL}/experience.md): Highlights from my career and key roles I've taken on.
