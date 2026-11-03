@@ -1,5 +1,6 @@
 import Home from 'components/home-page/home';
 import { StudioDock } from 'components/shared/studio-dock';
+import { PersonJsonLd } from 'components/shared/person-json-ld';
 import { GetStaticProps, NextPage } from 'next';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
@@ -23,6 +24,7 @@ const Index: NextPage<HomePageProps> = ({ contributions }) => {
 
   return (
     <PageLayout title="Muhammad Ahmad - Full Stack Developer">
+      <PersonJsonLd />
       <Home contributions={contributions} />
       <StudioDock />
       {isPlaying(router.query) && <PlayToolbar />}

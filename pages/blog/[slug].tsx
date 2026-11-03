@@ -95,7 +95,8 @@ export const getStaticPaths: GetStaticPaths = async () => {
     paths: latestPosts.map((post) => ({
       params: { slug: post.slug }
     })),
-    fallback: true
+    // Render unknown slugs on the server, so a missing post answers with a real 404 status.
+    fallback: 'blocking'
   };
 };
 

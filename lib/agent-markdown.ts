@@ -12,6 +12,24 @@ export function sendMarkdown(res: NextApiResponse, content: string, canonical = 
   res.status(200).send(content);
 }
 
+/** The 404 body for agents that asked for Markdown, pointing them back to pages that exist. */
+export function sendMarkdownNotFound(res: NextApiResponse, path: string) {
+  res.setHeader('Content-Type', 'text/markdown;charset=utf-8');
+  res.setHeader('Vary', 'Accept');
+  res.status(404).send(`# Page not found
+
+There is no page at \`${path}\` on mahmad.me. It may have moved or never existed.
+
+Try one of these instead:
+
+- [llms.txt](${SITE_URL}/llms.txt): an index of everything on this site, in Markdown
+- [Sitemap](${SITE_URL}/sitemap.xml): every public page
+- [Home](${SITE_URL}/)
+- [About, in Markdown](${SITE_URL}/about.md)
+- [Blog](${SITE_URL}/blog)
+`);
+}
+
 export function llmsTxt() {
   return `# mahmad.me
 
@@ -35,6 +53,8 @@ export function aboutMarkdown() {
   const stack = skillsArray.map((item) => `- ${item.name}`).join('\n');
 
   return `# About
+
+${PROFILE.bio.join('\n\n')}
 
 ## Personal Information
 

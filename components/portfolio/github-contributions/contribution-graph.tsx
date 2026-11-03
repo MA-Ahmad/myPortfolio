@@ -82,6 +82,15 @@ const THEME = cn(
   'data-[level="4"]:fill-muted-foreground/80'
 )
 
+// The same fills set once on the calendar, so its ~365 cells don't each repeat the classes.
+const CALENDAR_THEME = cn(
+  "[&_rect[data-level='0']]:fill-muted-foreground/5",
+  "[&_rect[data-level='1']]:fill-muted-foreground/20",
+  "[&_rect[data-level='2']]:fill-muted-foreground/40",
+  "[&_rect[data-level='3']]:fill-muted-foreground/60",
+  "[&_rect[data-level='4']]:fill-muted-foreground/80"
+)
+
 type ContributionGraphContextType = {
   data: Activity[]
   weeks: Week[]
@@ -334,13 +343,11 @@ export const ContributionGraphBlock = ({
 
   return (
     <rect
-      className={cn(THEME, className)}
-      data-count={activity.count}
-      data-date={activity.date}
+      className={className}
       data-level={activity.level}
       height={blockSize}
-      rx={blockRadius}
-      ry={blockRadius}
+      rx={blockRadius || undefined}
+      ry={blockRadius || undefined}
       width={blockSize}
       x={(blockSize + blockMargin) * weekIndex}
       y={labelHeight + (blockSize + blockMargin) * dayIndex}
@@ -386,7 +393,7 @@ export const ContributionGraphCalendar = ({
       {...props}
     >
       <svg
-        className="block overflow-visible"
+        className={cn("block overflow-visible", CALENDAR_THEME)}
         height={height}
         viewBox={`0 0 ${width} ${height}`}
         width={width}

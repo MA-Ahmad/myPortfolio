@@ -41,7 +41,8 @@ export function ProjectItem({ project }: { project: ProjectItemData }) {
         </div>
       </div>
 
-      <DisclosurePanel className="overflow-hidden">
+      {/* Kept in the DOM while closed so the descriptions are in the server-rendered HTML. */}
+      <DisclosurePanel unmount={false} className="overflow-hidden">
         <div className="space-y-4 border-t border-line p-4">
           {project.description ? (
             <p className="text-sm text-muted-foreground">{project.description}</p>

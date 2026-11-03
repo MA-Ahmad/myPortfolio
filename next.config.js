@@ -87,6 +87,21 @@ const nextConfig = {
             }
           ]
         }
+      ],
+      // Agents asking for Markdown get a Markdown 404 instead of the HTML error page. Fallback
+      // rewrites only run once no page, file or dynamic route matched.
+      fallback: [
+        {
+          source: '/:path*',
+          destination: '/api/agents/not-found?path=:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'accept',
+              value: '(?<accept>.*text/markdown.*)'
+            }
+          ]
+        }
       ]
     };
   }
