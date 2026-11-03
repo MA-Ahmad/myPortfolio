@@ -11,7 +11,7 @@ export const PROFILE = {
     'Open source lover.',
     'This is my digital garden.'
   ],
-  // A short introduction, shown on the home page and at the top of /about.
+  // A short introduction, served at the top of /about.md and as the Person description.
   bio: [
     "I'm Muhammad Ahmad, a full stack software engineer from Pakistan with more than nine years of experience building web products. Since 2023 I've been a Senior Software Engineer at Nalikes Studio, where I work on web3 products with Next.js, React, TypeScript and Ruby on Rails, deployed on AWS and Heroku.",
     'Before that I was a Senior Software Engineer at Big Wolf Games, building browser games and their backends with Rails, React and PixiJS, and at Phaedra Solutions, building Rails and React applications. I started my career at Brainplow and Brainx Technologies, and earned a Bachelor\'s degree in Computer Science from FAST-NUCES.',
