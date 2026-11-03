@@ -66,7 +66,7 @@ export const BLOCKS: BlockMeta[] = [
     images: {
       card: '/blocks/friday-deploy/card.webp',
       og: '/blocks/friday-deploy/og.jpg',
-      alt: 'The deploy key blown apart: glass shards of the key flying out of a fireball and shockwave, the little production server above it dazed with red eyes, a status pill reading "production · 502 bad gateway", and the heading "Never deploy on a Friday."'
+      alt: 'The deploy key blown apart: glass shards of the key flying out of a fireball and shockwave, the little production server above it dazed with red eyes, and the heading "Never deploy on a Friday."'
     }
   },
   {
