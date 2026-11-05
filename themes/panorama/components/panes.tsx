@@ -1,3 +1,4 @@
+import { useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ArrowUpRight } from 'lucide-react';
@@ -6,6 +7,7 @@ import type { Activity } from 'lib/github-contributions';
 import { PANORAMA_CONTENT as C, LIST_LIMIT } from '../content';
 import styles from '../panorama.module.css';
 import { Contributions } from './contributions';
+import { PostPreview } from './post-preview';
 import { ContactPills } from '../pipeline/contact-pills';
 import { Pipeline } from '../pipeline/pipeline';
 import pipelineStyles from '../pipeline/pipeline.module.css';
@@ -71,14 +73,27 @@ export function WorkPane() {
 
 export function WritingPane({ posts }: { posts: BlogListPost[] }) {
   const latest = posts.slice(0, LIST_LIMIT);
+  const listRef = useRef<HTMLUListElement>(null);
+  const covers = useMemo(
+    () =>
+      posts
+        .slice(0, LIST_LIMIT)
+        .filter((post) => post.cover_image)
+        .map((post) => ({ key: post.slug, src: post.cover_image! })),
+    [posts]
+  );
   return (
     <>
       <h2 className={styles.heading}>Latest writing</h2>
       {latest.length ? (
-        <ul className={styles.list}>
+        <ul ref={listRef} className={styles.list}>
           {latest.map((post) => (
             <li key={post.slug}>
-              <Link href={`/blog/${post.slug}`} className={styles.row}>
+              <Link
+                href={`/blog/${post.slug}`}
+                className={styles.row}
+                data-preview={post.cover_image ? post.slug : undefined}
+              >
                 <span className={styles.rowTitle}>{post.title}</span>
                 {post.description && <span className={styles.rowText}>{post.description}</span>}
                 <time className={styles.rowMeta} dateTime={post.published_at}>
@@ -93,6 +108,7 @@ export function WritingPane({ posts }: { posts: BlogListPost[] }) {
           The posts couldn’t be loaded just now. They’re all on the blog.
         </p>
       )}
+      <PostPreview listRef={listRef} images={covers} />
       <Link href="/blog" className={styles.more}>
         All posts
       </Link>
