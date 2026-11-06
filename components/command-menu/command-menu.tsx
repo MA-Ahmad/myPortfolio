@@ -18,12 +18,14 @@ import {
   SearchIcon,
   SunMediumIcon,
   SwatchBookIcon,
+  PencilRulerIcon,
   TerminalIcon,
   WorkflowIcon
 } from 'lucide-react';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
+import { requestRedraw } from 'lib/redraw';
 
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
@@ -282,6 +284,18 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
                   <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
                     <SwatchBookIcon className={iconClass} />
                     <span>Play mode</span>
+                  </CommandItem>
+                  <CommandItem
+                    className={s.item}
+                    onSelect={() => {
+                      if (router.pathname !== '/') return go('/?redraw=1');
+                      setOpen(false);
+                      requestRedraw();
+                    }}
+                    keywords={['rebuild', 'agents', 'draw', 'animate']}
+                  >
+                    <PencilRulerIcon className={iconClass} />
+                    <span>Redraw the page</span>
                   </CommandItem>
                 </Command.Group>
 

@@ -108,7 +108,7 @@ export default function PlayToolbar() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center p-2 lg:inset-x-auto lg:left-0 lg:p-6">
+      <div data-redraw-ignore className="pointer-events-none fixed inset-x-0 bottom-0 z-[70] flex justify-center p-2 lg:inset-x-auto lg:left-0 lg:p-6">
         <AnimatePresence>
           {!leaving && (
             <motion.section

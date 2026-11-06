@@ -39,6 +39,7 @@ export function SpiderHud({
           className="fixed bottom-6 left-6 z-[54] flex max-w-[calc(100vw-3rem)] items-center gap-3 whitespace-nowrap rounded-full border border-line bg-background/90 py-1 pl-4 pr-1 text-xs text-muted-foreground shadow-[0_12px_32px_-14px_rgb(0_0_0/0.35)] backdrop-blur"
           role="toolbar"
           aria-label="Spider controls"
+          data-redraw-skip
         >
           <span className="font-mono text-foreground" aria-live="polite">
             {hint}

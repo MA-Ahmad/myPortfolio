@@ -3,6 +3,7 @@ import { FlipSentences } from './flip-sentences';
 import { HandwrittenArrow, HandwrittenNote } from './handwritten-note';
 import { MarkIsometric } from './mark-isometric';
 import PixelAvatar from './pixel-avatar';
+import { RedrawCallout } from './redraw-callout';
 
 export function ProfileHeader() {
   return (
@@ -26,6 +27,7 @@ export function ProfileHeader() {
       </figure>
 
       <div className="flex flex-col sm:row-span-2 sm:row-start-1">
+        <RedrawCallout className="hidden sm:block" />
         <div data-web-cut className="screen-line-top mt-auto shrink-0 border-r border-line">
           <div className="mx-0.5 my-[3px] flex outline-none">
             <div data-spider-avatar data-spider-grab="the avatar" className="relative z-[2] size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">

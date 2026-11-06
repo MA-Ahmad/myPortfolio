@@ -860,3 +860,63 @@ html[data-play] .stripe-divider::before {
 .block-code .token.constant {
   color: var(--code-number);
 }
+
+/*
+ * Redraw (components/redraw/*): while a run is on, every layer the agents will draw carries
+ * `data-rd`. `visibility` inherits but a child can override it, so a layer can be hidden while
+ * the frame around it is already drawn. Text is typed by shrinking the `redraw-pending`
+ * highlight, which paints the untyped rest transparent without moving the layout. Its
+ * `::highlight()` rule is added by the engine at runtime (components/redraw/engine.ts): the
+ * build's CSS parser doesn't know that pseudo-element yet and warns on it.
+ */
+html[data-redraw-pending] [data-redraw-scope] > *,
+html[data-redraw] [data-redraw-root] > *,
+html[data-redraw] [data-rd='off'] {
+  visibility: hidden;
+}
+
+html[data-redraw-pending] [data-redraw-ignore] {
+  visibility: visible;
+}
+
+/*
+ * `data-redraw-skip`: not part of the drawing (the Redraw callout, the spider and its webs).
+ * Hidden from the press to the end of the run. With `="fade"` (the callout) it fades back in:
+ * removing the attribute on <html> lets opacity transition while visibility switches at once.
+ * Plain skip only hides, so things that run their own opacity (the spider) are left alone.
+ */
+[data-redraw-skip='fade'] {
+  transition: opacity 300ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html[data-redraw-pending] [data-redraw-skip],
+html[data-redraw] [data-redraw-skip] {
+  opacity: 0;
+  visibility: hidden;
+  transition: none;
+}
+
+html[data-redraw] [data-rd='on'],
+html[data-redraw] [data-rd='type'],
+html[data-redraw] [data-rd='wipe'],
+html[data-redraw] [data-rd='done'],
+html[data-redraw] [data-redraw-keep] {
+  visibility: visible;
+}
+
+/* Opacity only: a blur filter on a page-wide frame costs a full repaint every frame. */
+html[data-redraw] [data-rd='on'] {
+  animation: redraw-in 280ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes redraw-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-redraw] [data-rd='on'] {
+    animation: none;
+  }
+}

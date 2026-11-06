@@ -1,0 +1,181 @@
+/* The agents and their boxes live in page coordinates, so they scroll with what they draw. */
+.overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 60;
+  contain: layout style;
+  /* A touch shorter than the toolbar's 200ms: it starts a frame later, so both end together. */
+  transition: opacity 170ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Leaves with the toolbar: the agents perched on it fade out with it. */
+.overlay[data-leaving] {
+  opacity: 0;
+}
+
+/* Rulers, guides and the scan line: screen coordinates, drawn on a canvas every frame. */
+.guides {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 61;
+}
+
+.agent {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  z-index: 2;
+  will-change: transform;
+}
+
+.agent svg {
+  position: absolute;
+  overflow: visible;
+  opacity: 0;
+  scale: 0.6;
+  transition:
+    opacity 160ms ease-out,
+    scale 200ms cubic-bezier(0.22, 1, 0.36, 1),
+    rotate 400ms cubic-bezier(0.22, 1, 0.36, 1);
+  filter: drop-shadow(0 1px 1.5px rgb(0 0 0 / 0.35));
+}
+
+.arrow {
+  left: -3px;
+  top: -2px;
+  transform-origin: 3px 2px;
+  /* In the flock at the end each cursor turns to its own angle, about its tip. */
+  rotate: var(--tilt, 0deg);
+}
+
+.cross,
+.beam {
+  left: -8px;
+  top: -8px;
+}
+
+.agent[data-tool='arrow'] .arrow,
+.agent[data-tool='cross'] .cross,
+.agent[data-tool='beam'] .beam {
+  opacity: 1;
+  scale: 1;
+}
+
+.name {
+  position: absolute;
+  left: 13px;
+  top: 15px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--c);
+  color: #0a0a0b;
+  font: 500 10px/14px var(--font-sans, ui-sans-serif, system-ui);
+  white-space: nowrap;
+  opacity: 0;
+  translate: 0 -2px;
+  transition:
+    opacity 200ms ease-out,
+    translate 200ms ease-out;
+}
+
+.agent[data-talk] .name {
+  opacity: 1;
+  translate: 0 0;
+}
+
+.box {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  box-sizing: border-box;
+  border: 1px solid var(--c);
+  background: color-mix(in oklab, var(--c) 5%, transparent);
+  transition: opacity 380ms ease-out;
+}
+
+.box[data-kind='text'] {
+  border-style: dashed;
+  background: transparent;
+}
+
+.box[data-out] {
+  opacity: 0;
+}
+
+.handle {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  box-sizing: border-box;
+  background: var(--background);
+  border: 1px solid var(--c);
+}
+
+.handle:nth-child(1) {
+  left: -3px;
+  top: -3px;
+}
+.handle:nth-child(2) {
+  right: -3px;
+  top: -3px;
+}
+.handle:nth-child(3) {
+  left: -3px;
+  bottom: -3px;
+}
+.handle:nth-child(4) {
+  right: -3px;
+  bottom: -3px;
+}
+
+.size {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  translate: -50% 0;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--c);
+  color: #0a0a0b;
+  font:
+    500 9px/14px ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ripple {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 9999px;
+  border: 1.5px solid var(--foreground);
+  opacity: 0;
+  animation: ripple 650ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes ripple {
+  from {
+    opacity: 0.6;
+    scale: 0.2;
+  }
+  to {
+    opacity: 0;
+    scale: 1;
+  }
+}

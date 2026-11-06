@@ -18,7 +18,8 @@ export default function Home({
 }) {
   return (
     <div className="relative [--separator-height:2rem]">
-      <div className="guide-rails" aria-hidden />
+      {/* The redraw keeps the rails up for the whole run and puts its rulers in them. */}
+      <div className="guide-rails" data-redraw-rails data-redraw-ignore aria-hidden />
       <div className="site-frame mx-auto md:max-w-3xl">
         <ProfileHeader />
         <StripeSeparator />

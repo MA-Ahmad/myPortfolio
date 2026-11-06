@@ -1134,8 +1134,9 @@ export function Spider() {
 
   return (
     <>
-      {/* Webs sit under the sticky top bar; the spider walks over everything. */}
-      <svg aria-hidden className={cn(LAYER, TOKENS, 'z-[1]')}>
+      {/* Webs sit under the sticky top bar; the spider walks over everything. The redraw
+          (components/redraw) leaves all of it out while it draws the page: data-redraw-skip. */}
+      <svg aria-hidden data-redraw-skip className={cn(LAYER, TOKENS, 'z-[1]')}>
         {webs
           .filter((web) => !web.host)
           .map((web) => (
@@ -1172,6 +1173,7 @@ export function Spider() {
             <svg
               key={web.id}
               aria-hidden
+              data-redraw-skip
               className={cn(TOKENS, 'pointer-events-none absolute left-0 top-0 z-[1] overflow-hidden rounded-[inherit]')}
               width={web.w}
               height={web.h}
@@ -1182,7 +1184,7 @@ export function Spider() {
           )
         )}
 
-      <svg ref={layerRef} aria-hidden className={cn(LAYER, TOKENS, 'z-[53] opacity-0')}>
+      <svg ref={layerRef} aria-hidden data-redraw-skip className={cn(LAYER, TOKENS, 'z-[53] opacity-0')}>
         <line ref={threadRef} y1={0} stroke="var(--spider-silk)" strokeWidth={0.75} style={{ opacity: 0 }} />
         <g ref={ropesRef} />
         <SpiderArt bodyRef={bodyRef} legRefs={legRefs} hitRef={hitRef} onActivate={activate} />

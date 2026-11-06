@@ -15,6 +15,7 @@ function AppLayout(props: { children: React.ReactNode }) {
     // On wide pages the column's side lines run down to the footer, which sits at the bottom of the
     // screen however short the content is.
     <div
+      data-redraw-scope
       className={cn(
         'group/layout relative isolate min-h-screen bg-background text-foreground',
         isWide && 'flex flex-col'

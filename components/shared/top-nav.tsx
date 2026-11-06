@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { AiOutlineClose } from 'react-icons/ai';
-import { FileUserIcon, SwatchBookIcon } from 'lucide-react';
+import { FileUserIcon, PencilRulerIcon, SwatchBookIcon } from 'lucide-react';
 import { ColorModeSwitcher } from '../theme/ColorModeSwitcher';
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
@@ -9,6 +9,7 @@ import { CommandMenu } from 'components/command-menu/command-menu';
 import { PROFILE } from 'data/profile';
 import { cn } from 'lib/cn';
 import { PLAY_EXIT_EVENT, isPlaying } from 'lib/play';
+import { preloadRedraw, requestRedraw } from 'lib/redraw';
 
 const pageLinks: { name: string; path: string }[] = [
   // { name: 'Blog', path: '/blog' }
@@ -23,9 +24,7 @@ interface NavLinkProps {
 
 const NavLink = (props: NavLinkProps) => {
   const router = useRouter();
-  const isActive =
-    router.pathname === props.path ||
-    router.pathname.startsWith(`${props.path}/`);
+  const isActive = router.pathname === props.path || router.pathname.startsWith(`${props.path}/`);
 
   return (
     <NextLink
@@ -50,7 +49,11 @@ const PlayButton = () => {
 
   const toggle = () => {
     if (playing) window.dispatchEvent(new Event(PLAY_EXIT_EVENT));
-    else router.replace({ pathname: '/', query: { play: '1' } }, undefined, { shallow: true, scroll: false });
+    else
+      router.replace({ pathname: '/', query: { play: '1' } }, undefined, {
+        shallow: true,
+        scroll: false
+      });
   };
 
   return (
@@ -66,6 +69,29 @@ const PlayButton = () => {
       )}
     >
       <SwatchBookIcon className="size-3.5" />
+    </button>
+  );
+};
+
+/**
+ * Sends the agents in to redraw the home page. Phones only: on larger screens it has its own
+ * place on the page, beside the MA mark (components/portfolio/redraw-callout.tsx).
+ */
+const RedrawButton = () => {
+  const router = useRouter();
+  if (router.pathname !== '/') return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(event) => requestRedraw(event.currentTarget)}
+      onPointerEnter={() => void preloadRedraw()}
+      onFocus={() => void preloadRedraw()}
+      aria-label="Redraw the page"
+      title="Redraw the page"
+      className="inline-flex size-8 items-center justify-center rounded-full border border-line text-muted-foreground transition-[color,background-color,transform] duration-150 ease-out hover:bg-muted hover:text-foreground active:scale-[0.94] sm:hidden"
+    >
+      <PencilRulerIcon className="size-3.5" />
     </button>
   );
 };
@@ -107,12 +133,7 @@ export default function TopNav({ wide = false }: { wide?: boolean }) {
           <>
             <nav className="hidden items-center gap-4 md:flex">
               {pageLinks.map((link) => (
-                <NavLink
-                  key={link.path}
-                  name={link.name}
-                  path={link.path}
-                  onClose={onClose}
-                />
+                <NavLink key={link.path} name={link.name} path={link.path} onClose={onClose} />
               ))}
             </nav>
             <span className="mx-2 hidden h-5 w-px bg-line md:block" />
@@ -130,6 +151,7 @@ export default function TopNav({ wide = false }: { wide?: boolean }) {
           >
             <FileUserIcon className="size-3.5" />
           </a>
+          <RedrawButton />
           <PlayButton />
           <CommandMenu />
           <span className="mx-1 hidden h-5 w-px bg-line sm:block" />
@@ -141,12 +163,7 @@ export default function TopNav({ wide = false }: { wide?: boolean }) {
         <div className="mx-auto border-x border-line bg-background px-4 pb-4 md:hidden md:max-w-3xl">
           <nav className="flex flex-col gap-3 pt-3">
             {pageLinks.map((link) => (
-              <NavLink
-                key={link.path}
-                name={link.name}
-                path={link.path}
-                onClose={onClose}
-              />
+              <NavLink key={link.path} name={link.name} path={link.path} onClose={onClose} />
             ))}
           </nav>
         </div>
