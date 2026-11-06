@@ -1,7 +1,10 @@
 import { tearOf, type Point } from './tear';
 
-/** A seam is torn open, being welded, welded shut with a faint scar left, or tearing apart again. */
-export type SeamState = 'torn' | 'welding' | 'welded' | 'tearing';
+/**
+ * A seam is torn open, being welded, welded shut with a faint scar left, or tearing apart again.
+ * Every seam starts sealed: the sheet is whole, with no scar, until it first cracks open on load.
+ */
+export type SeamState = 'sealed' | 'torn' | 'welding' | 'welded' | 'tearing';
 
 export type Seam = {
   seed: number;
@@ -18,6 +21,25 @@ export const TEAR_MS = 260;
 export const openingAt = (t: number) => 1 - (1 - Math.max(0, Math.min(1, t / TEAR_MS))) ** 3;
 
 /**
+ * The first tear, on load, is slow: a hairline crack runs open, holds a beat under strain, then the
+ * pieces ease apart to the full gap.
+ */
+export const INTRO_TEAR_MS = 1500;
+const CRACK_MS = 420;
+const STRAIN_MS = 220;
+const HAIRLINE = 0.2;
+const STRAINED = 0.25;
+const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+export function introAt(t: number) {
+  if (t < CRACK_MS) return HAIRLINE * (1 - (1 - clamp01(t / CRACK_MS)) ** 3);
+  if (t < CRACK_MS + STRAIN_MS)
+    return HAIRLINE + (STRAINED - HAIRLINE) * ((t - CRACK_MS) / STRAIN_MS);
+  const x = clamp01((t - CRACK_MS - STRAIN_MS) / (INTRO_TEAR_MS - CRACK_MS - STRAIN_MS));
+  const eased = x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2;
+  return STRAINED + (1 - STRAINED) * eased;
+}
+
+/**
  * The sheet the sections are cut from: one seam between each pair of neighbours, and the state of
  * each. The pieces read it with useSyncExternalStore; SheetRunner moves it as sections open.
  */
@@ -26,7 +48,7 @@ export function createSheet(count: number) {
     const seed = 11 + i * 17;
     return { seed, v: tearOf(seed), h: tearOf(seed + 5, 760) };
   });
-  const initial: SeamState[] = seams.map(() => 'torn');
+  const initial: SeamState[] = seams.map(() => 'sealed');
   let states = initial;
   /** When each seam started welding or tearing, on the performance clock, so every part keys off one time. */
   const started = seams.map(() => 0);
@@ -46,6 +68,8 @@ export function createSheet(count: number) {
    * was let go past tearing, or null; the tear then opens from that crack.
    */
   const crack: (((along: number) => number) | null)[] = seams.map(() => null);
+  /** How long each seam's current tear takes: TEAR_MS, or INTRO_TEAR_MS for the first one on load. */
+  const spans = seams.map(() => TEAR_MS);
   const listeners = new Set<() => void>();
   const notify = () => listeners.forEach((listener) => listener());
 
@@ -64,6 +88,13 @@ export function createSheet(count: number) {
       crack[index] = at;
     },
     aimed: (index: number) => aims[index] !== null,
+    /** How long the seam's tear takes, ms. */
+    span: (index: number) => spans[index],
+    /** Whether the seam is (or last was) on its first, slow tear. */
+    intro: (index: number) => spans[index] === INTRO_TEAR_MS,
+    /** How far open the seam's tear is `t` ms in, 0 to 1. */
+    opening: (index: number, t: number) =>
+      spans[index] === INTRO_TEAR_MS ? introAt(t) : openingAt(t),
     get: () => states,
     getInitial: () => initial,
     subscribe(listener: () => void) {
@@ -72,8 +103,9 @@ export function createSheet(count: number) {
         listeners.delete(listener);
       };
     },
-    set(index: number, state: SeamState) {
+    set(index: number, state: SeamState, span = TEAR_MS) {
       const now = performance.now();
+      if (state === 'tearing') spans[index] = span;
       if (state === 'tearing')
         from[index] = states[index] === 'welding' ? now - started[index] : null;
       if (state === 'welding' || state === 'tearing') started[index] = now;
@@ -88,6 +120,7 @@ export function createSheet(count: number) {
     reset() {
       aims.fill(null);
       crack.fill(null);
+      spans.fill(TEAR_MS);
       states = initial;
       notify();
     }

@@ -9,7 +9,7 @@ import {
   useState,
   useSyncExternalStore
 } from 'react';
-import { GAP, openingAt, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
+import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
 import { Attract } from './attract';
 import { drawPixelSky } from './pixel-sky';
 import { playTear, playWeld } from './sound';
@@ -21,6 +21,9 @@ import styles from './torn.module.css';
 const REACH = 32;
 /** A weld starts a beat after the click. */
 const DELAY = 220;
+/** On load the sheet shows whole this long before its seams crack open, left to right. */
+const INTRO_HOLD = 650;
+const INTRO_STAGGER = 140;
 
 const narrow = '(max-width: 719px)';
 const subscribeTo = (query: string) => (listener: () => void) => {
@@ -49,6 +52,7 @@ export function SheetRunner({ sheet, weld, open }: { sheet: Sheet; weld: WeldKin
   const reduced = useMedia('(prefers-reduced-motion: reduce)');
   const starts = useRef<number[]>([]);
   const finishes = useRef<number[]>([]);
+  const mounted = useRef<number | null>(null);
 
   useEffect(
     () => () => {
@@ -66,10 +70,11 @@ export function SheetRunner({ sheet, weld, open }: { sheet: Sheet; weld: WeldKin
       states.forEach((_, i) => sheet.set(i, i < open ? 'welded' : 'torn'));
       return;
     }
+    mounted.current ??= performance.now();
 
     // Each step ends only if nothing has moved the seam on since it started.
     const run = (i: number, state: 'welding' | 'tearing', done: SeamState, ms: number) => {
-      sheet.set(i, state);
+      sheet.set(i, state, ms);
       const started = sheet.started[i];
       finishes.current.push(
         window.setTimeout(() => {
@@ -78,6 +83,20 @@ export function SheetRunner({ sheet, weld, open }: { sheet: Sheet; weld: WeldKin
       );
     };
     const at = (ms: number, step: () => void) => starts.current.push(window.setTimeout(step, ms));
+
+    // On load the sheet is whole. After a beat its seams crack and ease apart, left to right; any
+    // left of a section opened meanwhile simply stay shut.
+    const hold = Math.max(0, mounted.current + INTRO_HOLD - performance.now());
+    states
+      .map((state, i) => ({ state, i }))
+      .filter(({ state }) => state === 'sealed')
+      .forEach(({ i }, k) =>
+        i < open
+          ? sheet.set(i, 'welded')
+          : at(hold + k * INTRO_STAGGER, () => {
+              if (sheet.get()[i] === 'sealed') run(i, 'tearing', 'torn', INTRO_TEAR_MS);
+            })
+      );
 
     const tear = states
       .map((state, i) => ({ state, i }))
@@ -94,7 +113,7 @@ export function SheetRunner({ sheet, weld, open }: { sheet: Sheet; weld: WeldKin
     // A seam still springing open finishes tearing before it welds, so its gap never jumps.
     const start = (i: number) => {
       if (sheet.get()[i] === 'tearing') {
-        const left = sheet.started[i] + TEAR_MS - performance.now();
+        const left = sheet.started[i] + sheet.span(i) - performance.now();
         if (left > 0) return at(left + 16, () => start(i));
       }
       run(i, 'welding', 'welded', WELD_MS);
@@ -188,14 +207,14 @@ function gapOf(sheet: Sheet, kind: WeldKind, states: SeamState[], index: number,
   const crack = sheet.crack[index];
   return (at: number) => (along: number) => {
     if (state === 'torn') return GAP;
-    if (state === 'welded') return 0;
+    if (state === 'welded' || state === 'sealed') return 0;
     if (state === 'welding') return GAP * gapAt(kind, at - started, along, length, origin);
     const before = crack
       ? crack(along)
       : from === null
         ? 0
         : gapAt(kind, from, along, length, origin);
-    return GAP * (before + (1 - before) * openingAt(at - started));
+    return GAP * (before + (1 - before) * sheet.opening(index, at - started));
   };
 }
 
@@ -260,7 +279,8 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
   useEffect(() => {
     if (endState !== 'welding' && endState !== 'tearing') return;
     const now = performance.now();
-    const duration = sheet.started[index] + (endState === 'welding' ? WELD_MS : TEAR_MS) - now;
+    const duration =
+      sheet.started[index] + (endState === 'welding' ? WELD_MS : sheet.span(index)) - now;
     if (duration <= 0) return;
     const animation = gapRefs.current[axis]!.animate(
       track(duration, (t) => ({ clipPath: gap(axis, now + t) })),
@@ -326,7 +346,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
     >
       <div ref={boxRef} className={`${styles.frame} ${styles.box}`}>
         {startSeam && (
-          <Seams side="start" state={startState}>
+          <Seams side="start" state={startState} intro={sheet.intro(index - 1)}>
             {(on) => (
               <Edges
                 {...edgeProps}
@@ -341,7 +361,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
           </Seams>
         )}
         {endSeam && (
-          <Seams side="end" state={endState}>
+          <Seams side="end" state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <Edges
                 {...edgeProps}
@@ -359,7 +379,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
 
       {endSeam && (
         <div className={`${styles.frame} ${styles.gaps}`}>
-          <Seams side="end" state={endState}>
+          <Seams side="end" state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <div
                 ref={(element) => {
@@ -375,7 +395,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
 
       {endSeam && (
         <div className={`${styles.frame} ${styles.overlay}`}>
-          <Seams side="end" state={endState}>
+          <Seams side="end" state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <>
                 {/* An interrupted weld stays to fade out while the seam tears open. */}
@@ -530,16 +550,26 @@ function Grip({
 function Seams({
   side,
   state,
+  intro,
   children
 }: {
   side: 'start' | 'end';
   state: SeamState;
+  /** On its first tear the seam was never welded, so it has no scar to show. */
+  intro: boolean;
   children: (on: Axis) => ReactNode;
 }) {
   return (
     <>
       {(['v', 'h'] as const).map((on) => (
-        <div key={on} className={styles.seam} data-axis={on} data-side={side} data-state={state}>
+        <div
+          key={on}
+          className={styles.seam}
+          data-axis={on}
+          data-side={side}
+          data-state={state}
+          data-intro={intro && state === 'tearing' ? '' : undefined}
+        >
           {children(on)}
         </div>
       ))}
@@ -566,7 +596,16 @@ type EdgeProps = {
  * the line itself. Memoized: a piece re-renders whenever any seam moves, its edges only when theirs
  * does.
  */
-const Edges = memo(function Edges({ kind, sheet, seam, index, state, on, length, side }: EdgeProps) {
+const Edges = memo(function Edges({
+  kind,
+  sheet,
+  seam,
+  index,
+  state,
+  on,
+  length,
+  side
+}: EdgeProps) {
   const ref = useRef<HTMLDivElement>(null);
   const tear: Point[] = seam[on];
   const points = pointsOf(tear);
@@ -577,12 +616,13 @@ const Edges = memo(function Edges({ kind, sheet, seam, index, state, on, length,
     if (state === 'tearing') {
       const from = sheet.from[index];
       const before = from === null || isZip(kind) ? 0 : gapAt(kind, from, 0, length);
-      const frames = track(TEAR_MS, (t) => {
-        const gap = before + (1 - before) * openingAt(t);
+      const span = sheet.span(index);
+      const frames = track(span, (t) => {
+        const gap = before + (1 - before) * sheet.opening(index, t);
         return { transform: `translateX(${(side * GAP * gap).toFixed(2)}px)`, opacity: gap };
       });
       const animation = ref.current!.animate(frames, {
-        duration: TEAR_MS,
+        duration: span,
         delay: -elapsed,
         fill: 'forwards'
       });

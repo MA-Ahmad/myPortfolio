@@ -478,7 +478,8 @@
   transform: translateX(calc(var(--side) * var(--gap)));
 }
 
-.seam[data-state='welded'] .open {
+.seam[data-state='welded'] .open,
+.seam[data-state='sealed'] .open {
   opacity: 0;
 }
 
@@ -616,6 +617,11 @@
 .seam[data-state='welded'] .scar,
 .seam[data-state='tearing'] .scar {
   opacity: 1;
+}
+
+/* A seam cracking open on load was never welded: no scar under it. */
+.seam[data-intro] .scar {
+  opacity: 0;
 }
 
 /* An interrupted weld fades out while the seam tears open under it. */
