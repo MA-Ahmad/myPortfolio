@@ -455,19 +455,20 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
 
 /*
  * Top-nav avatar: a hairline ring a little off the photo, with a highlight gliding round it and a
- * soft glow trailing it. The ring and glow are masked bands of one rotating conic gradient, so the
- * motion is a transform the compositor runs on its own.
+ * soft glow trailing it. The ring and glow are masked bands of one conic gradient whose start angle
+ * turns. Rotating the pseudo-elements instead looks the same in Chrome, but iOS Safari renders a
+ * mask on an element with a running transform animation blurred and off centre, which smeared the
+ * glow into a wide crescent beside the avatar.
  */
+@property --avatar-ring-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0turn;
+}
+
 .avatar-ring {
   --avatar-ring-gap: 3px;
   --avatar-ring-color: color-mix(in oklab, var(--foreground) 14%, transparent);
-  --avatar-ring-glint: conic-gradient(
-    from 0turn,
-    transparent 0turn 0.5turn,
-    color-mix(in oklab, var(--foreground) 30%, transparent) 0.8turn,
-    var(--foreground) 0.97turn,
-    transparent 1turn
-  );
   position: relative;
   display: grid;
   place-items: center;
@@ -481,7 +482,14 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
   content: '';
   position: absolute;
   border-radius: inherit;
-  background: var(--avatar-ring-glint);
+  /* Set here, not on .avatar-ring, so the angle resolves on the element that animates it. */
+  background: conic-gradient(
+    from var(--avatar-ring-angle),
+    transparent 0turn 0.5turn,
+    color-mix(in oklab, var(--foreground) 30%, transparent) 0.8turn,
+    var(--foreground) 0.97turn,
+    transparent 1turn
+  );
   pointer-events: none;
   animation: avatar-ring-spin 4s linear infinite;
 }
@@ -489,6 +497,7 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
 /* The line itself. */
 .avatar-ring::before {
   inset: 0;
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 calc(100% - 0.5px));
   mask: radial-gradient(farthest-side, transparent calc(100% - 1.25px), #000 calc(100% - 0.5px));
 }
 
@@ -497,6 +506,12 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
   inset: -4px;
   /* A dark glow on a light page reads as a shadow, so it stays faint there. */
   opacity: 0.18;
+  -webkit-mask: radial-gradient(
+    farthest-side,
+    transparent calc(100% - 6.5px),
+    #000 calc(100% - 4.5px),
+    transparent 100%
+  );
   mask: radial-gradient(
     farthest-side,
     transparent calc(100% - 6.5px),
@@ -511,7 +526,7 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
 
 @keyframes avatar-ring-spin {
   to {
-    transform: rotate(1turn);
+    --avatar-ring-angle: 1turn;
   }
 }
 
