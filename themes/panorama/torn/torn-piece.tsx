@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
 import { Attract } from './attract';
+import { drawPixelGround, groundStore } from './pixel-ground';
 import { drawPixelSky } from './pixel-sky';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
@@ -143,6 +144,7 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
     >
       {/* The night sky's pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
       <PixelSky />
+      <PixelGround />
       <div className={styles.glow} />
       <div className={styles.moon} />
       <div className={`${styles.sky} ${styles.clouds}`} />
@@ -163,6 +165,35 @@ function PixelSky() {
     return () => observer.disconnect();
   }, []);
   return <canvas ref={ref} className={`${styles.sky} ${styles.pixelSky}`} />;
+}
+
+/**
+ * The ground's pixels along the bottom, white at night and black by day, redrawn when the sheet
+ * resizes or the tuning page (/dev/grid) moves a slider.
+ */
+function PixelGround() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const config = useSyncExternalStore(
+    groundStore.subscribe,
+    groundStore.get,
+    groundStore.getServer
+  );
+  useEffect(() => {
+    const canvas = ref.current!;
+    const surface = canvas.parentElement!;
+    const draw = () => drawPixelGround(canvas, surface.clientWidth, surface.clientHeight, config);
+    draw();
+    const observer = new ResizeObserver(draw);
+    observer.observe(surface);
+    return () => observer.disconnect();
+  }, [config]);
+  return (
+    <canvas
+      ref={ref}
+      className={`${styles.sky} ${styles.pixelGround}`}
+      style={{ '--ground-night': config.night, '--ground-day': config.day } as CSSProperties}
+    />
+  );
 }
 
 /** A pull gives less with each px, at this scale (px), so the weld feels like it's holding. */

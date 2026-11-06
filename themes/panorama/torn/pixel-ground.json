@@ -1,0 +1,16 @@
+{
+  "seed": 4127,
+  "cell": 8,
+  "size": 6,
+  "reach": 0.34,
+  "curve": 1.5,
+  "density": 0.8,
+  "clump": 10,
+  "clumping": 0.75,
+  "corners": 0.55,
+  "brightness": 0.22,
+  "floor": 0.18,
+  "bright": 0.06,
+  "night": 1,
+  "day": 0.7
+}

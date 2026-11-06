@@ -369,6 +369,22 @@
   opacity: var(--tn-night);
 }
 
+/*
+ * A clumped field of square pixels along the bottom, thinning upward: drawn white on a canvas from
+ * pixel-ground.json, and turned black by day.
+ */
+.pixelGround {
+  width: 100%;
+  height: 100%;
+  opacity: var(--ground-night);
+}
+
+[data-time='morning'] .pixelGround,
+[data-time='afternoon'] .pixelGround {
+  opacity: var(--ground-day);
+  filter: invert(1);
+}
+
 .clouds {
   background-image: url('./clouds.svg');
   opacity: var(--tn-clouds);
