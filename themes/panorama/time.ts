@@ -18,9 +18,10 @@ const KEY = 'panorama-time';
 
 /**
  * Runs inline as the page is parsed, so the first paint already has the right time of day
- * instead of flashing the server's night. Mirrors timeAt and the stored pick.
+ * instead of flashing the server's night. Mirrors timeAt and the stored pick, and marks a stored
+ * pick (data-picked), so the header shows its selected time and its Auto button before React runs.
  */
-export const EARLY_TIME_SCRIPT = `(function(){var el=document.currentScript.parentElement.parentElement;var t;try{t=localStorage.getItem('${KEY}')}catch(e){}if(['morning','afternoon','night'].indexOf(t)<0){var h=new Date().getHours();t=h>=5&&h<11?'morning':h>=11&&h<18?'afternoon':'night'}el.setAttribute('data-time',t)})()`;
+export const EARLY_TIME_SCRIPT = `(function(){var el=document.currentScript.parentElement.parentElement;var t;try{t=localStorage.getItem('${KEY}')}catch(e){}var p=['morning','afternoon','night'].indexOf(t)>=0;if(!p){var h=new Date().getHours();t=h>=5&&h<11?'morning':h>=11&&h<18?'afternoon':'night'}el.setAttribute('data-time',t);if(p)el.setAttribute('data-picked','')})()`;
 const listeners = new Set<() => void>();
 let picked: TimeOfDay | null = null;
 let clock: TimeOfDay = 'night';

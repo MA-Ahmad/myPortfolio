@@ -370,6 +370,27 @@
 }
 
 /*
+ * The field and its stars are drawn once the page runs: until then they're hidden, and they fade
+ * in. A change of time still snaps (no transition runs while the layout is switching).
+ */
+.pixelSky,
+.twinkles {
+  transition: opacity 600ms ease-out;
+}
+
+.pixelSky:not([data-drawn]),
+.twinkles:not([data-drawn]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixelSky,
+  .twinkles {
+    transition: none;
+  }
+}
+
+/*
  * At night a few of the sky's pixels twinkle: each swells into a small soft glow and fades back,
  * on its own loop. Only opacity animates; the glow itself is a fixed shadow.
  */

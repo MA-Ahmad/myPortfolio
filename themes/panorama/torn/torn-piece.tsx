@@ -177,6 +177,9 @@ function PixelSky() {
       );
     };
     draw();
+    // Drawn only once the page runs, so the field fades in rather than popping onto the sky.
+    canvas.dataset.drawn = '';
+    stars.dataset.drawn = '';
     const observer = new ResizeObserver(draw);
     observer.observe(surface);
     return () => observer.disconnect();

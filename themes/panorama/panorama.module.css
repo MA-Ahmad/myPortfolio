@@ -309,13 +309,14 @@
   border-radius: 999px;
 }
 
-.tools:empty {
-  display: none;
-}
-
-/* A hairline between the tools and the time of day. */
+/*
+ * A hairline between the tools and the time of day. The sound switch mounts into it after the page
+ * hydrates, so its width is held from the first paint and the pill never grows; the switch fades
+ * in where its space already is.
+ */
 .tools {
   display: flex;
+  min-width: 28px;
   margin-right: 3px;
   padding-right: 3px;
   box-shadow: 1px 0 0 var(--pn-line);
@@ -362,7 +363,13 @@
   transform: scale(0.94);
 }
 
-.time[aria-pressed='true'] {
+/*
+ * The selected time follows the root's data-time, which an inline script sets before first paint,
+ * so the highlight is on the right time even before React has run.
+ */
+.root[data-time='morning'] .time[data-value='morning'],
+.root[data-time='afternoon'] .time[data-value='afternoon'],
+.root[data-time='night'] .time[data-value='night'] {
   color: var(--pn-ink);
   background: var(--pn-fill-hi);
   box-shadow: inset 0 1px 0 var(--pn-glass-edge);
@@ -437,6 +444,21 @@
 .weld select:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
   outline-offset: 2px;
+}
+
+.tools > * {
+  animation: pn-tool-in 200ms ease-out both;
+}
+
+@keyframes pn-tool-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Following the clock, there's nothing to go back to. */
+.root:not([data-picked]) .auto {
+  display: none;
 }
 
 .auto {
