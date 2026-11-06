@@ -96,6 +96,8 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
       className={styles.dock}
       aria-label="Open Theme Studio: wire a theme into the display"
       data-look={look}
+      data-web-box="Theme Studio"
+      data-spider-grab="Theme Studio"
       data-reduced={reduced || undefined}
     >
       {look === 'midnight'

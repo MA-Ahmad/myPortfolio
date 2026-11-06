@@ -6,7 +6,7 @@ import PixelAvatar from './pixel-avatar';
 
 export function ProfileHeader() {
   return (
-    <div className="screen-line-bottom grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line screen-line-bottom-border after:z-[1]">
+    <div data-spider-unclip className="screen-line-bottom grid grid-cols-[auto_1fr] grid-rows-[1fr_auto] overflow-y-clip border-x border-line screen-line-bottom-border after:z-[1]">
       <figure className="relative col-span-2 p-2 sm:col-span-1 sm:col-start-2 sm:p-4">
         <div className="sm:-translate-x-16">
           <MarkIsometric />
@@ -26,10 +26,10 @@ export function ProfileHeader() {
       </figure>
 
       <div className="flex flex-col sm:row-span-2 sm:row-start-1">
-        <div className="screen-line-top mt-auto shrink-0 border-r border-line">
+        <div data-web-cut className="screen-line-top mt-auto shrink-0 border-r border-line">
           <div className="mx-0.5 my-[3px] flex outline-none">
-            <div className="relative size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">
-              <PixelAvatar src={`${PROFILE.avatar}&s=920`} alt={PROFILE.displayName} />
+            <div data-spider-avatar data-spider-grab="the avatar" className="relative z-[2] size-[7.5rem] rounded-full min-[24rem]:size-32 sm:size-40">
+              <PixelAvatar src={`${PROFILE.avatar}&s=920`} alt={PROFILE.displayName} replayOnPress={false} />
               <div className="pointer-events-none absolute inset-0 rounded-[inherit] ring-1 ring-inset ring-foreground/30 dark:ring-foreground/10" />
             </div>
           </div>

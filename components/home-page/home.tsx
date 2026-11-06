@@ -9,6 +9,7 @@ import { Projects } from 'components/portfolio/projects';
 import { TechStack } from 'components/portfolio/tech-stack';
 import { Blocks } from 'components/portfolio/blocks';
 import { StripeSeparator } from 'components/portfolio/separator';
+import { Spider } from 'components/portfolio/spider';
 
 export default function Home({
   contributions
@@ -16,7 +17,7 @@ export default function Home({
   contributions: Activity[];
 }) {
   return (
-    <div className="[--separator-height:2rem]">
+    <div className="relative [--separator-height:2rem]">
       <div className="guide-rails" aria-hidden />
       <div className="site-frame mx-auto md:max-w-3xl">
         <ProfileHeader />
@@ -36,6 +37,7 @@ export default function Home({
         <Projects />
         <StripeSeparator />
       </div>
+      <Spider />
     </div>
   );
 }

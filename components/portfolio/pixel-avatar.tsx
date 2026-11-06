@@ -11,6 +11,7 @@ type Props = {
   hoverRadius?: number;  // radius that breaks apart under the cursor
   hoverSpeed?: number;   // sideways burst
   hoverDepth?: number;   // how deep particles fall
+  replayOnPress?: boolean; // pressing the avatar replays the pixel intro
 };
 
 export default function PixelAvatar({
@@ -18,6 +19,7 @@ export default function PixelAvatar({
   alt = 'Muhammad Ahmad',
   className = '',
   cell = 4, hoverCell = 3, hoverRadius = 34, hoverSpeed = .45, hoverDepth = 1.3,
+  replayOnPress = true,
 }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const introRef = useRef<HTMLCanvasElement>(null);
@@ -113,7 +115,8 @@ export default function PixelAvatar({
     };
 
     const onMove = (e: PointerEvent) => {
-      if (!hReady) return;
+      // Held down, the avatar is being dragged (it hangs on the spider's line): no scatter.
+      if (!hReady || e.buttons) return;
       const r = wrap.getBoundingClientRect();
       const mx = e.clientX - r.left, my = e.clientY - r.top, R = hoverRadius, C = hoverCell;
       const c0 = Math.max(0, Math.floor((mx - R) / C)), c1 = Math.min(hCols - 1, Math.floor((mx + R) / C));
@@ -201,8 +204,8 @@ export default function PixelAvatar({
       setShow(false);
       runIntro();
     };
-    const onDown = (e: PointerEvent) => { if (e.pointerType !== 'touch') replay(); };
-    const onClick = (e: MouseEvent) => { if ((e as PointerEvent).pointerType === 'touch') replay(); };
+    const onDown = (e: PointerEvent) => { if (replayOnPress && e.pointerType !== 'touch') replay(); };
+    const onClick = (e: MouseEvent) => { if (replayOnPress && (e as PointerEvent).pointerType === 'touch') replay(); };
 
     img.onload = () => {
       // Opened from a Theme Studio screen, which already showed the intro playing.
@@ -225,10 +228,10 @@ export default function PixelAvatar({
       wrap.removeEventListener('pointerdown', onDown);
       wrap.removeEventListener('click', onClick);
     };
-  }, [src, cell, hoverCell, hoverRadius, hoverSpeed, hoverDepth]);
+  }, [src, cell, hoverCell, hoverRadius, hoverSpeed, hoverDepth, replayOnPress]);
 
   return (
-    <div ref={wrapRef} className={`relative block size-full cursor-pointer overflow-hidden rounded-[inherit] select-none touch-pan-y ${className}`}>
+    <div ref={wrapRef} className={`relative block size-full ${replayOnPress ? 'cursor-pointer' : ''} overflow-hidden rounded-[inherit] select-none touch-pan-y ${className}`}>
       {/* in normal flow, so the wrapper is sized exactly like your old <img> */}
       <img
         key={String(cors)}
