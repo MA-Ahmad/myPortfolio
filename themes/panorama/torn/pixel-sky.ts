@@ -26,7 +26,18 @@ export type SkyConfig = {
   /** Overall opacity at night (white) and by day (black). */
   night: number;
   day: number;
+  /**
+   * At night a few lit cells twinkle like stars, each on its own loop: how many, how far their
+   * soft glow spreads (px), how long one loop takes (s), and how bright they get at their peak.
+   */
+  twinkles: number;
+  glow: number;
+  period: number;
+  sparkle: number;
 };
+
+/** A lit cell, px from the sheet's top left, and a fixed 0–1 value to pick and pace it by. */
+export type LitCell = { x: number; y: number; size: number; pick: number };
 
 export const SKY_DEFAULTS: SkyConfig = saved;
 
@@ -78,22 +89,24 @@ const smoothstep = (a: number, b: number, x: number) => {
 
 /**
  * Draws the field. Rows count down from the top edge, so the pattern stays anchored there and a
- * resize never reshuffles it. Pure: the same config and size always draw the same pixels.
+ * resize never reshuffles it. Pure: the same config and size always draw the same pixels. Returns
+ * the `twinkles` cells chosen to twinkle, picked by seed from every lit cell.
  */
 export function drawPixelSky(
   canvas: HTMLCanvasElement,
   width: number,
   height: number,
   config: SkyConfig
-) {
+): LitCell[] {
   const dpr = window.devicePixelRatio || 1;
   canvas.width = Math.round(width * dpr);
   canvas.height = Math.round(height * dpr);
   const ctx = canvas.getContext('2d');
-  if (!ctx) return;
+  if (!ctx) return [];
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, width, height);
 
+  const lit: LitCell[] = [];
   const { seed, cell, reach, curve, density, clump, clumping, corners } = config;
   const { brightness, floor, bright } = config;
   const px = Math.max(1, Math.min(config.size, cell));
@@ -119,7 +132,9 @@ export function drawPixelSky(
       const level = full ? 1 : floor + (1 - floor) * 0.6 * hash(gx, gy, seed + 2) * depth;
       ctx.globalAlpha = Math.min(1, brightness * level);
       ctx.fillRect(gx * cell + inset, y, px, px);
+      lit.push({ x: gx * cell + inset, y, size: px, pick: hash(gx, gy, seed + 3) });
     }
   }
   ctx.globalAlpha = 1;
+  return lit.sort((a, b) => a.pick - b.pick).slice(0, Math.max(0, Math.round(config.twinkles)));
 }

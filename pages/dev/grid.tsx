@@ -50,6 +50,15 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
       { key: 'night', label: 'Night opacity', min: 0, max: 1, step: 0.01 },
       { key: 'day', label: 'Day opacity', min: 0, max: 1, step: 0.01 }
     ]
+  },
+  {
+    title: 'Twinkle (night)',
+    knobs: [
+      { key: 'twinkles', label: 'Stars', min: 0, max: 60, step: 1 },
+      { key: 'glow', label: 'Glow (px)', min: 1, max: 16, step: 0.5 },
+      { key: 'period', label: 'Loop (s)', min: 2, max: 20, step: 0.5 },
+      { key: 'sparkle', label: 'Peak', min: 0.1, max: 1, step: 0.05 }
+    ]
   }
 ];
 

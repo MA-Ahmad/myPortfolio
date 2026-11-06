@@ -375,6 +375,43 @@
   filter: invert(1);
 }
 
+/*
+ * At night a few of the sky's pixels twinkle: each swells into a small soft glow and fades back,
+ * on its own loop. Only opacity animates; the glow itself is a fixed shadow.
+ */
+.twinkles {
+  opacity: var(--tn-night);
+}
+
+.twinkle {
+  position: absolute;
+  border-radius: 1px;
+  background: #fff;
+  box-shadow:
+    0 0 calc(var(--glow) * 0.5) rgba(255, 255, 255, 0.7),
+    0 0 var(--glow) calc(var(--glow) * 0.15) rgba(225, 232, 255, 0.35);
+  opacity: 0;
+  animation: twinkle var(--period) ease-in-out var(--delay) infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  35%,
+  75%,
+  100% {
+    opacity: 0;
+  }
+  55% {
+    opacity: var(--sparkle);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle {
+    animation: none;
+  }
+}
+
 .clouds {
   background-image: url('./clouds.svg');
   opacity: var(--tn-clouds);

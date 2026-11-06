@@ -156,22 +156,44 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
  */
 function PixelSky() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const starsRef = useRef<HTMLDivElement>(null);
   const config = useSyncExternalStore(skyStore.subscribe, skyStore.get, skyStore.getServer);
   useEffect(() => {
     const canvas = ref.current!;
+    const stars = starsRef.current!;
     const surface = canvas.parentElement!;
-    const draw = () => drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
+    const draw = () => {
+      const twinkling = drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
+      // Each twinkle is a static glow whose opacity loops, on its own period and phase, so only a
+      // few are ever lit at once.
+      stars.replaceChildren(
+        ...twinkling.map(({ x, y, size, pick }) => {
+          const star = document.createElement('span');
+          const period = config.period * (0.7 + 0.6 * ((pick * 7919) % 1));
+          star.className = styles.twinkle;
+          star.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;--period:${period.toFixed(2)}s;--delay:${(-period * ((pick * 104729) % 1)).toFixed(2)}s`;
+          return star;
+        })
+      );
+    };
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(surface);
     return () => observer.disconnect();
   }, [config]);
   return (
-    <canvas
-      ref={ref}
-      className={`${styles.sky} ${styles.pixelSky}`}
-      style={{ '--sky-night': config.night, '--sky-day': config.day } as CSSProperties}
-    />
+    <>
+      <canvas
+        ref={ref}
+        className={`${styles.sky} ${styles.pixelSky}`}
+        style={{ '--sky-night': config.night, '--sky-day': config.day } as CSSProperties}
+      />
+      <div
+        ref={starsRef}
+        className={`${styles.sky} ${styles.twinkles}`}
+        style={{ '--glow': `${config.glow}px`, '--sparkle': config.sparkle } as CSSProperties}
+      />
+    </>
   );
 }
 

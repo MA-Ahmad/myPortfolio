@@ -12,5 +12,9 @@
   "floor": 0.18,
   "bright": 0.11,
   "night": 0.84,
-  "day": 0.74
+  "day": 0.74,
+  "twinkles": 14,
+  "glow": 5,
+  "period": 7,
+  "sparkle": 0.9
 }
