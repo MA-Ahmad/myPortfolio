@@ -1,14 +1,14 @@
 import { promises as fs } from 'fs';
 import path from 'path';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import saved from 'themes/panorama/torn/pixel-ground.json';
+import saved from 'themes/panorama/torn/pixel-sky.json';
 
-const FILE = 'themes/panorama/torn/pixel-ground.json';
+const FILE = 'themes/panorama/torn/pixel-sky.json';
 const KEYS = Object.keys(saved);
 
 /**
- * Dev only: writes the ground pixels' config from the tuning page (/dev/grid) to
- * `pixel-ground.json`, which the Panorama theme imports, so saving on that page is what ships.
+ * Dev only: writes the sky pixels' config from the tuning page (/dev/grid) to
+ * `pixel-sky.json`, which the Panorama theme imports, so saving on that page is what ships.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (process.env.NODE_ENV === 'production') return res.status(404).end();

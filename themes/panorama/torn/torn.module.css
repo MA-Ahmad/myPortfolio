@@ -360,28 +360,18 @@
 }
 
 /*
- * A few square pixels on a grid across the top, thinning out to none by about halfway: drawn on a
- * canvas from pixel-sky.json.
+ * A clumped field of square pixels along the top, thinning downward: drawn white on a canvas from
+ * pixel-sky.json, and turned black by day.
  */
 .pixelSky {
   width: 100%;
   height: 100%;
-  opacity: var(--tn-night);
+  opacity: var(--sky-night);
 }
 
-/*
- * A clumped field of square pixels along the bottom, thinning upward: drawn white on a canvas from
- * pixel-ground.json, and turned black by day.
- */
-.pixelGround {
-  width: 100%;
-  height: 100%;
-  opacity: var(--ground-night);
-}
-
-[data-time='morning'] .pixelGround,
-[data-time='afternoon'] .pixelGround {
-  opacity: var(--ground-day);
+[data-time='morning'] .pixelSky,
+[data-time='afternoon'] .pixelSky {
+  opacity: var(--sky-day);
   filter: invert(1);
 }
 

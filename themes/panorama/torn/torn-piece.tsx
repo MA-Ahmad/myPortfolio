@@ -11,8 +11,7 @@ import {
 } from 'react';
 import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
 import { Attract } from './attract';
-import { drawPixelGround, groundStore } from './pixel-ground';
-import { drawPixelSky } from './pixel-sky';
+import { drawPixelSky, skyStore } from './pixel-sky';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
 import { gapAt, isZip, shutAt, taperOf, track, Weld, WELD_MS, type WeldKind } from './welds';
@@ -144,7 +143,6 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
     >
       {/* The night sky's pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
       <PixelSky />
-      <PixelGround />
       <div className={styles.glow} />
       <div className={styles.moon} />
       <div className={`${styles.sky} ${styles.clouds}`} />
@@ -152,36 +150,17 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
   );
 }
 
-/** The night sky's sparse pixels, drawn on a canvas once per size of the sheet. */
+/**
+ * The sky's pixels along the top, white at night and black by day, redrawn when the sheet resizes
+ * or the tuning page (/dev/grid) moves a slider.
+ */
 function PixelSky() {
   const ref = useRef<HTMLCanvasElement>(null);
+  const config = useSyncExternalStore(skyStore.subscribe, skyStore.get, skyStore.getServer);
   useEffect(() => {
     const canvas = ref.current!;
     const surface = canvas.parentElement!;
-    const draw = () => drawPixelSky(canvas, surface.clientWidth, surface.clientHeight);
-    draw();
-    const observer = new ResizeObserver(draw);
-    observer.observe(surface);
-    return () => observer.disconnect();
-  }, []);
-  return <canvas ref={ref} className={`${styles.sky} ${styles.pixelSky}`} />;
-}
-
-/**
- * The ground's pixels along the bottom, white at night and black by day, redrawn when the sheet
- * resizes or the tuning page (/dev/grid) moves a slider.
- */
-function PixelGround() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const config = useSyncExternalStore(
-    groundStore.subscribe,
-    groundStore.get,
-    groundStore.getServer
-  );
-  useEffect(() => {
-    const canvas = ref.current!;
-    const surface = canvas.parentElement!;
-    const draw = () => drawPixelGround(canvas, surface.clientWidth, surface.clientHeight, config);
+    const draw = () => drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(surface);
@@ -190,8 +169,8 @@ function PixelGround() {
   return (
     <canvas
       ref={ref}
-      className={`${styles.sky} ${styles.pixelGround}`}
-      style={{ '--ground-night': config.night, '--ground-day': config.day } as CSSProperties}
+      className={`${styles.sky} ${styles.pixelSky}`}
+      style={{ '--sky-night': config.night, '--sky-day': config.day } as CSSProperties}
     />
   );
 }

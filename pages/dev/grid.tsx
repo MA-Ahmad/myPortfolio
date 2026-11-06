@@ -6,16 +6,16 @@ import type { BlogListPost } from 'components/blog/post-item';
 import { getLatestBlogPosts } from 'lib/blogPosts';
 import { type Activity, fetchGitHubContributions } from 'lib/github-contributions';
 import { PanoramaHome, PanoramaLayout } from 'themes/panorama';
-import { GROUND_DEFAULTS, type GroundConfig, groundStore } from 'themes/panorama/torn/pixel-ground';
+import { SKY_DEFAULTS, type SkyConfig, skyStore } from 'themes/panorama/torn/pixel-sky';
 import type { NextPageWithLayout } from '../_app';
 
 /**
- * Dev only: the tuning page for the Panorama theme's ground pixels. The real theme, with a panel of
+ * Dev only: the tuning page for the Panorama theme's sky pixels. The real theme, with a panel of
  * presets and sliders that redraw the field live; switch the time of day in the header to judge it
- * white on night and black on day. Save writes `themes/panorama/torn/pixel-ground.json`.
+ * white on night and black on day. Save writes `themes/panorama/torn/pixel-sky.json`.
  */
 
-type Knob = { key: keyof GroundConfig; label: string; min: number; max: number; step: number };
+type Knob = { key: keyof SkyConfig; label: string; min: number; max: number; step: number };
 
 const GROUPS: { title: string; knobs: Knob[] }[] = [
   {
@@ -28,7 +28,7 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
   {
     title: 'Shape',
     knobs: [
-      { key: 'reach', label: 'Reach up', min: 0.05, max: 1, step: 0.01 },
+      { key: 'reach', label: 'Reach down', min: 0.05, max: 1, step: 0.01 },
       { key: 'curve', label: 'Thinning', min: 0.3, max: 4, step: 0.1 },
       { key: 'density', label: 'Density', min: 0.05, max: 1, step: 0.01 },
       { key: 'corners', label: 'To corners', min: 0, max: 1, step: 0.01 }
@@ -53,8 +53,8 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
   }
 ];
 
-const PRESETS: { name: string; config: Partial<GroundConfig> }[] = [
-  { name: 'Saved', config: GROUND_DEFAULTS },
+const PRESETS: { name: string; config: Partial<SkyConfig> }[] = [
+  { name: 'Saved', config: SKY_DEFAULTS },
   {
     name: 'Corners',
     config: {
@@ -157,7 +157,7 @@ type Props = { contributions: Activity[]; posts: BlogListPost[] };
 
 const GridLab: NextPageWithLayout<Props> = ({ contributions, posts }) => (
   <>
-    <Meta title="Ground pixels lab" noindex />
+    <Meta title="Sky pixels lab" noindex />
     <PanoramaHome contributions={contributions} posts={posts} />
     <Panel />
   </>
@@ -166,7 +166,7 @@ const GridLab: NextPageWithLayout<Props> = ({ contributions, posts }) => (
 const noop = () => () => {};
 
 function Panel() {
-  const [config, setConfig] = useState<GroundConfig>(GROUND_DEFAULTS);
+  const [config, setConfig] = useState<SkyConfig>(SKY_DEFAULTS);
   const [open, setOpen] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
   const mounted = useSyncExternalStore(
@@ -175,10 +175,10 @@ function Panel() {
     () => false
   );
 
-  useEffect(() => groundStore.set(config), [config]);
-  useEffect(() => () => groundStore.set(GROUND_DEFAULTS), []);
+  useEffect(() => skyStore.set(config), [config]);
+  useEffect(() => () => skyStore.set(SKY_DEFAULTS), []);
 
-  const set = (key: keyof GroundConfig, value: number) =>
+  const set = (key: keyof SkyConfig, value: number) =>
     setConfig((current) => ({ ...current, [key]: value }));
 
   const copy = async () => {
@@ -205,7 +205,7 @@ function Panel() {
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center justify-between px-3 py-2 font-medium"
       >
-        Ground pixels <span className="text-neutral-500">{open ? 'Hide' : 'Show'}</span>
+        Sky pixels <span className="text-neutral-500">{open ? 'Hide' : 'Show'}</span>
       </button>
       {open && (
         <div className="max-h-[calc(100vh-140px)] overflow-y-auto px-3 pb-3">
