@@ -151,7 +151,7 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
 }
 
 /**
- * The sky's pixels along the top, white at night and black by day, redrawn when the sheet resizes
+ * The night sky's pixels along the top, faded out by day, redrawn when the sheet resizes
  * or the tuning page (/dev/grid) moves a slider.
  */
 function PixelSky() {
@@ -186,7 +186,7 @@ function PixelSky() {
       <canvas
         ref={ref}
         className={`${styles.sky} ${styles.pixelSky}`}
-        style={{ '--sky-night': config.night, '--sky-day': config.day } as CSSProperties}
+        style={{ '--sky-night': config.night } as CSSProperties}
       />
       <div
         ref={starsRef}

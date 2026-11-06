@@ -11,8 +11,8 @@ import type { NextPageWithLayout } from '../_app';
 
 /**
  * Dev only: the tuning page for the Panorama theme's sky pixels. The real theme, with a panel of
- * presets and sliders that redraw the field live; switch the time of day in the header to judge it
- * white on night and black on day. Save writes `themes/panorama/torn/pixel-sky.json`.
+ * presets and sliders that redraw the field live. It shows at night only, so pick Night in the
+ * header. Save writes `themes/panorama/torn/pixel-sky.json`.
  */
 
 type Knob = { key: keyof SkyConfig; label: string; min: number; max: number; step: number };
@@ -47,8 +47,7 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
       { key: 'brightness', label: 'Strength', min: 0.02, max: 1, step: 0.01 },
       { key: 'floor', label: 'Faintest', min: 0, max: 1, step: 0.01 },
       { key: 'bright', label: 'Full cells', min: 0, max: 0.5, step: 0.01 },
-      { key: 'night', label: 'Night opacity', min: 0, max: 1, step: 0.01 },
-      { key: 'day', label: 'Day opacity', min: 0, max: 1, step: 0.01 }
+      { key: 'night', label: 'Opacity', min: 0, max: 1, step: 0.01 }
     ]
   },
   {

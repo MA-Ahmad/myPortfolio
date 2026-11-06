@@ -361,18 +361,12 @@
 
 /*
  * A clumped field of square pixels along the top, thinning downward: drawn white on a canvas from
- * pixel-sky.json, and turned black by day.
+ * pixel-sky.json. Night only: it fades out with the moon by day.
  */
 .pixelSky {
   width: 100%;
   height: 100%;
-  opacity: var(--sky-night);
-}
-
-[data-time='morning'] .pixelSky,
-[data-time='afternoon'] .pixelSky {
-  opacity: var(--sky-day);
-  filter: invert(1);
+  opacity: calc(var(--sky-night) * var(--tn-night));
 }
 
 /*

@@ -2,7 +2,7 @@ import saved from './pixel-sky.json';
 
 /**
  * The sky's pixels: a dense, clumped field of squares on a fine grid along the top of the sheet,
- * thinning downward to a ragged edge. Drawn white; CSS turns it black by day.
+ * thinning downward to a ragged edge. Night only: by day the sky has clouds instead.
  */
 export type SkyConfig = {
   seed: number;
@@ -23,9 +23,8 @@ export type SkyConfig = {
   brightness: number;
   floor: number;
   bright: number;
-  /** Overall opacity at night (white) and by day (black). */
+  /** Overall opacity, at night. */
   night: number;
-  day: number;
   /**
    * At night a few lit cells twinkle like stars, each on its own loop: how many, how far their
    * soft glow spreads (px), how long one loop takes (s), and how bright they get at their peak.
