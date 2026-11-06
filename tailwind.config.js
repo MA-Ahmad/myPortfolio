@@ -7,6 +7,9 @@ const cssVar = (name) => ({ opacityValue }) =>
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+  // Touch screens keep :hover on the last thing tapped, so toggles like the play button looked
+  // stuck on after tapping them off. Hover styles only apply where a real pointer can hover.
+  future: { hoverOnlyWhenSupported: true },
   darkMode: 'selector',
   content: [
     './pages/**/*.{js,ts,jsx,tsx}',
