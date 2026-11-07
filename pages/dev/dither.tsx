@@ -103,7 +103,7 @@ const PRESETS: { name: string; config: Partial<DitherConfig> }[] = [
   { name: 'Saved', config: DITHER_DEFAULTS },
   {
     name: 'Reference',
-    config: { ...REFERENCE, angle: -8, offset: 0.36, width: 0.36, taper: 0.45, opacity: 0.85 }
+    config: { ...REFERENCE, angle: -8, offset: 0.46, width: 0.36, taper: 0.45, opacity: 0.85 }
   },
   {
     name: 'Aurora',
