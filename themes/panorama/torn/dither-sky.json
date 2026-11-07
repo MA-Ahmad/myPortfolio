@@ -1,0 +1,23 @@
+{
+  "enabled": 0,
+  "opacity": 0.85,
+  "cell": 3,
+  "gap": 0,
+  "levels": 8,
+  "curve": 1.6,
+  "chroma": 0.12,
+  "noise": 0.3,
+  "floor": 0.3,
+  "farDots": 0.4,
+  "angle": -10,
+  "offset": 0.17,
+  "width": 0.26,
+  "softness": 1,
+  "glow": 0.1,
+  "top": "#000000",
+  "green": "#1d8c55",
+  "yellow": "#d9b65a",
+  "bottom": "#000000",
+  "greenAt": 0.45,
+  "yellowAt": 0.7
+}

@@ -11,6 +11,7 @@ import {
 } from 'react';
 import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
 import { Attract } from './attract';
+import { ditherStore, drawDitherSky } from './dither-sky';
 import { drawPixelSky, skyStore } from './pixel-sky';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
@@ -141,12 +142,61 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
       style={{ '--open': open, '--count': count } as CSSProperties}
       aria-hidden
     >
-      {/* The night sky's pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
+      {/* The night sky's dithered band and pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
+      <DitherSky />
       <PixelSky />
       <div className={styles.glow} />
       <div className={styles.moon} />
       <div className={`${styles.sky} ${styles.clouds}`} />
     </div>
+  );
+}
+
+/**
+ * A dithered band of colour across the night sky (see dither-sky.ts), off unless its config turns
+ * it on; redrawn when the sheet resizes or the tuning page (/dev/dither) moves a slider.
+ */
+function DitherSky() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const config = useSyncExternalStore(
+    ditherStore.subscribe,
+    ditherStore.get,
+    ditherStore.getServer
+  );
+  const on = config.enabled > 0;
+  useEffect(() => {
+    if (!on) return;
+    const canvas = ref.current!;
+    const surface = canvas.parentElement!;
+    let size = '';
+    const draw = () => {
+      const next = `${surface.clientWidth}x${surface.clientHeight}`;
+      if (next === size) return;
+      size = next;
+      drawDitherSky(canvas, surface.clientWidth, surface.clientHeight, config);
+    };
+    draw();
+    canvas.dataset.drawn = '';
+    // A draw takes tens of ms, too long for every frame of a window resize: the drawn canvas
+    // stretches meanwhile, and it's redrawn once the size settles.
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(draw, 150);
+    });
+    observer.observe(surface);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [config, on]);
+  if (!on) return null;
+  return (
+    <canvas
+      ref={ref}
+      className={`${styles.sky} ${styles.ditherSky}`}
+      style={{ '--dither': config.opacity } as CSSProperties}
+    />
   );
 }
 
