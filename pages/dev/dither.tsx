@@ -13,8 +13,9 @@ import type { NextPageWithLayout } from '../_app';
 
 /**
  * Dev only: the tuning page for the Panorama theme's dithered night band. The real theme, with a
- * panel of presets, sliders and colours that redraw the glow live. It shows at night only. Save
- * writes `themes/panorama/torn/dither-sky.json` (with "On" ticked, it ships).
+ * panel of presets, sliders and colours that redraw the glow live. It shows here at night,
+ * always; on the theme page only if saved with "Live" ticked. Save writes
+ * `themes/panorama/torn/dither-sky.json`.
  */
 
 type NumberKey = {
@@ -158,8 +159,9 @@ const noop = () => () => {};
 const button = 'rounded-md bg-white/10 px-2 py-1 hover:bg-white/20';
 
 function Panel() {
-  // On while tuning, whatever is saved.
-  const [config, setConfig] = useState<DitherConfig>({ ...DITHER_DEFAULTS, enabled: 1 });
+  // `enabled` here is only whether it's live on the theme page, which is what Save writes; this
+  // page always shows it, so tuning never needs it live.
+  const [config, setConfig] = useState<DitherConfig>(DITHER_DEFAULTS);
   const [grid, setGrid] = useState(true);
   const [open, setOpen] = useState(true);
   const [status, setStatus] = useState<string | null>(null);
@@ -170,7 +172,7 @@ function Panel() {
   );
   const { time } = useTimeOfDay();
 
-  useEffect(() => ditherStore.set(config), [config]);
+  useEffect(() => ditherStore.set({ ...config, enabled: 1 }), [config]);
   useEffect(
     () => skyStore.set(grid ? SKY_DEFAULTS : { ...SKY_DEFAULTS, night: 0, twinkles: 0 }),
     [grid]
@@ -226,7 +228,7 @@ function Panel() {
                 checked={config.enabled > 0}
                 onChange={(event) => set('enabled', event.target.checked ? 1 : 0)}
               />
-              On (saved as on, it ships)
+              Live on /themes/panorama (when saved)
             </label>
             <label className="flex items-center gap-2">
               <input
