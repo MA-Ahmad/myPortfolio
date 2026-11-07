@@ -3,8 +3,9 @@
  * Panorama's colours: every surface reads a --pp token, set for each time of day below. The welds
  * themselves keep their fire colours.
  */
+/* Only its tokens: the pills and the flow sit in the Intro's own column (or its cards). */
 .pipeline {
-  margin-bottom: 8px;
+  display: contents;
   --pp-pill: linear-gradient(180deg, var(--pn-glass-sheen), transparent 70%), var(--pn-fill);
   --pp-pill-ring: inset 0 0 0 1px var(--pn-line), inset 0 1px 0 var(--pn-glass-edge);
   --pp-half-shadow: rgba(0, 0, 0, 0.9);
@@ -335,7 +336,8 @@
 .flow {
   display: grid;
   grid-template-columns: repeat(3, 1fr) 46px;
-  margin-top: 28px;
+  /* 28px below the pills and 8px above what follows, besides the column's 12px gap. */
+  margin: 16px 0 8px;
   border-radius: 12px;
   cursor: pointer;
   user-select: none;

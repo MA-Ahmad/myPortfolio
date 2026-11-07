@@ -194,6 +194,8 @@ function DitherSky() {
   return (
     <canvas
       ref={ref}
+      // Marks a busy sky: the panes put their text on glass cards over it (see .group).
+      data-dither-sky=""
       className={`${styles.sky} ${styles.ditherSky}`}
       style={{ '--dither': config.opacity } as CSSProperties}
     />
