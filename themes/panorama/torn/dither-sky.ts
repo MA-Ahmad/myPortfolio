@@ -1,8 +1,8 @@
 import saved from './dither-sky.json';
 
 /**
- * A dithered band across the night sky: a smooth gradient (black, green, yellow, black, across a
- * tilted band) quantised through an ordered (Bayer) threshold matrix and drawn on a grid of square
+ * A dithered glow across the night sky, like a sunrise seen from orbit: a sharp horizon with light
+ * above it, quantised through an ordered (Bayer) threshold matrix and drawn on a grid of square
  * cells, so it reads as fine pixels, like an LED panel.
  *
  * It is quantised close to linear light (`curve`), which is what gives the look: near black the
@@ -10,6 +10,13 @@ import saved from './dither-sky.json';
  * the bright band neighbouring levels are close and the dither is a fine checker texture. The channels share one
  * threshold, so dots are grey; a little independent jitter per channel (`chroma`) leaves the odd
  * red, green or yellow speck where they disagree.
+ *
+ * The light is not a gradient between colour stops: it is three glows added together in linear
+ * light, as light adds. A thin red rim on the horizon, a warm glow just above it, and a cool glow
+ * higher up that fades out slowly to black. Where warm and cool overlap they add to a soft near
+ * white, so the colours melt into each other with no seam, as in the reference this was fitted to
+ * (each channel there is one smooth bump: red low, green in the middle, blue high). Below the
+ * horizon it drops to dark at once.
  */
 export type DitherConfig = {
   /** 1 to draw it (night only), 0 for off. */
@@ -33,21 +40,33 @@ export type DitherConfig = {
   floor: number;
   /** How much of `floor` is left far from the band (1: dots everywhere, 0: only around the band). */
   farDots: number;
-  /** The band: its tilt (deg), where its centre crosses the sheet's middle (share of height), its width. */
+  /**
+   * The horizon: its tilt (deg), where it crosses the sheet's middle (share of height), and the
+   * band's height (share of the sheet's), which every distance below is a share of.
+   */
   angle: number;
   offset: number;
   width: number;
-  /** How smoothly the colours blend into each other (0: hard steps, 1: smooth). */
-  softness: number;
-  /** A wide soft halo of the band's colours past its edges. */
-  glow: number;
-  /** The band's colours from its top edge to its bottom edge, and where green and yellow peak (0–1). */
-  top: string;
-  green: string;
-  yellow: string;
-  bottom: string;
-  greenAt: number;
-  yellowAt: number;
+  /** How much dimmer the band's left end is than its right (0: even). */
+  taper: number;
+  /** The cool glow: colour, strength, peak height above the horizon, spread upward and downward. */
+  cool: string;
+  coolStrength: number;
+  coolAt: number;
+  coolUp: number;
+  coolDown: number;
+  /** The warm glow just above the horizon: colour, strength, peak height, spread. */
+  warm: string;
+  warmStrength: number;
+  warmAt: number;
+  warmWidth: number;
+  /** The thin rim on the horizon itself: colour, strength, spread. */
+  rim: string;
+  rimStrength: number;
+  rimWidth: number;
+  /** Below the horizon: how sharply the light cuts off, and the faint glow left under it. */
+  edge: number;
+  below: number;
 };
 
 export const DITHER_DEFAULTS: DitherConfig = saved;
@@ -105,11 +124,6 @@ const rgb = (hex: string): [number, number, number] => {
 const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
 const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
 
-const smooth = (t: number, softness: number) => {
-  const s = t * t * (3 - 2 * t);
-  return t + (s - t) * softness;
-};
-
 /**
  * Draws the band onto `canvas`, cell by cell at whole device pixels, so every cell is crisp. Pure:
  * the same config and size always draw the same pixels.
@@ -132,56 +146,55 @@ export function drawDitherSky(
   const image = new ImageData(cols, rows);
   const data = image.data;
 
-  const stops: [number, [number, number, number]][] = [
-    [0, rgb(config.top)],
-    [Math.min(config.greenAt, config.yellowAt), rgb(config.green)],
-    [Math.max(config.greenAt, config.yellowAt), rgb(config.yellow)],
-    [1, rgb(config.bottom)]
-  ];
-  const colourAt = (u: number): [number, number, number] => {
-    for (let i = 1; i < stops.length; i++) {
-      const [at, c] = stops[i];
-      const [from, p] = stops[i - 1];
-      if (u <= at) {
-        const t = smooth(at > from ? (u - from) / (at - from) : 1, config.softness);
-        return [p[0] + (c[0] - p[0]) * t, p[1] + (c[1] - p[1]) * t, p[2] + (c[2] - p[2]) * t];
-      }
-    }
-    return stops[stops.length - 1][1];
-  };
+  // Each glow's colour in linear light, scaled by its strength.
+  const light = (hex: string, strength: number) => rgb(hex).map((c) => toLinear(c) * strength);
+  const cool = light(config.cool, config.coolStrength);
+  const warm = light(config.warm, config.warmStrength);
+  const rim = light(config.rim, config.rimStrength);
+  const gauss = (x: number, spread: number) => Math.exp(-((x / Math.max(spread, 1e-3)) ** 2));
 
-  // The band in sheet px: a line through (middle, offset) tilted by `angle`; u runs 0 to 1 across it.
+  // The horizon in sheet px: a line through (middle, offset) tilted by `angle`. h is the height
+  // above it, in band heights; s runs along it, 0 at the left end of the sheet and 1 at the right.
   const angle = (config.angle * Math.PI) / 180;
-  const nx = -Math.sin(angle);
-  const ny = Math.cos(angle);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
   const cx = width / 2;
   const cy = height * config.offset;
   const band = Math.max(1, height * config.width);
-  const peak = colourAt((config.greenAt + config.yellowAt) / 2);
   const levels = Math.max(2, Math.round(config.levels));
   const top = levels - 1;
   const curve = Math.max(0.5, config.curve);
+  const lit: [number, number, number] = [0, 0, 0];
 
   for (let gy = 0; gy < rows; gy++) {
     const y = ((gy + 0.5) * step) / dpr;
     for (let gx = 0; gx < cols; gx++) {
       const x = ((gx + 0.5) * step) / dpr;
-      const d = (x - cx) * nx + (y - cy) * ny;
-      const u = d / band + 0.5;
-      const c: [number, number, number] = u > 0 && u < 1 ? colourAt(u) : [0, 0, 0];
-      // The halo: the band's own colour, falling off past its edges.
-      const out = u < 0 ? -u : u > 1 ? u - 1 : 0;
-      const halo = config.glow * Math.exp(-((out / 0.6) ** 2)) * (out > 0 ? 1 : 0);
+      const h = ((x - cx) * sin - (y - cy) * cos) / band;
+      const along = Math.min(1, Math.max(0, ((x - cx) * cos + (y - cy) * sin) / width + 0.5));
+      const even = 1 - config.taper * (1 - along * along * (3 - 2 * along));
+      // Above the horizon the glows add; below, the light at the horizon cuts off sharply, leaving
+      // a faint glow that fades within a short way.
+      const above = Math.max(0, h);
+      const under = Math.max(0, -h);
+      const cut = h >= 0 ? 1 : gauss(under, config.edge) + config.below * Math.exp(-under / 0.08);
+      const cg =
+        above > config.coolAt
+          ? gauss(above - config.coolAt, config.coolUp)
+          : gauss(above - config.coolAt, config.coolDown);
+      const wg = gauss(above - config.warmAt, config.warmWidth);
+      const rg = gauss(above, config.rimWidth);
+      for (let ch = 0; ch < 3; ch++)
+        // The rim burns brightest at the bright end, like the sun about to come up there.
+        lit[ch] = (cool[ch] * cg + warm[ch] * wg + rim[ch] * rg * even * even) * cut * even;
       // The dark dots thin out away from the band, so the text below sits on a quieter sky.
+      const out = h > 1.4 ? h - 1.4 : h < 0 ? under * 3 : 0;
       const near = Math.exp(-((out / 1.2) ** 2));
       const floor = (config.floor / top) * (config.farDots + (1 - config.farDots) * near);
       const shared = BAYER[gy & 7][gx & 7] + (hash(gx, gy) - 0.5) * config.noise;
       const i = (gy * cols + gx) * 4;
       for (let ch = 0; ch < 3; ch++) {
-        const v = Math.min(
-          1,
-          toLinear(Math.min(1, c[ch] + peak[ch] * halo)) ** (1 / curve) + floor
-        );
+        const v = Math.min(1, Math.min(1, lit[ch]) ** (1 / curve) + floor);
         const threshold = shared + (hash(gx, gy, ch + 1) - 0.5) * config.chroma;
         const level = Math.max(0, Math.min(top, Math.floor(v * top + threshold)));
         data[i + ch] = Math.round(toSrgb((level / top) ** curve) * 255);

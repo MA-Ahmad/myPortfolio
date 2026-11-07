@@ -13,7 +13,7 @@ import type { NextPageWithLayout } from '../_app';
 
 /**
  * Dev only: the tuning page for the Panorama theme's dithered night band. The real theme, with a
- * panel of presets, sliders and colours that redraw the band live. It shows at night only. Save
+ * panel of presets, sliders and colours that redraw the glow live. It shows at night only. Save
  * writes `themes/panorama/torn/dither-sky.json` (with "On" ticked, it ships).
  */
 
@@ -38,142 +38,108 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
     ]
   },
   {
-    title: 'Band',
+    title: 'Horizon',
     knobs: [
       { key: 'angle', label: 'Tilt (°)', min: -45, max: 45, step: 1 },
       { key: 'offset', label: 'Position', min: -0.2, max: 1.2, step: 0.01 },
-      { key: 'width', label: 'Width', min: 0.05, max: 1.5, step: 0.01 },
-      { key: 'greenAt', label: 'Green at', min: 0.05, max: 0.95, step: 0.01 },
-      { key: 'yellowAt', label: 'Yellow at', min: 0.05, max: 0.95, step: 0.01 },
-      { key: 'softness', label: 'Softness', min: 0, max: 1, step: 0.05 },
-      { key: 'glow', label: 'Halo', min: 0, max: 1, step: 0.01 },
+      { key: 'width', label: 'Band height', min: 0.1, max: 1.5, step: 0.01 },
+      { key: 'taper', label: 'Taper', min: 0, max: 1, step: 0.05 },
+      { key: 'edge', label: 'Edge', min: 0.002, max: 0.2, step: 0.002 },
+      { key: 'below', label: 'Glow under', min: 0, max: 0.5, step: 0.01 },
       { key: 'opacity', label: 'Opacity', min: 0, max: 1, step: 0.01 }
+    ]
+  },
+  {
+    title: 'Cool glow (high)',
+    knobs: [
+      { key: 'coolStrength', label: 'Strength', min: 0, max: 1.5, step: 0.01 },
+      { key: 'coolAt', label: 'Peak at', min: 0, max: 1, step: 0.01 },
+      { key: 'coolUp', label: 'Fade up', min: 0.02, max: 1.5, step: 0.01 },
+      { key: 'coolDown', label: 'Fade down', min: 0.01, max: 0.6, step: 0.01 }
+    ]
+  },
+  {
+    title: 'Warm glow (low)',
+    knobs: [
+      { key: 'warmStrength', label: 'Strength', min: 0, max: 1.5, step: 0.01 },
+      { key: 'warmAt', label: 'Peak at', min: 0, max: 1, step: 0.01 },
+      { key: 'warmWidth', label: 'Spread', min: 0.01, max: 0.6, step: 0.01 }
+    ]
+  },
+  {
+    title: 'Rim (on the horizon)',
+    knobs: [
+      { key: 'rimStrength', label: 'Strength', min: 0, max: 1.5, step: 0.01 },
+      { key: 'rimWidth', label: 'Spread', min: 0.005, max: 0.2, step: 0.005 }
     ]
   }
 ];
 
 const COLOURS: { key: ColourKey; label: string }[] = [
-  { key: 'top', label: 'Top' },
-  { key: 'green', label: 'Green' },
-  { key: 'yellow', label: 'Yellow' },
-  { key: 'bottom', label: 'Bottom' }
+  { key: 'cool', label: 'Cool' },
+  { key: 'warm', label: 'Warm' },
+  { key: 'rim', label: 'Rim' }
 ];
+
+/** The glows as fitted to the reference's measured profile: blue over amber over a red rim. */
+const REFERENCE: Partial<DitherConfig> = {
+  cool: '#44beff',
+  coolStrength: 0.41,
+  coolAt: 0.28,
+  coolUp: 0.38,
+  coolDown: 0.09,
+  warm: '#ff9519',
+  warmStrength: 0.46,
+  warmAt: 0.16,
+  warmWidth: 0.095,
+  rim: '#ff1a0a',
+  rimStrength: 0.45,
+  rimWidth: 0.035,
+  edge: 0.02,
+  below: 0.12
+};
 
 const PRESETS: { name: string; config: Partial<DitherConfig> }[] = [
   { name: 'Saved', config: DITHER_DEFAULTS },
   {
+    name: 'Reference',
+    config: { ...REFERENCE, angle: -8, offset: 0.36, width: 0.36, taper: 0.45, opacity: 0.85 }
+  },
+  {
     name: 'Aurora',
     config: {
-      cell: 3,
-      gap: 0,
-      levels: 8,
-      curve: 1.6,
-      chroma: 0.12,
-      noise: 0.3,
-      floor: 0.3,
-      farDots: 0.4,
-      angle: -10,
-      offset: 0.17,
-      width: 0.26,
-      softness: 1,
-      glow: 0.1,
-      opacity: 0.85,
-      green: '#1d8c55',
-      yellow: '#d9b65a',
-      greenAt: 0.45,
-      yellowAt: 0.7
-    }
-  },
-  {
-    name: 'Horizon',
-    config: {
-      cell: 3,
-      gap: 0,
-      levels: 8,
-      curve: 1.6,
-      chroma: 0.12,
-      noise: 0.3,
-      floor: 0.3,
-      farDots: 0.3,
-      angle: -24,
-      offset: 0.62,
-      width: 0.55,
-      softness: 1,
-      glow: 0.2,
-      opacity: 0.8,
-      green: '#178a63',
-      yellow: '#e2a845',
-      greenAt: 0.35,
-      yellowAt: 0.74
-    }
-  },
-  {
-    name: 'Thin',
-    config: {
-      cell: 2.5,
-      gap: 0,
-      levels: 8,
-      curve: 1.6,
-      chroma: 0.15,
-      noise: 0.3,
-      floor: 0.25,
-      farDots: 0.3,
+      ...REFERENCE,
+      cool: '#2fd38c',
+      coolStrength: 0.36,
+      warm: '#ffc94a',
+      warmStrength: 0.4,
+      rim: '#ff7a2e',
+      rimStrength: 0.2,
       angle: -8,
-      offset: 0.12,
-      width: 0.14,
-      softness: 1,
-      glow: 0.3,
-      opacity: 0.9,
-      green: '#22b06a',
-      yellow: '#efd06b',
-      greenAt: 0.4,
-      yellowAt: 0.7
+      offset: 0.36,
+      width: 0.36,
+      taper: 0.3,
+      opacity: 0.85
     }
   },
   {
-    name: 'Coarse',
-    config: {
-      cell: 5,
-      gap: 1,
-      levels: 6,
-      curve: 1.6,
-      chroma: 0.2,
-      noise: 0.35,
-      floor: 0.35,
-      farDots: 0.5,
-      angle: -12,
-      offset: 0.2,
-      width: 0.32,
-      softness: 1,
-      glow: 0.15,
-      opacity: 0.8,
-      green: '#1d8c55',
-      yellow: '#d9b65a',
-      greenAt: 0.45,
-      yellowAt: 0.7
-    }
+    name: 'High',
+    config: { ...REFERENCE, angle: -6, offset: 0.24, width: 0.3, taper: 0.5, opacity: 0.85 }
   },
   {
     name: 'Faint',
     config: {
-      cell: 3,
-      gap: 0,
-      levels: 8,
-      curve: 1.6,
-      chroma: 0.08,
-      noise: 0.3,
+      ...REFERENCE,
+      coolStrength: 0.25,
+      warmStrength: 0.26,
+      rimStrength: 0.15,
+      angle: -8,
+      offset: 0.36,
+      width: 0.36,
+      taper: 0.4,
       floor: 0.2,
       farDots: 0.2,
-      angle: -10,
-      offset: 0.15,
-      width: 0.24,
-      softness: 1,
-      glow: 0.08,
-      opacity: 0.6,
-      green: '#17724a',
-      yellow: '#b49650',
-      greenAt: 0.45,
-      yellowAt: 0.7
+      opacity: 0.6
     }
   }
 ];
@@ -291,9 +257,9 @@ function Panel() {
           </div>
           <fieldset className="mb-3">
             <legend className="mb-1 text-[11px] uppercase tracking-wide text-neutral-500">
-              Colours, top to bottom
+              Colours
             </legend>
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               {COLOURS.map((colour) => (
                 <label key={colour.key} className="flex flex-col items-center gap-1">
                   <input
