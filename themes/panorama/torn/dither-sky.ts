@@ -90,7 +90,7 @@ export const ditherStore = {
 };
 
 /** The 8×8 Bayer matrix, as thresholds in (0, 1). */
-const BAYER = (() => {
+export const BAYER = (() => {
   const m = [[0]];
   let size = 1;
   let out = m;
@@ -110,19 +110,19 @@ const BAYER = (() => {
   return out.map((row) => row.map((v) => (v + 0.5) / 64));
 })();
 
-function hash(x: number, y: number, salt = 0) {
+export function hash(x: number, y: number, salt = 0) {
   let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(salt + 1, 2246822519);
   h = Math.imul(h ^ (h >>> 13), 1274126177);
   return ((h ^ (h >>> 16)) >>> 0) / 4294967296;
 }
 
-const rgb = (hex: string): [number, number, number] => {
+export const rgb = (hex: string): [number, number, number] => {
   const n = parseInt(hex.replace('#', ''), 16);
   return [((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255];
 };
 
-const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
-const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
+export const toLinear = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+export const toSrgb = (c: number) => (c <= 0.0031308 ? c * 12.92 : 1.055 * c ** (1 / 2.4) - 0.055);
 
 /**
  * Draws the band onto `canvas`, cell by cell at whole device pixels, so every cell is crisp. Pure:

@@ -13,6 +13,7 @@ import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } fr
 import { Attract } from './attract';
 import { ditherStore, drawDitherSky } from './dither-sky';
 import { drawPixelSky, skyStore } from './pixel-sky';
+import { drawTrailsSky, trailsStore } from './trails-sky';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
 import { gapAt, isZip, shutAt, taperOf, track, Weld, WELD_MS, type WeldKind } from './welds';
@@ -144,6 +145,7 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
     >
       {/* The night sky's dithered band and pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
       <DitherSky />
+      <TrailsSky />
       <PixelSky />
       <div className={styles.glow} />
       <div className={styles.moon} />
@@ -194,8 +196,62 @@ function DitherSky() {
   return (
     <canvas
       ref={ref}
-      // Marks a busy sky: the panes put their text on glass cards over it (see .group).
-      data-dither-sky=""
+      // A busy sky: the panes put their text on glass cards over it (see .group).
+      data-busy-sky=""
+      className={`${styles.sky} ${styles.ditherSky}`}
+      style={{ '--dither': config.opacity } as CSSProperties}
+    />
+  );
+}
+
+/**
+ * Star trails across the night sky (see trails-sky.ts), off unless their config turns them on;
+ * dithered on the dithered sky's cells and levels when their `dither` is on. Redrawn when the sheet
+ * resizes (once it settles) or the tuning page (/dev/trails) moves a knob.
+ */
+function TrailsSky() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  const config = useSyncExternalStore(
+    trailsStore.subscribe,
+    trailsStore.get,
+    trailsStore.getServer
+  );
+  const dither = useSyncExternalStore(
+    ditherStore.subscribe,
+    ditherStore.get,
+    ditherStore.getServer
+  );
+  const on = config.enabled > 0;
+  useEffect(() => {
+    if (!on) return;
+    const canvas = ref.current!;
+    const surface = canvas.parentElement!;
+    let size = '';
+    const draw = () => {
+      const next = `${surface.clientWidth}x${surface.clientHeight}`;
+      if (next === size) return;
+      size = next;
+      drawTrailsSky(canvas, surface.clientWidth, surface.clientHeight, config, dither);
+    };
+    draw();
+    canvas.dataset.drawn = '';
+    let timer = 0;
+    const observer = new ResizeObserver(() => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(draw, 150);
+    });
+    observer.observe(surface);
+    return () => {
+      observer.disconnect();
+      window.clearTimeout(timer);
+    };
+  }, [config, dither, on]);
+  if (!on) return null;
+  return (
+    <canvas
+      ref={ref}
+      // A busy sky: the panes put their text on glass cards over it (see .group).
+      data-busy-sky=""
       className={`${styles.sky} ${styles.ditherSky}`}
       style={{ '--dither': config.opacity } as CSSProperties}
     />

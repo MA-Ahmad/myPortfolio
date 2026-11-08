@@ -740,14 +740,14 @@
  * so here the column only slides and each card fades itself in: its own opacity doesn't hide the
  * sky from its blur.
  */
-.root[data-time='night'] .sections:has([data-dither-sky]) .content {
+.root[data-time='night'] .sections:has([data-busy-sky]) .content {
   gap: 14px;
   width: min(100%, 640px);
   opacity: 1;
   will-change: transform;
 }
 
-.root[data-time='night'] .sections:has([data-dither-sky]) .group {
+.root[data-time='night'] .sections:has([data-busy-sky]) .group {
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -765,27 +765,27 @@
   transition: opacity var(--pn-switch) var(--pn-drawer);
 }
 
-.root[data-time='night'] .sections:has([data-dither-sky]) .section[data-open] .group {
+.root[data-time='night'] .sections:has([data-busy-sky]) .section[data-open] .group {
   opacity: 1;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
+  .root[data-time='night'] .sections:has([data-busy-sky]) .group {
     transition: none;
   }
 }
 
 /* Inside a card, the blocks start and end at its padding. */
-.root[data-time='night'] .sections:has([data-dither-sky]) .group > :first-child {
+.root[data-time='night'] .sections:has([data-busy-sky]) .group > :first-child {
   margin-top: 0;
 }
 
-.root[data-time='night'] .sections:has([data-dither-sky]) .group > :last-child {
+.root[data-time='night'] .sections:has([data-busy-sky]) .group > :last-child {
   margin-bottom: 0;
 }
 
 @media (max-width: 719px) {
-  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
+  .root[data-time='night'] .sections:has([data-busy-sky]) .group {
     padding: 16px 16px 18px;
     border-radius: 14px;
   }
