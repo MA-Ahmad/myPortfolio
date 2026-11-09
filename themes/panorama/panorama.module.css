@@ -1115,12 +1115,37 @@
   text-wrap: pretty;
 }
 
+/* A row whose title alone is the link (Writing): the row itself isn't pressable. */
+.rowPlain:active {
+  opacity: 1;
+}
+
+.rowLink {
+  border-radius: 4px;
+  transition: opacity 150ms ease-out;
+}
+
+.rowLink:active {
+  opacity: 0.7;
+  transition-duration: 0ms;
+}
+
+.rowLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 2px;
+}
+
 @media (hover: hover) and (pointer: fine) {
   .row:hover .rowTitle svg {
     transform: translate(1px, -1px);
   }
 
-  .list:hover .row:not(:hover) .rowTitle {
+  .list:hover .row:not(:hover, .rowPlain) .rowTitle {
+    color: var(--pn-body);
+  }
+
+  /* With only titles as links, the other titles dim while one is hovered. */
+  .list:has(.rowLink:hover) .rowLink:not(:hover) {
     color: var(--pn-body);
   }
 }
