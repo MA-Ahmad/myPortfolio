@@ -10,7 +10,7 @@ import {
   useSyncExternalStore
 } from 'react';
 import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
-import { Attract } from './attract';
+import { Welder } from './welder';
 import { ditherStore, drawDitherSky } from './dither-sky';
 import { drawPixelSky, skyStore } from './pixel-sky';
 import { playTear, playWeld } from './sound';
@@ -120,6 +120,8 @@ export function SheetRunner({ sheet, weld, open }: { sheet: Sheet; weld: WeldKin
       .map(({ i }) => i);
     // A seam still springing open finishes tearing before it welds, so its gap never jumps.
     const start = (i: number) => {
+      // Welded by hand: the bead is already laid, so it simply shuts.
+      if (sheet.takeByHand(i)) return sheet.set(i, 'welded');
       if (sheet.get()[i] === 'tearing') {
         const left = sheet.started[i] + sheet.span(i) - performance.now();
         if (left > 0) return at(left + 16, () => start(i));
@@ -511,18 +513,22 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
                 {endState === 'welded' && on === axis && (
                   <Grip axis={on} onPull={pull} onSettle={settle} onTear={tear} />
                 )}
-                {endState === 'torn' && on === axis && (
-                  <Attract
-                    id={index}
-                    tear={endSeam[on]}
-                    length={lengths[on]}
-                    axis={on}
-                    onJoin={(along) => {
-                      sheet.aim(index, along);
-                      onJoin();
-                    }}
-                  />
-                )}
+                {/* Torn, the seam can be welded by hand; shut, the bead laid by hand stays drawn. */}
+                {on === axis &&
+                  axis === 'v' &&
+                  (endState === 'torn' || (endState === 'welded' && sheet.bead(index))) && (
+                    <Welder
+                      sheet={sheet}
+                      index={index}
+                      tear={endSeam[on]}
+                      length={lengths[on]}
+                      live={endState === 'torn'}
+                      onDone={(along) => {
+                        sheet.aim(index, along);
+                        onJoin();
+                      }}
+                    />
+                  )}
               </>
             )}
           </Seams>

@@ -132,7 +132,7 @@
   --tear-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --join-ease: cubic-bezier(0.65, 0, 0.35, 1);
   --radius: 16px;
-  --gap: 6px; /* GAP in sheet.ts */
+  --gap: 3px; /* GAP in sheet.ts */
   --tn-band: #161b2c;
   --tn-hair: #283049;
   --tn-fibre: #3c4566;
@@ -1123,57 +1123,18 @@
 
 /* ---------- reduced motion: seams switch between torn and shut, with no weld drawn ---------- */
 
-/* ---------- a torn seam under the pointer: its edges reach for each other ---------- */
+/* ---------- a torn seam welded by hand (welder.tsx) ---------- */
 
-.attract {
+.welder {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 1px;
-  height: 1px;
-  overflow: visible;
+  top: -170px; /* ABOVE in welder.tsx */
+  left: -150px; /* HALF */
   pointer-events: none;
-}
-
-.attract polyline {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.attractGlow {
-  fill: var(--tn-glow);
-  filter: blur(8px);
-}
-
-.attractHalo {
-  stroke: var(--tn-glow);
-  stroke-width: 5;
-  filter: blur(2px);
-}
-
-.attractBolt {
-  stroke: var(--tn-warm);
-  stroke-width: 1.4;
-}
-
-.attractWhite {
-  stroke: var(--tn-hot);
-  stroke-width: 0.7;
-}
-
-.attractFork {
-  stroke: var(--tn-warm);
-  stroke-width: 0.9;
-}
-
-.attractSpark {
-  fill: var(--tn-warm);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .weld,
-  .attract {
+  .welder {
     display: none;
   }
 

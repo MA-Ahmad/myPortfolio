@@ -471,10 +471,10 @@
   pointer-events: none;
 }
 
-/* A torn seam's spark is up (see torn/attract.tsx): a click there welds it. */
+/* The welding rod is drawn at the pointer over a torn seam (see torn/welder.tsx). */
 .sections[data-seam],
 .sections[data-seam] * {
-  cursor: pointer !important;
+  cursor: none !important;
 }
 
 /* ---- A closed section: its edge, labeled ---- */

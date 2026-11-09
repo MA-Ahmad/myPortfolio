@@ -248,3 +248,74 @@ export function playWeld(kind: WeldKind) {
     hiss(n, now + 0.54, 0.45, 0.025, 2400, 900, 0.8, 'lowpass');
   }
 }
+
+/**
+ * A stick-welding arc for as long as it burns: the steady frying crackle of the arc (band-passed
+ * noise whose level jitters) over a faint mains-like buzz, with sharp spatter pops scheduled as
+ * `pop` is called. `stop` fades it out. Silent, and a no-op, while sound is off.
+ */
+export function startArc() {
+  const n = ready();
+  if (!n) return { pop: () => {}, flutter: () => {}, stop: () => {} };
+  const now = n.ctx.currentTime;
+  const out = n.ctx.createGain();
+  out.gain.setValueAtTime(0.0001, now);
+  out.gain.exponentialRampToValueAtTime(1, now + 0.04);
+  out.connect(n.out);
+
+  const fry = n.ctx.createBufferSource();
+  fry.buffer = n.noise;
+  fry.loop = true;
+  const band = n.ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 3200;
+  band.Q.value = 0.55;
+  const fryGain = n.ctx.createGain();
+  fryGain.gain.value = 0.07;
+  fry.connect(band).connect(fryGain).connect(out);
+  fry.start(now, Math.random() * 0.5);
+
+  const hum = n.ctx.createOscillator();
+  hum.type = 'sawtooth';
+  hum.frequency.value = 100;
+  const humFilter = n.ctx.createBiquadFilter();
+  humFilter.type = 'lowpass';
+  humFilter.frequency.value = 420;
+  const humGain = n.ctx.createGain();
+  humGain.gain.value = 0.018;
+  hum.connect(humFilter).connect(humGain).connect(out);
+  hum.start(now);
+
+  let stopped = false;
+  return {
+    /** The arc's level wavers as its length changes. Call every frame. */
+    flutter() {
+      if (stopped) return;
+      fryGain.gain.setTargetAtTime(0.04 + Math.random() * 0.07, n.ctx.currentTime, 0.012);
+    },
+    /** A spatter pop: a short, bright crack. */
+    pop() {
+      if (stopped) return;
+      const t = n.ctx.currentTime + 0.005;
+      hiss(
+        n,
+        t,
+        0.012 + Math.random() * 0.02,
+        0.05 + Math.random() * 0.07,
+        3000 + Math.random() * 4500,
+        1600,
+        2.5
+      );
+    },
+    stop() {
+      if (stopped) return;
+      stopped = true;
+      const t = n.ctx.currentTime;
+      out.gain.cancelScheduledValues(t);
+      out.gain.setValueAtTime(out.gain.value || 1, t);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 0.08);
+      fry.stop(t + 0.1);
+      hum.stop(t + 0.1);
+    }
+  };
+}

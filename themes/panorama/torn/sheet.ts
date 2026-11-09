@@ -1,4 +1,4 @@
-import { tearOf, type Point } from './tear';
+import { TEAR_H, tearOf, type Point } from './tear';
 
 /**
  * A seam is torn open, being welded, welded shut with a faint scar left, or tearing apart again.
@@ -14,7 +14,9 @@ export type Seam = {
 };
 
 /** How far each torn edge stands back from its seam's centre line, px: the gap is twice this. */
-export const GAP = 6;
+export const GAP = 3;
+/** A hand-laid bead is kept in steps this long along the seam, px. */
+export const BIN = 2.5;
 
 /** Tearing is sudden: the seam springs open in this long, on a strong ease-out. */
 export const TEAR_MS = 260;
@@ -70,6 +72,14 @@ export function createSheet(count: number) {
   const crack: (((along: number) => number) | null)[] = seams.map(() => null);
   /** How long each seam's current tear takes: TEAR_MS, or INTRO_TEAR_MS for the first one on load. */
   const spans = seams.map(() => TEAR_MS);
+  /**
+   * A bead welded by hand along each seam, or null: for each 2.5px of the seam, when it was welded
+   * (performance clock), or 0 if it hasn't been yet. Kept while the seam stays shut, so the weld
+   * stays where it was laid; cleared when the seam tears again.
+   */
+  const beads: (Float64Array | null)[] = seams.map(() => null);
+  /** Set when a seam has just been welded shut by hand, so it shuts at once with no weld played. */
+  const byHand: boolean[] = seams.map(() => false);
   const listeners = new Set<() => void>();
   const notify = () => listeners.forEach((listener) => listener());
 
@@ -88,6 +98,20 @@ export function createSheet(count: number) {
       crack[index] = at;
     },
     aimed: (index: number) => aims[index] !== null,
+    /** The seam's hand-laid bead; with `create`, made on first use. */
+    bead(index: number, create = false) {
+      if (create && !beads[index]) beads[index] = new Float64Array(Math.ceil(TEAR_H / BIN));
+      return beads[index];
+    },
+    /** Marks the seam as welded shut by hand, for the runner to close it without playing a weld. */
+    weldedByHand(index: number) {
+      byHand[index] = true;
+    },
+    takeByHand(index: number) {
+      const was = byHand[index];
+      byHand[index] = false;
+      return was;
+    },
     /** How long the seam's tear takes, ms. */
     span: (index: number) => spans[index],
     /** Whether the seam is (or last was) on its first, slow tear. */
@@ -106,6 +130,7 @@ export function createSheet(count: number) {
     set(index: number, state: SeamState, span = TEAR_MS) {
       const now = performance.now();
       if (state === 'tearing') spans[index] = span;
+      if (state === 'tearing') beads[index] = null;
       if (state === 'tearing')
         from[index] = states[index] === 'welding' ? now - started[index] : null;
       if (state === 'welding' || state === 'tearing') started[index] = now;
@@ -120,6 +145,8 @@ export function createSheet(count: number) {
     reset() {
       aims.fill(null);
       crack.fill(null);
+      beads.fill(null);
+      byHand.fill(false);
       spans.fill(TEAR_MS);
       states = initial;
       notify();
