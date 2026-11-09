@@ -5,9 +5,8 @@ import { type Point, xAt } from './tear';
 import { STYLE_LOOK, styleOf, welderStore } from './welder-config';
 import styles from './torn.module.css';
 
-/** How far either side of the tear the pointer counts as on the seam, px; pressed, more. */
+/** How far either side of the tear the pointer counts as on the seam, px. */
 const NEAR = GAP + 12;
-const HOLD_NEAR = NEAR * 3;
 /** The canvas reaches this far either side of the seam, and above and below it. */
 const HALF = 150;
 const ABOVE = 120;
@@ -164,8 +163,8 @@ function HandWelder({
       const origin = canvas.parentElement!.getBoundingClientRect();
       const offset = event.clientX - origin.left;
       const at = Math.max(0, Math.min(length, event.clientY - origin.top));
-      const near = pressed ? HOLD_NEAR : NEAR;
-      target = Math.abs(offset - xAt(tear, at)) < near ? at : null;
+      // Held, the rod stays on the seam wherever the pointer drifts across it, until released.
+      target = pressed || Math.abs(offset - xAt(tear, at)) < NEAR ? at : null;
       mark();
     };
 
@@ -291,16 +290,25 @@ function HandWelder({
       if (!frame) last = 0;
     };
 
-    /** Runs of welded bins, as [first, last] pairs. */
-    const runs = () => {
-      const out: [number, number][] = [];
+    /**
+     * Runs of welded bins as [first, last, level], split wherever their dryness (0 to `LEVELS`)
+     * changes, so each stretch can be drawn as one stroke at its own stage.
+     */
+    const LEVELS = 12;
+    const runs = (levelOf: (i: number) => number) => {
+      const out: [number, number, number][] = [];
       let start = -1;
+      let level = -1;
       for (let i = 0; i <= bins; i++) {
         const on = i < bins && bead![i] > 0;
-        if (on && start < 0) start = i;
-        if (!on && start >= 0) {
-          out.push([start, i - 1]);
+        const at = on ? levelOf(i) : -1;
+        if (start >= 0 && (!on || at !== level)) {
+          out.push([start, on ? i : i - 1, level]);
           start = -1;
+        }
+        if (on && start < 0) {
+          start = i;
+          level = at;
         }
       }
       return out;
@@ -318,66 +326,95 @@ function HandWelder({
     };
 
     /**
-     * The bead: one continuous stroke along each welded run, a dark edge, its body and a sheen
-     * along its crown so it reads as rounded, then fine ripples across it, then the glow of
-     * whatever is still hot. Returns whether any of it still glows.
+     * The bead: one continuous stroke along each welded stretch, a dark edge, its body and a sheen
+     * along its crown so it reads as rounded, then fine ripples across it, then the glow of what is
+     * still hot. Once cool it dries over `dry` ms: matte, darker and greyer, flatter and fainter,
+     * settling into the seam. Returns whether any of it is still changing.
      */
     const drawBead = (now: number) => {
       if (!bead || !welded) return false;
-      const w = config.width;
-      const metal = look.metal;
+      const cool = Math.max(100, config.cool);
+      const dryMs = Math.max(1, config.dry);
+      const settled = config.dryLevel;
+      // How dry a bin is, 0 to 1: it starts once the metal has cooled.
+      const dryness = (i: number) => Math.max(0, Math.min(1, (now - bead[i] - cool * 2.2) / dryMs));
+      const level = (i: number) => Math.round(dryness(i) * LEVELS);
+      let changing = false;
       ctx.globalCompositeOperation = 'source-over';
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
-      const segments = runs();
+      const segments = runs(level);
+      const dull: RGB = [64, 66, 72];
 
-      // The heat-affected zone either side: a straw-and-blue stain on TIG, a faint shadow otherwise.
-      for (const [a, b] of segments) {
+      for (const [a, b, l] of segments) {
+        const d = l / LEVELS;
+        if (d < 1) changing = true;
+        // Inner joins between stretches meet flat, so no layer overlaps itself there; only the
+        // bead's real ends are rounded.
+        const first = a === 0 || !bead[a - 1];
+        const final = b === bins - 1 || !bead[b + 1];
+        const stroke = (style: string, lineWidth: number, shift = 0) => {
+          ctx.strokeStyle = style;
+          ctx.lineWidth = lineWidth;
+          ctx.lineCap = 'butt';
+          path(a, b, shift);
+          ctx.stroke();
+          ctx.lineCap = 'round';
+          for (const [end, step] of [
+            [a, -1],
+            [b, 1]
+          ] as const) {
+            if (end === a ? !first : !final) continue;
+            const x = cx(centre[end] + shift);
+            const y = cy(end * BIN + BIN / 2);
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x, y + step * 0.01);
+            ctx.stroke();
+          }
+        };
+        // Dried, the metal goes matte and greyer, the bead flatter and fainter.
+        const metal: RGB = [
+          look.metal[0] + (dull[0] - look.metal[0]) * d * 0.75,
+          look.metal[1] + (dull[1] - look.metal[1]) * d * 0.75,
+          look.metal[2] + (dull[2] - look.metal[2]) * d * 0.75
+        ];
+        const w = config.width * (1 - 0.22 * d);
+        ctx.globalAlpha = 1 - settled * d;
         if (look.tint) {
-          path(a, b);
-          ctx.strokeStyle = 'rgba(70, 96, 170, 0.16)';
-          ctx.lineWidth = w + 9;
-          ctx.stroke();
-          path(a, b);
-          ctx.strokeStyle = 'rgba(190, 150, 80, 0.22)';
-          ctx.lineWidth = w + 5;
-          ctx.stroke();
+          stroke('rgba(70, 96, 170, 0.16)', w + 9);
+          stroke('rgba(190, 150, 80, 0.22)', w + 5);
         } else {
-          path(a, b);
-          ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-          ctx.lineWidth = w + 2.4;
-          ctx.stroke();
+          stroke('rgba(0, 0, 0, 0.35)', w + 2.4);
         }
-        path(a, b);
-        ctx.strokeStyle = rgba(scale(metal, 0.62), 1);
-        ctx.lineWidth = w;
-        ctx.stroke();
-        path(a, b);
-        ctx.strokeStyle = rgba(metal, 1);
-        ctx.lineWidth = w * 0.66;
-        ctx.stroke();
-        path(a, b, -w * 0.12);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-        ctx.lineWidth = Math.max(0.8, w * 0.22);
-        ctx.stroke();
+        stroke(rgba(scale(metal, 0.62), 1), w);
+        stroke(rgba(metal, 1), w * (0.66 - 0.16 * d));
+        stroke(
+          `rgba(255, 255, 255, ${(0.16 * (1 - 0.85 * d)).toFixed(3)})`,
+          Math.max(0.8, w * 0.22),
+          -w * 0.12
+        );
       }
+      ctx.globalAlpha = 1;
 
-      // Ripples: faint curved lines across the bead at an even spacing, curving the way it was run.
+      // Ripples: faint curved lines across the bead at an even spacing, fading as it dries.
       if (config.ripple > 0 && config.rippleDepth > 0) {
         const every = Math.max(1, Math.round(config.ripple / BIN));
         ctx.lineCap = 'round';
         ctx.lineWidth = 0.7;
         for (let i = 0; i < bins; i += every) {
           if (!bead[i]) continue;
+          const d = dryness(i);
+          const depth = config.rippleDepth * (1 - 0.6 * d) * (1 - settled * d);
           const x = cx(centre[i]);
           const y = cy(i * BIN + BIN / 2);
-          const half = w * 0.42;
-          ctx.strokeStyle = rgba([0, 0, 0], 0.32 * config.rippleDepth);
+          const half = config.width * (1 - 0.22 * d) * 0.42;
+          ctx.strokeStyle = rgba([0, 0, 0], 0.32 * depth);
           ctx.beginPath();
           ctx.moveTo(x - half, y + 0.4);
           ctx.quadraticCurveTo(x, y - 1.6, x + half, y + 0.4);
           ctx.stroke();
-          ctx.strokeStyle = rgba([255, 255, 255], 0.12 * config.rippleDepth);
+          ctx.strokeStyle = rgba([255, 255, 255], 0.12 * depth);
           ctx.beginPath();
           ctx.moveTo(x - half, y - 0.4);
           ctx.quadraticCurveTo(x, y - 2.4, x + half, y - 0.4);
@@ -391,11 +428,10 @@ function HandWelder({
       for (let i = 0; i < bins - 1; i++) {
         const at = bead[i];
         if (!at || !bead[i + 1]) continue;
-        const t = Math.exp(-(now - at) / Math.max(100, config.cool));
+        const t = Math.exp(-(now - at) / cool);
         if (t < 0.03) continue;
         glowing = true;
-        const colour = heatColour(t, metal);
-        ctx.strokeStyle = rgba(colour, Math.min(1, t * 1.6));
+        ctx.strokeStyle = rgba(heatColour(t, look.metal), Math.min(1, t * 1.6));
         ctx.lineWidth = config.width * 0.9;
         ctx.beginPath();
         ctx.moveTo(cx(centre[i]), cy(i * BIN + BIN / 2));
@@ -408,7 +444,7 @@ function HandWelder({
         for (let i = 0; i < bins - 1; i += 2) {
           const at = bead[i];
           if (!at) continue;
-          const t = Math.exp(-(now - at) / Math.max(100, config.cool));
+          const t = Math.exp(-(now - at) / cool);
           if (t < 0.2) continue;
           ctx.strokeStyle = rgba([255, 130, 50], t * 0.1);
           ctx.lineWidth = config.width * 3;
@@ -419,7 +455,7 @@ function HandWelder({
         }
       }
       ctx.globalCompositeOperation = 'source-over';
-      return glowing;
+      return glowing || changing;
     };
 
     /** Smoke rising off the pool, then the spatter as cooling streaks. Returns whether any is left. */
@@ -500,36 +536,92 @@ function HandWelder({
       ctx.globalCompositeOperation = 'source-over';
     };
 
-    /** The cursor: a short rod leaning up to the right, its tip on the seam, glowing after use. */
+    /**
+     * The cursor: a welding electrode drawn as a lit cylinder, leaning up to the right with its
+     * tip on the seam. A sharpened tip (glowing after the arc), the flux-coated rod shaded across
+     * its width, the bare stub, then a short insulated grip with a brass collar. Light comes from
+     * the upper left, so each part is lit on one side and shaded on the other.
+     */
     const drawPen = (arcing: boolean) => {
       const tx = cx(centre[binAt(tip)]);
-      const ty = cy(tip) - (arcing ? 2.5 : 4);
+      const ty = cy(tip) - (arcing ? 2 : 3.5);
       const ux = 0.5;
       const uy = -0.866;
-      const len = Math.max(8, config.pen);
+      // Across the rod, towards the light.
+      const nx = -uy;
+      const ny = ux;
+      const len = Math.max(10, config.pen);
+      const at = (d: number, side = 0): [number, number] => [
+        tx + ux * d + nx * side,
+        ty + uy * d + ny * side
+      ];
+      /** A cylinder from `from` to `to` along the rod, `r` px round, shaded across its width. */
+      const cylinder = (from: number, to: number, r: number, light: RGB, dark: RGB) => {
+        const [ax, ay] = at(from);
+        const grad = ctx.createLinearGradient(...at(from, r), ...at(from, -r));
+        grad.addColorStop(0, rgba(scale(light, 1.08), 1));
+        grad.addColorStop(0.3, rgba(light, 1));
+        grad.addColorStop(0.75, rgba(dark, 1));
+        grad.addColorStop(1, rgba(scale(dark, 0.6), 1));
+        ctx.strokeStyle = grad;
+        ctx.lineWidth = r * 2;
+        ctx.lineCap = 'butt';
+        ctx.beginPath();
+        ctx.moveTo(ax, ay);
+        ctx.lineTo(...at(to));
+        ctx.stroke();
+      };
+      const stub = len + 4;
+      const grip = stub + 18;
+
+      // A soft shadow cast down and to the right, so it floats over the sheet.
+      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.lineWidth = 6;
       ctx.lineCap = 'round';
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.lineWidth = 3.6;
       ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(tx + ux * len, ty + uy * len);
+      ctx.moveTo(tx + 3, ty + 4);
+      ctx.lineTo(...(at(grip, -3).map((v, k) => v + (k ? 5 : 2)) as [number, number]));
       ctx.stroke();
-      ctx.strokeStyle = '#c9ccd3';
-      ctx.lineWidth = 2;
+
+      // The insulated grip and its brass collar.
+      cylinder(stub + 3, grip, 3.6, [58, 60, 66], [14, 15, 18]);
+      ctx.fillStyle = rgba([24, 25, 29], 1);
       ctx.beginPath();
-      ctx.moveTo(tx + ux * 2, ty + uy * 2);
-      ctx.lineTo(tx + ux * len, ty + uy * len);
-      ctx.stroke();
-      ctx.strokeStyle =
-        tipHeat > 0.02 ? rgba(heatColour(0.3 + 0.65 * tipHeat, [90, 94, 104]), 1) : '#8a8f99';
+      ctx.arc(...at(grip), 3.6, 0, Math.PI * 2);
+      ctx.fill();
+      cylinder(stub, stub + 3, 3.1, [226, 188, 110], [120, 84, 34]);
+      // The bare stub in the collar, then the flux-coated rod.
+      cylinder(len, stub, 1.4, [206, 210, 218], [96, 100, 110]);
+      cylinder(5, len, 1.7, [214, 204, 182], [118, 108, 90]);
+      // The sharpened tip, glowing after the arc.
+      const hot = tipHeat > 0.02;
+      const tipLight: RGB = hot
+        ? heatColour(0.35 + 0.6 * tipHeat, [150, 150, 158])
+        : [176, 180, 190];
+      const tipDark: RGB = hot ? scale(tipLight, 0.7) : [84, 88, 98];
+      const [bx, by] = at(5);
+      const grad = ctx.createLinearGradient(...at(5, 1.7), ...at(5, -1.7));
+      grad.addColorStop(0, rgba(tipLight, 1));
+      grad.addColorStop(1, rgba(tipDark, 1));
+      ctx.fillStyle = grad;
       ctx.beginPath();
-      ctx.moveTo(tx, ty);
-      ctx.lineTo(tx + ux * 3, ty + uy * 3);
-      ctx.stroke();
+      ctx.moveTo(...at(5, 1.7));
+      ctx.lineTo(tx, ty);
+      ctx.lineTo(...at(5, -1.7));
+      ctx.closePath();
+      ctx.fill();
+      if (hot) {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = rgba([255, 150, 60], 0.35 * tipHeat);
+        ctx.beginPath();
+        ctx.arc(bx * 0.4 + tx * 0.6, by * 0.4 + ty * 0.6, 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
       if (!arcing && !welded && config.hint > 0) {
         ctx.font = '500 11px ui-monospace, monospace';
         ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-        ctx.fillText('Hold to weld', tx + 10, ty + 18);
+        ctx.fillText('Hold to weld', tx + 12, ty + 18);
       }
     };
 

@@ -34,7 +34,9 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
       { key: 'width', label: 'Width (px)', min: 2, max: 12, step: 0.1 },
       { key: 'ripple', label: 'Ripple every', min: 0, max: 8, step: 0.1 },
       { key: 'rippleDepth', label: 'Ripple depth', min: 0, max: 1, step: 0.05 },
-      { key: 'cool', label: 'Cooling (ms)', min: 150, max: 3000, step: 50 }
+      { key: 'cool', label: 'Cooling (ms)', min: 150, max: 3000, step: 50 },
+      { key: 'dry', label: 'Drying (ms)', min: 200, max: 8000, step: 100 },
+      { key: 'dryLevel', label: 'Dries to', min: 0, max: 0.9, step: 0.05 }
     ]
   },
   {

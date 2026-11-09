@@ -4,6 +4,8 @@
   "ripple": 3.2,
   "rippleDepth": 0.5,
   "cool": 900,
+  "dry": 2500,
+  "dryLevel": 0.35,
   "spatter": 1,
   "glow": 1,
   "smoke": 1,
