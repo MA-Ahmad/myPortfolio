@@ -156,7 +156,6 @@ function HandWelder({
      */
     const ended = new Float64Array(bins);
     if (bead) for (let i = 0; i < bins; i++) if (bead[i]) ended[i] = bead[i];
-    let sessionFrom = 0;
     // A smoothed waver in the arc's light, time-based so it reads the same at any frame rate.
     let waver = 1;
     let waverTo = 1;
@@ -364,15 +363,15 @@ function HandWelder({
       // over ~90ms, accelerating (ease-in): an entrance and an exit, not one played backwards.
       if (arcing && !wasArcing) {
         strikeAt = now;
-        sessionFrom = now;
       }
       if (!arcing && wasArcing) {
         releaseAt = now;
         fromLevel = level;
-        if (bead)
-          for (let i = 0; i < bins; i++) if (bead[i] >= sessionFrom && !ended[i]) ended[i] = now;
       }
       wasArcing = arcing;
+      // With no arc burning, every bit of bead still in progress ends now: the ones laid this
+      // stroke, and a spot laid by a tap released before any frame saw the arc.
+      if (!arcing && bead) for (let i = 0; i < bins; i++) if (bead[i] && !ended[i]) ended[i] = now;
       if (calm) level = arcing ? 1 : 0;
       else if (arcing) level += (1 - level) * (1 - Math.exp(-dt / 22));
       else level = Math.max(0, fromLevel * (1 - ((now - releaseAt) / 90) ** 2));
