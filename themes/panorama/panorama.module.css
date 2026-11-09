@@ -1120,7 +1120,11 @@
   opacity: 1;
 }
 
-.rowLink {
+/* The title keeps its own colour and weight, not the site's link styles. */
+.rowLink,
+.rowLink:hover {
+  color: inherit;
+  font-weight: inherit;
   border-radius: 4px;
   transition: opacity 150ms ease-out;
 }
@@ -1140,12 +1144,7 @@
     transform: translate(1px, -1px);
   }
 
-  .list:hover .row:not(:hover, .rowPlain) .rowTitle {
-    color: var(--pn-body);
-  }
-
-  /* With only titles as links, the other titles dim while one is hovered. */
-  .list:has(.rowLink:hover) .rowLink:not(:hover) {
+  .list:hover .row:not(:hover) .rowTitle {
     color: var(--pn-body);
   }
 }
