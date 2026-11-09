@@ -241,9 +241,24 @@ function HandWelder({
         on = w;
       }
       const mask = `linear-gradient(to bottom, #000 0px, ${stops.join(', ')}${stops.length ? ', ' : ''}#000 100%)`;
+      // The sheet's healed scar shows over the same stretches, the inverse of the edges' mask; the
+      // bead covers it while hot and fades away to leave it, as on a seam shut in full.
+      const scarMask = `linear-gradient(to bottom, transparent 0px, ${stops
+        .map((stop) =>
+          stop
+            .replace(/#000/g, 'MARK')
+            .replace(/transparent/g, '#000')
+            .replace(/MARK/g, 'transparent')
+        )
+        .join(', ')}${stops.length ? ', ' : ''}transparent 100%)`;
       seamEls().forEach((seamEl) => {
         seamEl.querySelectorAll<HTMLElement>('[data-gap]').forEach((gap) => {
           gap.style.clipPath = clip;
+        });
+        seamEl.querySelectorAll<HTMLElement>('[data-scar]').forEach((scar) => {
+          scar.style.opacity = '1';
+          scar.style.maskImage = scarMask;
+          scar.style.setProperty('-webkit-mask-image', scarMask);
         });
         seamEl.querySelectorAll<HTMLElement>('[data-edge]').forEach((edge) => {
           edge.style.maskImage = mask;
@@ -253,9 +268,10 @@ function HandWelder({
     };
     const clearClosure = () => {
       seamEls().forEach((seamEl) => {
-        seamEl.querySelectorAll<HTMLElement>('[data-edge]').forEach((edge) => {
-          edge.style.maskImage = '';
-          edge.style.removeProperty('-webkit-mask-image');
+        seamEl.querySelectorAll<HTMLElement>('[data-edge], [data-scar]').forEach((el) => {
+          el.style.maskImage = '';
+          el.style.removeProperty('-webkit-mask-image');
+          if (el.dataset.scar !== undefined) el.style.opacity = '';
         });
       });
     };
@@ -451,7 +467,6 @@ function HandWelder({
       if (!bead || !welded) return false;
       const cool = Math.max(100, config.cool);
       const dryMs = Math.max(1, config.dry);
-      const settled = config.dryLevel;
       // How dry a bin is, 0 to 1: it starts once the metal has cooled.
       const dryness = (i: number) => Math.max(0, Math.min(1, (now - bead[i] - cool * 2.2) / dryMs));
       const level = (i: number) => Math.round(dryness(i) * LEVELS);
@@ -501,7 +516,8 @@ function HandWelder({
           look.metal[2] + (dull[2] - look.metal[2]) * d
         ];
         const w = config.width * (1 - 0.4 * d);
-        ctx.globalAlpha = 1 - settled * d;
+        // It fades out entirely as it dries, leaving the sheet's own healed scar beneath.
+        ctx.globalAlpha = 1 - d;
         if (look.tint) {
           stroke('rgba(70, 96, 170, 0.16)', w + 9);
           stroke('rgba(190, 150, 80, 0.22)', w + 5);
@@ -527,7 +543,7 @@ function HandWelder({
         for (let i = 0; i < bins; i += every) {
           if (!bead[i]) continue;
           const d = dryness(i);
-          const depth = config.rippleDepth * (1 - 0.6 * d) * (1 - settled * d);
+          const depth = config.rippleDepth * (1 - d);
           const x = cx(centre[i]);
           const y = cy(i * BIN + BIN / 2);
           const half = config.width * (1 - 0.4 * d) * 0.42;

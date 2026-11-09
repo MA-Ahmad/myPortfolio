@@ -778,7 +778,7 @@ const Edges = memo(function Edges({
       </div>
       {/* The scar lies on the centre line: the piece before the seam draws it for both. */}
       {side < 0 && (
-        <div className={`${styles.plane} ${styles.scar}`} aria-hidden>
+        <div className={`${styles.plane} ${styles.scar}`} data-scar aria-hidden>
           <svg className={styles.drawing}>
             <polyline points={points} className={styles.scarShadow} />
             <polyline points={points} className={styles.scarBead} />

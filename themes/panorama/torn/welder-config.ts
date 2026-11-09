@@ -16,9 +16,8 @@ export type WelderConfig = {
   rippleDepth: number;
   /** How long the bead takes to cool from white-hot, ms. */
   cool: number;
-  /** Once cool, how long the bead takes to dry (matte, darker, flatter), ms, and how far it fades (0 to 1). */
+  /** Once cool, how long the bead takes to dry and fade away, leaving the sheet's healed scar, ms. */
   dry: number;
-  dryLevel: number;
   /** How much spatter, arc light and smoke (0 for none, 1 as tuned, up to 2). */
   spatter: number;
   glow: number;
