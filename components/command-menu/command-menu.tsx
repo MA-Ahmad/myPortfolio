@@ -91,6 +91,7 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
   const [open, setOpen] = useState(false);
   const [isMac, setIsMac] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
+  const returnFocus = useRef<HTMLElement | null>(null);
   const terminalIconRef = useRef<SVGSVGElement>(null);
   const notebookIconRef = useRef<SVGSVGElement>(null);
   const midnightIconRef = useRef<SVGSVGElement>(null);
@@ -108,6 +109,18 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
     router.prefetch('/theme-studio');
   }, [open, router]);
 
+  // The input takes focus as the menu opens; closing hands focus back to where it was.
+  const rememberFocus = () => {
+    if (!panelRef.current) returnFocus.current = document.activeElement as HTMLElement | null;
+  };
+
+  useEffect(() => {
+    if (open) return;
+    const target = returnFocus.current;
+    returnFocus.current = null;
+    if (target?.isConnected) target.focus({ preventScroll: true });
+  }, [open]);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -118,12 +131,14 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
 
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
+        rememberFocus();
         setOpen((value) => !value);
         return;
       }
 
       if (event.key === '/' && !typing && !event.metaKey && !event.ctrlKey) {
         event.preventDefault();
+        rememberFocus();
         setOpen(true);
       }
 
@@ -214,7 +229,10 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
       <button
         type="button"
         data-slot="command-menu-trigger"
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          rememberFocus();
+          setOpen(true);
+        }}
         className={s.trigger}
         aria-label="Open command menu"
       >
@@ -233,11 +251,18 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
             aria-label="Close command menu"
             onClick={() => setOpen(false)}
           />
-          <div ref={panelRef} className={s.panel}>
+          <div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Command menu"
+            className={s.panel}
+          >
             <Command label="Command menu" className="flex flex-col outline-none">
               <div className={s.inputRow}>
                 <SearchIcon className="size-4 opacity-50" />
                 <Command.Input
+                  autoFocus
                   placeholder="Search pages, sections, links…"
                   className={s.input}
                 />

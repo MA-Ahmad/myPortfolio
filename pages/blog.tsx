@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { SearchIcon } from 'lucide-react';
-import { GetServerSideProps } from 'next';
+import { GetStaticProps } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
 import { PostList } from 'components/blog/post-list';
 import { BlogListPost } from 'components/blog/post-item';
-import { getLatestBlogPosts } from 'lib/blogPosts';
+import { blogRevalidate, getDevtoPostsOrNull, getLatestBlogPosts } from 'lib/blogPosts';
 
 const TITLE = 'Blog';
 const DESCRIPTION = 'A list of all articles and posts!';
@@ -51,17 +51,17 @@ const Posts = ({ posts }: { posts: BlogListPost[] }) => {
   );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
-  const posts = await getLatestBlogPosts();
+export const getStaticProps: GetStaticProps = async () => {
+  const devtoPosts = await getDevtoPostsOrNull();
+  const posts = await getLatestBlogPosts(devtoPosts ?? []);
 
   if (!posts.length) {
-    return {
-      notFound: true
-    };
+    return { notFound: true, revalidate: 300 };
   }
 
   return {
-    props: { posts }
+    props: { posts },
+    revalidate: blogRevalidate(devtoPosts)
   };
 };
 

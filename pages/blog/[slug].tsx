@@ -10,8 +10,7 @@ import NextLink from 'next/link';
 import { BlogPost } from '../../interfaces/interface';
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
-import { getLatestBlogPosts } from 'lib/blogPosts';
-import { getDevtoPosts } from 'lib/fetchPosts';
+import { blogRevalidate, getDevtoPostsOrNull, getLatestBlogPosts } from 'lib/blogPosts';
 import { SITE_URL } from 'data/constants';
 
 export interface AllBlogProps {
@@ -89,7 +88,7 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
 
 const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
-  const latestPosts = await getLatestBlogPosts();
+  const latestPosts = await getLatestBlogPosts((await getDevtoPostsOrNull()) ?? []);
 
   return {
     paths: latestPosts.map((post) => ({
@@ -126,13 +125,18 @@ const movedPostURL = (slug: string, devData: BlogPost[], localSlugs: string[]) =
 
 export const getStaticProps: GetStaticProps = async ({ params }) => {
   const slug = String(params?.slug);
-  const latestPosts = await getLatestBlogPosts();
+  const devtoPosts: BlogPost[] | null = await getDevtoPostsOrNull();
+  const devData = devtoPosts ?? [];
+  const latestPosts = await getLatestBlogPosts(devData);
   const isLatestPost = latestPosts.some((post) => post.slug === slug);
   const localSlugs = fs
     .readdirSync(path.join(root, 'data', 'posts'))
     .map((file) => file.replace(/\.mdx/, ''));
 
-  const devData: BlogPost[] = await getDevtoPosts();
+  // Without Dev.to a slug that isn't a local post can't be resolved; failing keeps the last good page.
+  if (!devtoPosts && !localSlugs.includes(slug)) {
+    throw new Error('Dev.to is unavailable');
+  }
 
   // Local posts stay up after they drop out of the latest list; other old links follow the post.
   if (!isLatestPost && !localSlugs.includes(slug)) {
@@ -148,6 +152,9 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
 
   if (selectedBlog.length) {
     const res = await fetch(`https://dev.to/api/articles/${selectedBlog[0]?.id}`);
+    if (!res.ok) {
+      throw new Error(`Dev.to article ${selectedBlog[0]?.id}: HTTP ${res.status}`);
+    }
     blogObj = await res.json();
     remarkContent = await markdownToHtml(blogObj.body_markdown);
   } else {
@@ -177,18 +184,12 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     remarkContent = await markdownToHtml(content);
   }
 
-  if (!devData) {
-    return {
-      notFound: true
-    };
-  }
-
   return {
     props: {
       articleContent: remarkContent,
       blogDetails: blogObj
     },
-    revalidate: 1
+    revalidate: blogRevalidate(devtoPosts)
   };
 };
 

@@ -41,7 +41,6 @@ My personal portfolio, showing my skills, experience, projects and articles. It 
 - Next.js 16 and React 19
 - Tailwind CSS
 - Framer Motion
-- Prisma with PostgreSQL
 - Cloudflare Workers
 
 ### Featured

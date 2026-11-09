@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Inlined at build time so the page view calls in lib/gtag.js can read it in the browser.
+  env: { GA_TRACKING_ID: process.env.GA_TRACKING_ID ?? '' },
   turbopack: {
     resolveAlias: {
       fs: { browser: './empty-module.js' },
