@@ -8,8 +8,21 @@ export const LATEST_BLOG_COUNT = 10;
 
 const root = process.cwd();
 
-export const getLatestBlogPosts = async (): Promise<BlogListPost[]> => {
-  let devtoPosts = await getDevtoPosts();
+type DevtoPosts = Awaited<ReturnType<typeof getDevtoPosts>>;
+
+/** The few Dev.to posts are optional: local posts are listed even when Dev.to is down. */
+export const getDevtoPostsOrNull = (): Promise<DevtoPosts | null> =>
+  getDevtoPosts().catch((error) => {
+    console.error('Dev.to posts: request failed', error);
+    return null;
+  });
+
+/** How long a blog page is cached: an hour, or five minutes when it was built without Dev.to. */
+export const blogRevalidate = (devtoPosts: DevtoPosts | null) => (devtoPosts ? 3600 : 300);
+
+// Pass the Dev.to list when the caller already has it (or [] when Dev.to is down).
+export const getLatestBlogPosts = async (devtoPosts?: DevtoPosts): Promise<BlogListPost[]> => {
+  devtoPosts ??= await getDevtoPosts();
 
   const slugs = fs
     .readdirSync(path.join(root, 'data', 'posts'))
