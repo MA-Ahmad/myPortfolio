@@ -14,59 +14,66 @@ import pipelineStyles from '../pipeline/pipeline.module.css';
 
 export function IntroPane({ contributions }: { contributions: Activity[] }) {
   return (
-    <>
-      <h1 className={styles.name}>{C.name}</h1>
-      <p className={styles.role}>{C.role}</p>
-      <p className={styles.now}>
-        <span className={styles.live} aria-hidden />
-        {C.now.role} at {C.now.company}
-      </p>
-      <p className={styles.text}>{C.intro}</p>
-      <div className={pipelineStyles.pipeline}>
+    // The groups are cards on a busy sky (see .group); otherwise they leave no trace in the layout.
+    <div className={pipelineStyles.pipeline}>
+      <div className={styles.group}>
+        <h1 className={styles.name}>{C.name}</h1>
+        <p className={styles.role}>{C.role}</p>
+        <p className={styles.now}>
+          <span className={styles.live} aria-hidden />
+          {C.now.role} at {C.now.company}
+        </p>
+        <p className={styles.text}>{C.intro}</p>
         <ContactPills links={C.links} />
-        <Pipeline />
       </div>
-      <Contributions contributions={contributions} />
-    </>
+      <div className={styles.group}>
+        <Pipeline />
+        <Contributions contributions={contributions} />
+      </div>
+    </div>
   );
 }
 
 export function WorkPane() {
   return (
     <>
-      <h2 className={styles.heading}>Stack</h2>
-      <dl className={styles.stack}>
-        {C.stack.map((group) => (
-          <div key={group.title} className={styles.stackGroup}>
-            <dt>{group.title}</dt>
-            <dd>
-              <ul className={styles.chips}>
-                {group.skills.map((skill) => (
-                  <li key={skill.name} className={styles.chip}>
-                    <img src={skill.icon} alt="" width={14} height={14} data-tone={skill.tone} />
-                    {skill.name}
-                  </li>
-                ))}
-              </ul>
-            </dd>
-          </div>
-        ))}
-      </dl>
-      <h2 className={styles.heading}>Selected projects</h2>
-      <ul className={styles.list}>
-        {C.projects.map((project) => (
-          <li key={project.title}>
-            <a href={project.href} target="_blank" rel="noreferrer" className={styles.row}>
-              <span className={styles.rowTitle}>
-                {project.title}
-                <ArrowUpRight size={13} aria-hidden />
-              </span>
-              <span className={styles.rowText}>{project.text}</span>
-              <span className={styles.rowMeta}>{project.stack.join(' · ')}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      <div className={styles.group}>
+        <h2 className={styles.heading}>Stack</h2>
+        <dl className={styles.stack}>
+          {C.stack.map((group) => (
+            <div key={group.title} className={styles.stackGroup}>
+              <dt>{group.title}</dt>
+              <dd>
+                <ul className={styles.chips}>
+                  {group.skills.map((skill) => (
+                    <li key={skill.name} className={styles.chip}>
+                      <img src={skill.icon} alt="" width={14} height={14} data-tone={skill.tone} />
+                      {skill.name}
+                    </li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+      <div className={styles.group}>
+        <h2 className={styles.heading}>Selected projects</h2>
+        <ul className={styles.list}>
+          {C.projects.map((project) => (
+            <li key={project.title}>
+              <a href={project.href} target="_blank" rel="noreferrer" className={styles.row}>
+                <span className={styles.rowTitle}>
+                  {project.title}
+                  <ArrowUpRight size={13} aria-hidden />
+                </span>
+                <span className={styles.rowText}>{project.text}</span>
+                <span className={styles.rowMeta}>{project.stack.join(' · ')}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
     </>
   );
 }
@@ -83,7 +90,7 @@ export function WritingPane({ posts }: { posts: BlogListPost[] }) {
     [posts]
   );
   return (
-    <>
+    <div className={styles.group}>
       <h2 className={styles.heading}>Latest writing</h2>
       {latest.length ? (
         <ul ref={listRef} className={styles.list}>
@@ -112,13 +119,13 @@ export function WritingPane({ posts }: { posts: BlogListPost[] }) {
       <Link href="/blog" className={styles.more}>
         All posts
       </Link>
-    </>
+    </div>
   );
 }
 
 export function BlocksPane() {
   return (
-    <>
+    <div className={styles.group}>
       <p className={styles.text}>
         Interactive pieces with their source, ready to drop into a page.
       </p>
@@ -161,6 +168,6 @@ export function BlocksPane() {
       <Link href="/blocks" className={styles.more}>
         All blocks
       </Link>
-    </>
+    </div>
   );
 }

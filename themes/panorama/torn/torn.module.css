@@ -282,7 +282,7 @@
   /*
    * Where the moon sits (and by day the sun's haze): at the top of the open section, 85% of the way
    * across it, so it moves over with the columns. A closed column is one unit, the open one nine,
-   * as in panorama.module.css; stacked, the same runs down the rows.
+   * as in panorama.module.css. Stacked on a phone it stays in the Intro instead (below).
    */
   --unit: calc((100% - (var(--count) - 1) * var(--pn-gap)) / (var(--count) + 8));
   --open-start: calc(var(--open) * (var(--unit) + var(--pn-gap)));
@@ -303,11 +303,15 @@
     );
 }
 
-/* Stacked, it sits level with the open section's title, at the right, clear of the heading below. */
+/*
+ * Stacked, the Intro is the top row: the moon sits at its right end, level with its title while it
+ * is open and in the middle of the short row while it's closed, smaller, clear of the text.
+ */
 @media (max-width: 719px) {
   .surface {
-    --sky-x: 86%;
-    --sky-y: calc(var(--open-start) + 52px);
+    --intro: max(0, 1 - var(--open));
+    --sky-x: calc(100% - 40px);
+    --sky-y: calc(var(--pn-closed-h) / 2 + var(--intro) * (34px - var(--pn-closed-h) / 2));
   }
 }
 
@@ -359,14 +363,101 @@
     drop-shadow(0 0 22px oklch(0.88 0.03 250 / 0.28));
 }
 
+@media (max-width: 719px) {
+  .moon {
+    width: 30px;
+    height: 30px;
+  }
+}
+
 /*
- * A few square pixels on a grid across the top, thinning out to none by about halfway: drawn on a
- * canvas from pixel-sky.json.
+ * A clumped field of square pixels along the top, thinning downward: drawn white on a canvas from
+ * pixel-sky.json. Night only: it fades out with the moon by day.
  */
 .pixelSky {
   width: 100%;
   height: 100%;
+  opacity: calc(var(--sky-night) * var(--tn-night));
+}
+
+/*
+ * The dithered band (dither-sky.ts), night only. Screened over the sheet, so its black cells add
+ * nothing and the sheet's own night shows through; only the band and the dots add light.
+ */
+.ditherSky {
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  opacity: calc(var(--dither) * var(--tn-night));
+  transition: opacity 600ms ease-out;
+}
+
+.ditherSky:not([data-drawn]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ditherSky {
+    transition: none;
+  }
+}
+
+/*
+ * The field and its stars are drawn once the page runs: until then they're hidden, and they fade
+ * in. A change of time still snaps (no transition runs while the layout is switching).
+ */
+.pixelSky,
+.twinkles {
+  transition: opacity 600ms ease-out;
+}
+
+.pixelSky:not([data-drawn]),
+.twinkles:not([data-drawn]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixelSky,
+  .twinkles {
+    transition: none;
+  }
+}
+
+/*
+ * At night a few of the sky's pixels twinkle: each swells into a small soft glow and fades back,
+ * on its own loop. Only opacity animates; the glow itself is a fixed shadow.
+ */
+.twinkles {
   opacity: var(--tn-night);
+}
+
+.twinkle {
+  position: absolute;
+  border-radius: 1px;
+  background: #fff;
+  box-shadow:
+    0 0 calc(var(--glow) * 0.5) rgba(255, 255, 255, 0.7),
+    0 0 var(--glow) calc(var(--glow) * 0.15) rgba(225, 232, 255, 0.35);
+  opacity: 0;
+  animation: twinkle var(--period) ease-in-out var(--delay) infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  35%,
+  75%,
+  100% {
+    opacity: 0;
+  }
+  55% {
+    opacity: var(--sparkle);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle {
+    animation: none;
+  }
 }
 
 .clouds {
@@ -478,7 +569,8 @@
   transform: translateX(calc(var(--side) * var(--gap)));
 }
 
-.seam[data-state='welded'] .open {
+.seam[data-state='welded'] .open,
+.seam[data-state='sealed'] .open {
   opacity: 0;
 }
 
@@ -616,6 +708,11 @@
 .seam[data-state='welded'] .scar,
 .seam[data-state='tearing'] .scar {
   opacity: 1;
+}
+
+/* A seam cracking open on load was never welded: no scar under it. */
+.seam[data-intro] .scar {
+  opacity: 0;
 }
 
 /* An interrupted weld fades out while the seam tears open under it. */
