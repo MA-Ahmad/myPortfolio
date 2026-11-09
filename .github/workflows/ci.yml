@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      # Reported but not required yet: the code predates the React Compiler lint rules
+      # (react-hooks/refs, set-state-in-effect, purity, immutability). Drop continue-on-error
+      # once `pnpm lint` passes.
+      - run: pnpm lint
+        continue-on-error: true
+
+  presence-worker:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers/presence
+    steps:
+      - uses: actions/checkout@v4
+      # The worker has its own lockfile but no pinned pnpm; it uses the site's version.
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck

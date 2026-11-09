@@ -10,7 +10,7 @@ pnpm is the package manager (`pnpm-lock.yaml`, pinned via `packageManager`; the 
 - `pnpm build` / `pnpm start` — production build / serve
 - `pnpm lint` — ESLint (flat config, `eslint.config.mjs`)
 
-There is no test suite. Type-check with `npx tsc --noEmit`.
+There is no test suite. `pnpm typecheck` runs `tsc --noEmit`. CI (`.github/workflows/ci.yml`) type-checks the site and the presence worker on every pull request; it also runs lint, which does not block yet because of existing errors.
 
 `AGENTS.md` warns that this Next.js version (16.x) has breaking changes: read the relevant guide in `node_modules/next/dist/docs/` before writing Next-specific code.
 
