@@ -1127,14 +1127,13 @@
 
 .welder {
   position: absolute;
-  top: -120px; /* ABOVE in welder.tsx */
+  top: -150px; /* ABOVE in welder.tsx */
   left: -150px; /* HALF */
   pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .weld,
-  .welder {
+  .weld {
     display: none;
   }
 

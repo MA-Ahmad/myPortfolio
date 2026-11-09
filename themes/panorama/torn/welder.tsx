@@ -9,8 +9,9 @@ import styles from './torn.module.css';
 const NEAR = GAP + 12;
 /** The canvas reaches this far either side of the seam, and above and below it. */
 const HALF = 150;
-const ABOVE = 120;
-const BELOW = 80;
+/** As far as the arc's light reaches, so its glow is never cut off by the canvas. */
+const ABOVE = 150;
+const BELOW = 150;
 /** A seam counts as welded once this share of it is. */
 const DONE = 0.985;
 /** The rod's tip melts this far either side of it as it passes, px. */
@@ -98,7 +99,8 @@ function HandWelder({
 
   useEffect(() => {
     if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    // Under reduced motion it still welds, with a steady light and no flicker, spatter or smoke.
+    const calm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const look = STYLE_LOOK[styleOf(config)];
     const canvas = ref.current!;
     const sheetEl = canvas.closest<HTMLElement>('[data-skin]')!;
@@ -140,6 +142,17 @@ function HandWelder({
     // Where the tip was when it last welded, so a fast stroke welds everything it swept over.
     let swept: number | null = null;
     let tipHeat = 0;
+    // The arc's brightness (0 to 1): it strikes with a flash and rises fast, and dies away faster.
+    let level = 0;
+    let fromLevel = 0;
+    let strikeAt = 0;
+    let releaseAt = 0;
+    let wasArcing = false;
+    // A smoothed waver in the arc's light, time-based so it reads the same at any frame rate.
+    let waver = 1;
+    let waverTo = 1;
+    let lastWaver = 0;
+    let hint = 0;
     let frame = 0;
     let last = 0;
     let lastPuff = 0;
@@ -241,6 +254,26 @@ function HandWelder({
       const arcing = pressed && target !== null && live && !finished;
       if (target !== null && !pressed) tip = target;
 
+      // The arc strikes with a brief flash and rises over ~60ms (ease-out), and on release dies
+      // over ~90ms, accelerating (ease-in): an entrance and an exit, not one played backwards.
+      if (arcing && !wasArcing) strikeAt = now;
+      if (!arcing && wasArcing) {
+        releaseAt = now;
+        fromLevel = level;
+      }
+      wasArcing = arcing;
+      if (calm) level = arcing ? 1 : 0;
+      else if (arcing) level += (1 - level) * (1 - Math.exp(-dt / 22));
+      else level = Math.max(0, fromLevel * (1 - ((now - releaseAt) / 90) ** 2));
+      if (!calm && now - lastWaver > 40) {
+        lastWaver = now;
+        // Mostly a gentle waver; now and then a brief dip as the arc wanders.
+        waverTo = Math.random() < 0.05 ? 0.55 : 0.8 + Math.random() * 0.2;
+      }
+      waver = calm ? 1 : waver + (waverTo - waver) * (1 - Math.exp(-dt / 30));
+      const showHint = target !== null && !arcing && !welded && config.hint > 0;
+      hint += ((showHint ? 1 : 0) - hint) * (1 - Math.exp(-dt / 50));
+
       if (arcing && !arc) arc = startArc();
       if (!arcing && arc) {
         arc.stop();
@@ -251,7 +284,7 @@ function HandWelder({
       if (arcing) {
         tipHeat = 1;
         const x = centre[binAt(tip)];
-        const throws = Math.round((1 + Math.random() * 3) * config.spatter);
+        const throws = calm ? 0 : Math.round((1 + Math.random() * 3) * config.spatter);
         for (let k = 0; k < throws; k++) {
           if (sparks.length >= SPATTER) sparks.shift();
           const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.6;
@@ -269,7 +302,7 @@ function HandWelder({
           lastPop = now;
           arc?.pop();
         }
-        if (config.smoke > 0 && now - lastPuff > 90 / config.smoke) {
+        if (!calm && config.smoke > 0 && now - lastPuff > 90 / config.smoke) {
           lastPuff = now;
           puffs.push({ x, y: tip, born: now, drift: (Math.random() - 0.5) * 0.02 });
           if (puffs.length > 30) puffs.shift();
@@ -282,10 +315,11 @@ function HandWelder({
       ctx.clearRect(0, 0, width, height);
       const hot = drawBead(now);
       const lively = drawSmokeAndSpatter(now);
-      if (arcing) drawArc();
-      if (target !== null && live && !finished) drawPen(arcing);
+      if (level > 0.01) drawArc(now);
+      if (target !== null && live && !finished) drawPen();
 
-      const moving = arcing || target !== null || lively || hot || tipHeat > 0.02;
+      const moving =
+        arcing || target !== null || lively || hot || tipHeat > 0.02 || level > 0.01 || hint > 0.01;
       frame = moving ? requestAnimationFrame(tick) : 0;
       if (!frame) last = 0;
     };
@@ -499,39 +533,61 @@ function HandWelder({
       return left;
     };
 
-    /** The arc: its light thrown over the sheet, a halo, the pool and a white core. */
-    const drawArc = () => {
+    /**
+     * The arc at `level` brightness: its light thrown over the sheet on a smooth falloff, a halo,
+     * a warm glow where the pool lights the bead, the pool and a white core. On the strike, a brief
+     * flash brightens and widens the core.
+     */
+    const drawArc = (now: number) => {
       const x = cx(centre[binAt(tip)]);
       const y = cy(tip);
-      const f = (0.72 + Math.random() * 0.28) * config.glow;
-      const [r, g, b] = look.arc;
+      const flash = calm ? 0 : Math.exp(-(now - strikeAt) / 70);
+      const f = level * waver * (1 + 0.7 * flash);
+      const glow = f * config.glow;
+      const arcColour = look.arc;
       ctx.globalCompositeOperation = 'lighter';
-      if (config.glow > 0) {
+      if (glow > 0) {
+        // Light falling off evenly with distance, in one hue, with no ring.
         const light = ctx.createRadialGradient(x, y, 0, x, y, HALF);
-        light.addColorStop(0, rgba([r, g, b], 0.24 * f));
-        light.addColorStop(0.35, rgba([r * 0.7, g * 0.75, b], 0.07 * f));
-        light.addColorStop(1, rgba([r, g, b], 0));
+        [
+          [0, 0.24],
+          [0.12, 0.15],
+          [0.3, 0.065],
+          [0.55, 0.02],
+          [1, 0]
+        ].forEach(([at, a]) => light.addColorStop(at, rgba(arcColour, a * glow)));
         ctx.fillStyle = light;
         ctx.fillRect(x - HALF, y - HALF, HALF * 2, HALF * 2);
-        const halo = ctx.createRadialGradient(x, y, 0, x, y, 20 * f);
-        halo.addColorStop(0, rgba([r, g, b], 0.7));
-        halo.addColorStop(1, rgba([r, g, b], 0));
+        const r = 18 * (0.85 + 0.15 * waver) * (1 + 0.4 * flash);
+        const halo = ctx.createRadialGradient(x, y, 0, x, y, r);
+        halo.addColorStop(0, rgba(arcColour, 0.7 * Math.min(1, glow)));
+        halo.addColorStop(0.5, rgba(arcColour, 0.22 * Math.min(1, glow)));
+        halo.addColorStop(1, rgba(arcColour, 0));
         ctx.fillStyle = halo;
         ctx.beginPath();
-        ctx.arc(x, y, 20 * f, 0, Math.PI * 2);
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+        // The pool lights the bead just behind it, warm.
+        const warm = ctx.createRadialGradient(x, y - 4, 0, x, y - 4, 22);
+        warm.addColorStop(0, rgba([255, 150, 70], 0.2 * level));
+        warm.addColorStop(1, rgba([255, 150, 70], 0));
+        ctx.fillStyle = warm;
+        ctx.beginPath();
+        ctx.arc(x, y - 4, 22, 0, Math.PI * 2);
         ctx.fill();
       }
-      ctx.fillStyle = 'rgba(255, 180, 80, 0.85)';
+      ctx.fillStyle = rgba([255, 180, 80], 0.85 * level);
       ctx.beginPath();
       ctx.ellipse(x, y + 1, config.width * 0.6, 3.2, 0, 0, Math.PI * 2);
       ctx.fill();
-      const core = ctx.createRadialGradient(x, y, 0, x, y, 5.5);
-      core.addColorStop(0, 'rgba(255, 255, 255, 1)');
-      core.addColorStop(0.5, 'rgba(240, 244, 255, 0.75)');
-      core.addColorStop(1, 'rgba(220, 230, 255, 0)');
+      const coreR = 5.5 * (1 + 0.5 * flash);
+      const core = ctx.createRadialGradient(x, y, 0, x, y, coreR);
+      core.addColorStop(0, rgba([255, 255, 255], Math.min(1, f)));
+      core.addColorStop(0.5, rgba([240, 244, 255], 0.75 * Math.min(1, f)));
+      core.addColorStop(1, rgba([220, 230, 255], 0));
       ctx.fillStyle = core;
       ctx.beginPath();
-      ctx.arc(x, y, 5.5, 0, Math.PI * 2);
+      ctx.arc(x, y, coreR, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalCompositeOperation = 'source-over';
     };
@@ -542,9 +598,10 @@ function HandWelder({
      * its width, the bare stub, then a short insulated grip with a brass collar. Light comes from
      * the upper left, so each part is lit on one side and shaded on the other.
      */
-    const drawPen = (arcing: boolean) => {
+    const drawPen = () => {
       const tx = cx(centre[binAt(tip)]);
-      const ty = cy(tip) - (arcing ? 2 : 3.5);
+      // The rod eases down onto the seam as the arc strikes, instead of jumping.
+      const ty = cy(tip) - (3.5 - 1.5 * level);
       const ux = 0.5;
       const uy = -0.866;
       // Across the rod, towards the light.
@@ -618,9 +675,9 @@ function HandWelder({
         ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
       }
-      if (!arcing && !welded && config.hint > 0) {
+      if (hint > 0.01) {
         ctx.font = '500 11px ui-monospace, monospace';
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillStyle = `rgba(255, 255, 255, ${(0.6 * hint).toFixed(3)})`;
         ctx.fillText('Hold to weld', tx + 12, ty + 18);
       }
     };
