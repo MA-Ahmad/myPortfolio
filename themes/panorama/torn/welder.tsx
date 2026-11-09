@@ -25,13 +25,13 @@ type Spark = { x: number; y: number; vx: number; vy: number; born: number; life:
 type Puff = { x: number; y: number; born: number; drift: number };
 type RGB = [number, number, number];
 
-/** White-hot, yellow, orange, cherry, dull red: the glow of cooling metal by temperature (0–1). */
+/** White-hot, yellow, orange, then a dim bronze: the glow of cooling metal by temperature (0–1). */
 const RAMP: [number, RGB][] = [
-  [1, [255, 252, 228]],
-  [0.8, [255, 212, 116]],
-  [0.58, [255, 148, 50]],
-  [0.36, [208, 70, 24]],
-  [0.16, [118, 38, 24]]
+  [1, [255, 250, 226]],
+  [0.78, [255, 214, 124]],
+  [0.55, [250, 156, 64]],
+  [0.32, [186, 108, 56]],
+  [0.14, [104, 78, 62]]
 ];
 
 /** The metal's colour at temperature `t` (0–1), cooling to `metal`. */
@@ -148,6 +148,15 @@ function HandWelder({
     let strikeAt = 0;
     let releaseAt = 0;
     let wasArcing = false;
+    /*
+     * When the welding session each bin was laid in ended (performance clock), or 0 while it's
+     * still going. While welding, a hot tail trails behind the rod; once released, the whole tail
+     * cools together and then fades into the scar together, in place, rather than in the order it
+     * was laid (which reads as liquid running along the seam).
+     */
+    const ended = new Float64Array(bins);
+    if (bead) for (let i = 0; i < bins; i++) if (bead[i]) ended[i] = bead[i];
+    let sessionFrom = 0;
     // A smoothed waver in the arc's light, time-based so it reads the same at any frame rate.
     let waver = 1;
     let waverTo = 1;
@@ -353,10 +362,15 @@ function HandWelder({
 
       // The arc strikes with a brief flash and rises over ~60ms (ease-out), and on release dies
       // over ~90ms, accelerating (ease-in): an entrance and an exit, not one played backwards.
-      if (arcing && !wasArcing) strikeAt = now;
+      if (arcing && !wasArcing) {
+        strikeAt = now;
+        sessionFrom = now;
+      }
       if (!arcing && wasArcing) {
         releaseAt = now;
         fromLevel = level;
+        if (bead)
+          for (let i = 0; i < bins; i++) if (bead[i] >= sessionFrom && !ended[i]) ended[i] = now;
       }
       wasArcing = arcing;
       if (calm) level = arcing ? 1 : 0;
@@ -457,120 +471,79 @@ function HandWelder({
       if (from === to) ctx.lineTo(cx(centre[to] + shift), cy(to * BIN + BIN));
     };
 
+    /** How hot a bin is (0 to 1): trailing the rod while welding, then cooling all at once. */
+    const temperature = (i: number, now: number, cool: number) => {
+      const at = bead![i];
+      if (!ended[i]) return Math.exp(-(now - at) / cool);
+      return Math.exp(-(ended[i] - at) / cool) * Math.exp(-(now - ended[i]) / (cool * 0.6));
+    };
+    /** How far a bin has faded into the scar (0 to 1): together, once its session has cooled. */
+    const dryness = (i: number, now: number, cool: number, dryMs: number) =>
+      ended[i] ? Math.max(0, Math.min(1, (now - ended[i] - cool * 1.4) / dryMs)) : 0;
+
     /**
-     * The bead: one continuous stroke along each welded stretch, a dark edge, its body and a sheen
-     * along its crown so it reads as rounded, then fine ripples across it, then the glow of what is
-     * still hot. Once cool it dries over `dry` ms: matte, darker and greyer, flatter and fainter,
-     * settling into the seam. Returns whether any of it is still changing.
+     * The bead: one flat stroke of metal along each welded stretch, with what is still hot glowing
+     * on it. Once its session has cooled, the whole stretch fades together into the sheet's healed
+     * scar beneath. Returns whether any of it is still changing.
      */
     const drawBead = (now: number) => {
       if (!bead || !welded) return false;
       const cool = Math.max(100, config.cool);
       const dryMs = Math.max(1, config.dry);
-      // How dry a bin is, 0 to 1: it starts once the metal has cooled.
-      const dryness = (i: number) => Math.max(0, Math.min(1, (now - bead[i] - cool * 2.2) / dryMs));
-      const level = (i: number) => Math.round(dryness(i) * LEVELS);
+      const level = (i: number) => Math.round(dryness(i, now, cool, dryMs) * LEVELS);
       let changing = false;
-      ctx.globalCompositeOperation = 'source-over';
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      const segments = runs(level);
       readSheet();
-      // Cold, it takes the sheet's colour: deepened towards black on a dark sheet, only shaded on a
-      // light one, so it reads as a joint in either, not a rope.
-      const light =
+      const shade =
         (0.2126 * sheetColour[0] + 0.7152 * sheetColour[1] + 0.0722 * sheetColour[2]) / 255;
-      const dull: RGB = scale(sheetColour, light > 0.5 ? 0.86 : 0.55);
+      const dull: RGB = scale(sheetColour, shade > 0.5 ? 0.86 : 0.55);
+      const w = config.width;
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.lineJoin = 'round';
 
-      for (const [a, b, l] of segments) {
+      for (const [a, b, l] of runs(level)) {
         const d = l / LEVELS;
         if (d < 1) changing = true;
-        // Inner joins between stretches meet flat, so no layer overlaps itself there; only the
-        // bead's real ends are rounded.
+        if (d >= 1) continue;
         const first = a === 0 || !bead[a - 1];
         const final = b === bins - 1 || !bead[b + 1];
-        const stroke = (style: string, lineWidth: number, shift = 0) => {
-          ctx.strokeStyle = style;
-          ctx.lineWidth = lineWidth;
-          ctx.lineCap = 'butt';
-          path(a, b, shift);
-          ctx.stroke();
-          ctx.lineCap = 'round';
-          for (const [end, step] of [
-            [a, -1],
-            [b, 1]
-          ] as const) {
-            if (end === a ? !first : !final) continue;
-            const x = cx(centre[end] + shift);
-            const y = cy(end * BIN + BIN / 2);
-            ctx.beginPath();
-            ctx.moveTo(x, y);
-            ctx.lineTo(x, y + step * 0.01);
-            ctx.stroke();
-          }
-        };
-        // Dried, the metal goes matte and greyer, the bead flatter and fainter.
         const metal: RGB = [
           look.metal[0] + (dull[0] - look.metal[0]) * d,
           look.metal[1] + (dull[1] - look.metal[1]) * d,
           look.metal[2] + (dull[2] - look.metal[2]) * d
         ];
-        const w = config.width * (1 - 0.4 * d);
-        // It fades out entirely as it dries, leaving the sheet's own healed scar beneath.
         ctx.globalAlpha = 1 - d;
-        if (look.tint) {
-          stroke('rgba(70, 96, 170, 0.16)', w + 9);
-          stroke('rgba(190, 150, 80, 0.22)', w + 5);
-        } else {
-          // Its shadow on the sheet, which goes as it dries and settles flat.
-          stroke(`rgba(0, 0, 0, ${(0.35 * (1 - d)).toFixed(3)})`, w + 2.4);
+        ctx.strokeStyle = rgba(metal, 1);
+        ctx.lineWidth = w;
+        ctx.lineCap = 'butt';
+        path(a, b);
+        ctx.stroke();
+        // Only the bead's real ends are rounded; inner joins meet flat.
+        ctx.lineCap = 'round';
+        for (const [end, step] of [
+          [a, -1],
+          [b, 1]
+        ] as const) {
+          if (end === a ? !first : !final) continue;
+          const x = cx(centre[end]);
+          const y = cy(end * BIN + BIN / 2);
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x, y + step * 0.01);
+          ctx.stroke();
         }
-        stroke(rgba(scale(metal, 0.62), 1), w);
-        stroke(rgba(metal, 1), w * (0.66 - 0.16 * d));
-        stroke(
-          `rgba(255, 255, 255, ${(0.16 * (1 - 0.85 * d)).toFixed(3)})`,
-          Math.max(0.8, w * 0.22),
-          -w * 0.12
-        );
       }
       ctx.globalAlpha = 1;
 
-      // Ripples: faint curved lines across the bead at an even spacing, fading as it dries.
-      if (config.ripple > 0 && config.rippleDepth > 0) {
-        const every = Math.max(1, Math.round(config.ripple / BIN));
-        ctx.lineCap = 'round';
-        ctx.lineWidth = 0.7;
-        for (let i = 0; i < bins; i += every) {
-          if (!bead[i]) continue;
-          const d = dryness(i);
-          const depth = config.rippleDepth * (1 - d);
-          const x = cx(centre[i]);
-          const y = cy(i * BIN + BIN / 2);
-          const half = config.width * (1 - 0.4 * d) * 0.42;
-          ctx.strokeStyle = rgba([0, 0, 0], 0.32 * depth);
-          ctx.beginPath();
-          ctx.moveTo(x - half, y + 0.4);
-          ctx.quadraticCurveTo(x, y - 1.6, x + half, y + 0.4);
-          ctx.stroke();
-          ctx.strokeStyle = rgba([255, 255, 255], 0.12 * depth);
-          ctx.beginPath();
-          ctx.moveTo(x - half, y - 0.4);
-          ctx.quadraticCurveTo(x, y - 2.4, x + half, y - 0.4);
-          ctx.stroke();
-        }
-      }
-
-      // What is still hot glows, cooling along the bead in the order it was laid.
+      // What is still hot glows on it, in place.
       let glowing = false;
       ctx.lineCap = 'butt';
       for (let i = 0; i < bins - 1; i++) {
-        const at = bead[i];
-        if (!at || !bead[i + 1]) continue;
-        const t = Math.exp(-(now - at) / cool);
-        if (t < 0.03) continue;
+        if (!bead[i] || !bead[i + 1]) continue;
+        const t = temperature(i, now, cool);
+        if (t < 0.02) continue;
         glowing = true;
-        ctx.strokeStyle = rgba(heatColour(t, look.metal), Math.min(1, t * 1.6));
-        ctx.lineWidth = config.width * 0.9;
+        ctx.strokeStyle = rgba(heatColour(t, look.metal), Math.min(1, t * 1.5));
+        ctx.lineWidth = w;
         ctx.beginPath();
         ctx.moveTo(cx(centre[i]), cy(i * BIN + BIN / 2));
         ctx.lineTo(cx(centre[i + 1]), cy((i + 1) * BIN + BIN / 2 + 0.3));
@@ -580,12 +553,11 @@ function HandWelder({
         ctx.globalCompositeOperation = 'lighter';
         ctx.lineCap = 'round';
         for (let i = 0; i < bins - 1; i += 2) {
-          const at = bead[i];
-          if (!at) continue;
-          const t = Math.exp(-(now - at) / cool);
+          if (!bead[i]) continue;
+          const t = temperature(i, now, cool);
           if (t < 0.2) continue;
-          ctx.strokeStyle = rgba([255, 130, 50], t * 0.1);
-          ctx.lineWidth = config.width * 3;
+          ctx.strokeStyle = rgba([255, 140, 60], t * 0.09);
+          ctx.lineWidth = w * 3;
           ctx.beginPath();
           ctx.moveTo(cx(centre[i]), cy(i * BIN));
           ctx.lineTo(cx(centre[i]), cy(i * BIN + BIN * 2));
@@ -697,85 +669,141 @@ function HandWelder({
     };
 
     /**
-     * The cursor: a welding electrode drawn as a lit cylinder, leaning up to the right with its
-     * tip on the seam. A sharpened tip (glowing after the arc), the flux-coated rod shaded across
-     * its width, the bare stub, then a short insulated grip with a brass collar. Light comes from
-     * the upper left, so each part is lit on one side and shaded on the other.
+     * The cursor: the chosen welding device (`device` in welder.json), its tip on the seam,
+     * leaning up to the right. Each is drawn small and lit from the upper left, so its parts read
+     * as rounded; its tip glows after the arc.
      */
     const drawPen = () => {
       const tx = cx(centre[binAt(tip)]);
-      // The rod eases down onto the seam as the arc strikes, instead of jumping.
+      // It eases down onto the seam as the arc strikes, instead of jumping.
       const ty = cy(tip) - (3.5 - 1.5 * level);
       const ux = 0.5;
       const uy = -0.866;
-      // Across the rod, towards the light.
       const nx = -uy;
       const ny = ux;
-      const len = Math.max(10, config.pen);
       const at = (d: number, side = 0): [number, number] => [
         tx + ux * d + nx * side,
         ty + uy * d + ny * side
       ];
-      /** A cylinder from `from` to `to` along the rod, `r` px round, shaded across its width. */
-      const cylinder = (from: number, to: number, r: number, light: RGB, dark: RGB) => {
-        const [ax, ay] = at(from);
+      /** A cylinder from `from` to `to` along the device, `r` px round, shaded across its width. */
+      const cylinder = (from: number, to: number, r: number, light: RGB, dark: RGB, r2 = r) => {
         const grad = ctx.createLinearGradient(...at(from, r), ...at(from, -r));
         grad.addColorStop(0, rgba(scale(light, 1.08), 1));
         grad.addColorStop(0.3, rgba(light, 1));
         grad.addColorStop(0.75, rgba(dark, 1));
         grad.addColorStop(1, rgba(scale(dark, 0.6), 1));
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = r * 2;
-        ctx.lineCap = 'butt';
+        ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(...at(to));
+        ctx.moveTo(...at(from, r));
+        ctx.lineTo(...at(to, r2));
+        ctx.lineTo(...at(to, -r2));
+        ctx.lineTo(...at(from, -r));
+        ctx.closePath();
+        ctx.fill();
+      };
+      const shadow = (length: number, width: number) => {
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.lineWidth = width;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(tx + 2, ty + 3);
+        ctx.lineTo(tx + ux * length + 3, ty + uy * length + 4);
         ctx.stroke();
       };
-      const stub = len + 4;
-      const grip = stub + 18;
-
-      // A soft shadow cast down and to the right, so it floats over the sheet.
-      ctx.strokeStyle = 'rgba(0, 0, 0, 0.35)';
-      ctx.lineWidth = 6;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(tx + 3, ty + 4);
-      ctx.lineTo(...(at(grip, -3).map((v, k) => v + (k ? 5 : 2)) as [number, number]));
-      ctx.stroke();
-
-      // The insulated grip and its brass collar.
-      cylinder(stub + 3, grip, 3.6, [58, 60, 66], [14, 15, 18]);
-      ctx.fillStyle = rgba([24, 25, 29], 1);
-      ctx.beginPath();
-      ctx.arc(...at(grip), 3.6, 0, Math.PI * 2);
-      ctx.fill();
-      cylinder(stub, stub + 3, 3.1, [226, 188, 110], [120, 84, 34]);
-      // The bare stub in the collar, then the flux-coated rod.
-      cylinder(len, stub, 1.4, [206, 210, 218], [96, 100, 110]);
-      cylinder(5, len, 1.7, [214, 204, 182], [118, 108, 90]);
-      // The sharpened tip, glowing after the arc.
       const hot = tipHeat > 0.02;
-      const tipLight: RGB = hot
-        ? heatColour(0.35 + 0.6 * tipHeat, [150, 150, 158])
-        : [176, 180, 190];
-      const tipDark: RGB = hot ? scale(tipLight, 0.7) : [84, 88, 98];
-      const [bx, by] = at(5);
-      const grad = ctx.createLinearGradient(...at(5, 1.7), ...at(5, -1.7));
-      grad.addColorStop(0, rgba(tipLight, 1));
-      grad.addColorStop(1, rgba(tipDark, 1));
-      ctx.fillStyle = grad;
-      ctx.beginPath();
-      ctx.moveTo(...at(5, 1.7));
-      ctx.lineTo(tx, ty);
-      ctx.lineTo(...at(5, -1.7));
-      ctx.closePath();
-      ctx.fill();
-      if (hot) {
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.fillStyle = rgba([255, 150, 60], 0.35 * tipHeat);
+      const tipColour = (cold: RGB): RGB => (hot ? heatColour(0.3 + 0.65 * tipHeat, cold) : cold);
+      const device = config.device;
+
+      if (device === 'electrode') {
+        const len = Math.max(10, config.pen);
+        const stub = len + 4;
+        const grip = stub + 18;
+        shadow(grip, 6);
+        cylinder(stub + 3, grip, 3.6, [58, 60, 66], [14, 15, 18]);
+        cylinder(stub, stub + 3, 3.1, [226, 188, 110], [120, 84, 34]);
+        cylinder(len, stub, 1.4, [206, 210, 218], [96, 100, 110]);
+        cylinder(5, len, 1.7, [214, 204, 182], [118, 108, 90]);
+        cylinder(
+          0,
+          5,
+          0.2,
+          tipColour([176, 180, 190]),
+          scale(tipColour([176, 180, 190]), 0.6),
+          1.7
+        );
+      } else if (device === 'tig') {
+        // A tungsten point, the ceramic cup flaring back from it, the torch body and ribbed handle.
+        shadow(46, 8);
+        cylinder(16, 46, 3.4, [64, 66, 74], [16, 17, 20]);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+        ctx.lineWidth = 0.7;
+        for (let d = 22; d < 44; d += 3.5) {
+          ctx.beginPath();
+          ctx.moveTo(...at(d, 3.2));
+          ctx.lineTo(...at(d, -3.2));
+          ctx.stroke();
+        }
+        cylinder(12, 16, 4.2, [82, 84, 92], [26, 27, 31]);
+        cylinder(4, 12, 2.2, [236, 214, 198], [150, 120, 104], 4.4);
+        cylinder(
+          0,
+          4,
+          0.3,
+          tipColour([196, 200, 210]),
+          scale(tipColour([196, 200, 210]), 0.55),
+          0.7
+        );
+      } else if (device === 'mig') {
+        // A copper contact tip in a brass nozzle, the swan neck and the handle.
+        shadow(44, 9);
+        cylinder(24, 44, 4.6, [70, 72, 80], [18, 19, 22]);
+        cylinder(14, 24, 2.8, [60, 62, 68], [16, 17, 20]);
+        cylinder(4, 14, 4.4, [236, 196, 120], [130, 92, 40], 3.6);
+        cylinder(0, 4, 0.8, tipColour([214, 130, 80]), scale(tipColour([214, 130, 80]), 0.55), 1.3);
+      } else if (device === 'laser') {
+        // A slim laser head: a dark anodised body, a bright lens ring and its aiming dot.
+        shadow(38, 6);
+        cylinder(5, 38, 2.6, [58, 66, 92], [14, 16, 26]);
+        cylinder(3, 5, 2.6, [226, 230, 238], [110, 116, 128]);
+        cylinder(0, 3, 0.8, [40, 44, 56], [10, 11, 14], 2);
+        if (level < 0.5) {
+          ctx.globalCompositeOperation = 'lighter';
+          const dot = ctx.createRadialGradient(tx, ty + 3, 0, tx, ty + 3, 6);
+          dot.addColorStop(0, 'rgba(255, 60, 60, 0.9)');
+          dot.addColorStop(1, 'rgba(255, 40, 40, 0)');
+          ctx.fillStyle = dot;
+          ctx.beginPath();
+          ctx.arc(tx, ty + 3, 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalCompositeOperation = 'source-over';
+        }
+      } else {
+        // The pencil: a plain rod with a dark outline, its tip glowing after use.
+        const len = Math.max(8, config.pen);
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.lineWidth = 3.6;
         ctx.beginPath();
-        ctx.arc(bx * 0.4 + tx * 0.6, by * 0.4 + ty * 0.6, 4, 0, Math.PI * 2);
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(...at(len));
+        ctx.stroke();
+        ctx.strokeStyle = '#c9ccd3';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(...at(2));
+        ctx.lineTo(...at(len));
+        ctx.stroke();
+        ctx.strokeStyle = rgba(tipColour([138, 143, 153]), 1);
+        ctx.beginPath();
+        ctx.moveTo(tx, ty);
+        ctx.lineTo(...at(3));
+        ctx.stroke();
+      }
+      if (hot && device !== 'pencil') {
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = rgba([255, 150, 60], 0.3 * tipHeat);
+        ctx.beginPath();
+        ctx.arc(...at(1.5), 3.5, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = 'source-over';
       }

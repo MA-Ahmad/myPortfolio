@@ -1,8 +1,7 @@
 {
   "style": "mig",
-  "width": 6,
-  "ripple": 3.2,
-  "rippleDepth": 0.5,
+  "device": "pencil",
+  "width": 4.5,
   "cool": 900,
   "dry": 2500,
   "spatter": 1,

@@ -8,6 +8,7 @@ import { type Activity, fetchGitHubContributions } from 'lib/github-contribution
 import { PanoramaHome, PanoramaLayout } from 'themes/panorama';
 import {
   STYLE_LOOK,
+  WELD_DEVICES,
   WELD_STYLES,
   WELDER_DEFAULTS,
   type WelderConfig,
@@ -17,7 +18,8 @@ import type { NextPageWithLayout } from '../_app';
 
 /**
  * Dev only: the tuning page for welding a Panorama seam by hand. The real theme, with a panel to
- * pick the process (stick, MIG, TIG, laser, braze) and tune its bead, arc and cursor, live. Hover a
+ * pick the process (stick, MIG, TIG, laser, braze) and the device (pencil, electrode, TIG torch,
+ * MIG gun, laser pen), and tune the bead, arc and cursor, live. Hover a
  * torn seam, hold and drag along it. "Start over" tears the seams again. Save writes
  * `themes/panorama/torn/welder.json`.
  */
@@ -32,8 +34,6 @@ const GROUPS: { title: string; knobs: Knob[] }[] = [
     title: 'Bead',
     knobs: [
       { key: 'width', label: 'Width (px)', min: 2, max: 12, step: 0.1 },
-      { key: 'ripple', label: 'Ripple every', min: 0, max: 8, step: 0.1 },
-      { key: 'rippleDepth', label: 'Ripple depth', min: 0, max: 1, step: 0.05 },
       { key: 'cool', label: 'Cooling (ms)', min: 150, max: 3000, step: 50 },
       { key: 'dry', label: 'Drying (ms)', min: 200, max: 8000, step: 100 }
     ]
@@ -131,6 +131,24 @@ function Panel({ onRestart }: { onRestart: () => void }) {
                   className={`${button} ${config.style === style ? 'bg-white/30' : ''}`}
                 >
                   {STYLE_LOOK[style].label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset className="mb-3">
+            <legend className="mb-1 text-[11px] uppercase tracking-wide text-neutral-500">
+              Device
+            </legend>
+            <div className="flex flex-wrap gap-1">
+              {WELD_DEVICES.map((device) => (
+                <button
+                  key={device.key}
+                  type="button"
+                  aria-pressed={config.device === device.key}
+                  onClick={() => setConfig((current) => ({ ...current, device: device.key }))}
+                  className={`${button} ${config.device === device.key ? 'bg-white/30' : ''}`}
+                >
+                  {device.label}
                 </button>
               ))}
             </div>

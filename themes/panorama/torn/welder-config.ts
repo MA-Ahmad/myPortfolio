@@ -5,15 +5,23 @@ import saved from './welder.json';
  * arc; the numbers tune it. Tuned at /dev/welder, which saves `welder.json`.
  */
 export const WELD_STYLES = ['stick', 'mig', 'tig', 'laser', 'braze'] as const;
+
+/** The welding device drawn at the pointer. */
+export const WELD_DEVICES = [
+  { key: 'pencil', label: 'Pencil' },
+  { key: 'electrode', label: 'Electrode' },
+  { key: 'tig', label: 'TIG torch' },
+  { key: 'mig', label: 'MIG gun' },
+  { key: 'laser', label: 'Laser pen' }
+] as const;
 export type WeldStyle = (typeof WELD_STYLES)[number];
 
 export type WelderConfig = {
   style: string;
+  /** The device drawn at the pointer: pencil, electrode, tig, mig or laser. */
+  device: string;
   /** The bead's width, px. */
   width: number;
-  /** The spacing of its ripples along the seam, px, and how strongly they show (0 to 1). */
-  ripple: number;
-  rippleDepth: number;
   /** How long the bead takes to cool from white-hot, ms. */
   cool: number;
   /** Once cool, how long the bead takes to dry and fade away, leaving the sheet's healed scar, ms. */
@@ -22,7 +30,7 @@ export type WelderConfig = {
   spatter: number;
   glow: number;
   smoke: number;
-  /** The length of the rod at the pointer, px. */
+  /** The length of the pencil's or electrode's rod, px. */
   pen: number;
   /** 1 to say "Hold to weld" beside the rod before the first weld. */
   hint: number;
@@ -30,7 +38,7 @@ export type WelderConfig = {
 
 export const WELDER_DEFAULTS: WelderConfig = saved;
 
-/** Each process as it looks: the colour of its cooled bead, its arc, and its ripples. */
+/** Each process as it looks: the colour of its cooled bead and its arc. */
 export const STYLE_LOOK: Record<
   WeldStyle,
   {
@@ -50,8 +58,6 @@ export const STYLE_LOOK: Record<
     tint: false,
     preset: {
       width: 7,
-      ripple: 2.6,
-      rippleDepth: 0.7,
       cool: 1100,
       spatter: 1.4,
       glow: 1,
@@ -63,7 +69,7 @@ export const STYLE_LOOK: Record<
     metal: [112, 117, 127],
     arc: [205, 215, 255],
     tint: false,
-    preset: { width: 6, ripple: 3.2, rippleDepth: 0.5, cool: 900, spatter: 1, glow: 1, smoke: 1 }
+    preset: { width: 6, cool: 900, spatter: 1, glow: 1, smoke: 1 }
   },
   tig: {
     label: 'TIG',
@@ -72,8 +78,6 @@ export const STYLE_LOOK: Record<
     tint: true,
     preset: {
       width: 5,
-      ripple: 2.2,
-      rippleDepth: 0.8,
       cool: 800,
       spatter: 0.2,
       glow: 1.1,
@@ -85,7 +89,7 @@ export const STYLE_LOOK: Record<
     metal: [196, 201, 212],
     arc: [255, 236, 210],
     tint: false,
-    preset: { width: 2.6, ripple: 0, rippleDepth: 0, cool: 500, spatter: 0.35, glow: 0.6, smoke: 0 }
+    preset: { width: 2.6, cool: 500, spatter: 0.35, glow: 0.6, smoke: 0 }
   },
   braze: {
     label: 'Braze',
@@ -94,8 +98,6 @@ export const STYLE_LOOK: Record<
     tint: false,
     preset: {
       width: 6.5,
-      ripple: 4,
-      rippleDepth: 0.35,
       cool: 1200,
       spatter: 0.3,
       glow: 0.8,
