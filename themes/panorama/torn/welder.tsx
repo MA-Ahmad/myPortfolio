@@ -1,7 +1,7 @@
 import { memo, useEffect, useRef, useSyncExternalStore } from 'react';
 import { BIN, GAP, type Sheet } from './sheet';
 import { startArc } from './sound';
-import { type Point, xAt } from './tear';
+import { gapShape, type Point, xAt } from './tear';
 import { STYLE_LOOK, styleOf, welderStore } from './welder-config';
 import styles from './torn.module.css';
 
@@ -190,11 +190,92 @@ function HandWelder({
       if (!bead) return;
       const lo = binAt(Math.min(from, to) - MELT);
       const hi = binAt(Math.max(from, to) + MELT);
+      let grew = false;
       for (let i = lo; i <= hi; i++) {
         if (bead[i]) continue;
         bead[i] = now;
         welded++;
+        grew = true;
       }
+      if (grew) closeQueued = true;
+    };
+
+    /*
+     * Where the bead is laid, the seam is joined: its gap closes and the two torn edges either
+     * side of it are hidden there, so the two pieces meet as one sheet, with the bead on the line.
+     * Written straight to the seam's gap strip and edge planes, found by the seam's index; the
+     * pieces draw them again whenever the seam moves on.
+     */
+    const seamEls = () =>
+      sheetEl.querySelectorAll<HTMLElement>(`[data-seam-index="${index}"][data-axis="v"]`);
+    let closeQueued = false;
+    const applyClosure = () => {
+      closeQueued = false;
+      if (!bead || !live || !welded) return;
+      // How open the seam is at `along`: shut where welded, easing open over a few px at the ends.
+      const open = (along: number) => {
+        const i = binAt(along);
+        if (bead[i]) return 0;
+        let near = Infinity;
+        for (let k = 1; k <= 3; k++) {
+          if ((i - k >= 0 && bead[i - k]) || (i + k < bins && bead[i + k])) {
+            near = k;
+            break;
+          }
+        }
+        return near === Infinity ? 1 : Math.min(1, near / 3);
+      };
+      const clip = gapShape({ tear, gap: (along) => GAP * open(along) }, length);
+      // The edges are masked out over each welded stretch, softly at its ends.
+      const stops: string[] = [];
+      let on = false;
+      for (let i = 0; i <= bins; i++) {
+        const w = i < bins && bead[i] > 0;
+        if (w === on) continue;
+        const y = (i * BIN).toFixed(1);
+        stops.push(
+          on
+            ? `transparent ${y}px, #000 ${(i * BIN + 4).toFixed(1)}px`
+            : `#000 ${(i * BIN - 4).toFixed(1)}px, transparent ${y}px`
+        );
+        on = w;
+      }
+      const mask = `linear-gradient(to bottom, #000 0px, ${stops.join(', ')}${stops.length ? ', ' : ''}#000 100%)`;
+      seamEls().forEach((seamEl) => {
+        seamEl.querySelectorAll<HTMLElement>('[data-gap]').forEach((gap) => {
+          gap.style.clipPath = clip;
+        });
+        seamEl.querySelectorAll<HTMLElement>('[data-edge]').forEach((edge) => {
+          edge.style.maskImage = mask;
+          edge.style.setProperty('-webkit-mask-image', mask);
+        });
+      });
+    };
+    const clearClosure = () => {
+      seamEls().forEach((seamEl) => {
+        seamEl.querySelectorAll<HTMLElement>('[data-edge]').forEach((edge) => {
+          edge.style.maskImage = '';
+          edge.style.removeProperty('-webkit-mask-image');
+        });
+      });
+    };
+
+    /*
+     * The sheet's own colour at this time of day, read from its tokens, so a cold bead blends
+     * into the pieces either side of it. Read through a pixel, so any CSS colour works.
+     */
+    let sheetColour: RGB = [20, 21, 24];
+    let sheetToken = '';
+    const readSheet = () => {
+      const token = getComputedStyle(canvas).getPropertyValue('--tn-glass-top').trim();
+      if (!token || token === sheetToken) return;
+      sheetToken = token;
+      const probe = document.createElement('canvas').getContext('2d');
+      if (!probe) return;
+      probe.fillStyle = token;
+      probe.fillRect(0, 0, 1, 1);
+      const data = probe.getImageData(0, 0, 1, 1).data;
+      sheetColour = [data[0], data[1], data[2]];
     };
 
     const onMove = (event: PointerEvent) => {
@@ -312,6 +393,7 @@ function HandWelder({
         tipHeat *= Math.exp(-dt / 400);
       }
 
+      if (closeQueued) applyClosure();
       ctx.clearRect(0, 0, width, height);
       const hot = drawBead(now);
       const lively = drawSmokeAndSpatter(now);
@@ -378,7 +460,12 @@ function HandWelder({
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
       const segments = runs(level);
-      const dull: RGB = [64, 66, 72];
+      readSheet();
+      // Cold, it takes the sheet's colour: deepened towards black on a dark sheet, only shaded on a
+      // light one, so it reads as a joint in either, not a rope.
+      const light =
+        (0.2126 * sheetColour[0] + 0.7152 * sheetColour[1] + 0.0722 * sheetColour[2]) / 255;
+      const dull: RGB = scale(sheetColour, light > 0.5 ? 0.86 : 0.55);
 
       for (const [a, b, l] of segments) {
         const d = l / LEVELS;
@@ -409,17 +496,18 @@ function HandWelder({
         };
         // Dried, the metal goes matte and greyer, the bead flatter and fainter.
         const metal: RGB = [
-          look.metal[0] + (dull[0] - look.metal[0]) * d * 0.75,
-          look.metal[1] + (dull[1] - look.metal[1]) * d * 0.75,
-          look.metal[2] + (dull[2] - look.metal[2]) * d * 0.75
+          look.metal[0] + (dull[0] - look.metal[0]) * d,
+          look.metal[1] + (dull[1] - look.metal[1]) * d,
+          look.metal[2] + (dull[2] - look.metal[2]) * d
         ];
-        const w = config.width * (1 - 0.22 * d);
+        const w = config.width * (1 - 0.4 * d);
         ctx.globalAlpha = 1 - settled * d;
         if (look.tint) {
           stroke('rgba(70, 96, 170, 0.16)', w + 9);
           stroke('rgba(190, 150, 80, 0.22)', w + 5);
         } else {
-          stroke('rgba(0, 0, 0, 0.35)', w + 2.4);
+          // Its shadow on the sheet, which goes as it dries and settles flat.
+          stroke(`rgba(0, 0, 0, ${(0.35 * (1 - d)).toFixed(3)})`, w + 2.4);
         }
         stroke(rgba(scale(metal, 0.62), 1), w);
         stroke(rgba(metal, 1), w * (0.66 - 0.16 * d));
@@ -442,7 +530,7 @@ function HandWelder({
           const depth = config.rippleDepth * (1 - 0.6 * d) * (1 - settled * d);
           const x = cx(centre[i]);
           const y = cy(i * BIN + BIN / 2);
-          const half = config.width * (1 - 0.22 * d) * 0.42;
+          const half = config.width * (1 - 0.4 * d) * 0.42;
           ctx.strokeStyle = rgba([0, 0, 0], 0.32 * depth);
           ctx.beginPath();
           ctx.moveTo(x - half, y + 0.4);
@@ -682,7 +770,10 @@ function HandWelder({
       }
     };
 
-    if (bead && welded) ensure();
+    if (bead && welded) {
+      closeQueued = true;
+      ensure();
+    }
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('pointerup', onUp);
     window.addEventListener('blur', onLeave);
@@ -698,6 +789,7 @@ function HandWelder({
       sheetEl.removeEventListener('click', onClick, true);
       cancelAnimationFrame(frame);
       arc?.stop();
+      clearClosure();
       target = null;
       mark();
     };

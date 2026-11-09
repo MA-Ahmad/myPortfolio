@@ -444,7 +444,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
     >
       <div ref={boxRef} className={`${styles.frame} ${styles.box}`}>
         {startSeam && (
-          <Seams side="start" state={startState} intro={sheet.intro(index - 1)}>
+          <Seams side="start" seam={index - 1} state={startState} intro={sheet.intro(index - 1)}>
             {(on) => (
               <Edges
                 {...edgeProps}
@@ -459,7 +459,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
           </Seams>
         )}
         {endSeam && (
-          <Seams side="end" state={endState} intro={sheet.intro(index)}>
+          <Seams side="end" seam={index} state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <Edges
                 {...edgeProps}
@@ -477,13 +477,14 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
 
       {endSeam && (
         <div className={`${styles.frame} ${styles.gaps}`}>
-          <Seams side="end" state={endState} intro={sheet.intro(index)}>
+          <Seams side="end" seam={index} state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <div
                 ref={(element) => {
                   gapRefs.current[on] = element;
                 }}
                 className={styles.gap}
+                data-gap
                 style={{ clipPath: on === 'v' ? gapV : gapH }}
               />
             )}
@@ -493,7 +494,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
 
       {endSeam && (
         <div className={`${styles.frame} ${styles.overlay}`}>
-          <Seams side="end" state={endState} intro={sheet.intro(index)}>
+          <Seams side="end" seam={index} state={endState} intro={sheet.intro(index)}>
             {(on) => (
               <>
                 {/* An interrupted weld stays to fade out while the seam tears open. */}
@@ -651,11 +652,14 @@ function Grip({
  */
 function Seams({
   side,
+  seam,
   state,
   intro,
   children
 }: {
   side: 'start' | 'end';
+  /** Which seam this is, so the hand welder can find its gap and edges. */
+  seam: number;
   state: SeamState;
   /** On its first tear the seam was never welded, so it has no scar to show. */
   intro: boolean;
@@ -669,6 +673,7 @@ function Seams({
           className={styles.seam}
           data-axis={on}
           data-side={side}
+          data-seam-index={seam}
           data-state={state}
           data-intro={intro && state === 'tearing' ? '' : undefined}
         >
@@ -761,6 +766,7 @@ const Edges = memo(function Edges({
       <div
         ref={ref}
         className={`${styles.plane} ${styles.open}`}
+        data-edge
         style={{ '--side': side } as CSSProperties}
         aria-hidden
       >
