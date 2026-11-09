@@ -14,7 +14,7 @@ export type Seam = {
 };
 
 /** How far each torn edge stands back from its seam's centre line, px: the gap is twice this. */
-export const GAP = 6;
+export const GAP = 3;
 
 /** Tearing is sudden: the seam springs open in this long, on a strong ease-out. */
 export const TEAR_MS = 260;

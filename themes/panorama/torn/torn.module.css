@@ -132,7 +132,7 @@
   --tear-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --join-ease: cubic-bezier(0.65, 0, 0.35, 1);
   --radius: 16px;
-  --gap: 6px; /* GAP in sheet.ts */
+  --gap: 3px; /* GAP in sheet.ts */
   --tn-band: #161b2c;
   --tn-hair: #283049;
   --tn-fibre: #3c4566;
