@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactNode, useEffect, useState } from 'react';
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react';
 import { SECTIONS } from '../content';
 import styles from '../panorama.module.css';
 
@@ -18,6 +18,8 @@ export type Backdrop = {
 };
 
 const OPEN = 9; // fr of the open section; closed ones get 1fr
+/** Stacked, a swipe that keeps pulling this far past the end of a section moves to the next one, px. */
+const PULL_PX = 70;
 /** --pn-switch: how long the columns take to settle after a section opens. */
 const SWITCH_MS = 760;
 
@@ -63,8 +65,55 @@ export function Sections({
     return () => window.removeEventListener('keydown', onKey);
   }, [sections.length]);
 
+  // Stacked on a phone, scrolling moves between sections as the up and down arrows do: a swipe that
+  // starts with the open section already scrolled to its end, and pulls on past it, opens the next
+  // one (or, at its top, the previous one). A scroll that only reaches the end, momentum included,
+  // stays put: the swipe has to begin there.
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const strip = stripRef.current!;
+    const stacked = window.matchMedia('(max-width: 719px)');
+    let gesture: { y: number; body: HTMLElement; atTop: boolean; atEnd: boolean } | null = null;
+    const onStart = (event: TouchEvent) => {
+      gesture = null;
+      if (!stacked.matches || event.touches.length !== 1) return;
+      const body = (event.target as Element).closest<HTMLElement>(`.${styles.body}`);
+      if (!body || !body.closest('[data-open]')) return;
+      gesture = {
+        y: event.touches[0].clientY,
+        body,
+        atTop: body.scrollTop <= 1,
+        atEnd: body.scrollTop + body.clientHeight >= body.scrollHeight - 1
+      };
+    };
+    const onEnd = (event: TouchEvent) => {
+      if (!gesture) return;
+      const pulled = gesture.y - event.changedTouches[0].clientY;
+      const step =
+        pulled > PULL_PX && gesture.atEnd ? 1 : -pulled > PULL_PX && gesture.atTop ? -1 : 0;
+      gesture = null;
+      if (step) setOpen((current) => Math.max(0, Math.min(sections.length - 1, current + step)));
+    };
+    strip.addEventListener('touchstart', onStart, { passive: true });
+    strip.addEventListener('touchend', onEnd, { passive: true });
+    const onCancel = () => (gesture = null);
+    strip.addEventListener('touchcancel', onCancel, { passive: true });
+    return () => {
+      strip.removeEventListener('touchstart', onStart);
+      strip.removeEventListener('touchend', onEnd);
+      strip.removeEventListener('touchcancel', onCancel);
+    };
+  }, [sections.length]);
+
+  // A section opened by scrolling starts at its top.
+  useEffect(() => {
+    const body = stripRef.current?.querySelector<HTMLElement>(`[data-open] .${styles.body}`);
+    if (body) body.scrollTop = 0;
+  }, [open]);
+
   return (
     <div
+      ref={stripRef}
       className={styles.sections}
       data-skin={backdrop.skin}
       style={{ '--columns': columns } as CSSProperties}
@@ -92,7 +141,11 @@ export function Sections({
                 tabIndex={isOpen ? -1 : 0}
               />
 
-              <div id={`${section.id}-body`} className={styles.body} inert={!isOpen && i !== settled}>
+              <div
+                id={`${section.id}-body`}
+                className={styles.body}
+                inert={!isOpen && i !== settled}
+              >
                 <div className={styles.sectionNameSpace} />
                 <div className={styles.content}>{section.body}</div>
               </div>
