@@ -22,8 +22,8 @@ const FINE_POINTER = '(hover: hover) and (pointer: fine)';
 const REDUCED_MOTION = '(prefers-reduced-motion: reduce)';
 
 /**
- * A post's cover that floats beside the cursor while it is over the post's row, and follows it
- * there. Rows opt in with `data-preview="<key>"`; one listener on the list finds them. Only mouse
+ * A post's cover that floats beside the cursor while it is over the post's title, and follows it
+ * there. Titles opt in with `data-preview="<key>"`; one listener on the list finds them. Only mouse
  * and trackpad pointers get it: a tap opens the post.
  */
 export function PostPreview({
@@ -125,7 +125,7 @@ export function PostPreview({
       setActive(key);
     };
 
-    // The row under a point, if it has a cover and its section is open.
+    // The title under a point, if its post has a cover and its section is open.
     const rowAt = (el: Element | null) => {
       const row = el?.closest<HTMLElement>('[data-preview]');
       if (!row || !list.contains(row)) return null;

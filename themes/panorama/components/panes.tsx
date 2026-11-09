@@ -96,12 +96,11 @@ export function WritingPane({ posts }: { posts: BlogListPost[] }) {
         <ul ref={listRef} className={styles.list}>
           {latest.map((post) => (
             <li key={post.slug}>
-              <Link
-                href={`/blog/${post.slug}`}
-                className={styles.row}
-                data-preview={post.cover_image ? post.slug : undefined}
-              >
-                <span className={styles.rowTitle}>{post.title}</span>
+              <Link href={`/blog/${post.slug}`} className={styles.row}>
+                <span className={styles.rowTitle}>
+                  {/* Only the title's own text shows the cover, not the rest of the row. */}
+                  <span data-preview={post.cover_image ? post.slug : undefined}>{post.title}</span>
+                </span>
                 {post.description && <span className={styles.rowText}>{post.description}</span>}
                 <time className={styles.rowMeta} dateTime={post.published_at}>
                   {format(new Date(post.published_at), 'MMM d, yyyy')}
