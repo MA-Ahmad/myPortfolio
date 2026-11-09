@@ -1,7 +1,7 @@
 import saved from './blast.json';
 
 /**
- * Every taste decision in the blast, saved from the tuning page at /dev/friday-deploy into
+ * Every taste decision in the blast, kept in
  * `blast.json`. With the same config, including the seed, the blast is the same frame for frame.
  */
 export type BlastConfig = {

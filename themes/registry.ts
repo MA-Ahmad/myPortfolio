@@ -4,6 +4,7 @@ import type { BlogListPost } from 'components/blog/post-item';
 import { TerminalHome, TerminalLayout } from './terminal';
 import { NotebookHome, NotebookLayout } from './notebook';
 import { MidnightHome, MidnightLayout, MidnightSkills, MidnightWork } from './midnight';
+import { PanoramaHome, PanoramaLayout } from './panorama';
 
 export type ThemeHomeProps = {
   contributions: Activity[];
@@ -38,6 +39,11 @@ export const THEMES = {
       work: { title: 'Work - Muhammad Ahmad', Page: MidnightWork },
       skills: { title: 'Skills - Muhammad Ahmad', Page: MidnightSkills }
     }
+  },
+  panorama: {
+    title: 'Muhammad Ahmad - Full Stack Developer',
+    Home: PanoramaHome,
+    Layout: PanoramaLayout
   }
 } satisfies Record<string, Theme>;
 

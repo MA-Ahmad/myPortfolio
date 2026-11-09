@@ -1,0 +1,1220 @@
+/*
+ * The Intro's torn contact pills and its design-to-ship pipeline, from the Midnight theme, in
+ * Panorama's colours: every surface reads a --pp token, set for each time of day below. The welds
+ * themselves keep their fire colours.
+ */
+/* Only its tokens: the pills and the flow sit in the Intro's own column (or its cards). */
+.pipeline {
+  display: contents;
+  --pp-pill: linear-gradient(180deg, var(--pn-glass-sheen), transparent 70%), var(--pn-fill);
+  --pp-pill-ring: inset 0 0 0 1px var(--pn-line), inset 0 1px 0 var(--pn-glass-edge);
+  --pp-half-shadow: rgba(0, 0, 0, 0.9);
+  --pp-tile-top: #1b1e28;
+  --pp-tile-bottom: #12141b;
+  --pp-tile-stroke: rgba(255, 255, 255, 0.09);
+  --pp-tile-inner: rgba(255, 255, 255, 0.04);
+  --pp-icon: #6d7488;
+  --pp-led: #3a3f4f;
+  --pp-band: #22263a;
+  --pp-hair: #2e3550;
+  --pp-fibre: #3c4566;
+  --pp-dot: #3a3f4f;
+  --pp-busy: #f5a524;
+  --pp-done: #30d158;
+  --pp-port: #363b4b;
+  --pp-port-ring: #0a0c12;
+  --pp-wire: rgba(255, 255, 255, 0.16);
+  --pp-glow: #fff;
+  --pp-iron: #3a3f4f;
+}
+
+[data-time='morning'] .pipeline {
+  --pp-half-shadow: rgba(80, 50, 20, 0.35);
+  --pp-tile-top: #fffdf9;
+  --pp-tile-bottom: #f3ebe0;
+  --pp-tile-stroke: rgba(110, 70, 40, 0.2);
+  --pp-tile-inner: rgba(255, 255, 255, 0.85);
+  --pp-icon: #9a8672;
+  --pp-led: #dccdbc;
+  --pp-band: #fdf9f3;
+  --pp-hair: rgba(110, 70, 40, 0.26);
+  --pp-fibre: rgba(110, 70, 40, 0.34);
+  --pp-dot: #dccdbc;
+  --pp-busy: #e8890c;
+  --pp-done: #1f9d48;
+  --pp-port: #d4c3b0;
+  --pp-port-ring: #f5efe7;
+  --pp-wire: rgba(110, 70, 40, 0.28);
+  --pp-glow: #e8890c;
+  --pp-iron: #b8a48f;
+}
+
+[data-time='afternoon'] .pipeline {
+  --pp-half-shadow: rgba(20, 35, 60, 0.3);
+  --pp-tile-top: #ffffff;
+  --pp-tile-bottom: #eef2f6;
+  --pp-tile-stroke: rgba(30, 50, 80, 0.18);
+  --pp-tile-inner: rgba(255, 255, 255, 0.85);
+  --pp-icon: #8792a3;
+  --pp-led: #cfd6e0;
+  --pp-band: #fcfdfe;
+  --pp-hair: rgba(30, 50, 80, 0.24);
+  --pp-fibre: rgba(30, 50, 80, 0.3);
+  --pp-dot: #cfd6e0;
+  --pp-busy: #e8890c;
+  --pp-done: #1f9d48;
+  --pp-port: #c9d1dc;
+  --pp-port-ring: #f6f8fa;
+  --pp-wire: rgba(30, 50, 80, 0.24);
+  --pp-glow: #2f6bff;
+  --pp-iron: #a3adbb;
+}
+
+/* The tile and the torn edge, drawn in svg, read the same tokens. */
+.tileTop {
+  stop-color: var(--pp-tile-top);
+}
+.tileBottom {
+  stop-color: var(--pp-tile-bottom);
+}
+.tileBody {
+  stroke: var(--pp-tile-stroke);
+}
+.tileInner {
+  fill: none;
+  stroke: var(--pp-tile-inner);
+}
+.tileLed {
+  fill: var(--pp-led);
+}
+.tileIcon {
+  color: var(--pp-icon);
+}
+.edgeBand,
+.edgeHair {
+  fill: none;
+  stroke-linejoin: bevel;
+}
+.edgeBand {
+  stroke: var(--pp-band);
+  stroke-width: 2;
+}
+.edgeHair {
+  stroke: var(--pp-hair);
+  stroke-width: 0.5;
+}
+.edgeFibre {
+  stroke: var(--pp-fibre);
+  stroke-width: 0.35;
+  stroke-linecap: round;
+  opacity: 0.5;
+}
+
+.pillRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.socials {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* A little apart from the torn pills while they share a line; flush left once it wraps. */
+@media (min-width: 720px) {
+  .socials {
+    margin-left: 6px;
+  }
+}
+/* The same pill as the torn ones, whole and round: same fill, ring and height, an icon alone. */
+.social {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: var(--pp-pill);
+  box-shadow: var(--pp-pill-ring);
+  color: var(--pn-ink);
+  transition:
+    box-shadow 150ms ease-out,
+    transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.social::before {
+  content: '';
+  position: absolute;
+  inset: -7px -4px; /* hit area: 30px pills reach 44px */
+}
+.social svg {
+  flex: none;
+  color: var(--pn-faint);
+  transition: color 150ms ease-out;
+}
+@media (hover: hover) and (pointer: fine) {
+  .social:hover {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--pn-ink) 22%, transparent),
+      inset 0 1px 0 var(--pn-glass-edge);
+  }
+  .social:hover svg {
+    color: var(--pn-ink);
+  }
+}
+.social:active {
+  transform: scale(0.96);
+}
+.social:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 3px;
+}
+
+.pillPair {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.or {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  letter-spacing: 0.04em;
+  color: var(--pn-faint);
+}
+
+.tornPill {
+  position: relative;
+  display: inline-flex;
+  transition: transform 150ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+.tornPill::before {
+  content: '';
+  position: absolute;
+  inset: -7px -4px; /* hit area: 30px pills reach 44px */
+}
+.tornPill:active {
+  transform: scale(0.96);
+}
+.pillFace,
+.pillHalfL,
+.pillHalfR {
+  background: var(--pp-pill);
+  box-shadow: var(--pp-pill-ring);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--pn-ink);
+  font-size: var(--pn-text-ui);
+  white-space: nowrap;
+}
+.pillFace svg,
+.pillHalfL svg,
+.pillHalfR svg {
+  flex: none;
+  color: var(--pn-faint);
+}
+.pillHalfL,
+.pillHalfR {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.85;
+  filter: drop-shadow(0 1px 1.2px var(--pp-half-shadow));
+  /* Tearing is quick and sharp. */
+  transition:
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    opacity 200ms ease-out;
+}
+.pillHalfL {
+  transform: translate(-2.2px, 0.5px) rotate(-2deg);
+  transform-origin: 0 100%;
+}
+.pillHalfR {
+  transform: translate(2.2px, -0.4px) rotate(1.6deg);
+  transform-origin: 100% 0;
+}
+.pillEdge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  transition: opacity 120ms ease-out;
+}
+/* The whole pill, seamless: fades in over the halves once they touch. */
+.pillFace {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition:
+    opacity 80ms ease-out,
+    color 180ms ease-out;
+}
+.pillFace::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--pn-fill);
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  pointer-events: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .tornPill:hover .pillHalfL,
+  .tornPill:hover .pillHalfR {
+    transform: none;
+    opacity: 1;
+    transition:
+      transform 340ms cubic-bezier(0.65, 0, 0.35, 1),
+      opacity 180ms ease-out 300ms;
+  }
+  .tornPill:hover .pillEdge {
+    opacity: 0;
+    transition-delay: 300ms;
+  }
+  .tornPill:hover .pillFace {
+    opacity: 1;
+    color: var(--pn-ink);
+    transition:
+      opacity 150ms ease-out 320ms,
+      color 180ms ease-out 320ms;
+  }
+  .tornPill:hover .pillFace::after {
+    opacity: 1;
+    transition-delay: 320ms;
+  }
+}
+.tornPill:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 3px;
+  border-radius: 999px;
+}
+.tornPill:focus-visible .pillHalfL,
+.tornPill:focus-visible .pillHalfR {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform 340ms cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 180ms ease-out 300ms;
+}
+.tornPill:focus-visible .pillEdge {
+  opacity: 0;
+  transition-delay: 300ms;
+}
+.tornPill:focus-visible .pillFace {
+  opacity: 1;
+  color: var(--pn-ink);
+  transition:
+    opacity 150ms ease-out 320ms,
+    color 180ms ease-out 320ms;
+}
+/* Touch has no hover: the buttons stay whole. */
+@media (hover: none), (pointer: coarse) {
+  .pillHalfL,
+  .pillHalfR {
+    display: none;
+  }
+  .pillFace {
+    opacity: 1;
+  }
+}
+
+.heroHead {
+  position: relative;
+}
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 46px;
+  /* 28px below the pills and 8px above what follows, besides the column's 12px gap. */
+  margin: 16px 0 8px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.flow:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 6px;
+}
+
+.node {
+  --label-h: 13px;
+  --tile: 46px;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.label {
+  width: var(--tile);
+  height: var(--label-h);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  line-height: var(--label-h);
+  text-align: center;
+  white-space: nowrap;
+  color: var(--pn-faint);
+  letter-spacing: 0.01em;
+  transition: color 300ms ease-out;
+}
+.node[data-state='welding'] .label,
+.node[data-state='fixed'] .label {
+  color: var(--pn-body);
+}
+
+.tileRow {
+  display: flex;
+  align-items: center;
+}
+
+.boxWrap {
+  position: relative;
+  flex: none;
+  width: var(--tile);
+  height: var(--tile);
+}
+
+.tile {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+
+/*
+ * Torn: each half pulled a little away and twisted, dimmed, with its own shadow into the gap.
+ * Tearing is quick and sharp; joining accelerates the halves into each other, and only once they
+ * touch do the torn edges fade, the joined tile fade in and the tile brighten.
+ */
+.halfL,
+.halfR {
+  opacity: 0.6;
+  filter: drop-shadow(0 1px 1.2px var(--pp-half-shadow));
+  transition:
+    transform 260ms cubic-bezier(0.23, 1, 0.32, 1) var(--break-delay, 0ms),
+    opacity 200ms ease-out var(--break-delay, 0ms);
+}
+.halfL {
+  transform: translate(-2.8px, 0.6px) rotate(-3deg);
+  transform-origin: 0 46px;
+}
+.halfR {
+  transform: translate(2.8px, -0.5px) rotate(2.4deg);
+  transform-origin: 46px 0;
+}
+.edge {
+  transition: opacity 120ms ease-out var(--break-delay, 0ms);
+}
+.joined {
+  opacity: 0;
+  transition: opacity 80ms ease-out var(--break-delay, 0ms);
+}
+
+.node[data-state='welding'] .halfL,
+.node[data-state='welding'] .halfR,
+.node[data-state='fixed'] .halfL,
+.node[data-state='fixed'] .halfR {
+  transform: none;
+  opacity: 1;
+  transition:
+    transform var(--close-ms, 380ms) cubic-bezier(0.65, 0, 0.35, 1),
+    opacity 180ms ease-out var(--join-at, 340ms);
+}
+.node[data-state='welding'] .edge,
+.node[data-state='fixed'] .edge {
+  opacity: 0;
+  transition: opacity 160ms ease-out var(--join-at, 340ms);
+}
+.node[data-state='welding'] .joined,
+.node[data-state='fixed'] .joined {
+  opacity: 1;
+  transition: opacity 150ms ease-out calc(var(--join-at, 340ms) + 20ms);
+}
+/* ---------- welds: one kind per tile, see components/welds.tsx ---------- */
+
+.weld {
+  pointer-events: none;
+}
+.weld * {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Sparks: x flies out and slows, y rises then falls under gravity, colour cools as they go. */
+.sparkX,
+.sparkY,
+.sparkLine {
+  transform-box: view-box;
+}
+.sparkX {
+  opacity: 0;
+}
+.sparkLine {
+  stroke: #fff;
+  stroke-width: 0.55;
+}
+.node[data-state='welding'] .sparkX {
+  animation: spark-x var(--t) cubic-bezier(0.15, 0.6, 0.35, 1) var(--d) both;
+}
+.node[data-state='welding'] .sparkY {
+  animation: spark-y var(--t) linear var(--d) both;
+}
+.node[data-state='welding'] .sparkLine {
+  animation: spark-cool var(--t) linear var(--d) both;
+}
+@keyframes spark-x {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  3% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--dx));
+  }
+}
+@keyframes spark-y {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  30% {
+    transform: translateY(var(--up));
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.55);
+  }
+  100% {
+    transform: translateY(var(--down));
+  }
+}
+@keyframes spark-cool {
+  0% {
+    stroke: #fff;
+  }
+  35% {
+    stroke: #ffd28a;
+  }
+  100% {
+    stroke: #ff5a1f;
+  }
+}
+
+/* Torch: a white-hot bead runs down the seam (260-900ms); the seam behind it glows and cools. */
+.torchHeat,
+.torchHalo,
+.torchHead {
+  opacity: 0;
+}
+.torchHeat {
+  stroke: #ff9440;
+  stroke-width: 1.2;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.torchHalo {
+  stroke: rgba(255, 196, 120, 0.22);
+  stroke-width: 4;
+  stroke-dasharray: 9 200;
+  stroke-dashoffset: 9;
+}
+.torchHead {
+  stroke: #fff;
+  stroke-width: 1.6;
+  filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 0 4px #ff9a3c);
+  stroke-dasharray: 3 200;
+  stroke-dashoffset: 3;
+}
+.node[data-state='welding'] .torchHeat {
+  animation: torch-heat 1300ms linear both;
+}
+.node[data-state='welding'] .torchHalo {
+  animation: torch-halo 1300ms linear both;
+}
+.node[data-state='welding'] .torchHead {
+  animation: torch-head 1300ms linear both;
+}
+@keyframes torch-heat {
+  0%,
+  20% {
+    opacity: 1;
+    stroke: #ffd38a;
+    stroke-dashoffset: 100;
+  }
+  69% {
+    opacity: 1;
+    stroke: #ff9440;
+    stroke-dashoffset: 0;
+  }
+  100% {
+    opacity: 0;
+    stroke: #7a2e10;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes torch-halo {
+  0%,
+  20% {
+    opacity: 1;
+    stroke-dashoffset: 9;
+  }
+  69% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  74%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+@keyframes torch-head {
+  0%,
+  19% {
+    opacity: 0;
+    stroke-dashoffset: 3;
+  }
+  20% {
+    opacity: 1;
+    stroke-dashoffset: 3;
+  }
+  69% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  72%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+
+/* Spot: four flashes down the seam, each with a ring and a rivet mark that cools. */
+.spotFlash,
+.spotRing,
+.spotMark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.weld .spotFlash {
+  fill: #fff;
+  stroke: none;
+}
+.weld .spotRing {
+  stroke: #ffc77a;
+  stroke-width: 0.6;
+}
+.weld .spotMark {
+  fill: #ffab4a;
+  stroke: none;
+}
+.node[data-state='welding'] .spotFlash {
+  animation: spot-flash 260ms ease-out var(--d) both;
+}
+.node[data-state='welding'] .spotRing {
+  animation: spot-ring 420ms cubic-bezier(0.23, 1, 0.32, 1) var(--d) both;
+}
+.node[data-state='welding'] .spotMark {
+  animation: spot-mark calc(1300ms - var(--d)) linear var(--d) both;
+}
+@keyframes spot-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes spot-ring {
+  0% {
+    opacity: 1;
+    transform: scale(0.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+@keyframes spot-mark {
+  0% {
+    opacity: 0;
+    fill: #fff3d6;
+  }
+  2% {
+    opacity: 1;
+  }
+  15% {
+    fill: #ffab4a;
+  }
+  60% {
+    opacity: 0.9;
+    fill: #8a3a18;
+  }
+  100% {
+    opacity: 0;
+    fill: var(--pp-iron);
+  }
+}
+/* The halves close a step with every spot weld. */
+.node[data-weld='spot'][data-state='welding'] .halfL {
+  animation: stitch-l 1300ms linear both;
+}
+.node[data-weld='spot'][data-state='welding'] .halfR {
+  animation: stitch-r 1300ms linear both;
+}
+@keyframes stitch-l {
+  0%,
+  11.5% {
+    transform: translate(-2.8px, 0.6px) rotate(-3deg);
+  }
+  15%,
+  25.4% {
+    transform: translate(-2.1px, 0.45px) rotate(-2.25deg);
+  }
+  29%,
+  39.2% {
+    transform: translate(-1.4px, 0.3px) rotate(-1.5deg);
+  }
+  43%,
+  53% {
+    transform: translate(-0.7px, 0.15px) rotate(-0.75deg);
+  }
+  56.5%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes stitch-r {
+  0%,
+  11.5% {
+    transform: translate(2.8px, -0.5px) rotate(2.4deg);
+  }
+  15%,
+  25.4% {
+    transform: translate(2.1px, -0.38px) rotate(1.8deg);
+  }
+  29%,
+  39.2% {
+    transform: translate(1.4px, -0.25px) rotate(1.2deg);
+  }
+  43%,
+  53% {
+    transform: translate(0.7px, -0.12px) rotate(0.6deg);
+  }
+  56.5%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/* Arc: bolts flicker across the gap while the halves are dragged in, then a flash on contact. */
+.weld .arcBolt {
+  stroke: #e3f2ff;
+  stroke-width: 0.6;
+  opacity: 0;
+  filter: drop-shadow(0 0 1.2px #8ccaff) drop-shadow(0 0 3px #3b9dff);
+}
+.weld .arcFlash {
+  fill: #d6ecff;
+  stroke: none;
+  opacity: 0;
+}
+.node[data-state='welding'] .arcBolt {
+  animation: arc-flicker 520ms linear var(--d) both;
+}
+.node[data-state='welding'] .arcFlash {
+  animation: arc-flash 1300ms linear both;
+}
+@keyframes arc-flicker {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0.15;
+  }
+  22% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0;
+  }
+  46% {
+    opacity: 0.9;
+  }
+  52% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 0.1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes arc-flash {
+  0%,
+  38% {
+    opacity: 0;
+  }
+  41% {
+    opacity: 0.45;
+  }
+  62%,
+  100% {
+    opacity: 0;
+  }
+}
+.node[data-weld='arc'][data-state='welding'] .halfL {
+  animation: arc-pull-l 1300ms linear both;
+}
+.node[data-weld='arc'][data-state='welding'] .halfR {
+  animation: arc-pull-r 1300ms linear both;
+}
+@keyframes arc-pull-l {
+  0% {
+    transform: translate(-2.8px, 0.6px) rotate(-3deg);
+  }
+  10% {
+    transform: translate(-2.4px, 0.4px) rotate(-2.6deg);
+  }
+  16% {
+    transform: translate(-2.6px, 0.7px) rotate(-2.8deg);
+  }
+  24% {
+    transform: translate(-1.8px, 0.35px) rotate(-2deg);
+  }
+  30% {
+    transform: translate(-2px, 0.5px) rotate(-2.2deg);
+  }
+  37% {
+    transform: translate(-1.1px, 0.2px) rotate(-1.2deg);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4);
+  }
+  40%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+@keyframes arc-pull-r {
+  0% {
+    transform: translate(2.8px, -0.5px) rotate(2.4deg);
+  }
+  10% {
+    transform: translate(2.5px, -0.6px) rotate(2.1deg);
+  }
+  16% {
+    transform: translate(2.3px, -0.3px) rotate(2.2deg);
+  }
+  24% {
+    transform: translate(1.9px, -0.45px) rotate(1.6deg);
+  }
+  30% {
+    transform: translate(1.7px, -0.2px) rotate(1.7deg);
+  }
+  37% {
+    transform: translate(1px, -0.15px) rotate(0.9deg);
+    animation-timing-function: cubic-bezier(0.6, 0, 0.9, 0.4);
+  }
+  40%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+}
+
+/*
+ * Zip (torch and molten): the halves swing into a V hinged where the weld starts, then close as the
+ * weld travels, while the joined tile is uncovered exactly up to the weld front. Above the bead the
+ * tile is whole; below it the tear is still open, narrowing to the bead. Every transform keeps the
+ * same function list, translate(A) rotate(r) translate(B), so the browser interpolates each part.
+ */
+.node[data-weld='torch'][data-state='welding'] .halfL {
+  animation: zip-top-l 1300ms both;
+}
+.node[data-weld='torch'][data-state='welding'] .halfR {
+  animation: zip-top-r 1300ms both;
+}
+.node[data-weld='torch'][data-state='welding'] .joined {
+  animation: reveal-down 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .halfL {
+  animation: zip-bottom-l 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .halfR {
+  animation: zip-bottom-r 1300ms both;
+}
+.node[data-weld='molten'][data-state='welding'] .joined {
+  animation: reveal-up 1300ms both;
+}
+
+/* Torch: hinge at the top centre (23, 0). Left half's origin is (0, 46); right half's is (46, 0). */
+@keyframes zip-top-l {
+  0% {
+    opacity: 0.6;
+    transform: translate(-2.8px, 0.6px) rotate(-3deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(23px, -46px) rotate(1.8deg) translate(-23px, 46px);
+    animation-timing-function: linear;
+  }
+  69%,
+  100% {
+    opacity: 1;
+    transform: translate(23px, -46px) rotate(0deg) translate(-23px, 46px);
+  }
+}
+@keyframes zip-top-r {
+  0% {
+    opacity: 0.6;
+    transform: translate(2.8px, -0.5px) rotate(2.4deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-23px, 0) rotate(-1.8deg) translate(23px, 0);
+    animation-timing-function: linear;
+  }
+  69%,
+  100% {
+    opacity: 1;
+    transform: translate(-23px, 0) rotate(0deg) translate(23px, 0);
+  }
+}
+/* The welded tile follows the bead down (20-69%, linear like the bead). */
+@keyframes reveal-down {
+  0%,
+  20% {
+    opacity: 1;
+    clip-path: inset(0 0 100% 0);
+  }
+  69%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Molten: hinge at the bottom centre (23, 46). */
+@keyframes zip-bottom-l {
+  0% {
+    opacity: 0.6;
+    transform: translate(-2.8px, 0.6px) rotate(-3deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  23% {
+    opacity: 1;
+    transform: translate(23px, 0) rotate(-1.8deg) translate(-23px, 0);
+    animation-timing-function: linear;
+  }
+  62%,
+  100% {
+    opacity: 1;
+    transform: translate(23px, 0) rotate(0deg) translate(-23px, 0);
+  }
+}
+@keyframes zip-bottom-r {
+  0% {
+    opacity: 0.6;
+    transform: translate(2.8px, -0.5px) rotate(2.4deg) translate(0, 0);
+    animation-timing-function: cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  23% {
+    opacity: 1;
+    transform: translate(-23px, 46px) rotate(1.8deg) translate(23px, -46px);
+    animation-timing-function: linear;
+  }
+  62%,
+  100% {
+    opacity: 1;
+    transform: translate(-23px, 46px) rotate(0deg) translate(23px, -46px);
+  }
+}
+/* The welded tile rises with the molten front (23-62%). */
+@keyframes reveal-up {
+  0%,
+  23% {
+    opacity: 1;
+    clip-path: inset(100% 0 0 0);
+  }
+  62%,
+  100% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Molten: the seam fills from the bottom behind a white-hot front, then cools. */
+.moltenGlow,
+.moltenCore,
+.moltenFront {
+  opacity: 0;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+}
+.weld .moltenGlow {
+  stroke: rgba(255, 120, 30, 0.35);
+  stroke-width: 4.5;
+}
+.weld .moltenCore {
+  stroke: #ff8a2b;
+  stroke-width: 1.5;
+}
+.weld .moltenFront {
+  stroke: #fff;
+  stroke-width: 1.7;
+  stroke-dasharray: 2.5 200;
+  stroke-dashoffset: 2.5;
+}
+.node[data-state='welding'] .moltenGlow {
+  animation: molten-glow 1300ms linear both;
+}
+.node[data-state='welding'] .moltenCore {
+  animation: molten-core 1300ms linear both;
+}
+.node[data-state='welding'] .moltenFront {
+  animation: molten-front 1300ms linear both;
+}
+@keyframes molten-glow {
+  0%,
+  23% {
+    opacity: 1;
+    stroke-dashoffset: 100;
+  }
+  62% {
+    opacity: 1;
+    stroke-dashoffset: 0;
+  }
+  85%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes molten-core {
+  0%,
+  23% {
+    opacity: 1;
+    stroke: #ffc46b;
+    stroke-dashoffset: 100;
+  }
+  62% {
+    opacity: 1;
+    stroke: #ff8a2b;
+    stroke-dashoffset: 0;
+  }
+  82% {
+    opacity: 0.9;
+    stroke: #b4380e;
+  }
+  100% {
+    opacity: 0;
+    stroke: #4a2416;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes molten-front {
+  0%,
+  22% {
+    opacity: 0;
+    stroke-dashoffset: 2.5;
+  }
+  23% {
+    opacity: 1;
+    stroke-dashoffset: 2.5;
+  }
+  62% {
+    opacity: 1;
+    stroke-dashoffset: -100;
+  }
+  65%,
+  100% {
+    opacity: 0;
+    stroke-dashoffset: -100;
+  }
+}
+
+/* The status light: orange while a box is being joined, green once it is whole. */
+.dot {
+  position: absolute;
+  left: 36px;
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--pp-dot);
+  opacity: 0;
+  transition:
+    background-color 200ms ease-out,
+    opacity 200ms ease-out;
+}
+.dot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 9px 1px currentColor;
+  opacity: 0;
+  transition: opacity 200ms ease-out;
+}
+.node[data-state='welding'] .dot,
+.node[data-state='fixed'] .dot {
+  opacity: 1;
+}
+.node[data-state='welding'] .dot {
+  background: var(--pp-busy);
+  color: var(--pp-busy);
+}
+.node[data-state='fixed'] .dot {
+  background: var(--pp-done);
+  color: var(--pp-done);
+}
+.node[data-state='welding'] .dot::after,
+.node[data-state='fixed'] .dot::after {
+  opacity: 0.9;
+}
+
+/* Little port dots where a wire meets the box's edge. */
+.port {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--pp-port);
+  box-shadow: 0 0 0 1px var(--pp-port-ring);
+}
+.port[data-hide] {
+  display: none;
+}
+.port_l {
+  left: -3px;
+  top: calc(50% - 2.5px);
+}
+.port_r {
+  right: -3px;
+  top: calc(50% - 2.5px);
+}
+
+/* Dashed wire between boxes, with a glow line that runs along it. */
+.wire {
+  position: relative;
+  flex: 1;
+  height: 9px;
+  overflow: hidden;
+  background: repeating-linear-gradient(90deg, var(--pp-wire) 0 4px, transparent 4px 8px) 0 4px /
+    100% 1px no-repeat;
+}
+.spark {
+  position: absolute;
+  left: 0;
+  top: 3px;
+  width: 56px;
+  height: 3px;
+  /* Thin at the tail, bright and thick at the head. */
+  background: linear-gradient(
+    to right,
+    transparent,
+    color-mix(in srgb, var(--pp-glow) 50%, transparent) 60%,
+    var(--pp-glow)
+  );
+  clip-path: polygon(0 45%, 100% 0, 100% 100%, 0 55%);
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--pp-glow) 80%, transparent));
+  opacity: 0;
+  transform: translateX(-56px);
+}
+.spark[data-run] {
+  animation: run 560ms cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+@keyframes run {
+  0% {
+    opacity: 1;
+    transform: translateX(-56px);
+  }
+  85% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--w));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spark {
+    animation: none;
+  }
+  .pillHalfL,
+  .pillHalfR,
+  .pillFace,
+  .tornPill:hover .pillHalfL,
+  .tornPill:hover .pillHalfR,
+  .tornPill:hover .pillFace,
+  .tornPill:focus-visible .pillHalfL,
+  .tornPill:focus-visible .pillHalfR,
+  .tornPill:focus-visible .pillFace {
+    transition-duration: 1ms;
+    transition-delay: 0ms;
+  }
+  .halfL,
+  .halfR,
+  .edge,
+  .joined,
+  .node[data-state] .halfL,
+  .node[data-state] .halfR,
+  .node[data-state] .edge,
+  .node[data-state] .joined {
+    transition: none;
+  }
+  .weld {
+    display: none;
+  }
+  .node[data-state] .halfL,
+  .node[data-state] .halfR,
+  .node[data-state] .joined {
+    animation: none;
+  }
+}
+
+/* On a touch screen, no filters on anything that moves (see torn.module.css). */
+@media (pointer: coarse) {
+  .pillHalfR,
+  .halfR,
+  .torchHead,
+  .weld .arcBolt,
+  .spark {
+    filter: none;
+  }
+}

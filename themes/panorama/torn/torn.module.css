@@ -1,0 +1,1200 @@
+/*
+ * Torn sections: the sections are pieces of one sheet, torn apart where they meet. Opening a
+ * section welds the seams to its left shut; the ones to its right stay torn. The technique is the
+ * Midnight theme's torn tiles at sheet scale. Every weld runs 1400ms (WELD_MS in welds.tsx); keyframe percentages below are of that.
+ */
+
+/* Registered so a change of time fades the sheet's colours instead of swapping them. */
+@property --tn-band {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #161b2c;
+}
+
+@property --tn-hair {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #283049;
+}
+
+@property --tn-fibre {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3c4566;
+}
+
+@property --tn-scar {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(170, 190, 240, 0.2);
+}
+
+@property --tn-scar-light {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(220, 228, 255, 0.3);
+}
+
+@property --tn-scar-shadow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(0, 0, 0, 0.45);
+}
+
+@property --tn-hot {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #fff;
+}
+
+@property --tn-warm {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffd28a;
+}
+
+@property --tn-cool {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ff5a1f;
+}
+
+@property --tn-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ff9a3c;
+}
+
+@property --tn-iron {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3a3f52;
+}
+
+@property --tn-dust {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(200, 210, 235, 0.5);
+}
+
+@property --tn-glass-top {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.145 0.005 265);
+}
+
+@property --tn-glass-bottom {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.185 0.007 265);
+}
+
+@property --tn-sheen {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.85 0.04 265 / 0);
+}
+
+/* The sky over the top of the sheet: its colour going down, a glow (moon or sun), the moon, clouds. */
+@property --tn-sky-top {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.1 0.003 265);
+}
+
+@property --tn-sky-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.11 0.003 265);
+}
+
+@property --tn-sky-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.82 0.04 250 / 0.08);
+}
+
+/* How much of the night sky shows: its pixels and moon. */
+@property --tn-night {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 1;
+}
+
+@property --tn-clouds {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.torn {
+  --weld: 1400ms;
+  --tear-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  --join-ease: cubic-bezier(0.65, 0, 0.35, 1);
+  --radius: 16px;
+  --gap: 3px; /* GAP in sheet.ts */
+  --tn-band: #161b2c;
+  --tn-hair: #283049;
+  --tn-fibre: #3c4566;
+  --tn-scar: rgba(170, 190, 240, 0.2);
+  --tn-scar-light: rgba(220, 228, 255, 0.3);
+  --tn-scar-shadow: rgba(0, 0, 0, 0.45);
+  --tn-hot: #fff;
+  --tn-warm: #ffd28a;
+  --tn-cool: #ff5a1f;
+  --tn-glow: #ff9a3c;
+  --tn-iron: #3a3f52;
+  --tn-dust: rgba(200, 210, 235, 0.5);
+  /* Black at the top under the sky, easing to a dark slate by the bottom. */
+  --tn-glass-top: oklch(0.145 0.005 265);
+  --tn-glass-bottom: oklch(0.185 0.007 265);
+  --tn-sheen: oklch(0.85 0.04 265 / 0);
+  --tn-sky-top: oklch(0.1 0.003 265);
+  --tn-sky-mid: oklch(0.11 0.003 265);
+  --tn-sky-glow: oklch(0.82 0.04 250 / 0.08);
+  --tn-night: 1;
+  --tn-clouds: 0;
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* On paper the torn core is lighter than the sheet, and the sparks are drawn warmer so they show. */
+[data-time='morning'] .torn {
+  --tn-band: #fdf9f3;
+  --tn-hair: rgba(110, 70, 40, 0.26);
+  --tn-fibre: rgba(110, 70, 40, 0.34);
+  --tn-scar: rgba(110, 70, 40, 0.16);
+  --tn-scar-light: rgba(255, 255, 255, 0.9);
+  --tn-scar-shadow: rgba(80, 50, 20, 0.14);
+  --tn-hot: #ffd27a;
+  --tn-warm: #f39a2c;
+  --tn-cool: #b8410e;
+  --tn-glow: #f07a1a;
+  --tn-iron: #9a8672;
+  --tn-dust: rgba(110, 80, 50, 0.4);
+  --tn-glass-top: oklch(0.995 0.006 70);
+  --tn-glass-bottom: oklch(0.955 0.014 70);
+  --tn-sheen: oklch(1 0 0 / 0.6);
+  /* A pale blue sky warming to peach, with the low sun's haze where the moon sits at night. */
+  --tn-sky-top: oklch(0.83 0.055 242);
+  --tn-sky-mid: oklch(0.925 0.045 60);
+  --tn-sky-glow: oklch(0.97 0.08 78 / 0.8);
+  --tn-night: 0;
+  --tn-clouds: 0.9;
+}
+
+[data-time='afternoon'] .torn {
+  --tn-band: #fcfdfe;
+  --tn-hair: rgba(30, 50, 80, 0.24);
+  --tn-fibre: rgba(30, 50, 80, 0.3);
+  --tn-scar: rgba(30, 50, 80, 0.14);
+  --tn-scar-light: rgba(255, 255, 255, 0.9);
+  --tn-scar-shadow: rgba(20, 35, 60, 0.13);
+  --tn-hot: #ffd27a;
+  --tn-warm: #f39a2c;
+  --tn-cool: #b8410e;
+  --tn-glow: #f07a1a;
+  --tn-iron: #8792a3;
+  --tn-dust: rgba(40, 60, 90, 0.36);
+  --tn-glass-top: oklch(0.995 0.003 250);
+  --tn-glass-bottom: oklch(0.96 0.008 250);
+  --tn-sheen: oklch(1 0 0 / 0.6);
+  /* A clear blue sky, paling to white. */
+  --tn-sky-top: oklch(0.76 0.1 248);
+  --tn-sky-mid: oklch(0.89 0.05 240);
+  --tn-sky-glow: oklch(1 0 0 / 0.4);
+  --tn-night: 0;
+  --tn-clouds: 0.85;
+}
+
+/* ---------- the pieces ---------- */
+
+/*
+ * A frame is the piece's section box, reaching past it on each torn side (by --fs at the start and
+ * --fe at the end) to the seam's centre line and on to just beyond where the tear can wander.
+ * Every seam is drawn from the same point in it: --rs from the start edge, or --re from the end.
+ */
+.frame {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(-1 * var(--fs));
+  right: calc(-1 * var(--fe));
+}
+
+@media (max-width: 719px) {
+  .frame {
+    top: calc(-1 * var(--fs));
+    bottom: calc(-1 * var(--fe));
+    left: 0;
+    right: 0;
+  }
+}
+
+/* A piece's torn edges, over the sheet's surface. */
+.box {
+  z-index: -1;
+  overflow: hidden;
+}
+
+/* The torn gaps, over every piece's edges: each one hides the half of an edge that lies in it. */
+.gaps {
+  z-index: 0;
+}
+
+.torn[data-first] .box {
+  border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.torn[data-last] .box {
+  border-radius: 0 var(--radius) var(--radius) 0;
+}
+
+@media (max-width: 719px) {
+  .torn[data-first] .box {
+    border-radius: var(--radius) var(--radius) 0 0;
+  }
+
+  .torn[data-last] .box {
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+}
+
+/* Welds draw over both neighbours, and over the sections' content. */
+.overlay {
+  z-index: 2;
+}
+
+/*
+ * The sheet is dark glass: a smoky tint at the top that deepens to near black at the bottom, a
+ * soft sheen at the top centre, and one even hairline all round. The bottom stays clearly lighter
+ * than the page, so the tears read as gaps the whole way down. It is one surface under every
+ * piece, laid over the strip of sections, so its light runs straight across the seams; the gaps are
+ * cut over it. Nothing on it changes while the sections resize, so it is never redrawn mid-switch.
+ *
+ * Its top is sky: blue by day, warming at sunrise, near black with the moon and a few square
+ * pixels at night, fading into the glass by halfway down so the reading part of every section
+ * stays as it was.
+ */
+.surface {
+  /*
+   * Where the moon sits (and by day the sun's haze): at the top of the open section, 85% of the way
+   * across it, so it moves over with the columns. A closed column is one unit, the open one nine,
+   * as in panorama.module.css. Stacked on a phone it stays in the Intro instead (below).
+   */
+  --unit: calc((100% - (var(--count) - 1) * var(--pn-gap)) / (var(--count) + 8));
+  --open-start: calc(var(--open) * (var(--unit) + var(--pn-gap)));
+  --sky-x: calc(var(--open-start) + 9 * var(--unit) * 0.85);
+  --sky-y: 84px;
+  inset: 0 var(--pn-gutter) var(--pn-gutter);
+  z-index: -2;
+  border-radius: var(--radius);
+  overflow: hidden;
+  background:
+    radial-gradient(60% 45% at 50% 0%, var(--tn-sheen), transparent),
+    linear-gradient(
+      180deg,
+      var(--tn-sky-top),
+      var(--tn-sky-mid) 22%,
+      var(--tn-glass-top) 50%,
+      var(--tn-glass-bottom) 85%
+    );
+}
+
+/*
+ * Stacked, the Intro is the top row: the moon sits at its right end, level with its title while it
+ * is open and in the middle of the short row while it's closed, smaller, clear of the text.
+ */
+@media (max-width: 719px) {
+  .surface {
+    --intro: max(0, 1 - var(--open));
+    --sky-x: calc(100% - 40px);
+    --sky-y: calc(var(--pn-closed-h) / 2 + var(--intro) * (34px - var(--pn-closed-h) / 2));
+  }
+}
+
+/* The sky's layers, from the back: the night's pixels, the moon in its glow, the day's clouds. */
+.sky {
+  position: absolute;
+  inset: 0;
+  background-position: left top;
+  background-size: max(100%, 760px) auto;
+  background-repeat: no-repeat;
+}
+
+/* The moon's glow, the sun's haze by day: a small bright core in a wide soft halo. */
+.glow,
+.moon {
+  position: absolute;
+  left: var(--sky-x);
+  top: var(--sky-y);
+  translate: -50% -50%;
+  /* The same move as the columns, so the moon arrives with the section. */
+  transition:
+    left var(--pn-switch) var(--pn-drawer),
+    top var(--pn-switch) var(--pn-drawer);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glow,
+  .moon {
+    transition: none;
+  }
+}
+
+.glow {
+  width: 560px;
+  height: 560px;
+  background:
+    radial-gradient(circle 46px at center, var(--tn-sky-glow), transparent),
+    radial-gradient(circle 280px at center, var(--tn-sky-glow), transparent 72%);
+}
+
+/* A full moon (a NASA photograph) with a soft bloom, behind the clouds so they can pass over it. */
+.moon {
+  width: 40px;
+  height: 40px;
+  background: url('./moon.png') center / contain no-repeat;
+  opacity: var(--tn-night);
+  /* A thin bright rim of light, then a wide, faint, cool halo, as a camera sees it. */
+  filter: drop-shadow(0 0 3px oklch(0.97 0.02 90 / 0.55))
+    drop-shadow(0 0 22px oklch(0.88 0.03 250 / 0.28));
+}
+
+@media (max-width: 719px) {
+  .moon {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/*
+ * A clumped field of square pixels along the top, thinning downward: drawn white on a canvas from
+ * pixel-sky.json. Night only: it fades out with the moon by day.
+ */
+.pixelSky {
+  width: 100%;
+  height: 100%;
+  opacity: calc(var(--sky-night) * var(--tn-night));
+}
+
+/*
+ * The dithered band (dither-sky.ts), night only. Screened over the sheet, so its black cells add
+ * nothing and the sheet's own night shows through; only the band and the dots add light.
+ */
+.ditherSky {
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  opacity: calc(var(--dither) * var(--tn-night));
+  transition: opacity 600ms ease-out;
+}
+
+.ditherSky:not([data-drawn]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ditherSky {
+    transition: none;
+  }
+}
+
+/*
+ * The field and its stars are drawn once the page runs: until then they're hidden, and they fade
+ * in. A change of time still snaps (no transition runs while the layout is switching).
+ */
+.pixelSky,
+.twinkles {
+  transition: opacity 600ms ease-out;
+}
+
+.pixelSky:not([data-drawn]),
+.twinkles:not([data-drawn]) {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pixelSky,
+  .twinkles {
+    transition: none;
+  }
+}
+
+/*
+ * At night a few of the sky's pixels twinkle: each swells into a small soft glow and fades back,
+ * on its own loop. Only opacity animates; the glow itself is a fixed shadow.
+ */
+.twinkles {
+  opacity: var(--tn-night);
+}
+
+.twinkle {
+  position: absolute;
+  border-radius: 1px;
+  background: #fff;
+  box-shadow:
+    0 0 calc(var(--glow) * 0.5) rgba(255, 255, 255, 0.7),
+    0 0 var(--glow) calc(var(--glow) * 0.15) rgba(225, 232, 255, 0.35);
+  opacity: 0;
+  animation: twinkle var(--period) ease-in-out var(--delay) infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  35%,
+  75%,
+  100% {
+    opacity: 0;
+  }
+  55% {
+    opacity: var(--sparkle);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .twinkle {
+    animation: none;
+  }
+}
+
+.clouds {
+  background-image: url('./clouds.svg');
+  opacity: var(--tn-clouds);
+}
+
+.surface::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pn-ink) 12%, transparent);
+}
+
+/* ---------- seams ---------- */
+
+/*
+ * A seam's drawing space, a zero-width line down the seam's centre. Stacked sections turn it on
+ * its side with a transpose, so x stays across the seam and y along it.
+ */
+.seam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100%;
+}
+
+.seam[data-axis='v'][data-side='start'] {
+  left: var(--rs);
+}
+
+.seam[data-axis='v'][data-side='end'] {
+  left: calc(100% - var(--re));
+}
+
+.seam[data-axis='h'] {
+  height: var(--length-h);
+  transform: matrix(0, 1, 1, 0, 0, 0);
+  transform-origin: 0 0;
+}
+
+.seam[data-axis='h'][data-side='start'] {
+  top: var(--rs);
+}
+
+.seam[data-axis='h'][data-side='end'] {
+  top: calc(100% - var(--re));
+}
+
+@media (min-width: 720px) {
+  .seam[data-axis='h'] {
+    display: none;
+  }
+}
+
+@media (max-width: 719px) {
+  .seam[data-axis='v'] {
+    display: none;
+  }
+}
+
+/* Welds and shadows are kept to the sheet's top and bottom; sparks may still fly out to the sides. */
+.gaps .seam,
+.overlay .seam {
+  clip-path: inset(0 -400px);
+}
+
+/* An 800px plane on the seam's centre line, as long as the seam; its svg starts at the line's top. */
+.plane {
+  position: absolute;
+  top: 0;
+  left: -400px;
+  width: 800px;
+  height: 100%;
+}
+
+.drawing {
+  position: absolute;
+  top: 0;
+  left: 400px;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+}
+
+.drawing * {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/*
+ * A seam's gap: a strip 80px wide on its centre line (PAD in tear.ts), filled with the page's own
+ * colour, flat, and cut to the band between the two edges (gapShape).
+ */
+.gap {
+  position: absolute;
+  top: 0;
+  left: -40px;
+  width: 80px;
+  height: 100%;
+  background: var(--pn-bg);
+}
+
+/* The torn edge: a narrow core band, a hairline on the cut and a few fibres. */
+.open {
+  transform: translateX(calc(var(--side) * var(--gap)));
+}
+
+.seam[data-state='welded'] .open,
+.seam[data-state='sealed'] .open {
+  opacity: 0;
+}
+
+.band {
+  stroke: var(--tn-band);
+  stroke-width: 5;
+}
+
+.hair {
+  stroke: var(--tn-hair);
+  stroke-width: 1.2;
+}
+
+.fibre {
+  stroke: var(--tn-fibre);
+  stroke-width: 0.8;
+  opacity: 0.6;
+}
+
+/*
+ * What's left of a seam once shut: a healed line, barely raised. At rest it is a faint hairline
+ * with a hint of relief (a light upper edge, a soft shadow below); over its grab strip the ridge
+ * stands up, and a warm glint runs along it under the pointer, where it would be grabbed.
+ */
+.scar {
+  opacity: 0;
+}
+
+.scarShadow,
+.scarBead,
+.scarLight {
+  transition-property: stroke-width, opacity, translate;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.scarShadow {
+  stroke: var(--tn-scar-shadow);
+  stroke-width: 1.6;
+  translate: 0.6px 0.6px;
+  opacity: 0.7;
+}
+
+.scarBead {
+  stroke: var(--tn-scar);
+  stroke-width: 1.3;
+}
+
+.scarLight {
+  stroke: var(--tn-scar-light);
+  stroke-width: 0.6;
+  translate: -0.5px -0.5px;
+  opacity: 0.5;
+}
+
+/* The glint: the bead again in warm light, masked to a pool around the pointer (--grip-y). */
+.glint {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+  -webkit-mask-image: radial-gradient(14px 110px at 400px var(--grip-y, -999px), #000, transparent);
+  mask-image: radial-gradient(14px 110px at 400px var(--grip-y, -999px), #000, transparent);
+}
+
+.glint polyline {
+  stroke: var(--tn-warm);
+  stroke-width: 1.4;
+  opacity: 0.85;
+}
+
+.glint .glintHalo {
+  stroke: var(--tn-glow);
+  stroke-width: 6;
+  opacity: 0.22;
+  filter: blur(3px);
+}
+
+.torn:has(.grip[data-pulling]) .seam[data-side='end'] .glint {
+  opacity: 1;
+}
+
+.torn:has(.grip[data-pulling]) .seam[data-side='end'] .scarBead {
+  stroke-width: 2.2;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .torn:has(.grip:hover) .seam[data-side='end'] .scarShadow {
+    stroke-width: 2.6;
+    translate: 1.1px 1.1px;
+    opacity: 1;
+  }
+
+  .torn:has(.grip:hover) .seam[data-side='end'] .scarBead {
+    stroke-width: 2.2;
+  }
+
+  .torn:has(.grip:hover) .seam[data-side='end'] .scarLight {
+    stroke-width: 0.9;
+    translate: -0.8px -0.8px;
+    opacity: 1;
+  }
+
+  .torn:has(.grip:hover) .seam[data-side='end'] .glint {
+    opacity: 1;
+  }
+}
+
+/*
+ * A welded seam's grab strip, 32px across its centre line. Dragged across the seam it cracks open
+ * (see Grip); the gap shows the crack.
+ */
+.grip {
+  position: absolute;
+  top: 0;
+  left: -16px;
+  width: 32px;
+  height: 100%;
+  pointer-events: auto;
+  cursor: grab;
+  touch-action: none;
+}
+
+.grip[data-pulling] {
+  cursor: grabbing;
+}
+
+/*
+ * The scar comes up while the weld is still cooling, so the seam never goes blank before it shows.
+ * The gap covers it on any stretch still open, and a tear opening from the line hides it at once.
+ */
+.seam[data-state='welding'] .scar {
+  opacity: 1;
+  transition: opacity 600ms ease-out 800ms;
+}
+
+.seam[data-state='welded'] .scar,
+.seam[data-state='tearing'] .scar {
+  opacity: 1;
+}
+
+/* A seam cracking open on load was never welded: no scar under it. */
+.seam[data-intro] .scar {
+  opacity: 0;
+}
+
+/* An interrupted weld fades out while the seam tears open under it. */
+.fading {
+  position: absolute;
+  inset: 0;
+}
+
+.seam[data-state='tearing'] .fading {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+/* ---------- welds ---------- */
+
+/* Particles: x flies out and slows, y rises then falls under gravity, sparks cool as they go. */
+.particleX,
+.particleY {
+  transform-box: view-box;
+}
+
+.particleX {
+  opacity: 0;
+  animation: particle-x var(--t) cubic-bezier(0.15, 0.6, 0.35, 1) var(--d) both;
+}
+
+.particleY {
+  animation: particle-y var(--t) linear var(--d) both;
+}
+
+.spark,
+.drip {
+  stroke: var(--tn-hot);
+  stroke-width: 1.3;
+  animation: cool var(--t) linear var(--d) both;
+}
+
+.drip {
+  stroke-width: 2.2;
+}
+
+.weld .dust {
+  fill: var(--tn-dust);
+  stroke: none;
+}
+
+@keyframes particle-x {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+  3% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(var(--dx));
+  }
+}
+
+@keyframes particle-y {
+  0% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.2, 0.6, 0.4, 1);
+  }
+  30% {
+    transform: translateY(var(--up));
+    animation-timing-function: cubic-bezier(0.55, 0, 0.9, 0.55);
+  }
+  100% {
+    transform: translateY(var(--down));
+  }
+}
+
+@keyframes cool {
+  0% {
+    stroke: var(--tn-hot);
+  }
+  35% {
+    stroke: var(--tn-warm);
+  }
+  100% {
+    stroke: var(--tn-cool);
+  }
+}
+
+/* ---- Zip welds: torch and molten. The bands are uncovered with the front, in welds.tsx ---- */
+
+.masked {
+  -webkit-mask: var(--mask) no-repeat;
+  mask: var(--mask) no-repeat;
+  -webkit-mask-size: var(--mask-size);
+  mask-size: var(--mask-size);
+}
+
+.glow {
+  stroke: var(--tn-glow);
+  stroke-width: 9;
+  opacity: 0.22;
+}
+
+.core {
+  stroke: var(--tn-warm);
+  stroke-width: 1.8;
+}
+
+.trail .drawing {
+  animation: seam-cool var(--weld) linear both;
+}
+
+@keyframes seam-cool {
+  0%,
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.trail .core {
+  animation: core-cool var(--weld) linear both;
+}
+
+@keyframes core-cool {
+  0%,
+  12% {
+    stroke: var(--tn-hot);
+  }
+  35% {
+    stroke: var(--tn-warm);
+  }
+  60% {
+    stroke: var(--tn-glow);
+  }
+  85%,
+  100% {
+    stroke: var(--tn-iron);
+  }
+}
+
+.torn[data-weld='molten'] .core {
+  stroke-width: 3.4;
+}
+
+.torn[data-weld='molten'] .glow {
+  stroke-width: 12;
+  opacity: 0.3;
+}
+
+.haloLine {
+  stroke: var(--tn-glow);
+  stroke-width: 16;
+  opacity: 0.18;
+}
+
+.headLine {
+  stroke: var(--tn-hot);
+  stroke-width: 3.2;
+  filter: drop-shadow(0 0 2px var(--tn-hot)) drop-shadow(0 0 6px var(--tn-glow));
+}
+
+/* ---- Spot: seven welds down the seam, each pulling the pieces a step closer ---- */
+
+.spotFlash,
+.spotRing,
+.spotMark {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.weld .spotFlash {
+  fill: var(--tn-hot);
+  stroke: none;
+  animation: spot-flash 260ms ease-out var(--d) both;
+}
+
+.weld .spotRing {
+  stroke: var(--tn-warm);
+  stroke-width: 1.2;
+  animation: spot-ring 460ms var(--tear-ease) var(--d) both;
+}
+
+.weld .spotMark {
+  fill: var(--tn-warm);
+  stroke: none;
+  animation: spot-mark calc(var(--weld) - var(--d)) linear var(--d) both;
+}
+
+@keyframes spot-flash {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes spot-ring {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  1% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2.2);
+  }
+}
+
+@keyframes spot-mark {
+  0% {
+    opacity: 0;
+    fill: var(--tn-hot);
+  }
+  2% {
+    opacity: 1;
+  }
+  18% {
+    fill: var(--tn-warm);
+  }
+  60% {
+    opacity: 0.9;
+    fill: var(--tn-cool);
+  }
+  100% {
+    opacity: 0;
+    fill: var(--tn-iron);
+  }
+}
+
+/* ---- Arc: bolts across the gap drag the pieces in with a jitter; they slam shut in a flash ---- */
+
+.weld .arcBolt {
+  stroke: #e3f2ff;
+  stroke-width: 1.2;
+  opacity: 0;
+  filter: drop-shadow(0 0 2px #8ccaff) drop-shadow(0 0 6px #3b9dff);
+  animation: arc-flicker 560ms linear var(--d) both;
+}
+
+.weld .arcFlash,
+.weld .arcFlashWide {
+  stroke: #e3f2ff;
+  opacity: 0;
+  animation: arc-flash var(--weld) linear both;
+}
+
+.weld .arcFlash {
+  stroke-width: 3;
+}
+
+.weld .arcFlashWide {
+  stroke: #8ccaff;
+  stroke-width: 16;
+  animation-name: arc-flash-wide;
+}
+
+@keyframes arc-flicker {
+  0% {
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  14% {
+    opacity: 0.15;
+  }
+  22% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0;
+  }
+  46% {
+    opacity: 0.9;
+  }
+  52% {
+    opacity: 0;
+  }
+  68% {
+    opacity: 1;
+  }
+  76% {
+    opacity: 0.1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes arc-flash {
+  0%,
+  39.5% {
+    opacity: 0;
+  }
+  40.5% {
+    opacity: 1;
+  }
+  62%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes arc-flash-wide {
+  0%,
+  39.5% {
+    opacity: 0;
+  }
+  40.5% {
+    opacity: 0.2;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---- Snap: a charge builds as the pieces are pulled in; they meet in a flash and a ripple ---- */
+
+.weld .charge {
+  stroke: var(--pn-accent);
+  stroke-width: 3;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px var(--pn-accent));
+  animation: charge var(--weld) linear both;
+}
+
+@keyframes charge {
+  0% {
+    opacity: 0;
+    stroke-width: 1;
+  }
+  36% {
+    opacity: 0.8;
+    stroke-width: 3;
+  }
+  40%,
+  100% {
+    opacity: 0;
+    stroke-width: 3;
+  }
+}
+
+.weld .snapLine {
+  stroke: var(--tn-hot);
+  stroke-width: 2.4;
+  opacity: 0;
+  filter: drop-shadow(0 0 4px var(--pn-accent));
+  animation: slam var(--weld) linear both;
+}
+
+@keyframes slam {
+  0%,
+  36.5% {
+    opacity: 0;
+  }
+  37.5% {
+    opacity: 1;
+  }
+  58%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.weld .ripple {
+  stroke: var(--pn-accent);
+  stroke-width: 1.2;
+  opacity: 0;
+  animation: ripple var(--weld) both;
+}
+
+@keyframes ripple {
+  0%,
+  37% {
+    opacity: 0;
+    transform: translateX(0);
+    animation-timing-function: cubic-bezier(0.23, 1, 0.32, 1);
+  }
+  38% {
+    opacity: 0.7;
+  }
+  80%,
+  100% {
+    opacity: 0;
+    transform: translateX(calc(var(--dir) * 72px));
+  }
+}
+
+/* ---------- the sound switch ---------- */
+
+/* ---------- reduced motion: seams switch between torn and shut, with no weld drawn ---------- */
+
+/* ---------- a torn seam under the pointer: its edges reach for each other ---------- */
+
+.attract {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.attract polyline {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.attractGlow {
+  fill: var(--tn-glow);
+  filter: blur(8px);
+}
+
+.attractHalo {
+  stroke: var(--tn-glow);
+  stroke-width: 5;
+  filter: blur(2px);
+}
+
+.attractBolt {
+  stroke: var(--tn-warm);
+  stroke-width: 1.4;
+}
+
+.attractWhite {
+  stroke: var(--tn-hot);
+  stroke-width: 0.7;
+}
+
+.attractFork {
+  stroke: var(--tn-warm);
+  stroke-width: 0.9;
+}
+
+.attractSpark {
+  fill: var(--tn-warm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .weld,
+  .attract {
+    display: none;
+  }
+
+  .torn,
+  .scar,
+  .scar *,
+  .glint {
+    transition: none !important;
+  }
+}
+
+/*
+ * On a touch screen the welds' glows are plain strokes. A blur or drop shadow on an SVG stroke
+ * that is animating re-rasterises every frame, which stutters on a phone's GPU.
+ */
+@media (pointer: coarse) {
+  .glintHalo,
+  .headLine,
+  .arcBolt,
+  .charge,
+  .snapLine {
+    filter: none;
+  }
+}

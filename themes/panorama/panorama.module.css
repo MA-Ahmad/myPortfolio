@@ -1,0 +1,1200 @@
+/*
+ * The section columns, set on the strip each time a section opens. Kept from inheriting, so
+ * changing it restyles the strip alone, not every element inside the four sections.
+ */
+@property --columns {
+  syntax: '*';
+  inherits: false;
+}
+
+/*
+ * The colours a change of time (morning, afternoon, night) swaps, registered so they can
+ * transition: every colour built from them, the text, the glass and the marks, fades with them.
+ */
+@property --pn-bg {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #1c1f24;
+}
+
+@property --pn-ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f4f4f5;
+}
+
+@property --pn-panel {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0a0c12;
+}
+
+@property --pn-panel-deep {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0d1226;
+}
+
+@property --pn-mark {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(160, 180, 230, 0.16);
+}
+
+@property --pn-mark-strong {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(170, 190, 240, 0.42);
+}
+
+@property --pn-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7aa2ff;
+}
+
+@property --pn-glass {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0.2 0.015 265 / 0.55);
+}
+
+@property --pn-glass-sheen {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(1 0 0 / 0.06);
+}
+
+@property --pn-glass-edge {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(1 0 0 / 0.1);
+}
+
+@property --pn-glass-shadow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: oklch(0 0 0 / 0.6);
+}
+
+.root {
+  /* A shade lighter than the night's near-black sheet, so a crack pulled open in it shows. */
+  --pn-bg: #1c1f24;
+  --pn-ink: #f4f4f5;
+  /* The sheet's own near-black (torn.module.css), so the washes over it stay flat. */
+  --pn-scrim: 14 15 18;
+  /* What the backgrounds draw with: a panel, quiet marks, strong marks, one accent. */
+  --pn-panel: #0a0c12;
+  --pn-panel-deep: #0d1226;
+  --pn-mark: rgba(160, 180, 230, 0.16);
+  --pn-mark-strong: rgba(170, 190, 240, 0.42);
+  --pn-accent: #7aa2ff;
+  /* Text tones: body for reading, faint for labels and meta (still AA on every time's panel). */
+  --pn-body: color-mix(in srgb, var(--pn-ink) 76%, transparent);
+  --pn-faint: color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  --pn-line: color-mix(in srgb, var(--pn-ink) 10%, transparent);
+  --pn-fill: color-mix(in srgb, var(--pn-ink) 7%, transparent);
+  --pn-fill-hi: color-mix(in srgb, var(--pn-ink) 13%, transparent);
+  /* Glass for the header controls. */
+  --pn-glass: oklch(0.2 0.015 265 / 0.55);
+  --pn-glass-sheen: oklch(1 0 0 / 0.06);
+  --pn-glass-edge: oklch(1 0 0 / 0.1);
+  --pn-glass-shadow: oklch(0 0 0 / 0.6);
+  /* The type scale; every size on the page is one of these. */
+  --pn-text-label: 11px;
+  --pn-text-meta: 12px;
+  --pn-text-ui: 13px;
+  --pn-text-row: 14px;
+  --pn-text-body: 15px;
+  --pn-text-lead: 16px;
+  --pn-text-title: 22px;
+  --pn-text-display: 34px;
+  --pn-gutter: 16px;
+  --pn-gap: 10px;
+  --pn-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  /* The open/close curve: quick to start, long soft landing. */
+  --pn-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  /*
+   * A section switch, on one clock: the columns, both sections' text and both labels all move for
+   * this long on --pn-drawer, so the closing and opening sections mirror each other.
+   */
+  --pn-switch: 760ms;
+  /* A closed section's width (or height, stacked): 1fr of the 12 the columns share. */
+  --pn-closed: calc((100vw - 2 * var(--pn-gutter) - 3 * var(--pn-gap)) / 12);
+  --pn-closed-h: calc((100dvh - 56px - var(--pn-gutter) - 3 * var(--pn-gap)) / 12);
+
+  position: relative;
+  display: grid;
+  grid-template-rows: 56px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--pn-bg);
+  color: var(--pn-ink);
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis: none;
+  /* On phones: no grey flash over a tapped control (each has its own :active), no font inflation. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  /*
+   * A change of time snaps, sky and all: ink and surfaces recolour in the same frame, so text
+   * never sits at a mid-grey over a half-changed sheet, and no clouds linger over a night sky.
+   */
+}
+
+/*
+ * While the time of day is changing (data-switching, set for a frame by the layout), nothing
+ * fades: hover-style colour transitions would otherwise carry old ink over the new sheet. The
+ * columns keep any move they are in.
+ */
+.root[data-switching] :where(*:not(.sections)) {
+  transition: none !important;
+}
+
+/* Taps fire at once: nothing here double-tap zooms. */
+.root :where(a, button, select, [role='button']) {
+  touch-action: manipulation;
+}
+
+/* Controls never select their label or pop the link callout on a long press; content still can. */
+.bar,
+.face,
+.sectionName {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Morning and afternoon read as paper; night stays dark. */
+.root[data-time='morning'] {
+  --pn-bg: #efe9e1;
+  --pn-ink: #1c1915;
+  --pn-scrim: 239 233 225;
+  --pn-panel: #f5efe7;
+  --pn-panel-deep: #f6dcc3;
+  --pn-mark: rgba(110, 70, 40, 0.16);
+  --pn-mark-strong: rgba(110, 70, 40, 0.42);
+  --pn-accent: #d0602e;
+  --pn-glass: oklch(0.99 0.012 70 / 0.62);
+  --pn-glass-sheen: oklch(1 0 0 / 0.7);
+  --pn-glass-edge: oklch(1 0 0 / 0.9);
+  --pn-glass-shadow: oklch(0.42 0.05 60 / 0.22);
+}
+
+.root[data-time='afternoon'] {
+  --pn-bg: #edf0f2;
+  --pn-ink: #0f1114;
+  --pn-scrim: 238 240 242;
+  --pn-panel: #f6f8fa;
+  --pn-panel-deep: #dce8f4;
+  --pn-mark: rgba(30, 50, 80, 0.14);
+  --pn-mark-strong: rgba(30, 50, 80, 0.4);
+  --pn-accent: #2f6bff;
+  --pn-glass: oklch(0.99 0.005 250 / 0.62);
+  --pn-glass-sheen: oklch(1 0 0 / 0.7);
+  --pn-glass-edge: oklch(1 0 0 / 0.9);
+  --pn-glass-shadow: oklch(0.36 0.04 250 / 0.2);
+}
+
+@media (min-width: 720px) {
+  .root {
+    --pn-gutter: 24px;
+  }
+}
+
+.root ::selection {
+  background: var(--pn-ink);
+  color: var(--pn-bg);
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: -48px;
+  z-index: 10;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--pn-ink);
+  color: var(--pn-bg);
+  font-size: var(--pn-text-ui);
+}
+
+.skip:focus {
+  top: 12px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-inline: var(--pn-gutter);
+}
+
+.back {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--pn-body);
+  transition:
+    color 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+/* 44px hit area around the 32px circle. */
+.back::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    color: var(--pn-ink);
+  }
+}
+
+.back:active {
+  transform: scale(0.94);
+}
+
+.back:focus-visible,
+.face:focus-visible,
+.row:focus-visible,
+.more:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.hint {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  letter-spacing: 0.02em;
+  color: var(--pn-faint);
+  white-space: nowrap;
+}
+
+/* Touch screens have no arrow keys, and narrow ones no room for the hint on one line. */
+@media (hover: none), (max-width: 479px) {
+  .hint {
+    display: none;
+  }
+}
+
+/*
+ * Header controls: one glass pill holding the backdrop's tools (sound) and the time of day. Glass
+ * here is a translucent fill over a blur, a specular top edge and a hairline ring, so it reads as a
+ * pane in every time of day, not a flat chip.
+ */
+.controls,
+.back {
+  background: linear-gradient(180deg, var(--pn-glass-sheen), transparent 60%), var(--pn-glass);
+  box-shadow:
+    inset 0 1px 0 var(--pn-glass-edge),
+    inset 0 0 0 1px var(--pn-line),
+    0 6px 20px -8px var(--pn-glass-shadow);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding: 3px;
+  border-radius: 999px;
+}
+
+/*
+ * A hairline between the tools and the time of day. The sound switch mounts into it after the page
+ * hydrates, so its width is held from the first paint and the pill never grows; the switch fades
+ * in where its space already is.
+ */
+.tools {
+  display: flex;
+  min-width: 28px;
+  margin-right: 3px;
+  padding-right: 3px;
+  box-shadow: 1px 0 0 var(--pn-line);
+}
+
+.times {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.time,
+.tool {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border-radius: 999px;
+  color: var(--pn-faint);
+  transition:
+    color 150ms ease-out,
+    background-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+/* 44px tall hit areas, side by side without overlapping. */
+.time::after,
+.tool::after {
+  content: '';
+  position: absolute;
+  inset: -9px -1px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .time:hover,
+  .tool:hover {
+    color: var(--pn-ink);
+  }
+}
+
+.time:active,
+.tool:active {
+  transform: scale(0.94);
+}
+
+/*
+ * The selected time follows the root's data-time, which an inline script sets before first paint,
+ * so the highlight is on the right time even before React has run.
+ */
+.root[data-time='morning'] .time[data-value='morning'],
+.root[data-time='afternoon'] .time[data-value='afternoon'],
+.root[data-time='night'] .time[data-value='night'] {
+  color: var(--pn-ink);
+  background: var(--pn-fill-hi);
+  box-shadow: inset 0 1px 0 var(--pn-glass-edge);
+}
+
+/* Sound on is the icon in full ink; off is faint. */
+.tool[aria-pressed='true'] {
+  color: var(--pn-ink);
+}
+
+.time:focus-visible,
+.tool:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.tools > * {
+  animation: pn-tool-in 200ms ease-out both;
+}
+
+@keyframes pn-tool-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Following the clock, there's nothing to go back to. */
+.root:not([data-picked]) .auto {
+  display: none;
+}
+
+.auto {
+  position: relative;
+  padding: 0 8px 0 6px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  color: var(--pn-faint);
+}
+
+/* A 44px tall target around the 28px label. */
+.auto::after {
+  content: '';
+  position: absolute;
+  inset: -8px 0;
+}
+
+.main {
+  min-width: 0;
+  min-height: 0;
+  outline: none;
+}
+
+/* ---- The sections: one screen, one open ---- */
+
+.sections {
+  display: grid;
+  grid-template-columns: var(--columns);
+  gap: var(--pn-gap);
+  height: calc(100dvh - 56px);
+  padding: 0 var(--pn-gutter) var(--pn-gutter);
+  position: relative;
+  transition: grid-template-columns var(--pn-switch) var(--pn-drawer);
+}
+
+/* Narrow screens stack them: the same idea, turned on its side. */
+@media (max-width: 719px) {
+  .sections {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--columns);
+    transition: grid-template-rows var(--pn-switch) var(--pn-drawer);
+  }
+}
+
+.section {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 16px;
+  /* Its own layer, so a closing neighbour never repaints it. */
+  isolation: isolate;
+}
+
+/* What the section shows, clipped to it. A backdrop's `under` layer sits beneath, unclipped. */
+.window {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--pn-ink) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--pn-ink) 6%, transparent);
+  pointer-events: none;
+}
+
+/* A torn seam's spark is up (see torn/attract.tsx): a click there welds it. */
+.sections[data-seam],
+.sections[data-seam] * {
+  cursor: pointer !important;
+}
+
+/* ---- A closed section: its edge, labeled ---- */
+
+.face {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(rgb(var(--pn-scrim) / 0.15), rgb(var(--pn-scrim) / 0.55));
+  cursor: pointer;
+  /* Comes in as the column closes, and goes as it opens: the body's fade, reversed. */
+  transition: opacity var(--pn-switch) var(--pn-drawer);
+}
+
+/* Pressed, the closed edge lifts a little, the moment a finger lands. */
+.face:active {
+  background: linear-gradient(rgb(var(--pn-scrim) / 0.05), rgb(var(--pn-scrim) / 0.4));
+}
+
+.section[data-open] .face {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/*
+ * The section's name, never faded. Closed, it is turned a quarter clockwise about its top left
+ * corner, reading down the middle of the edge; opening, it swings up into the title's place as the
+ * column widens, on the same clock. The top line stays put, so every name starts level.
+ */
+.sectionName {
+  --line: 28px;
+  position: absolute;
+  top: 20px;
+  left: 0;
+  margin: 0;
+  font-size: var(--pn-text-title);
+  font-weight: 500;
+  line-height: var(--line);
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: var(--pn-ink);
+  pointer-events: none;
+  transform-origin: 0 0;
+  transform: translate(calc(var(--pn-closed) / 2 + var(--line) / 2), 0) rotate(90deg);
+  transition: transform var(--pn-switch) var(--pn-drawer);
+}
+
+.section[data-open] .sectionName {
+  transform: translate(24px, 0) rotate(0deg);
+}
+
+/* Holds the heading's line in the open section's layout. */
+.sectionNameSpace {
+  height: 28px;
+  flex: none;
+}
+
+/*
+ * A torn skin draws the sheet the sections are cut from, under their windows. The sections give
+ * up their own layers so a seam's weld can draw over both neighbours, and the strip becomes one,
+ * so the shadow in a torn gap can sit under every piece.
+ */
+.sections[data-skin='torn'] {
+  isolation: isolate;
+}
+
+.sections[data-skin='torn'] .section {
+  isolation: auto;
+}
+
+.sections[data-skin='torn'] .section::after {
+  display: none;
+}
+
+.sections[data-skin='torn'] .window {
+  z-index: 1;
+}
+
+/* Plain paper needs no wash behind the text, and a wash's straight edge would cut across a scar. */
+.sections[data-skin='torn'] .face,
+.sections[data-skin='torn'] .content::before {
+  background: none;
+}
+
+/* Stacked, a closed section is a short row: the name reads across it, centred down it. */
+@media (max-width: 719px) {
+  .sectionName {
+    transform: translate(18px, calc(var(--pn-closed-h) / 2 - var(--line) / 2 - 20px)) rotate(0deg);
+  }
+}
+
+/* ---- An open section ---- */
+
+.body {
+  position: absolute;
+  inset: 0 auto 0 0;
+  /* As wide as the section will be once open, so text never rewraps while it grows. */
+  width: calc((100vw - 2 * var(--pn-gutter) - 3 * var(--pn-gap)) * 0.75);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 24px 24px;
+  overflow-y: auto;
+  /* Its own bounce at either end, without dragging the page behind it. */
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  /* Closed, its content is only transparent (see .content), and inert from the markup. */
+  pointer-events: none;
+}
+
+.body::-webkit-scrollbar {
+  display: none;
+}
+
+.section[data-open] .body {
+  pointer-events: auto;
+}
+
+@media (max-width: 719px) {
+  .body {
+    width: 100%;
+  }
+
+  /*
+   * Scrolled, the text fades out under the section's title instead of running beneath it. At rest
+   * the content starts below the faded band, so nothing is dimmed until it scrolls up. Not over the
+   * dithered sky, where the cards are glass: a mask would cut their blur off from the sky.
+   */
+  .sections:not(:has([data-dither-sky])) .body {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 44px, #000 70px);
+    mask-image: linear-gradient(to bottom, transparent 44px, #000 70px);
+  }
+}
+
+.content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 600px);
+}
+
+/* A soft wash behind the text that grows with it, so the floor keeps the rest of the window. */
+.content::before {
+  content: '';
+  position: absolute;
+  inset: -120px -60px -24px -24px;
+  z-index: -1;
+  background: radial-gradient(
+    120% 100% at 0% 100%,
+    rgb(var(--pn-scrim) / 0.92) 40%,
+    rgb(var(--pn-scrim) / 0) 100%
+  );
+  pointer-events: none;
+}
+
+/*
+ * The content settles into place with the column as one block, and sinks back as it closes,
+ * fading on the same clock: a closing section keeps its text while its column narrows, dimming
+ * exactly as the opening one brightens, so the strip is never blank between the two. Transitions,
+ * so a switch caught midway turns back smoothly instead of jumping.
+ *
+ * Closed, it is only transparent, never hidden: a hidden layer can lose its drawn tiles and be
+ * drawn again a tile at a time on reopening. It keeps its own small layer for good, so its text is
+ * never redrawn as a layer is handed back at the start or end of a switch, a visible flicker.
+ */
+.content {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity var(--pn-switch) var(--pn-drawer),
+    transform var(--pn-switch) var(--pn-drawer);
+  will-change: opacity, transform;
+}
+
+.section[data-open] .content {
+  opacity: 1;
+  transform: none;
+}
+
+.sectionName {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root,
+  .sections,
+  .body,
+  .face,
+  .sectionName {
+    transition: none !important;
+  }
+
+  .content {
+    transition: none;
+  }
+}
+
+/* ---- Section content ---- */
+
+/*
+ * A pane's blocks: the hero, the pipeline, the chart, a list. On the plain sky they leave no trace
+ * in the layout. Over the dithered night sky, which is too busy to read text on, each is a card of
+ * dark frosted glass, as the sky's reference does it: the sky shows through, blurred, behind solid
+ * text.
+ */
+.group {
+  display: contents;
+}
+
+/*
+ * A backdrop blur only sees past an ancestor with no opacity (or will-change: opacity) of its own,
+ * so here the column only slides and each card fades itself in: its own opacity doesn't hide the
+ * sky from its blur.
+ */
+.root[data-time='night'] .sections:has([data-dither-sky]) .content {
+  gap: 14px;
+  width: min(100%, 640px);
+  opacity: 1;
+  will-change: transform;
+}
+
+.root[data-time='night'] .sections:has([data-dither-sky]) .group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px 20px 20px;
+  border-radius: 16px;
+  background: rgb(15 17 21 / 0.72);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.06),
+    inset 0 1px 0 rgb(255 255 255 / 0.05),
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 12px 32px -8px rgb(0 0 0 / 0.45);
+  opacity: 0;
+  transition: opacity var(--pn-switch) var(--pn-drawer);
+}
+
+.root[data-time='night'] .sections:has([data-dither-sky]) .section[data-open] .group {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
+    transition: none;
+  }
+}
+
+/* Inside a card, the blocks start and end at its padding. */
+.root[data-time='night'] .sections:has([data-dither-sky]) .group > :first-child {
+  margin-top: 0;
+}
+
+.root[data-time='night'] .sections:has([data-dither-sky]) .group > :last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 719px) {
+  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
+    padding: 16px 16px 18px;
+    border-radius: 14px;
+  }
+}
+
+.name {
+  margin: 0;
+  font-size: var(--pn-text-display);
+  font-weight: 500;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+  text-wrap: balance;
+}
+
+.role {
+  margin: -6px 0 0;
+  line-height: 1.4;
+  text-wrap: balance;
+  font-size: var(--pn-text-lead);
+  color: var(--pn-body);
+}
+
+.text {
+  margin: 0;
+  max-width: 44ch;
+  font-size: var(--pn-text-body);
+  line-height: 1.6;
+  color: var(--pn-body);
+  text-wrap: pretty;
+}
+
+.now {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-meta);
+  line-height: 1.5;
+  color: var(--pn-faint);
+}
+
+.live {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #30d158;
+  box-shadow: 0 0 0 3px rgba(48, 209, 88, 0.18);
+}
+
+.heading {
+  margin: 4px 0 0;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--pn-faint);
+}
+
+.stack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 24px;
+  margin: 0 0 8px;
+}
+
+.stackGroup {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.stackGroup dt {
+  font-size: var(--pn-text-ui);
+  color: var(--pn-faint);
+}
+
+.stackGroup dd {
+  margin: 0;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px 0 8px;
+  border-radius: 999px;
+  font-size: var(--pn-text-ui);
+  white-space: nowrap;
+  color: var(--pn-ink);
+  background: var(--pn-fill);
+  box-shadow: inset 0 0 0 1px var(--pn-line);
+}
+
+.chip img {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+.root[data-time='night'] .chip img[data-tone='dark'],
+.root:not([data-time='night']) .chip img[data-tone='light'] {
+  filter: invert(1);
+}
+
+@media (max-width: 559px) {
+  .stack {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- GitHub contributions: one cell a day, the newest week on the right ---- */
+
+.contrib {
+  --cell: 9px;
+  display: grid;
+  gap: 10px;
+  /* As wide as the grid, so it lines up on the left; narrower screens clip it. */
+  width: fit-content;
+  max-width: 100%;
+  margin: 12px 0 0;
+}
+
+.contribGrid {
+  display: grid;
+  grid-template-rows: repeat(7, var(--cell));
+  gap: 2px;
+  /* Wider than the column on narrow screens: the oldest weeks are clipped on the left. */
+  justify-content: end;
+  overflow: hidden;
+}
+
+.contribGrid span,
+.contribLegend span {
+  border-radius: 2px;
+  background: var(--pn-fill);
+}
+
+.contrib [data-level='1'] {
+  background: color-mix(in oklch, var(--pn-accent) 20%, var(--pn-fill));
+}
+
+.contrib [data-level='2'] {
+  background: color-mix(in oklch, var(--pn-accent) 42%, var(--pn-fill));
+}
+
+.contrib [data-level='3'] {
+  background: color-mix(in oklch, var(--pn-accent) 68%, var(--pn-fill));
+}
+
+.contrib [data-level='4'] {
+  background: var(--pn-accent);
+}
+
+.contribCaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 16px;
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--pn-faint);
+}
+
+.contribLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.contribLegend span {
+  width: var(--cell);
+  height: var(--cell);
+}
+
+.contribLegend span:first-child {
+  margin-left: 3px;
+}
+
+.contribLegend span:last-child {
+  margin-right: 3px;
+}
+
+/* ---- Blocks: a grid of two, each with its still ---- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border-radius: 10px;
+}
+
+.cardImage {
+  margin-bottom: 6px;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: 10px;
+  background: var(--pn-fill);
+  box-shadow: inset 0 0 0 1px var(--pn-line);
+}
+
+.cardImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 300ms var(--pn-ease);
+}
+
+.root[data-time='night'] .cardImage img[data-mode='light'],
+.root:not([data-time='night']) .cardImage img[data-mode='dark'] {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover .cardImage img {
+    transform: scale(1.03);
+  }
+}
+
+.card,
+.row {
+  transition: opacity 150ms ease-out;
+}
+
+.card:active,
+.row:active {
+  opacity: 0.7;
+  transition-duration: 0ms;
+}
+
+.card:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 4px;
+}
+
+@media (max-width: 459px) {
+  .cards {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.list li + li {
+  box-shadow: 0 -1px 0 var(--pn-line);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 0;
+  border-radius: 6px;
+}
+
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--pn-text-body);
+  line-height: 1.35;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--pn-ink);
+  transition: color 150ms ease-out;
+}
+
+.rowTitle svg {
+  color: var(--pn-faint);
+  transition: transform 150ms ease-out;
+}
+
+.rowMeta {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: var(--pn-text-label);
+  font-variant-numeric: tabular-nums;
+  color: var(--pn-faint);
+}
+
+.rowText {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: var(--pn-text-ui);
+  line-height: 1.5;
+  color: var(--pn-body);
+  text-wrap: pretty;
+}
+
+/* A row whose title alone is the link (Writing): the row itself isn't pressable. */
+.rowPlain:active {
+  opacity: 1;
+}
+
+/* The title keeps its own colour and weight, not the site's link styles. */
+.rowLink,
+.rowLink:hover {
+  color: inherit;
+  font-weight: inherit;
+  border-radius: 4px;
+  transition: opacity 150ms ease-out;
+}
+
+.rowLink:active {
+  opacity: 0.7;
+  transition-duration: 0ms;
+}
+
+.rowLink:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .row:hover .rowTitle svg {
+    transform: translate(1px, -1px);
+  }
+
+  .list:hover .row:not(:hover) .rowTitle {
+    color: var(--pn-body);
+  }
+}
+
+.more {
+  position: relative;
+  align-self: flex-start;
+  font-size: var(--pn-text-ui);
+  color: var(--pn-body);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--pn-ink) 25%, transparent);
+  text-underline-offset: 4px;
+  transition:
+    color 150ms ease-out,
+    text-decoration-color 150ms ease-out;
+}
+
+/* A 44px tall target around the one-line link. */
+.more::after {
+  content: '';
+  position: absolute;
+  inset: -12px -8px;
+}
+
+.more:active {
+  color: var(--pn-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .more:hover {
+    color: var(--pn-ink);
+    text-decoration-color: currentColor;
+  }
+}
+
+/*
+ * A post's cover, following the cursor over its row in the Writing section (post-preview.tsx).
+ * The outer layer only moves (its transform is set each frame); the card inside fades and grows
+ * from the corner nearest the cursor, so the two never fight over one transform.
+ */
+.preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.previewCard {
+  box-sizing: border-box;
+  border-radius: 14px;
+  background: var(--pn-panel);
+  box-shadow:
+    0 0 0 1px var(--pn-line),
+    0 1px 0 0 var(--pn-glass-sheen) inset,
+    0 4px 12px -4px var(--pn-glass-shadow),
+    0 24px 48px -16px var(--pn-glass-shadow);
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 120ms ease-out,
+    transform 120ms ease-out;
+}
+
+.previewCard[data-visible] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 180ms var(--pn-ease),
+    transform 260ms var(--pn-ease);
+}
+
+.previewImage {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 9px;
+  background: var(--pn-fill);
+}
+
+/* The rim drawn over the picture, so a white cover still has an edge on paper. */
+.previewImage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--pn-line);
+}
+
+/* Every cover is stacked here; moving between rows crossfades to the next one. */
+.previewImage img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.previewImage img[data-active] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .previewCard,
+  .previewCard[data-visible] {
+    transform: none;
+    transition: opacity 120ms ease-out;
+  }
+}
