@@ -161,7 +161,7 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
 
 /**
  * A dithered band of colour across the night sky (see dither-sky.ts), off unless its config turns
- * it on; redrawn when the sheet resizes or the tuning page (/dev/dither) moves a slider.
+ * it on; redrawn when the sheet resizes.
  */
 function DitherSky() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -211,7 +211,7 @@ function DitherSky() {
 
 /**
  * The night sky's pixels along the top, faded out by day, redrawn when the sheet resizes
- * or the tuning page (/dev/grid) moves a slider.
+ * or its config changes.
  */
 function PixelSky() {
   const ref = useRef<HTMLCanvasElement>(null);

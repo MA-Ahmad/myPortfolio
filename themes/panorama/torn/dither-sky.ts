@@ -87,7 +87,7 @@ export type DitherConfig = {
 
 export const DITHER_DEFAULTS: DitherConfig = saved;
 
-/* A tiny store, so the tuning page (/dev/dither) can redraw the live sheet as its sliders move. */
+/* A tiny store holding the config the sheet draws from (dither-sky.json). */
 let current: DitherConfig = DITHER_DEFAULTS;
 const listeners = new Set<() => void>();
 export const ditherStore = {

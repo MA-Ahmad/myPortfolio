@@ -386,66 +386,6 @@
   outline-offset: 2px;
 }
 
-/* The dev page's weld picker: first in the tools, whatever order the portals mount in. */
-.weldPicker {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  order: -1;
-}
-
-.weld {
-  position: relative;
-  display: flex;
-  align-items: center;
-  height: 26px;
-  border-radius: 999px;
-  color: var(--pn-ink);
-  transition: background-color 150ms ease-out;
-}
-
-.weld select {
-  appearance: none;
-  height: 100%;
-  padding: 0 24px 0 10px;
-  border: 0;
-  border-radius: inherit;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-size: var(--pn-text-ui);
-  cursor: pointer;
-}
-
-/* iOS zooms into a field under 16px on focus. */
-@media (pointer: coarse) {
-  .weld select {
-    font-size: 16px;
-  }
-}
-
-.weld select option {
-  color: initial;
-}
-
-.weld svg {
-  position: absolute;
-  right: 9px;
-  color: var(--pn-faint);
-  pointer-events: none;
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .weld:hover {
-    background: var(--pn-fill-hi);
-  }
-}
-
-.weld select:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--pn-ink) 60%, transparent);
-  outline-offset: 2px;
-}
-
 .tools > * {
   animation: pn-tool-in 200ms ease-out both;
 }

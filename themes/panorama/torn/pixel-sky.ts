@@ -40,7 +40,7 @@ export type LitCell = { x: number; y: number; size: number; pick: number };
 
 export const SKY_DEFAULTS: SkyConfig = saved;
 
-/* A tiny store, so the tuning page (/dev/grid) can redraw the live sheet as its sliders move. */
+/* A tiny store holding the config the sheet draws from (pixel-sky.json). */
 let current: SkyConfig = SKY_DEFAULTS;
 const listeners = new Set<() => void>();
 export const skyStore = {
