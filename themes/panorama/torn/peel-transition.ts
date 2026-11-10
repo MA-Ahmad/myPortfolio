@@ -32,8 +32,20 @@ const SHEET = 'panorama-sheet';
 const UNDER = 'panorama-sheet-under';
 const FLAP = 'panorama-flap';
 const THREADS = 'panorama-threads';
-const DURATION_MS = 820;
-const FRAMES = 48;
+const DURATION_MS = 1050;
+const FRAMES = 64;
+/**
+ * How the fold's speed runs over the peel. It leaves at the speed the hand let it go at, picks up
+ * over this share of the time, and from the start is also falling off toward the far corner (the
+ * higher the power, the earlier it slows). Leaving at full speed instead put a quarter of the sheet
+ * behind it in the first 100ms, from a standstill: a jump, not a peel.
+ */
+const PICK_UP = 0.42;
+const FALL_OFF = 1.3;
+/** The slowest and fastest the fold may leave at, px/s of x + y: never dead still, never a lurch. */
+const LEAVE = { min: 120, max: 2600 };
+/** The curve is worked out at this many steps and read off at each frame. */
+const STEPS = 400;
 /** How wide the turned-over flap settles to as the fold runs, in px of x + y. */
 const FLAP_WIDE = 150;
 /** How deep the band the flap is drawn on is, px: enough for the deepest corner the pull can lift. */
@@ -44,8 +56,40 @@ let running = false;
 export const peeling = () => running;
 
 /**
+ * How far along the fold is (0 to 1) at each of FRAMES + 1 moments, for a fold that leaves at
+ * `speed` px/s and has `travel` px to go. The speed is the pick-up times the fall-off; the
+ * pick-up's starting level is found so that the first moment's speed is `speed`.
+ */
+function progress(speed: number, travel: number) {
+  const want = (Math.min(LEAVE.max, Math.max(LEAVE.min, speed)) * DURATION_MS) / 1000 / travel;
+  const shape = new Float64Array(STEPS + 1);
+  let level = 0.05;
+  let total = 1;
+  for (let pass = 0; pass < 8; pass++) {
+    total = 0;
+    for (let i = 0; i <= STEPS; i++) {
+      const p = i / STEPS;
+      const up = Math.min(1, p / PICK_UP);
+      shape[i] = (level + (1 - level) * up * up * (3 - 2 * up)) * (1 - p) ** FALL_OFF;
+      if (i) total += (shape[i] + shape[i - 1]) / 2 / STEPS;
+    }
+    // The first moment's speed, as a share of the whole travel per whole duration, is level / total.
+    level = Math.min(1, Math.max(0.01, want * total));
+  }
+  const at = new Float64Array(FRAMES + 1);
+  let done = 0;
+  for (let i = 1, frame = 1; i <= STEPS; i++) {
+    done += (shape[i] + shape[i - 1]) / 2 / STEPS / total;
+    while (frame <= FRAMES && i >= (frame / FRAMES) * STEPS) at[frame++] = Math.min(1, done);
+  }
+  at[FRAMES] = 1;
+  return at;
+}
+
+/**
  * Carries a corner lifted to `fold` (the fold line is x + y = fold, px from the sheet's own top
- * left, `inset` in from `sheet`'s) on across the sheet, to `next`. `flap` is the element the band
+ * left, `inset` in from `sheet`'s) on across the sheet, to `next`, starting at the `speed` (px/s of
+ * x + y) the hand was lifting it at when it let go. `flap` is the element the band
  * is drawn in and `threads` the layer the pull's threads are on, which fades off. `before` runs
  * just ahead of the new sheet's snapshot, to clear the hand-drawn fold away. Without view
  * transitions, or mid-transition, the time just changes.
@@ -56,6 +100,7 @@ export async function peelTo(
   threads: SVGElement,
   inset: number,
   fold: number,
+  speed: number,
   from: TimeOfDay,
   next: TimeOfDay,
   before: () => void
@@ -98,11 +143,10 @@ export async function peelTo(
     const px = (v: number) => `${v.toFixed(1)}px`;
     const cut: Keyframe[] = [];
     const band: Keyframe[] = [];
+    // On from the hand's own pace, gathering speed, then easing out to the far corner.
+    const along = progress(speed, end - fold);
     for (let i = 0; i <= FRAMES; i++) {
-      const p = i / FRAMES;
-      // Away at once, as the hand lets go, and easing out to the far corner: quick off the mark
-      // without lurching.
-      const eased = 1 - (1 - p) ** 2.4;
+      const eased = along[i];
       const c = fold + (end - fold) * eased;
       // The flap is the lifted part mirrored over the fold, up to its full width.
       const w = Math.min(c, fold + (FLAP_WIDE - fold) * Math.min(1, eased * 2.5));

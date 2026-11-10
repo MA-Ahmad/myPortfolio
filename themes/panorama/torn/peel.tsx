@@ -19,6 +19,9 @@ const HAND = 300;
 /** How far ahead of the lifted corner's tip the hand is kept at a full pull, px. */
 const LEAD = 130;
 
+/** A corner not moved for this long before it is let go counts as held still, ms. */
+const STILL_MS = 90;
+
 /** How far the lifted corner's shadow reaches past its edges, px. */
 const SHADE = 16;
 
@@ -73,6 +76,10 @@ export function Peel() {
     let amount = 0;
     let spring = 0;
     let leaving = false;
+    // How fast the fold is being lifted, px/s of x + y, and when it last moved: the peel carries on
+    // at this pace (peel-transition.ts).
+    let lifting = 0;
+    let lifted = 0;
 
     const time = () => (timed.getAttribute('data-time') ?? 'night') as TimeOfDay;
     // Where the corner is in the window, and whether the cursor is stuck to the hand.
@@ -224,7 +231,12 @@ export function Peel() {
           const out = (HAND * (1 - Math.exp(-far / HAND))) / far;
           pointer = { x: grab.x + dx * out, y: grab.y + dy * out };
           want = 1;
+          const before = amount;
           amount = 1 - Math.exp(-Math.max(0, inward - START) / RESIST);
+          // Smoothed over a few moves, so one late or early event does not set the pace.
+          const since = event.timeStamp - lifted;
+          if (lifted && since > 0) lifting += ((((amount - before) * LIFT) / since) * 1000 - lifting) * 0.35;
+          lifted = event.timeStamp;
           // The hand stays ahead of the lifted corner, so the threads never bunch up on it.
           const short = amount * (LIFT * Math.SQRT2 + LEAD) - (pointer.x + pointer.y) / Math.SQRT2;
           if (short > 0) {
@@ -260,6 +272,8 @@ export function Peel() {
       cancelAnimationFrame(spring);
       spring = 0;
       grab = locate(event);
+      lifting = 0;
+      lifted = 0;
       bid(event, 'peel', Math.hypot(grab.x, grab.y), svg);
       down = true;
     };
@@ -303,6 +317,8 @@ export function Peel() {
         threads,
         inset,
         amount * LIFT,
+        // A corner held still before it is let go has no pace to carry on.
+        event.timeStamp - lifted < STILL_MS ? Math.max(0, lifting) : 0,
         from,
         underneath(from),
         () => {
