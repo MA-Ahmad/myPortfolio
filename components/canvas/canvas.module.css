@@ -47,12 +47,6 @@
   --strands: #f6d365, #f08a4b, #e5484d, #d6409f, #8e4ec6;
 }
 
-@media (max-width: 767px) {
-  .root {
-    overflow: visible;
-  }
-}
-
 .stage {
   position: relative;
   height: 100dvh;

@@ -17,31 +17,34 @@ export const DISPLAY_HEADER_H = 48;
 export const DISPLAY_ROW_H = 36;
 export const DISPLAY_BODY_PAD = 8;
 export const DISPLAY_FOOTER_H = 40;
-/** On desktop the display's body is a screen showing the connected theme's page, 16:9. */
-export const DISPLAY_SCREEN_H = 315;
+/**
+ * The display's body is a screen showing the connected theme's page: 16:9 on desktop, where the page
+ * is laid out as a desktop sees it; nearly square on a phone, which shows the page's phone layout.
+ */
+export const DISPLAY_SCREEN_H: Record<Layout, number> = { desktop: 315, mobile: 330 };
+// No footer: the screen runs to the bottom edge, where the bundle lands.
 const DISPLAY: Record<Layout, { w: number; h: number }> = {
-  // No footer on desktop: the screen runs to the bottom edge, where the bundle lands.
-  desktop: { w: 560, h: DISPLAY_HEADER_H + DISPLAY_SCREEN_H },
-  // On a phone its body is three rows of readouts.
-  mobile: { w: 280, h: DISPLAY_HEADER_H + DISPLAY_BODY_PAD * 2 + DISPLAY_ROW_H * 3 + DISPLAY_FOOTER_H }
+  desktop: { w: 560, h: DISPLAY_HEADER_H + DISPLAY_SCREEN_H.desktop },
+  mobile: { w: 320, h: DISPLAY_HEADER_H + DISPLAY_SCREEN_H.mobile }
 };
 export const displaySize = (layout: Layout) => DISPLAY[layout];
 
 export const NEAR_RADIUS = 64;
 export const SNAP_RADIUS = 18;
 
-// Every desktop card is one size, so each sits the same in the slot under the display.
-const PREVIEW_H = 200;
+// Every card is one size, so each sits the same in the slot under the display.
+const PREVIEW_H: Record<Layout, number> = { desktop: 200, mobile: 170 };
 const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_BOTTOM;
 
-// Desktop: the display on top and, straight under it, the slot the connected theme sits in. The
-// other themes wait in the same row on either side, a slot apart, and slide along it.
+// The display on top and, straight under it, the slot the connected theme sits in. The other themes
+// wait in the same row on either side, a slot apart, and slide along it. On a phone the slots are
+// close enough that the neighbours' edges show.
 export const ROW: CardId[] = ['notebook', 'terminal', 'home', 'midnight', 'panorama'];
 export const DEFAULT_ACTIVE: CardId = 'home';
 const SLOT_W = CARD_W;
-const SLOT_GAP = 56;
-const SLOT_STEP = SLOT_W + SLOT_GAP;
-const ROW_GAP_Y = 230;
+const SLOT_STEP: Record<Layout, number> = { desktop: SLOT_W + 56, mobile: SLOT_W + 14 };
+// The height left for the bundle between the display and the cards.
+const ROW_GAP_Y: Record<Layout, number> = { desktop: 230, mobile: 120 };
 
 /** How many slots `id` is from the slot under the display: negative to its left. */
 export const slotOffset = (id: CardId, active: CardId) => ROW.indexOf(id) - ROW.indexOf(active);
@@ -69,7 +72,7 @@ export const CARDS: CardDef[] = [
     route: '/',
     href: '/',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW_H, mobile: 168 },
+    previewHeight: PREVIEW_H,
     packets: ['react.png', 'nextjs.png', 'typescript.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg']
   },
   {
@@ -78,7 +81,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/terminal',
     href: '/themes/terminal',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW_H, mobile: 150 },
+    previewHeight: PREVIEW_H,
     packets: ['rails.png', 'nestjs.svg', 'postgresql.png', 'claude.svg', 'ruby.png', 'redis.png']
   },
   {
@@ -87,7 +90,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/notebook',
     href: '/themes/notebook',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW_H, mobile: 170 },
+    previewHeight: PREVIEW_H,
     packets: ['claude.svg', 'react.png', 'nextjs.png', 'rails.png', 'typescript.png', 'cursor.svg']
   },
   {
@@ -96,7 +99,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/midnight',
     href: '/themes/midnight',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW_H, mobile: 170 },
+    previewHeight: PREVIEW_H,
     packets: ['nextjs.png', 'tailwindcss.svg', 'postgresql.png', 'redis.png', 'cursor.svg', 'typescript.png']
   },
   {
@@ -105,7 +108,7 @@ export const CARDS: CardDef[] = [
     route: '/themes/panorama',
     href: '/themes/panorama',
     width: { desktop: CARD_W, mobile: CARD_W },
-    previewHeight: { desktop: PREVIEW_H, mobile: 170 },
+    previewHeight: PREVIEW_H,
     packets: ['react.png', 'typescript.png', 'nextjs.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg']
   }
 ];
@@ -120,27 +123,22 @@ export const nodeSize = (id: NodeId, layout: Layout) => {
   return { w: card.width[layout], h: cardHeight(card, layout) };
 };
 
-/** Desktop wires run up from a card into the display; a phone's run sideways into its gutter. */
-export const wireAxis = (layout: Layout): Axis => (layout === 'desktop' ? 'y' : 'x');
+/** Every wire runs up from a card into the display. */
+export const wireAxis = (_layout: Layout): Axis => 'y';
 
 /**
- * The card edge the port is on. On desktop it faces the display: the top edge while the card is
- * below the display, the bottom edge if it has been dragged above it. The phone stack is a single
- * column left of the display's input, so its ports stay on the right.
+ * The card edge the wire leaves by. It faces the display: the top edge while the card is below the
+ * display, the bottom edge if it has been dragged above it.
  */
 export function portSide(id: CardId, layout: Layout, positions: Positions): Side {
-  if (layout !== 'desktop') return 'right';
-  const cardCenter = positions[id].y + cardHeight(cardById(id), 'desktop') / 2;
-  const displayCenter = positions.display.y + DISPLAY.desktop.h / 2;
+  const cardCenter = positions[id].y + cardHeight(cardById(id), layout) / 2;
+  const displayCenter = positions.display.y + DISPLAY[layout].h / 2;
   return cardCenter > displayCenter ? 'top' : 'bottom';
 }
 
-/**
- * A desktop card's port faces the display, so it plugs into the display input on the opposite
- * edge. On a phone the display is above the stack and every wire runs up its right edge.
- */
+/** The display edge a card's wire enters by: the one facing the card. */
 export const inputSide = (id: CardId, layout: Layout, positions: Positions): Side =>
-  layout !== 'desktop' ? 'right' : portSide(id, layout, positions) === 'top' ? 'bottom' : 'top';
+  portSide(id, layout, positions) === 'top' ? 'bottom' : 'top';
 
 /** Where a card's port sits, from the card's own corner: the middle of the edge it is on. */
 export function portOffset(card: CardDef, layout: Layout, side: Side): Point {
@@ -151,55 +149,33 @@ export function portOffset(card: CardDef, layout: Layout, side: Side): Point {
 }
 
 /**
- * Desktop puts the display at the top centre and the themes in one row beneath it, the `active`
- * one in the slot straight under the display with its port facing up at it, the rest a slot apart
- * to either side. Mobile stacks everything in one column and ignores `active`.
+ * The display at the top centre and the themes in one row beneath it, the `active` one in the slot
+ * straight under the display, the rest a slot apart to either side.
  */
 export function initialPositions(layout: Layout, active: CardId = DEFAULT_ACTIVE): Record<NodeId, Point> {
-  if (layout === 'desktop') {
-    const centre = DESIGN.desktop.w / 2;
-    const row = { display: { x: centre - DISPLAY.desktop.w / 2, y: 0 } } as Record<NodeId, Point>;
-    for (const id of ROW) {
-      row[id] = {
-        x: centre + slotOffset(id, active) * SLOT_STEP - cardById(id).width.desktop / 2,
-        y: DISPLAY.desktop.h + ROW_GAP_Y
-      };
-    }
-    return row;
+  const centre = DESIGN[layout].w / 2;
+  const row = { display: { x: centre - DISPLAY[layout].w / 2, y: 0 } } as Record<NodeId, Point>;
+  for (const id of ROW) {
+    row[id] = {
+      x: centre + slotOffset(id, active) * SLOT_STEP[layout] - cardById(id).width[layout] / 2,
+      y: DISPLAY[layout].h + ROW_GAP_Y[layout]
+    };
   }
-  // The display leads the stack, so it is on screen whenever the page opens; the cards sit
-  // under it and wire up the right side.
-  const stack = {} as Record<NodeId, Point>;
-  stack.display = { x: MOBILE_GUTTER + (CARD_W - DISPLAY.mobile.w) / 2, y: 0 };
-  let y = DISPLAY.mobile.h + MOBILE_GAP_DISPLAY;
-  for (const card of CARDS) {
-    stack[card.id] = { x: MOBILE_GUTTER, y };
-    y += cardHeight(card, 'mobile') + 24;
-  }
-  return stack;
+  return row;
 }
 
-// On a phone every wire runs up the right edge of the stack, out of its card's port and back
-// into the display's input; this much room is kept for the curve on both sides, so the stack
-// itself stays centered.
-const MOBILE_GUTTER = 44;
-const MOBILE_GAP_DISPLAY = 56;
+/** Nothing limits how far a wire's curve reaches out of its ends. */
+export const wireReachCap = (_layout: Layout) => Infinity;
+
+const tallest = (layout: Layout) => Math.max(...CARDS.map((card) => cardHeight(card, layout)));
 
 /**
- * How far a phone wire's curve may reach out of its ports. A bezier with both handles this far
- * out swings 3/4 of it beyond the ports, which stays inside the gutter.
+ * The box the nodes are laid out in, scaled to fit the window. Desktop has room for the connected
+ * card and a neighbour each side; a phone's is as wide as its display, and the neighbours run off it.
  */
-export const wireReachCap = (layout: Layout) => (layout === 'mobile' ? MOBILE_GUTTER * 1.2 : Infinity);
-
-export const DESIGN = {
-  desktop: {
-    w: SLOT_W + 2 * SLOT_STEP,
-    h: DISPLAY.desktop.h + ROW_GAP_Y + Math.max(...CARDS.map((card) => cardHeight(card, 'desktop')))
-  },
-  mobile: {
-    w: CARD_W + MOBILE_GUTTER * 2,
-    h: DISPLAY.mobile.h + MOBILE_GAP_DISPLAY + CARDS.reduce((sum, card) => sum + cardHeight(card, 'mobile') + 24, 0)
-  }
+export const DESIGN: Record<Layout, { w: number; h: number }> = {
+  desktop: { w: SLOT_W + 2 * SLOT_STEP.desktop, h: DISPLAY.desktop.h + ROW_GAP_Y.desktop + tallest('desktop') },
+  mobile: { w: DISPLAY.mobile.w, h: DISPLAY.mobile.h + ROW_GAP_Y.mobile + tallest('mobile') }
 };
 
 export function outputPort(id: CardId, positions: Positions, layout: Layout): Point {

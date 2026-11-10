@@ -24,7 +24,7 @@ const inputStyle = (side: Side, w: number, h: number): CSSProperties =>
 
 // The page in the display's screen is laid out this wide and scaled down to fit, so it shows the
 // theme as a desktop visitor gets it.
-const PAGE_W = 1200;
+const PAGE_W: Record<Layout, number> = { desktop: 1200, mobile: 390 };
 
 export type DisplayState = 'idle' | 'armed' | 'near' | 'open' | 'ready';
 
@@ -91,7 +91,9 @@ export function DisplayNode({
   const shown = page ? cardById(page) : null;
   // The href whose page has finished loading; the screen stays dark until then.
   const [loaded, setLoaded] = useState<string | null>(null);
-  const pageScale = (w - 2) / PAGE_W;
+  const pageW = PAGE_W[layout];
+  const screenH = DISPLAY_SCREEN_H[layout];
+  const pageScale = (w - 2) / pageW;
   const ready = state === 'ready';
 
   const status =
@@ -146,14 +148,15 @@ export function DisplayNode({
           <Monitor className="size-3.5" />
         </span>
         Display
-        <span className={styles.meta}>{shown ? shown.route : 'full page'}</span>
+        {/* A phone's header has room for the name and the way in, not the route as well. */}
+        {layout === 'desktop' && <span className={styles.meta}>{shown ? shown.route : 'full page'}</span>}
         {/* On desktop the header carries the way in, so the screen runs to the display's bottom edge
             and the bundle below it has the room a footer would take. */}
         {shown && card && onOpen && (ready || open) && (
           <button
             type="button"
             className={styles.openButton}
-            style={{ marginLeft: 12 }}
+            style={{ marginLeft: layout === 'desktop' ? 12 : 'auto' }}
             disabled={open}
             // The header is the display's handle; a press on the button is not a grab.
             onPointerDown={(event) => event.stopPropagation()}
@@ -165,7 +168,7 @@ export function DisplayNode({
       </header>
 
       {shown ? (
-        <div className={styles.screen} style={{ height: DISPLAY_SCREEN_H }}>
+        <div className={styles.screen} style={{ height: screenH }}>
           {/* Keyed by page, so each theme starts from the top with a dark screen. */}
           <iframe
             key={shown.href}
@@ -173,7 +176,7 @@ export function DisplayNode({
             data-on={loaded === shown.href || undefined}
             src={shown.href}
             title={`${shown.title} theme, live`}
-            style={{ width: PAGE_W, height: DISPLAY_SCREEN_H / pageScale, transform: `scale(${pageScale})` }}
+            style={{ width: pageW, height: screenH / pageScale, transform: `scale(${pageScale})` }}
             onLoad={() => setLoaded(shown.href)}
           />
         </div>

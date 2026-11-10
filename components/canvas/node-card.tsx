@@ -126,8 +126,9 @@ export function NodeCard({
         aria-label={slot !== undefined && slot !== 0 ? `Select ${card.title} theme` : `Open ${card.title} theme`}
         aria-disabled={busy || undefined}
         draggable={false}
-        // On desktop the whole card can be picked up; a press that never moves stays a click.
-        onPointerDown={draggable ? onGrab : undefined}
+        // The whole card can be picked up on desktop, or swiped aside on a phone; a press that never
+        // moves stays a click.
+        onPointerDown={onGrab}
         onClick={(event: MouseEvent) => {
           if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
@@ -140,20 +141,6 @@ export function NodeCard({
         onPointerLeave={(event) => event.pointerType !== 'touch' && onLeave()}
         onBlur={onLeave}
       />
-
-      {/* Only for dragging a wire, which the phone does; the link above is the keyboard and screen
-          reader path. On desktop the bundle fans along the whole edge and there is no port. */}
-      {layout !== 'desktop' && (
-        <span
-          className={`${styles.port} ${styles.output}`}
-          data-lit={lit || undefined}
-          aria-hidden
-          style={{ left: port.x + nudge.x, top: port.y + nudge.y }}
-          onPointerDown={onWire}
-          onPointerEnter={onPrepare}
-          onPointerLeave={onLeave}
-        />
-      )}
     </article>
   );
 }
