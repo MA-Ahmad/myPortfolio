@@ -1,5 +1,4 @@
 import {
-  type CSSProperties,
   type PointerEvent,
   type ReactNode,
   useCallback,
@@ -9,107 +8,97 @@ import {
   useState
 } from 'react';
 import { flushSync } from 'react-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import type { Activity } from 'lib/github-contributions';
-import {
-  type Point,
-  distance,
-  easeInOutCubic,
-  easeOutCubic,
-  lerp,
-  outside,
-  wirePath
-} from 'lib/canvas/geometry';
+import type { Point } from 'lib/canvas/geometry';
 import { pixelNavigate } from 'lib/pixel-transition';
 import { type Screen, createScreen } from 'lib/canvas/screen';
 import styles from './canvas.module.css';
 import { DisplayNode, type DisplayState } from './display-node';
-import { Hint } from './hint';
 import { PeerLayer, type SharedWire } from './multiplayer';
 import { NodeCard } from './node-card';
-import { Packets, packetIcon } from './packets';
 import {
   CARDS,
   type CardId,
+  DEFAULT_ACTIVE,
   DESIGN,
   type Layout,
-  NEAR_RADIUS,
   type NodeId,
-  type Side,
+  ROW,
   cardById,
   direction,
   initialPositions,
   inputPort,
   inputSide,
   nodeSize,
-  wireReachCap,
   outputPort,
-  portSide
+  portSide,
+  slotOffset
 } from './nodes';
 import { HomePreview } from './previews/home-preview';
 import { MidnightPreview } from './previews/midnight-preview';
 import { NotebookPreview } from './previews/notebook-preview';
+import { PanoramaPreview } from './previews/panorama-preview';
 import { TerminalPreview } from './previews/terminal-preview';
-import { Spark } from './spark';
-import { Wire } from './wire';
+import { Strands, type StrandsHandle } from './strands';
 
-type Phase = 'drag' | 'near' | 'snapped' | 'retract';
-type WireState = { from: CardId; tip: Point; phase: Phase };
+// The theme being sent to the display, from the press on Open until its page takes over.
+type WireState = { from: CardId };
 type View = { layout: Layout; scale: number; ox: number; oy: number; width: number; height: number };
 
 const BAR_H = 56;
+// Desktop hangs from the top: the display sits this far under the bar at any window height, and
+// the world is scaled down until the cards clear the bottom of the window by the other.
+const STAGE_TOP = 6;
+const STAGE_BOTTOM = 16;
+// The least width kept clear either side of the nodes' box, in all.
+const SIDE_ROOM: Record<Layout, number> = { desktop: 96, mobile: 24 };
+// A sideways drag on a phone's card this long turns the carousel.
+const SWIPE_PX = 36;
 const MOBILE_BREAKPOINT = 768;
-const DRAG_THRESHOLD = 3;
-// Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
-// port adds a soft field, and every fresh reach for the port earns a kick that grows each time.
-const BODY_PAD = 16;
-const FIELD_RADIUS = 40;
-const REPEL_RADIUS = 30;
-const REARM_RADIUS = 42;
-const KICK = 60;
-const KICK_GROWTH = 0.18;
-const KICK_MAX = 1.6;
-const KICK_MS = 650;
-const ZAP_MS = 380;
-// The screen grows out of the display once the last packet's swell has peaked.
+// The screen grows out of the display once its swell has peaked.
 const LIFT_DELAY_MS = 220;
-// Each packet that lands swells the display about its center by this much, on a bouncy spring.
-const SWELL_STEP = 0.02;
+// The display swells about its center on a bouncy spring.
 const SWELL_SPRING = { stiffness: 380, damping: 14 };
 // Pulled out, it settles back without the bounce.
 const SHRINK_SPRING = { stiffness: 260, damping: 26 };
-// Matches .packets[data-stopped] in canvas.module.css.
-const PACKETS_FADE_MS = 240;
-// Matches .hint[data-leaving].
-const HINT_FADE_MS = 200;
-// A screen loaded ahead for a port the pointer left is dropped after this, unless a wire is out.
+// A screen whose send was pulled back out is dropped after this, unless another send has started.
 const PREPARE_IDLE_MS = 2000;
-
-type Repel = { source: CardId; target: CardId; dir: Point; count: number };
-type Zap = { source: CardId; target: CardId; port: Point; key: number };
+// Matches the transform transition on .node[data-slot].
+const SLIDE_MS = 520;
+// Sending a theme: when the first light lands on the display, how long until its screen grows, how
+// much the display swells and how far its glow comes up (the display's --swell).
+const SEND_LANDS_MS = 320;
+const SEND_MS = 820;
+const SEND_SWELL = 0.035;
+const SEND_GLOW = 3;
+// A press that travels this far moves the node; less is a click.
+const MOVE_THRESHOLD = 4;
+// The bundle spans a card's top edge and the display's bottom edge, short of their round corners.
+// The least height left between the display and the connected card while either is moved.
+const BUNDLE_ROOM = 72;
+const FAN_INSET = 20;
+const FAN_CARD = 132;
+const FAN_DISPLAY = 205;
 
 function measure(stage: HTMLElement): View {
   const width = stage.clientWidth;
   const height = window.innerHeight;
-  if (width < MOBILE_BREAKPOINT) {
-    const scale = Math.min(1, (width - 32) / DESIGN.mobile.w);
-    return { layout: 'mobile', scale, ox: (width - DESIGN.mobile.w * scale) / 2, oy: BAR_H + 16, width, height };
-  }
-  const scale = Math.max(0.5, Math.min(1, (width - 96) / DESIGN.desktop.w, (height - BAR_H - 72) / DESIGN.desktop.h));
-  return {
-    layout: 'desktop',
-    scale,
-    ox: (width - DESIGN.desktop.w * scale) / 2,
-    oy: BAR_H + (height - BAR_H - DESIGN.desktop.h * scale) / 2,
-    width,
-    height
-  };
+  const layout: Layout = width < MOBILE_BREAKPOINT ? 'mobile' : 'desktop';
+  const design = DESIGN[layout];
+  // The display sits just under the bar and everything below it must fit above the window's edge.
+  const room = height - BAR_H - STAGE_TOP - STAGE_BOTTOM;
+  const scale = Math.max(0.5, Math.min(1, (width - SIDE_ROOM[layout]) / design.w, room / design.h));
+  return { layout, scale, ox: (width - design.w * scale) / 2, oy: BAR_H + STAGE_TOP, width, height };
 }
 
 /** The colors each page paints first, so the pixel transition hands over without a flash. */
 function transitionColors(id: CardId) {
   if (id === 'terminal') return { edge: '#b8c572', background: '#0d0e0f' };
   if (id === 'midnight') return { edge: '#f3f3f4', background: '#0b0b0d' };
+  // --pn-ink and --pn-bg in themes/panorama/panorama.module.css.
+  if (id === 'panorama') return { edge: '#f4f4f5', background: '#1c1f24' };
   const dark = document.documentElement.classList.contains('dark');
   if (id === 'notebook') {
     return {
@@ -129,21 +118,17 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View | null>(null);
   const [positions, setPositions] = useState(() => initialPositions('desktop'));
-  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'home', 'terminal', 'display']);
+  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'panorama', 'home', 'terminal', 'display']);
   const [grabbed, setGrabbed] = useState<NodeId | null>(null);
+  // The theme in the slot under the display, and whether the row is sliding to a new one.
+  const [active, setActive] = useState<CardId>(DEFAULT_ACTIVE);
+  const [swapping, setSwapping] = useState(false);
   const [wire, setWire] = useState<WireState | null>(null);
-  const [burst, setBurst] = useState<number | null>(null);
-  const [repel, setRepel] = useState<Repel | null>(null);
-  const [zap, setZap] = useState<Zap | null>(null);
-  // The theme whose packets are on the wire, and whether its screen has grown out of the display.
+  // The theme being sent, and whether its screen has grown out of the display.
   const [booting, setBooting] = useState<CardId | null>(null);
   const [lifted, setLifted] = useState(false);
   const [arrivals, setArrivals] = useState(0);
-  // Each transfer remounts the packets; an unplug stops them mid-wire while they fade.
-  const [transfer, setTransfer] = useState(0);
-  const [packetsStopped, setPacketsStopped] = useState(false);
   const [powerOff, setPowerOff] = useState<{ key: number; source: CardId } | null>(null);
-  const [hint, setHint] = useState<{ id: CardId; leaving: boolean } | null>(null);
   // Read out by screen readers as a theme starts opening or is pulled back out.
   const [status, setStatus] = useState('');
 
@@ -153,34 +138,29 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   viewRef.current = view;
   positionsRef.current = positions;
   wireRef.current = wire;
+  const activeRef = useRef(active);
+  const swapTimerRef = useRef<number | undefined>(undefined);
+  const sendTimerRef = useRef<number | undefined>(undefined);
+  // Set while a press on a card has turned into a drag, so the click that ends it opens nothing.
+  const draggedRef = useRef(false);
 
-  const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
   const timerRef = useRef<number | undefined>(undefined);
   const swellRef = useRef({ x: 1, v: 0, target: 1, frame: 0, spring: SWELL_SPRING });
   const liftedRef = useRef(false);
-  const packetsTimerRef = useRef<number | undefined>(undefined);
-  const hintTimerRef = useRef<number | undefined>(undefined);
   const screenRef = useRef<Screen | null>(null);
   const preparedRef = useRef<CardId | null>(null);
   const discardRef = useRef<number | undefined>(undefined);
   const displayRef = useRef<HTMLElement>(null);
-  const layerRef = useRef<SVGSVGElement>(null);
+  const strandsRef = useRef<StrandsHandle>(null);
   const reducedRef = useRef(false);
-  const pointerRef = useRef<Point | null>(null);
-  const kickRef = useRef<{ vec: Point; start: number } | null>(null);
-  const kickFrameRef = useRef(0);
-  const armedRef = useRef<Partial<Record<CardId, boolean>>>({});
-  const repelCountRef = useRef(0);
-  const strikesRef = useRef(0);
-  const zapTimerRef = useRef<number | undefined>(undefined);
 
   useLayoutEffect(() => {
     const stage = stageRef.current;
     if (!stage) return;
     const update = () => {
       const next = measure(stage);
-      if (next.layout !== viewRef.current?.layout) setPositions(initialPositions(next.layout));
+      if (next.layout !== viewRef.current?.layout) setPositions(initialPositions(next.layout, activeRef.current));
       setView(next);
     };
     update();
@@ -194,20 +174,14 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   }, []);
 
   useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
+
+  useEffect(() => {
     CARDS.forEach((card) => router.prefetch(card.href));
-    // Decoded ahead, so no icon pops in partway down the wire.
-    CARDS.forEach((card) => card.packets.forEach((icon) => (new Image().src = packetIcon(icon))));
   }, [router]);
 
-  // Once a real wire is out the hint gives way to it. Clicking a card focuses its link, which
-  // would otherwise bring the hint straight back to loop its token beside the real packets.
-  useEffect(() => {
-    if (wire && hint && !hint.leaving) hideHint();
-    // hideHint only sets state and a timer.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wire, hint]);
-
-  // Esc pulls the wire back out while its packets are still flying in.
+  // Esc pulls a theme back out while it is still being sent.
   useEffect(() => {
     if (!booting) return;
     const onKey = (event: KeyboardEvent) => event.key === 'Escape' && pullOut();
@@ -224,14 +198,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     query.addEventListener('change', onChange);
     return () => {
       query.removeEventListener('change', onChange);
-      cancelAnimationFrame(frameRef.current);
-      cancelAnimationFrame(kickFrameRef.current);
       releaseRef.current?.();
-      window.clearTimeout(zapTimerRef.current);
       window.clearTimeout(timerRef.current);
       window.clearTimeout(discardRef.current);
-      window.clearTimeout(packetsTimerRef.current);
-      window.clearTimeout(hintTimerRef.current);
+      window.clearTimeout(sendTimerRef.current);
+      window.clearTimeout(swapTimerRef.current);
       cancelAnimationFrame(swellRef.current.frame);
       screenRef.current?.destroy();
     };
@@ -243,27 +214,12 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     return { x: (clientX - rect.left - ox) / scale, y: (clientY - rect.top - oy) / scale };
   }, []);
 
-  const animate = (
-    from: Point,
-    to: () => Point,
-    duration: number,
-    ease: (t: number) => number,
-    onFrame: (p: Point) => void,
-    onDone?: () => void
-  ) => {
-    cancelAnimationFrame(frameRef.current);
-    const start = performance.now();
-    const step = (now: number) => {
-      const t = Math.min(1, (now - start) / duration);
-      onFrame(lerp(from, to(), ease(t)));
-      if (t < 1) frameRef.current = requestAnimationFrame(step);
-      else onDone?.();
-    };
-    frameRef.current = requestAnimationFrame(step);
-  };
-
   const target = (from: CardId) => () =>
-    inputPort(positionsRef.current.display, inputSide(from, viewRef.current!.layout, positionsRef.current));
+    inputPort(
+      positionsRef.current.display,
+      inputSide(from, viewRef.current!.layout, positionsRef.current),
+      viewRef.current!.layout
+    );
 
   const open = (id: CardId) => {
     const stage = stageRef.current;
@@ -287,115 +243,57 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   /**
-   * Plugs the wire in at once: the cards vibrate, the glow runs round the display and the theme's
-   * packets ride the wire in. Meanwhile the theme's page starts loading in a screen that grows out
-   * of the display once the last packet lands (see `lift`). Reduced motion opens the page at once.
+   * Sends a theme to the display: the card and the display vibrate, the glow runs round the display
+   * and light races up the bundle. Meanwhile the theme's page starts loading in a screen that grows
+   * out of the display once the light has landed (see `lift`). Reduced motion opens the page at once.
    */
   const snap = (from: CardId) => {
     releaseRef.current?.();
-    cancelAnimationFrame(frameRef.current);
-    // Usually loaded ahead already; this only catches a connect nothing announced.
     prepare(from);
-    flushSync(() => {
-      setWire({ from, tip: target(from)(), phase: 'snapped' });
-      setBurst(Date.now());
-    });
+    flushSync(() => setWire({ from }));
     const title = cardById(from).title;
     if (reducedRef.current) {
       setStatus(`Opening ${title} theme`);
       return open(from);
     }
     setStatus(`Opening ${title} theme. Press Escape to cancel.`);
-    window.clearTimeout(packetsTimerRef.current);
-    setPacketsStopped(false);
-    setTransfer((count) => count + 1);
     setBooting(from);
+    // The bundle itself carries the send, a volley of light and sparks up the strands. The display
+    // takes it in with one swell, then its screen grows.
+    window.clearTimeout(sendTimerRef.current);
+    sendTimerRef.current = window.setTimeout(() => {
+      setArrivals(SEND_GLOW);
+      swellTo(1 + SEND_SWELL);
+      sendTimerRef.current = window.setTimeout(lift, SEND_MS - SEND_LANDS_MS);
+    }, SEND_LANDS_MS);
   };
 
   /**
-   * Switches the display back off when its wire is pulled out mid-transfer: the packets stop and
-   * fade, the swell settles back, and the display's screen collapses old-TV style.
+   * Switches the display back off when a theme is pulled out mid-send: the swell settles back, and
+   * the display's screen collapses old-TV style.
    */
   const powerDown = (id: CardId) => {
-    // A lift may be waiting on the last swell.
+    // A lift may be waiting on the swell.
     window.clearTimeout(timerRef.current);
-    setPacketsStopped(true);
-    window.clearTimeout(packetsTimerRef.current);
-    packetsTimerRef.current = window.setTimeout(() => setBooting(null), PACKETS_FADE_MS);
+    window.clearTimeout(sendTimerRef.current);
+    setBooting(null);
     setArrivals(0);
-    setBurst(null);
     setPowerOff({ key: Date.now(), source: id });
     setStatus(`Stopped opening ${cardById(id).title} theme`);
     swellTo(1, SHRINK_SPRING);
   };
 
-  /** Esc while packets are flying: power down and let the wire spring back to its card. */
+  /** Esc while a theme is being sent: power down and drop the send. */
   const pullOut = () => {
     const current = wireRef.current;
-    if (!current || current.phase !== 'snapped' || liftedRef.current) return;
+    if (!current || liftedRef.current) return;
     powerDown(current.from);
-    retract(current.from, swollenPort(current.from, swellRef.current.x));
+    retract();
   };
 
-  /**
-   * A press on the plugged-in input pulls the wire back out: dragged, it follows the pointer and
-   * can go back in; clicked, it springs home.
-   */
-  const unplug = (event: PointerEvent) => {
-    const current = wireRef.current;
-    if (event.button !== 0 || !current || current.phase !== 'snapped' || liftedRef.current) return;
-    event.preventDefault();
-    event.stopPropagation();
-    const id = current.from;
-    const press = { x: event.clientX, y: event.clientY };
-    let dragging = false;
-    powerDown(id);
-    setWire({ from: id, tip: swollenPort(id, swellRef.current.x), phase: 'near' });
-    armedRef.current = {};
-    strikesRef.current = 0;
-    listen(
-      event,
-      (move) => {
-        if (!dragging) {
-          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < DRAG_THRESHOLD) return;
-          dragging = true;
-        }
-        pointerRef.current = toWorld(move.clientX, move.clientY);
-        aim(id);
-      },
-      (cancelled) => {
-        pointerRef.current = null;
-        kickRef.current = null;
-        cancelAnimationFrame(kickFrameRef.current);
-        const wire = wireRef.current;
-        if (!wire || (wire.phase !== 'drag' && wire.phase !== 'near')) return;
-        if (dragging && !cancelled && wire.phase === 'near') snap(id);
-        else retract(id, wire.tip);
-      }
-    );
-  };
-
-  /** While a port is hovered or focused, show what plugging it in would do. */
-  const showHint = (id: CardId) => {
-    if (reducedRef.current || wireRef.current) return;
-    window.clearTimeout(hintTimerRef.current);
-    setHint({ id, leaving: false });
-  };
-
-  const hideHint = () => {
-    setHint((current) => current && { ...current, leaving: true });
-    window.clearTimeout(hintTimerRef.current);
-    hintTimerRef.current = window.setTimeout(() => setHint(null), HINT_FADE_MS);
-  };
-
-  /**
-   * Starts loading a theme's page in a hidden screen as soon as a connect looks likely: the
-   * pointer or focus reaching its port. The page's own startup work runs on this thread, so done
-   * this early it finishes before the packets fly instead of stuttering them.
-   */
+  /** Starts loading a theme's page in a hidden screen as its send begins. */
   const prepare = (id: CardId) => {
-    const current = wireRef.current;
-    if (reducedRef.current || (current && (current.from !== id || current.phase === 'snapped'))) return;
+    if (reducedRef.current || wireRef.current) return;
     window.clearTimeout(discardRef.current);
     if (screenRef.current && preparedRef.current === id) return;
     screenRef.current?.destroy();
@@ -408,7 +306,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     preparedRef.current = id;
   };
 
-  /** Drops a screen loaded ahead that went unused, so its hidden page doesn't keep running. */
+  /** Drops a screen that went unused, so its hidden page doesn't keep running. */
   const discardSoon = () => {
     window.clearTimeout(discardRef.current);
     discardRef.current = window.setTimeout(() => {
@@ -423,45 +321,27 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const layout = viewRef.current!.layout;
     const at = positionsRef.current.display;
     const size = nodeSize('display', layout);
-    const p = inputPort(at, inputSide(from, layout, positionsRef.current));
+    const p = inputPort(at, inputSide(from, layout, positionsRef.current), layout);
     const cx = at.x + size.w / 2;
     const cy = at.y + size.h / 2;
     return { x: cx + (p.x - cx) * scale, y: cy + (p.y - cy) * scale };
   };
 
   /**
-   * Swells the display and moves the wire's end with it, straight on the elements: a React render
+   * Swells the display and moves the bundle's end with it, straight on the elements: a React render
    * per frame would redraw every card and preview. Renders in between read the same scale.
    */
   const applySwell = (scale: number) => {
     const current = wireRef.current;
     const display = displayRef.current;
     if (!current || !display) return;
-    const layout = viewRef.current!.layout;
     const at = positionsRef.current.display;
     display.style.transform = `translate3d(${at.x}px, ${at.y}px, 0) scale(${scale})`;
-    // Once pulled out the wire follows the pointer, so only a plugged-in one tracks the port.
-    if (current.phase !== 'snapped') return;
-    const port = swollenPort(current.from, scale);
-    const positions = positionsRef.current;
-    const from = outputPort(current.from, positions, layout);
-    const d = wirePath(
-      from,
-      direction(portSide(current.from, layout, positions)),
-      port,
-      direction(inputSide(current.from, layout, positions)),
-      wireReachCap(layout)
-    );
-    const layer = layerRef.current;
-    layer?.querySelectorAll('[data-wire]').forEach((path) => path.setAttribute('d', d));
-    layer?.querySelectorAll('[data-port]').forEach((circle) => {
-      circle.setAttribute('cx', String(port.x));
-      circle.setAttribute('cy', String(port.y));
-    });
+    strandsRef.current?.moveEnd(swollenPort(current.from, scale));
   };
 
   /**
-   * Springs the display toward `target` scale. It runs here rather than in CSS so the wire's end
+   * Springs the display toward `target` scale. It runs here rather than in CSS so the bundle's end
    * can follow the input port as the display swells.
    */
   const swellTo = (target: number, spring = SWELL_SPRING) => {
@@ -493,31 +373,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     }, LIFT_DELAY_MS);
   };
 
-  const retract = (from: CardId, tip: Point) => {
+  const retract = () => {
     releaseRef.current?.();
-    if (reducedRef.current) return setWire(null);
-    const home = () => outputPort(from, positionsRef.current, viewRef.current!.layout);
-    const reach = distance(tip, home());
-    animate(
-      tip,
-      home,
-      Math.min(520, 260 + reach * 0.5),
-      easeOutCubic,
-      (p) => setWire({ from, tip: p, phase: 'retract' }),
-      () => {
-        setWire(null);
-        discardSoon();
-      }
-    );
+    setWire(null);
+    discardSoon();
   };
-
-  // Only arms the wire; it plugs in on release, never while the pointer is still held.
-  const moveTip = (from: CardId, tip: Point) => {
-    const gap = distance(tip, target(from)());
-    setWire({ from, tip, phase: gap < NEAR_RADIUS ? 'near' : 'drag' });
-  };
-
-  const busy = wire !== null && wire.phase !== 'drag' && wire.phase !== 'near';
 
   /**
    * Follows one pointer until it is released. The pressed element captures that pointer, so only
@@ -563,163 +423,68 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     releaseRef.current = release;
   };
 
-  const center = (id: NodeId): Point => {
-    const at = positionsRef.current[id];
-    const size = nodeSize(id, viewRef.current!.layout);
-    return { x: at.x + size.w / 2, y: at.y + size.h / 2 };
-  };
-
-  /**
-   * How far the last kick still pushes the tip: out fast, then easing back while it trembles.
-   * The tremble stays on the far side, so the tip never swings back onto the port.
-   */
-  const kickOffset = (now: number): Point => {
-    const kick = kickRef.current;
-    if (!kick) return { x: 0, y: 0 };
-    const s = (now - kick.start) / 1000;
-    if (s * 1000 >= KICK_MS) {
-      kickRef.current = null;
-      return { x: 0, y: 0 };
-    }
-    const f = (1 - Math.exp(-s / 0.025)) * Math.exp(-s / 0.14) * (0.75 + 0.25 * Math.cos(s * 45));
-    return { x: kick.vec.x * f, y: kick.vec.y * f };
-  };
-
-  const kick = (id: CardId, target: CardId, port: Point, tip: Point, now: number) => {
-    armedRef.current[target] = false;
-    const dx = tip.x - port.x;
-    const dy = tip.y - port.y;
-    const length = Math.hypot(dx, dy);
-    const away =
-      length > 0.5
-        ? { x: dx / length, y: dy / length }
-        : { x: direction(portSide(target, viewRef.current!.layout, positionsRef.current)), y: 0 };
-    const strength = KICK * Math.min(KICK_MAX, 1 + strikesRef.current * KICK_GROWTH);
-    strikesRef.current += 1;
-    kickRef.current = { vec: { x: away.x * strength, y: away.y * strength }, start: now };
-
-    const a = center(id);
-    const b = center(target);
-    const apart = Math.hypot(b.x - a.x, b.y - a.y) || 1;
-    repelCountRef.current += 1;
-    setRepel({ source: id, target, dir: { x: (b.x - a.x) / apart, y: (b.y - a.y) / apart }, count: repelCountRef.current });
-    setZap({ source: id, target, port, key: now });
-    window.clearTimeout(zapTimerRef.current);
-    zapTimerRef.current = window.setTimeout(() => setZap(null), ZAP_MS);
-
-    cancelAnimationFrame(kickFrameRef.current);
-    const step = (time: number) => {
-      if (!kickRef.current || !pointerRef.current) return;
-      aim(id, time);
-      kickFrameRef.current = requestAnimationFrame(step);
-    };
-    kickFrameRef.current = requestAnimationFrame(step);
-  };
-
-  /**
-   * Places the tip at the pointer, kept outside every other theme card and pushed off its port.
-   * A kick rearms once it has settled and the pointer has backed off the port a little.
-   */
-  const aim = (id: CardId, now = performance.now()) => {
-    const pointer = pointerRef.current;
-    const current = wireRef.current;
-    if (!pointer || (current && current.phase !== 'drag' && current.phase !== 'near')) return;
-    const layout = viewRef.current!.layout;
-    let tip = pointer;
-    for (const card of CARDS) {
-      if (card.id === id) continue;
-      tip = outside(tip, positionsRef.current[card.id], nodeSize(card.id, layout), BODY_PAD);
-      const port = outputPort(card.id, positionsRef.current, layout);
-      const gap = distance(tip, port);
-      if (gap > REARM_RADIUS && !kickRef.current) armedRef.current[card.id] = true;
-      if (gap < REPEL_RADIUS && armedRef.current[card.id] !== false && !reducedRef.current)
-        kick(id, card.id, port, tip, now);
-      if (gap < FIELD_RADIUS) {
-        const away =
-          gap > 0.5
-            ? { x: (tip.x - port.x) / gap, y: (tip.y - port.y) / gap }
-            : { x: direction(portSide(card.id, layout, positionsRef.current)), y: 0 };
-        const pushed = FIELD_RADIUS - (FIELD_RADIUS - gap) * 0.3;
-        tip = { x: port.x + away.x * pushed, y: port.y + away.y * pushed };
-      }
-    }
-    const offset = kickOffset(now);
-    moveTip(id, { x: tip.x + offset.x, y: tip.y + offset.y });
-  };
-
-  // The wire only appears once the pointer actually moves, and plugs in only on release.
-  const startWire = (id: CardId) => (event: PointerEvent) => {
-    if (event.button !== 0 || wireRef.current) return;
-    prepare(id);
-    hideHint();
-    event.preventDefault();
-    event.stopPropagation();
-    const press = { x: event.clientX, y: event.clientY };
-    let dragging = false;
-    armedRef.current = {};
-    strikesRef.current = 0;
-    listen(
-      event,
-      (move) => {
-        if (!dragging) {
-          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < DRAG_THRESHOLD) return;
-          dragging = true;
-        }
-        pointerRef.current = toWorld(move.clientX, move.clientY);
-        aim(id);
-      },
-      (cancelled) => {
-        pointerRef.current = null;
-        kickRef.current = null;
-        cancelAnimationFrame(kickFrameRef.current);
-        // A press that never became a drag wires it up, like a tap on the card.
-        if (!dragging && !cancelled) return connect(id);
-        const current = wireRef.current;
-        if (!current || (current.phase !== 'drag' && current.phase !== 'near')) return;
-        if (!cancelled && current.phase === 'near') snap(id);
-        else retract(id, current.tip);
-      }
-    );
-  };
-
+  /** A click on a card or on Open: a card waiting in the row is carried in, the connected one is sent. */
   const connect = (id: CardId) => {
-    if (wireRef.current) return;
-    prepare(id);
-    hideHint();
-    // On a phone the display leads the stack, so bring it into view as the wire flies up to it.
-    if (viewRef.current?.layout === 'mobile' && window.scrollY > 0) {
-      window.scrollTo({ top: 0, behavior: reducedRef.current ? 'auto' : 'smooth' });
-    }
-    const from = outputPort(id, positionsRef.current, viewRef.current!.layout);
-    if (reducedRef.current) return snap(id);
-    setWire({ from: id, tip: from, phase: 'drag' });
-    animate(
-      from,
-      target(id),
-      760,
-      easeInOutCubic,
-      (p) => moveTip(id, p),
-      () => snap(id)
-    );
+    if (wireRef.current || draggedRef.current) return;
+    if (id !== activeRef.current) return select(id);
+    snap(id);
   };
 
+  /**
+   * Moves a node about the desktop by its header or, for a card, anywhere on it. The bundle between
+   * the display and the connected card follows every frame. A press that never travels is left to
+   * be the click it was.
+   */
   const grab = (id: NodeId) => (event: PointerEvent) => {
-    if (event.button !== 0 || viewRef.current?.layout !== 'desktop') return;
+    if (event.button !== 0 || wireRef.current) return;
+    const layout = viewRef.current!.layout;
+    if (layout === 'mobile') {
+      // A phone's nodes stay put; a sideways swipe on a card turns the carousel instead.
+      if (id === 'display') return;
+      const from = event.clientX;
+      let swiped = false;
+      listen(
+        event,
+        (move) => {
+          if (swiped || Math.abs(move.clientX - from) < SWIPE_PX) return;
+          swiped = true;
+          draggedRef.current = true;
+          step(move.clientX < from ? 1 : -1);
+        },
+        () => window.setTimeout(() => (draggedRef.current = false), 0)
+      );
+      return;
+    }
     event.preventDefault();
+    const press = { x: event.clientX, y: event.clientY };
     const start = toWorld(event.clientX, event.clientY);
     const origin = positionsRef.current[id];
-    const size = nodeSize(id, 'desktop');
-    setOrder((current) => [...current.filter((node) => node !== id), id]);
-    setGrabbed(id);
+    const size = nodeSize(id, layout);
+    let moving = false;
     listen(
       event,
       (move) => {
+        if (!moving) {
+          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < MOVE_THRESHOLD) return;
+          moving = true;
+          draggedRef.current = true;
+          setOrder((current) => [...current.filter((node) => node !== id), id]);
+          setGrabbed(id);
+        }
         const { ox, oy, scale, width, height } = viewRef.current!;
         const p = toWorld(move.clientX, move.clientY);
         const minX = (8 - ox) / scale;
         const maxX = (width - 8 - ox) / scale - size.w;
-        const minY = (BAR_H - oy) / scale;
-        const maxY = (height - 8 - oy) / scale - size.h;
+        let minY = (BAR_H - oy) / scale;
+        let maxY = (height - 8 - oy) / scale - size.h;
+        // The connected card stays under the display with room for the bundle between them, so it
+        // always runs the same way: out of the card's top, into the display's bottom.
+        const displaySize = nodeSize('display', layout);
+        if (id === activeRef.current) {
+          minY = Math.max(minY, positionsRef.current.display.y + displaySize.h + BUNDLE_ROOM);
+        } else if (id === 'display') {
+          maxY = Math.min(maxY, positionsRef.current[activeRef.current].y - displaySize.h - BUNDLE_ROOM);
+        }
         setPositions((current) => ({
           ...current,
           [id]: {
@@ -728,30 +493,59 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           }
         }));
       },
-      () => setGrabbed(null)
+      () => {
+        setGrabbed(null);
+        // The click that ends a drag comes right after this; anything later is a fresh press.
+        window.setTimeout(() => (draggedRef.current = false), 0);
+      }
     );
   };
 
+  /**
+   * Carries a theme into the slot under the display; its bundle fades out for the ride. Nodes that
+   * were moved glide back to their places.
+   */
+  const select = (id: CardId) => {
+    if (wireRef.current || id === activeRef.current) return;
+    discardSoon();
+    activeRef.current = id;
+    setActive(id);
+    setPositions(initialPositions(viewRef.current!.layout, id));
+    setStatus(`${cardById(id).title} theme selected`);
+    window.clearTimeout(swapTimerRef.current);
+    if (reducedRef.current) return setSwapping(false);
+    setSwapping(true);
+    swapTimerRef.current = window.setTimeout(() => setSwapping(false), SLIDE_MS);
+  };
+
+  const step = (by: number) => {
+    const next = ROW[ROW.indexOf(activeRef.current) + by];
+    if (next) select(next);
+  };
+
   const layout = view?.layout ?? 'desktop';
-  const draggable = layout === 'desktop' && !booting;
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (event.key === 'ArrowLeft') step(-1);
+      else if (event.key === 'ArrowRight') step(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // step reads everything from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout]);
+
   const source = wire ? outputPort(wire.from, positions, layout) : null;
-  // The display swells about its center as packets land; the input port is drawn where it ends up.
+  // The display swells about its center as a send lands; the bundle ends where its edge ends up.
   const displayScale = swellRef.current.x;
   const port = wire ? swollenPort(wire.from, displayScale) : null;
-  // Desktop cards can sit on either side, so the display always offers both inputs.
-  const inputs: Side[] =
-    layout === 'desktop'
-      ? ['left', 'right']
-      : Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout, positions))));
-  const plugged = wire?.phase === 'snapped' ? wire.from : null;
-  const nearSource = wire && wire.phase !== 'drag' && wire.phase !== 'retract' ? wire.from : null;
-  const displayState: DisplayState = plugged
-    ? 'open'
-    : nearSource
-      ? 'near'
-      : wire?.phase === 'drag'
-        ? 'armed'
-        : 'idle';
+  const plugged = wire ? wire.from : null;
+  const resting = !wire && !swapping;
+  const displayState: DisplayState = plugged ? 'open' : resting ? 'ready' : 'idle';
   const design = DESIGN[layout];
   const sharedWire: SharedWire | null =
     wire && source && port
@@ -759,23 +553,23 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           source: wire.from,
           from: source,
           fromDir: direction(portSide(wire.from, layout, positions)),
-          to: wire.phase === 'snapped' ? port : wire.tip,
+          to: port,
           toDir: direction(inputSide(wire.from, layout, positions)),
-          lit: wire.phase === 'snapped',
-          reachCap: layout === 'mobile' ? wireReachCap(layout) : null
+          lit: true,
+          reachCap: null
         }
       : null;
-  const stageHeight = layout === 'mobile' && view ? view.oy + design.h * view.scale + 40 : undefined;
 
   const previews: Record<CardId, ReactNode> = {
-    home: <HomePreview avatar={layout === 'desktop' ? 84 : 68} />,
-    terminal: <TerminalPreview contributions={contributions} weeks={layout === 'desktop' ? 49 : 43} />,
+    home: <HomePreview avatar={layout === 'desktop' ? 78 : 68} />,
+    terminal: <TerminalPreview contributions={contributions} weeks={43} />,
     notebook: <NotebookPreview />,
-    midnight: <MidnightPreview />
+    midnight: <MidnightPreview />,
+    panorama: <PanoramaPreview contributions={contributions} />
   };
 
   return (
-    <div ref={stageRef} className={styles.stage} style={{ height: stageHeight }}>
+    <div ref={stageRef} className={styles.stage}>
       <p className="sr-only" role="status" aria-live="polite">
         {status}
       </p>
@@ -793,34 +587,17 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             key={card.id}
             card={card}
             layout={layout}
-            side={portSide(card.id, layout, positions)}
             at={positions[card.id]}
             z={order.indexOf(card.id) + 1}
-            draggable={draggable}
+            draggable={layout === 'desktop' && !wire}
             dragging={grabbed === card.id}
+            onGrab={grab(card.id)}
+            slot={slotOffset(card.id, active)}
             lit={plugged === card.id}
             shake={plugged === card.id}
-            repel={
-              repel && (repel.source === card.id || repel.target === card.id)
-                ? {
-                    x: repel.source === card.id ? -repel.dir.x : repel.dir.x,
-                    y: repel.source === card.id ? -repel.dir.y : repel.dir.y,
-                    count: repel.count
-                  }
-                : null
-            }
             busy={wire !== null}
-            onGrab={grab(card.id)}
-            onWire={startWire(card.id)}
             onConnect={() => connect(card.id)}
-            onPrepare={() => {
-              prepare(card.id);
-              showHint(card.id);
-            }}
-            onLeave={() => {
-              discardSoon();
-              hideHint();
-            }}
+            onLeave={discardSoon}
           >
             {previews[card.id]}
           </NodeCard>
@@ -828,91 +605,44 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
         <DisplayNode
           ref={displayRef}
+          layout={layout}
+          // Only once measured, in the browser: a frame in the server's markup can finish loading
+          // before React is listening for it, and the screen would stay dark.
+          page={view ? (wire?.from ?? active) : null}
           at={positions.display}
           z={order.indexOf('display') + 1}
-          draggable={draggable}
+          draggable={layout === 'desktop' && !wire}
           dragging={grabbed === 'display'}
-          source={plugged ?? nearSource}
+          gliding={swapping}
+          onGrab={grab('display')}
+          source={plugged ?? (resting ? active : null)}
           state={displayState}
-          inputs={inputs}
-          side={wire ? inputSide(wire.from, layout, positions) : inputs[0]}
+          side={wire ? inputSide(wire.from, layout, positions) : 'bottom'}
           swell={arrivals}
           scale={displayScale}
           lifted={lifted}
           powerOff={powerOff}
-          onGrab={grab('display')}
-          onUnplug={unplug}
+          onOpen={() => connect(active)}
         />
 
-        <svg ref={layerRef} className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
-          {hint && view && (
-            <Hint
-              key={hint.id}
-              source={hint.id}
-              from={outputPort(hint.id, positions, layout)}
-              fromDir={direction(portSide(hint.id, layout, positions))}
-              to={inputPort(positions.display, inputSide(hint.id, layout, positions))}
-              toDir={direction(inputSide(hint.id, layout, positions))}
-              leaving={hint.leaving}
-            />
-          )}
-          {wire && source && (
-            <>
-              <Wire
-                source={wire.from}
-                from={source}
-                fromDir={direction(portSide(wire.from, layout, positions))}
-                to={wire.phase === 'snapped' && port ? port : wire.tip}
-                toDir={direction(inputSide(wire.from, layout, positions))}
-                lit={wire.phase === 'snapped'}
-                reachCap={wireReachCap(layout)}
-              />
-              <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
-                <circle className={styles.cap} data-lit={plugged || undefined} cx={source.x} cy={source.y} r={5} />
-                {plugged && port && (
-                  <circle className={styles.cap} data-lit data-port cx={port.x} cy={port.y} r={6} />
-                )}
-              </g>
-            </>
-          )}
-          {wire && wire.phase !== 'snapped' && (
-            <circle className={styles.tip} cx={wire.tip.x} cy={wire.tip.y} r={4} />
-          )}
-          {wire?.phase === 'near' && port && !reducedRef.current && (
-            <Spark source={wire.from} tip={wire.tip} port={port} />
-          )}
-          {zap && wire && (wire.phase === 'drag' || wire.phase === 'near') && (
-            <g key={zap.key}>
-              <Spark source={zap.source} tip={wire.tip} port={zap.port} />
-              <g style={{ '--accent': `var(--accent-${zap.target})` } as CSSProperties}>
-                <circle className={styles.burst} cx={zap.port.x} cy={zap.port.y} r={6} />
-              </g>
-            </g>
-          )}
-          {booting && wire?.from === booting && source && port && (
-            <Packets
-              key={transfer}
-              source={booting}
-              from={source}
-              fromDir={direction(portSide(booting, layout, positions))}
-              to={port}
-              toDir={direction(inputSide(booting, layout, positions))}
-              reachCap={wireReachCap(layout)}
-              stopped={packetsStopped}
-              onArrive={() => {
-                setBurst(Date.now());
-                setArrivals((count) => count + 1);
-                swellTo(swellRef.current.target + SWELL_STEP);
-              }}
-              onDone={lift}
-            />
-          )}
-          {plugged && burst && port && (
-            <g key={burst} style={{ '--accent': `var(--accent-${plugged})` } as CSSProperties}>
-              <circle className={styles.burst} data-port cx={port.x} cy={port.y} r={6} />
-            </g>
-          )}
-        </svg>
+        {([-1, 1] as const).map((by) => {
+            // Clear of the card on desktop; on a phone, over its edge, where the next card's shows.
+            const out = layout === 'desktop' ? 28 : 2;
+            const edge = positions[active].x + (by < 0 ? -out : nodeSize(active, layout).w + out);
+            return (
+              <button
+                key={by}
+                type="button"
+                className={styles.step}
+                style={{ left: edge, top: positions[active].y + nodeSize(active, layout).h / 2, zIndex: 8 }}
+                aria-label={by < 0 ? 'Previous theme' : 'Next theme'}
+                disabled={!ROW[ROW.indexOf(active) + by] || wire !== null}
+                onClick={() => step(by)}
+              >
+                {by < 0 ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+              </button>
+            );
+          })}
 
         {view && (
           <PeerLayer
@@ -925,6 +655,26 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           />
         )}
       </div>
+
+      {view && (
+        <Strands
+          ref={strandsRef}
+          width={view.width}
+          height={view.height}
+          scale={view.scale}
+          ox={view.ox}
+          oy={view.oy}
+          from={wire && source ? source : outputPort(active, positions, layout)}
+          fromDir={direction(portSide(wire?.from ?? active, layout, positions))}
+          to={port ?? inputPort(positions.display, inputSide(active, layout, positions), layout)}
+          toDir={direction(inputSide(wire?.from ?? active, layout, positions))}
+          fanFrom={Math.min(FAN_CARD, nodeSize(wire?.from ?? active, layout).w / 2 - FAN_INSET)}
+          fanTo={Math.min(FAN_DISPLAY, nodeSize('display', layout).w / 2 - FAN_INSET)}
+          mode={wire ? 'live' : swapping ? 'off' : 'idle'}
+          compact={layout === 'mobile'}
+          reduced={reducedRef.current}
+        />
+      )}
     </div>
   );
 }

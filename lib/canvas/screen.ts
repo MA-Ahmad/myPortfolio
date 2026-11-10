@@ -247,6 +247,9 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
     Object.assign(bottom.style, { position: 'absolute', bottom: '0', left: '0', right: '0' });
     bottom.removeAttribute('role');
     const content = rows.cloneNode(true) as HTMLElement;
+    // A display that already plays the page hands over to this screen's own copy of it; a cloned
+    // frame would load the page a third time.
+    content.querySelectorAll('iframe').forEach((copy) => copy.remove());
     Object.assign(content.style, { position: 'absolute', top: '0', left: '0', width: `${rows.offsetWidth}px` });
     // Added beside the frame, never around it: moving a frame reloads it.
     shell.insertBefore(top, area);
