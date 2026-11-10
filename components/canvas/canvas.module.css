@@ -13,6 +13,9 @@
   --accent-terminal: #6f7d1f;
   --accent-notebook: #d43d8f;
   --accent-midnight: #d97706;
+  --accent-panorama: #5b5bd6;
+  /* The strand bundle's colours, gold through to violet (PALETTE_LIGHT in lib/canvas/strands.ts). */
+  --strands: #b45309, #c2410c, #be123c, #a21caf, #6d28d9;
 
   position: relative;
   min-height: 100dvh;
@@ -39,6 +42,9 @@
   --accent-terminal: #b8c572;
   --accent-notebook: #f27ab9;
   --accent-midnight: #f5a524;
+  --accent-panorama: #a5b4fc;
+  /* PALETTE_DARK in lib/canvas/strands.ts. */
+  --strands: #f6d365, #f08a4b, #e5484d, #d6409f, #8e4ec6;
 }
 
 @media (max-width: 767px) {
@@ -65,6 +71,15 @@
   top: 0;
   left: 0;
   overflow: visible;
+  pointer-events: none;
+}
+
+/* The visitor's wire: a bundle of strands on one canvas over the whole stage, so a wire dragged
+   past the nodes is never clipped. */
+.strands {
+  position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
 }
 
@@ -98,6 +113,120 @@
     0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent),
     0 0 36px -10px color-mix(in oklab, var(--accent) 70%, transparent);
   transition-duration: 200ms;
+}
+
+/* The carousel: cards glide a slot at a time; those beside the slot under the display sit back. */
+.node[data-slot] {
+  transform-origin: 50% 50%;
+  transition:
+    transform 520ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 320ms ease,
+    border-color 300ms ease,
+    box-shadow 400ms ease;
+}
+
+.node[data-slot='1'] {
+  opacity: 0.5;
+}
+
+.node[data-slot='2'] {
+  opacity: 0.18;
+}
+
+/* A node in the hand follows the pointer exactly; the glide is only for the carousel. */
+.node[data-slot][data-dragging] {
+  transition:
+    opacity 320ms ease,
+    border-color 300ms ease,
+    box-shadow 400ms ease;
+}
+
+.node[data-dragging] .open {
+  cursor: grabbing;
+}
+
+/* A display that was moved goes home with the cards when the carousel turns. */
+.display[data-gliding] {
+  transition:
+    transform 520ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 300ms ease,
+    box-shadow 400ms ease;
+}
+
+@media (hover: hover) {
+  .node[data-slot='1']:hover,
+  .node[data-slot='2']:hover {
+    opacity: 0.85;
+  }
+}
+
+/* Previous / next theme, either side of the slot under the display. */
+.step {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--cv-border-strong);
+  border-radius: 50%;
+  background: var(--cv-card);
+  color: var(--cv-text);
+  box-shadow: var(--cv-shadow);
+  cursor: pointer;
+  transition:
+    opacity 200ms ease,
+    border-color 150ms ease,
+    transform 120ms ease;
+}
+
+.step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.step:not(:disabled):active {
+  transform: scale(0.94);
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--cv-text);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .step:not(:disabled):hover {
+    border-color: var(--cv-text);
+  }
+}
+
+/* The display and the theme plugged into it wear the bundle's colours as their border, gold on the
+   left through to violet on the right, so the strands read as running out of one outline and into
+   the other. Drawn over the 1px border and masked down to it. */
+.node[data-linked]::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--strands));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.85;
+  animation: linked 420ms ease-out;
+}
+
+@keyframes linked {
+  from {
+    opacity: 0;
+  }
 }
 
 /* A card pushed away from another: out along --rx/--ry, then settling. Two identical keyframes
@@ -316,7 +445,8 @@
     background-color 250ms ease,
     box-shadow 250ms ease,
     transform 200ms cubic-bezier(0.2, 0, 0, 1),
-    left 360ms cubic-bezier(0.32, 0.72, 0, 1);
+    left 360ms cubic-bezier(0.32, 0.72, 0, 1),
+    top 360ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .port::after {
@@ -389,6 +519,33 @@
   border-radius: 0 14px 14px 0;
   background: radial-gradient(
     ellipse 64px 55% at 100% 50%,
+    color-mix(in oklab, var(--accent) 55%, transparent),
+    transparent 70%
+  );
+}
+
+.display[data-side='top']::before,
+.display[data-side='bottom']::before {
+  top: -1px;
+  bottom: auto;
+  left: 8%;
+  right: 8%;
+  width: auto;
+  height: 64px;
+  border-radius: 14px 14px 0 0;
+  background: radial-gradient(
+    ellipse 55% 64px at 50% 0,
+    color-mix(in oklab, var(--accent) 55%, transparent),
+    transparent 70%
+  );
+}
+
+.display[data-side='bottom']::before {
+  top: auto;
+  bottom: -1px;
+  border-radius: 0 0 14px 14px;
+  background: radial-gradient(
+    ellipse 55% 64px at 50% 100%,
     color-mix(in oklab, var(--accent) 55%, transparent),
     transparent 70%
   );
@@ -477,6 +634,30 @@
   }
 }
 
+/* The display's screen on desktop: the connected theme's own page, scaled down, scrollable. */
+.screen {
+  position: relative;
+  flex: none;
+  overflow: hidden;
+  /* The display's own bottom corners, inside its 1px border. */
+  border-radius: 0 0 13px 13px;
+  background: #0b0b0c;
+}
+
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  opacity: 0;
+  transition: opacity 320ms ease;
+}
+
+.page[data-on] {
+  opacity: 1;
+}
+
 .rows {
   flex: none;
   padding: 8px 0;
@@ -552,6 +733,53 @@
   box-shadow: 0 0 8px var(--accent);
 }
 
+.status[data-state='ready'] .dot {
+  background: var(--accent);
+  opacity: 1;
+}
+
+.openButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  margin-left: auto;
+  height: 24px;
+  line-height: 1;
+  padding: 0 10px;
+  border: 1px solid var(--cv-border-strong);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--cv-text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 120ms ease;
+}
+
+.openButton:disabled {
+  color: var(--cv-muted);
+  cursor: default;
+}
+
+.openButton:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.openButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .openButton:not(:disabled):hover {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
+  }
+}
+
 @keyframes blink {
   50% {
     opacity: 0.35;
@@ -559,33 +787,6 @@
 }
 
 /* Wires and effects */
-
-.wire {
-  fill: none;
-  stroke: var(--cv-wire);
-  stroke-width: 2;
-  stroke-linecap: round;
-  transition: stroke 250ms ease;
-}
-
-.wire[data-lit] {
-  stroke: var(--accent);
-}
-
-.wireGlow {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 7;
-  stroke-linecap: round;
-  opacity: 0;
-  filter: blur(5px);
-  transition: opacity 400ms ease;
-}
-
-.wireGlow[data-lit] {
-  opacity: 0.55;
-  transition-duration: 200ms;
-}
 
 .tip {
   fill: var(--cv-wire);
@@ -1048,6 +1249,15 @@
   .node[data-shake],
   .node[data-repel],
   .status[data-state='armed'] .dot {
+    animation: none;
+  }
+
+  .display[data-gliding],
+  .node[data-slot] {
+    transition: none;
+  }
+
+  .node[data-linked]::after {
     animation: none;
   }
 

@@ -9,6 +9,7 @@ import {
   useState
 } from 'react';
 import { flushSync } from 'react-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useRouter } from 'next/router';
 import type { Activity } from 'lib/github-contributions';
 import {
@@ -31,10 +32,12 @@ import { Packets, packetIcon } from './packets';
 import {
   CARDS,
   type CardId,
+  DEFAULT_ACTIVE,
   DESIGN,
   type Layout,
   NEAR_RADIUS,
   type NodeId,
+  ROW,
   type Side,
   cardById,
   direction,
@@ -44,20 +47,28 @@ import {
   nodeSize,
   wireReachCap,
   outputPort,
-  portSide
+  outward,
+  portSide,
+  slotOffset,
+  wireAxis
 } from './nodes';
 import { HomePreview } from './previews/home-preview';
 import { MidnightPreview } from './previews/midnight-preview';
 import { NotebookPreview } from './previews/notebook-preview';
+import { PanoramaPreview } from './previews/panorama-preview';
 import { TerminalPreview } from './previews/terminal-preview';
 import { Spark } from './spark';
-import { Wire } from './wire';
+import { Strands, type StrandsHandle } from './strands';
 
 type Phase = 'drag' | 'near' | 'snapped' | 'retract';
 type WireState = { from: CardId; tip: Point; phase: Phase };
 type View = { layout: Layout; scale: number; ox: number; oy: number; width: number; height: number };
 
 const BAR_H = 56;
+// Desktop hangs from the top: the display sits this far under the bar at any window height, and
+// the world is scaled down until the cards clear the bottom of the window by the other.
+const DESKTOP_TOP = 6;
+const DESKTOP_BOTTOM = 16;
 const MOBILE_BREAKPOINT = 768;
 const DRAG_THRESHOLD = 3;
 // Other theme cards push a wire tip away: their body keeps it outside a padded outline, their
@@ -84,6 +95,22 @@ const PACKETS_FADE_MS = 240;
 const HINT_FADE_MS = 200;
 // A screen loaded ahead for a port the pointer left is dropped after this, unless a wire is out.
 const PREPARE_IDLE_MS = 2000;
+// Matches the transform transition on .node[data-slot].
+const SLIDE_MS = 520;
+// Sending a theme on desktop: when the first light lands on the display, how long until its screen
+// grows, how much the display swells and how far its glow comes up (in the old packets' steps).
+const SEND_LANDS_MS = 320;
+const SEND_MS = 820;
+const SEND_SWELL = 0.035;
+const SEND_GLOW = 3;
+// A press that travels this far moves the node; less is a click.
+const MOVE_THRESHOLD = 4;
+// The bundle spans a card's top edge and the display's bottom edge, short of their round corners.
+// The least height left between the display and the connected card while either is moved.
+const BUNDLE_ROOM = 72;
+const FAN_INSET = 20;
+const FAN_CARD = 132;
+const FAN_DISPLAY = 205;
 
 type Repel = { source: CardId; target: CardId; dir: Point; count: number };
 type Zap = { source: CardId; target: CardId; port: Point; key: number };
@@ -95,12 +122,13 @@ function measure(stage: HTMLElement): View {
     const scale = Math.min(1, (width - 32) / DESIGN.mobile.w);
     return { layout: 'mobile', scale, ox: (width - DESIGN.mobile.w * scale) / 2, oy: BAR_H + 16, width, height };
   }
-  const scale = Math.max(0.5, Math.min(1, (width - 96) / DESIGN.desktop.w, (height - BAR_H - 72) / DESIGN.desktop.h));
+  const room = height - BAR_H - DESKTOP_TOP - DESKTOP_BOTTOM;
+  const scale = Math.max(0.5, Math.min(1, (width - 96) / DESIGN.desktop.w, room / DESIGN.desktop.h));
   return {
     layout: 'desktop',
     scale,
     ox: (width - DESIGN.desktop.w * scale) / 2,
-    oy: BAR_H + (height - BAR_H - DESIGN.desktop.h * scale) / 2,
+    oy: BAR_H + DESKTOP_TOP,
     width,
     height
   };
@@ -110,6 +138,8 @@ function measure(stage: HTMLElement): View {
 function transitionColors(id: CardId) {
   if (id === 'terminal') return { edge: '#b8c572', background: '#0d0e0f' };
   if (id === 'midnight') return { edge: '#f3f3f4', background: '#0b0b0d' };
+  // --pn-ink and --pn-bg in themes/panorama/panorama.module.css.
+  if (id === 'panorama') return { edge: '#f4f4f5', background: '#1c1f24' };
   const dark = document.documentElement.classList.contains('dark');
   if (id === 'notebook') {
     return {
@@ -129,8 +159,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View | null>(null);
   const [positions, setPositions] = useState(() => initialPositions('desktop'));
-  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'home', 'terminal', 'display']);
+  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'panorama', 'home', 'terminal', 'display']);
   const [grabbed, setGrabbed] = useState<NodeId | null>(null);
+  // Desktop: the theme in the slot under the display, and whether the row is sliding to a new one.
+  const [active, setActive] = useState<CardId>(DEFAULT_ACTIVE);
+  const [swapping, setSwapping] = useState(false);
   const [wire, setWire] = useState<WireState | null>(null);
   const [burst, setBurst] = useState<number | null>(null);
   const [repel, setRepel] = useState<Repel | null>(null);
@@ -153,6 +186,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   viewRef.current = view;
   positionsRef.current = positions;
   wireRef.current = wire;
+  const activeRef = useRef(active);
+  const swapTimerRef = useRef<number | undefined>(undefined);
+  const sendTimerRef = useRef<number | undefined>(undefined);
+  // Set while a press on a card has turned into a drag, so the click that ends it opens nothing.
+  const draggedRef = useRef(false);
 
   const frameRef = useRef(0);
   const releaseRef = useRef<(() => void) | null>(null);
@@ -166,6 +204,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const discardRef = useRef<number | undefined>(undefined);
   const displayRef = useRef<HTMLElement>(null);
   const layerRef = useRef<SVGSVGElement>(null);
+  const strandsRef = useRef<StrandsHandle>(null);
   const reducedRef = useRef(false);
   const pointerRef = useRef<Point | null>(null);
   const kickRef = useRef<{ vec: Point; start: number } | null>(null);
@@ -180,7 +219,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     if (!stage) return;
     const update = () => {
       const next = measure(stage);
-      if (next.layout !== viewRef.current?.layout) setPositions(initialPositions(next.layout));
+      if (next.layout !== viewRef.current?.layout) setPositions(initialPositions(next.layout, activeRef.current));
       setView(next);
     };
     update();
@@ -192,6 +231,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       window.removeEventListener('resize', update);
     };
   }, []);
+
+  useEffect(() => {
+    activeRef.current = active;
+  }, [active]);
 
   useEffect(() => {
     CARDS.forEach((card) => router.prefetch(card.href));
@@ -232,6 +275,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       window.clearTimeout(discardRef.current);
       window.clearTimeout(packetsTimerRef.current);
       window.clearTimeout(hintTimerRef.current);
+      window.clearTimeout(sendTimerRef.current);
+      window.clearTimeout(swapTimerRef.current);
       cancelAnimationFrame(swellRef.current.frame);
       screenRef.current?.destroy();
     };
@@ -263,7 +308,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   const target = (from: CardId) => () =>
-    inputPort(positionsRef.current.display, inputSide(from, viewRef.current!.layout, positionsRef.current));
+    inputPort(
+      positionsRef.current.display,
+      inputSide(from, viewRef.current!.layout, positionsRef.current),
+      viewRef.current!.layout
+    );
 
   const open = (id: CardId) => {
     const stage = stageRef.current;
@@ -310,6 +359,15 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     setPacketsStopped(false);
     setTransfer((count) => count + 1);
     setBooting(from);
+    if (viewRef.current?.layout !== 'desktop') return;
+    // On desktop nothing rides the wire: the bundle itself carries the send, a volley of light and
+    // sparks up the strands. The display takes it in with one swell, then its screen grows.
+    window.clearTimeout(sendTimerRef.current);
+    sendTimerRef.current = window.setTimeout(() => {
+      setArrivals(SEND_GLOW);
+      swellTo(1 + SEND_SWELL);
+      sendTimerRef.current = window.setTimeout(lift, SEND_MS - SEND_LANDS_MS);
+    }, SEND_LANDS_MS);
   };
 
   /**
@@ -319,6 +377,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const powerDown = (id: CardId) => {
     // A lift may be waiting on the last swell.
     window.clearTimeout(timerRef.current);
+    window.clearTimeout(sendTimerRef.current);
     setPacketsStopped(true);
     window.clearTimeout(packetsTimerRef.current);
     packetsTimerRef.current = window.setTimeout(() => setBooting(null), PACKETS_FADE_MS);
@@ -350,6 +409,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const press = { x: event.clientX, y: event.clientY };
     let dragging = false;
     powerDown(id);
+    if (viewRef.current?.layout === 'desktop') return setWire(null);
     setWire({ from: id, tip: swollenPort(id, swellRef.current.x), phase: 'near' });
     armedRef.current = {};
     strikesRef.current = 0;
@@ -377,6 +437,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   /** While a port is hovered or focused, show what plugging it in would do. */
   const showHint = (id: CardId) => {
+    if (viewRef.current?.layout === 'desktop') return;
     if (reducedRef.current || wireRef.current) return;
     window.clearTimeout(hintTimerRef.current);
     setHint({ id, leaving: false });
@@ -423,7 +484,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const layout = viewRef.current!.layout;
     const at = positionsRef.current.display;
     const size = nodeSize('display', layout);
-    const p = inputPort(at, inputSide(from, layout, positionsRef.current));
+    const p = inputPort(at, inputSide(from, layout, positionsRef.current), layout);
     const cx = at.x + size.w / 2;
     const cy = at.y + size.h / 2;
     return { x: cx + (p.x - cx) * scale, y: cy + (p.y - cy) * scale };
@@ -450,7 +511,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       direction(portSide(current.from, layout, positions)),
       port,
       direction(inputSide(current.from, layout, positions)),
-      wireReachCap(layout)
+      wireReachCap(layout),
+      wireAxis(layout)
     );
     const layer = layerRef.current;
     layer?.querySelectorAll('[data-wire]').forEach((path) => path.setAttribute('d', d));
@@ -458,6 +520,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
       circle.setAttribute('cx', String(port.x));
       circle.setAttribute('cy', String(port.y));
     });
+    strandsRef.current?.moveEnd(port);
   };
 
   /**
@@ -495,7 +558,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   const retract = (from: CardId, tip: Point) => {
     releaseRef.current?.();
-    if (reducedRef.current) return setWire(null);
+    if (reducedRef.current || viewRef.current?.layout === 'desktop') {
+      setWire(null);
+      discardSoon();
+      return;
+    }
     const home = () => outputPort(from, positionsRef.current, viewRef.current!.layout);
     const reach = distance(tip, home());
     animate(
@@ -593,7 +660,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     const away =
       length > 0.5
         ? { x: dx / length, y: dy / length }
-        : { x: direction(portSide(target, viewRef.current!.layout, positionsRef.current)), y: 0 };
+        : outward(portSide(target, viewRef.current!.layout, positionsRef.current));
     const strength = KICK * Math.min(KICK_MAX, 1 + strikesRef.current * KICK_GROWTH);
     strikesRef.current += 1;
     kickRef.current = { vec: { x: away.x * strength, y: away.y * strength }, start: now };
@@ -638,7 +705,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
         const away =
           gap > 0.5
             ? { x: (tip.x - port.x) / gap, y: (tip.y - port.y) / gap }
-            : { x: direction(portSide(card.id, layout, positionsRef.current)), y: 0 };
+            : outward(portSide(card.id, layout, positionsRef.current));
         const pushed = FIELD_RADIUS - (FIELD_RADIUS - gap) * 0.3;
         tip = { x: port.x + away.x * pushed, y: port.y + away.y * pushed };
       }
@@ -650,6 +717,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   // The wire only appears once the pointer actually moves, and plugs in only on release.
   const startWire = (id: CardId) => (event: PointerEvent) => {
     if (event.button !== 0 || wireRef.current) return;
+    if (viewRef.current?.layout === 'desktop') {
+      event.preventDefault();
+      event.stopPropagation();
+      return connect(id);
+    }
     prepare(id);
     hideHint();
     event.preventDefault();
@@ -683,6 +755,12 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   };
 
   const connect = (id: CardId) => {
+    if (viewRef.current?.layout === 'desktop') {
+      if (wireRef.current || draggedRef.current) return;
+      if (id !== activeRef.current) return select(id);
+      hideHint();
+      return snap(id);
+    }
     if (wireRef.current) return;
     prepare(id);
     hideHint();
@@ -703,23 +781,44 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     );
   };
 
+  /**
+   * Moves a node about the desktop by its header or, for a card, anywhere on it. The bundle between
+   * the display and the connected card follows every frame. A press that never travels is left to
+   * be the click it was.
+   */
   const grab = (id: NodeId) => (event: PointerEvent) => {
-    if (event.button !== 0 || viewRef.current?.layout !== 'desktop') return;
+    if (event.button !== 0 || viewRef.current?.layout !== 'desktop' || wireRef.current) return;
     event.preventDefault();
+    const press = { x: event.clientX, y: event.clientY };
     const start = toWorld(event.clientX, event.clientY);
     const origin = positionsRef.current[id];
     const size = nodeSize(id, 'desktop');
-    setOrder((current) => [...current.filter((node) => node !== id), id]);
-    setGrabbed(id);
+    let moving = false;
     listen(
       event,
       (move) => {
+        if (!moving) {
+          if (Math.hypot(move.clientX - press.x, move.clientY - press.y) < MOVE_THRESHOLD) return;
+          moving = true;
+          draggedRef.current = true;
+          hideHint();
+          setOrder((current) => [...current.filter((node) => node !== id), id]);
+          setGrabbed(id);
+        }
         const { ox, oy, scale, width, height } = viewRef.current!;
         const p = toWorld(move.clientX, move.clientY);
         const minX = (8 - ox) / scale;
         const maxX = (width - 8 - ox) / scale - size.w;
-        const minY = (BAR_H - oy) / scale;
-        const maxY = (height - 8 - oy) / scale - size.h;
+        let minY = (BAR_H - oy) / scale;
+        let maxY = (height - 8 - oy) / scale - size.h;
+        // The connected card stays under the display with room for the bundle between them, so it
+        // always runs the same way: out of the card's top, into the display's bottom.
+        const displaySize = nodeSize('display', 'desktop');
+        if (id === activeRef.current) {
+          minY = Math.max(minY, positionsRef.current.display.y + displaySize.h + BUNDLE_ROOM);
+        } else if (id === 'display') {
+          maxY = Math.min(maxY, positionsRef.current[activeRef.current].y - displaySize.h - BUNDLE_ROOM);
+        }
         setPositions((current) => ({
           ...current,
           [id]: {
@@ -728,30 +827,75 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           }
         }));
       },
-      () => setGrabbed(null)
+      () => {
+        setGrabbed(null);
+        // The click that ends a drag comes right after this; anything later is a fresh press.
+        window.setTimeout(() => (draggedRef.current = false), 0);
+      }
     );
   };
 
+  /**
+   * Carries a theme into the slot under the display; its bundle fades out for the ride. Nodes that
+   * were moved glide back to their places.
+   */
+  const select = (id: CardId) => {
+    if (wireRef.current || id === activeRef.current) return;
+    hideHint();
+    discardSoon();
+    activeRef.current = id;
+    setActive(id);
+    setPositions(initialPositions('desktop', id));
+    setStatus(`${cardById(id).title} theme selected`);
+    window.clearTimeout(swapTimerRef.current);
+    if (reducedRef.current) return setSwapping(false);
+    setSwapping(true);
+    swapTimerRef.current = window.setTimeout(() => setSwapping(false), SLIDE_MS);
+  };
+
+  const step = (by: number) => {
+    const next = ROW[ROW.indexOf(activeRef.current) + by];
+    if (next) select(next);
+  };
+
   const layout = view?.layout ?? 'desktop';
-  const draggable = layout === 'desktop' && !booting;
+
+  useEffect(() => {
+    if (layout !== 'desktop') return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      const tag = (event.target as HTMLElement | null)?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      if (event.key === 'ArrowLeft') step(-1);
+      else if (event.key === 'ArrowRight') step(1);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // step reads everything from refs.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout]);
+
   const source = wire ? outputPort(wire.from, positions, layout) : null;
   // The display swells about its center as packets land; the input port is drawn where it ends up.
   const displayScale = swellRef.current.x;
   const port = wire ? swollenPort(wire.from, displayScale) : null;
-  // Desktop cards can sit on either side, so the display always offers both inputs.
+  // On desktop the bundle lands along the display's whole bottom edge, so it shows no input dot.
   const inputs: Side[] =
     layout === 'desktop'
-      ? ['left', 'right']
+      ? []
       : Array.from(new Set(CARDS.map((card) => inputSide(card.id, layout, positions))));
   const plugged = wire?.phase === 'snapped' ? wire.from : null;
   const nearSource = wire && wire.phase !== 'drag' && wire.phase !== 'retract' ? wire.from : null;
+  const resting = layout === 'desktop' && !wire && !swapping;
   const displayState: DisplayState = plugged
     ? 'open'
     : nearSource
       ? 'near'
       : wire?.phase === 'drag'
         ? 'armed'
-        : 'idle';
+        : resting
+          ? 'ready'
+          : 'idle';
   const design = DESIGN[layout];
   const sharedWire: SharedWire | null =
     wire && source && port
@@ -768,10 +912,11 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageHeight = layout === 'mobile' && view ? view.oy + design.h * view.scale + 40 : undefined;
 
   const previews: Record<CardId, ReactNode> = {
-    home: <HomePreview avatar={layout === 'desktop' ? 84 : 68} />,
-    terminal: <TerminalPreview contributions={contributions} weeks={layout === 'desktop' ? 49 : 43} />,
+    home: <HomePreview avatar={layout === 'desktop' ? 78 : 68} />,
+    terminal: <TerminalPreview contributions={contributions} weeks={43} />,
     notebook: <NotebookPreview />,
-    midnight: <MidnightPreview />
+    midnight: <MidnightPreview />,
+    panorama: <PanoramaPreview contributions={contributions} />
   };
 
   return (
@@ -796,8 +941,10 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
             side={portSide(card.id, layout, positions)}
             at={positions[card.id]}
             z={order.indexOf(card.id) + 1}
-            draggable={draggable}
+            draggable={layout === 'desktop' && !wire}
             dragging={grabbed === card.id}
+            onGrab={grab(card.id)}
+            slot={layout === 'desktop' ? slotOffset(card.id, active) : undefined}
             lit={plugged === card.id}
             shake={plugged === card.id}
             repel={
@@ -810,11 +957,12 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
                 : null
             }
             busy={wire !== null}
-            onGrab={grab(card.id)}
             onWire={startWire(card.id)}
             onConnect={() => connect(card.id)}
             onPrepare={() => {
-              prepare(card.id);
+              // On desktop the display already plays the connected theme; a second copy of its page
+              // is only loaded once it is opened.
+              if (layout !== 'desktop') prepare(card.id);
               showHint(card.id);
             }}
             onLeave={() => {
@@ -828,21 +976,45 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
         <DisplayNode
           ref={displayRef}
+          layout={layout}
+          // Only once measured, in the browser: a frame in the server's markup can finish loading
+          // before React is listening for it, and the screen would stay dark.
+          page={layout === 'desktop' && view ? (wire?.from ?? active) : null}
           at={positions.display}
           z={order.indexOf('display') + 1}
-          draggable={draggable}
+          draggable={layout === 'desktop' && !wire}
           dragging={grabbed === 'display'}
-          source={plugged ?? nearSource}
+          gliding={swapping}
+          onGrab={grab('display')}
+          source={plugged ?? nearSource ?? (resting ? active : null)}
           state={displayState}
           inputs={inputs}
-          side={wire ? inputSide(wire.from, layout, positions) : inputs[0]}
+          side={wire ? inputSide(wire.from, layout, positions) : (inputs[0] ?? 'bottom')}
           swell={arrivals}
           scale={displayScale}
           lifted={lifted}
           powerOff={powerOff}
-          onGrab={grab('display')}
+          onOpen={() => connect(active)}
           onUnplug={unplug}
         />
+
+        {layout === 'desktop' &&
+          ([-1, 1] as const).map((by) => {
+            const edge = positions[active].x + (by < 0 ? -28 : nodeSize(active, 'desktop').w + 28);
+            return (
+              <button
+                key={by}
+                type="button"
+                className={styles.step}
+                style={{ left: edge, top: positions[active].y + 130, zIndex: 8 }}
+                aria-label={by < 0 ? 'Previous theme' : 'Next theme'}
+                disabled={!ROW[ROW.indexOf(active) + by] || wire !== null}
+                onClick={() => step(by)}
+              >
+                {by < 0 ? <ChevronLeft className="size-4" /> : <ChevronRight className="size-4" />}
+              </button>
+            );
+          })}
 
         <svg ref={layerRef} className={styles.layer} width={design.w} height={design.h} style={{ zIndex: 10 }} aria-hidden>
           {hint && view && (
@@ -851,22 +1023,14 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               source={hint.id}
               from={outputPort(hint.id, positions, layout)}
               fromDir={direction(portSide(hint.id, layout, positions))}
-              to={inputPort(positions.display, inputSide(hint.id, layout, positions))}
+              to={inputPort(positions.display, inputSide(hint.id, layout, positions), layout)}
               toDir={direction(inputSide(hint.id, layout, positions))}
+              axis={wireAxis(layout)}
               leaving={hint.leaving}
             />
           )}
-          {wire && source && (
+          {wire && source && layout !== 'desktop' && (
             <>
-              <Wire
-                source={wire.from}
-                from={source}
-                fromDir={direction(portSide(wire.from, layout, positions))}
-                to={wire.phase === 'snapped' && port ? port : wire.tip}
-                toDir={direction(inputSide(wire.from, layout, positions))}
-                lit={wire.phase === 'snapped'}
-                reachCap={wireReachCap(layout)}
-              />
               <g style={{ '--accent': `var(--accent-${wire.from})` } as CSSProperties}>
                 <circle className={styles.cap} data-lit={plugged || undefined} cx={source.x} cy={source.y} r={5} />
                 {plugged && port && (
@@ -875,7 +1039,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               </g>
             </>
           )}
-          {wire && wire.phase !== 'snapped' && (
+          {wire && wire.phase !== 'snapped' && layout !== 'desktop' && (
             <circle className={styles.tip} cx={wire.tip.x} cy={wire.tip.y} r={4} />
           )}
           {wire?.phase === 'near' && port && !reducedRef.current && (
@@ -889,7 +1053,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               </g>
             </g>
           )}
-          {booting && wire?.from === booting && source && port && (
+          {booting && wire?.from === booting && source && port && layout !== 'desktop' && (
             <Packets
               key={transfer}
               source={booting}
@@ -898,6 +1062,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               to={port}
               toDir={direction(inputSide(booting, layout, positions))}
               reachCap={wireReachCap(layout)}
+              axis={wireAxis(layout)}
               stopped={packetsStopped}
               onArrive={() => {
                 setBurst(Date.now());
@@ -907,7 +1072,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
               onDone={lift}
             />
           )}
-          {plugged && burst && port && (
+          {plugged && burst && port && layout !== 'desktop' && (
             <g key={burst} style={{ '--accent': `var(--accent-${plugged})` } as CSSProperties}>
               <circle className={styles.burst} data-port cx={port.x} cy={port.y} r={6} />
             </g>
@@ -925,6 +1090,38 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           />
         )}
       </div>
+
+      {view && (wire ? source : layout === 'desktop') && (
+        <Strands
+          ref={strandsRef}
+          width={view.width}
+          height={stageHeight ?? view.height}
+          scale={view.scale}
+          ox={view.ox}
+          oy={view.oy}
+          from={wire && source ? source : outputPort(active, positions, layout)}
+          fromDir={direction(portSide(wire?.from ?? active, layout, positions))}
+          to={
+            wire
+              ? wire.phase === 'snapped' && port
+                ? port
+                : wire.tip
+              : inputPort(positions.display, inputSide(active, layout, positions), layout)
+          }
+          toDir={direction(inputSide(wire?.from ?? active, layout, positions))}
+          reachCap={wireReachCap(layout)}
+          axis={wireAxis(layout)}
+          fanFrom={
+            layout === 'desktop'
+              ? Math.min(FAN_CARD, nodeSize(wire?.from ?? active, layout).w / 2 - FAN_INSET)
+              : undefined
+          }
+          fanTo={layout === 'desktop' ? Math.min(FAN_DISPLAY, nodeSize('display', layout).w / 2 - FAN_INSET) : undefined}
+          mode={wire ? (wire.phase === 'snapped' ? 'live' : wire.phase) : swapping ? 'off' : 'idle'}
+          compact={layout === 'mobile'}
+          reduced={reducedRef.current}
+        />
+      )}
     </div>
   );
 }

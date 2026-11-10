@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react';
-import { GripVertical, House, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
+import { Columns4, GripVertical, House, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
 import {
@@ -9,14 +9,15 @@ import {
   type Layout,
   type Side,
   cardHeight,
-  portY
+  portOffset
 } from './nodes';
 
 const ICONS: Record<CardId, typeof House> = {
   home: House,
   terminal: SquareTerminal,
   notebook: NotebookPen,
-  midnight: Moon
+  midnight: Moon,
+  panorama: Columns4
 };
 
 type Props = {
@@ -33,7 +34,9 @@ type Props = {
   /** Which way to jolt when a wire is pushed off this card or off another one; `count` restarts it. */
   repel: { x: number; y: number; count: number } | null;
   busy: boolean;
-  onGrab: (event: PointerEvent) => void;
+  /** Slots from the one under the display; undefined outside the carousel. */
+  slot?: number;
+  onGrab?: (event: PointerEvent) => void;
   onWire: (event: PointerEvent) => void;
   onConnect: () => void;
   /** The pointer reached the port or card, or focus reached the card, so a connect may follow. */
@@ -54,6 +57,7 @@ export function NodeCard({
   shake,
   repel,
   busy,
+  slot,
   onGrab,
   onWire,
   onConnect,
@@ -63,6 +67,9 @@ export function NodeCard({
 }: Props) {
   const Icon = ICONS[card.id];
   const height = cardHeight(card, layout);
+  const port = portOffset(card, layout, side);
+  // 1px out past the border on whichever edge it is on.
+  const nudge = { left: { x: -1, y: -1 }, right: { x: 1, y: -1 }, top: { x: 0, y: -1 }, bottom: { x: 0, y: 1 } }[side];
 
   return (
     <article
@@ -70,6 +77,10 @@ export function NodeCard({
       data-dragging={dragging || undefined}
       data-lit={lit || undefined}
       data-shake={shake || undefined}
+      data-slot={slot === undefined ? undefined : Math.min(2, Math.abs(slot))}
+      data-active={slot === 0 || undefined}
+      data-linked={slot === 0 || undefined}
+      aria-current={slot === 0 ? 'true' : undefined}
       data-repel={repel ? (repel.count % 2 ? 'a' : 'b') : undefined}
       aria-label={`${card.title} theme`}
       style={
@@ -80,7 +91,7 @@ export function NodeCard({
           width: card.width[layout],
           height,
           zIndex: z,
-          transform: `translate3d(${at.x}px, ${at.y}px, 0)`
+          transform: `translate3d(${at.x}px, ${at.y}px, 0)${slot !== undefined && slot !== 0 ? ' scale(0.94)' : ''}`
         } as CSSProperties
       }
     >
@@ -112,8 +123,11 @@ export function NodeCard({
         href={card.href}
         className={styles.open}
         style={{ top: CARD_HEADER_H }}
-        aria-label={`Open ${card.title} theme`}
+        aria-label={slot !== undefined && slot !== 0 ? `Select ${card.title} theme` : `Open ${card.title} theme`}
         aria-disabled={busy || undefined}
+        draggable={false}
+        // On desktop the whole card can be picked up; a press that never moves stays a click.
+        onPointerDown={draggable ? onGrab : undefined}
         onClick={(event: MouseEvent) => {
           if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
           event.preventDefault();
@@ -127,16 +141,19 @@ export function NodeCard({
         onBlur={onLeave}
       />
 
-      {/* Only for dragging a wire; the link above is the keyboard and screen reader path. */}
-      <span
-        className={`${styles.port} ${styles.output}`}
-        data-lit={lit || undefined}
-        aria-hidden
-        style={{ left: side === 'left' ? -1 : 'calc(100% + 1px)', top: portY(card, layout) - 1 }}
-        onPointerDown={onWire}
-        onPointerEnter={onPrepare}
-        onPointerLeave={onLeave}
-      />
+      {/* Only for dragging a wire, which the phone does; the link above is the keyboard and screen
+          reader path. On desktop the bundle fans along the whole edge and there is no port. */}
+      {layout !== 'desktop' && (
+        <span
+          className={`${styles.port} ${styles.output}`}
+          data-lit={lit || undefined}
+          aria-hidden
+          style={{ left: port.x + nudge.x, top: port.y + nudge.y }}
+          onPointerDown={onWire}
+          onPointerEnter={onPrepare}
+          onPointerLeave={onLeave}
+        />
+      )}
     </article>
   );
 }

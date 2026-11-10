@@ -1,5 +1,5 @@
 import { type CSSProperties, useEffect, useRef } from 'react';
-import { type Point, wirePath } from 'lib/canvas/geometry';
+import { type Axis, type Point, wirePath } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
 import { type CardId, cardById } from './nodes';
 import { GLYPHS, GLYPH_FLICKER_MS, PacketToken, across, easeInOutSine, packetIcon } from './packets';
@@ -35,6 +35,7 @@ type Props = {
   fromDir: number;
   to: Point;
   toDir: number;
+  axis: Axis;
   /** Fades out before it is removed. */
   leaving: boolean;
 };
@@ -44,7 +45,7 @@ type Props = {
  * the display, and one of its skill icons gliding down it on a loop, a different one each time,
  * with a little of its ASCII behind.
  */
-export function Hint({ source, from, fromDir, to, toDir, leaving }: Props) {
+export function Hint({ source, from, fromDir, to, toDir, axis, leaving }: Props) {
   const icons = cardById(source).packets;
   const pathRef = useRef<SVGPathElement>(null);
   const pulseRef = useRef<SVGCircleElement>(null);
@@ -52,12 +53,15 @@ export function Hint({ source, from, fromDir, to, toDir, leaving }: Props) {
   const imageRef = useRef<SVGImageElement>(null);
   const glyphRefs = useRef<(SVGTextElement | null)[]>([]);
   // The token rides from port center to port center; the wire you see stops at the rings.
-  const d = wirePath(from, fromDir, to, toDir);
+  const d = wirePath(from, fromDir, to, toDir, Infinity, axis);
+  const vertical = axis === 'y';
   const shown = wirePath(
-    { x: from.x + fromDir * PORT_GAP, y: from.y },
+    { x: from.x + (vertical ? 0 : fromDir * PORT_GAP), y: from.y + (vertical ? fromDir * PORT_GAP : 0) },
     fromDir,
-    { x: to.x + toDir * PORT_GAP, y: to.y },
-    toDir
+    { x: to.x + (vertical ? 0 : toDir * PORT_GAP), y: to.y + (vertical ? toDir * PORT_GAP : 0) },
+    toDir,
+    Infinity,
+    axis
   );
 
   useEffect(() => {

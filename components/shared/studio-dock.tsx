@@ -2,7 +2,7 @@ import { type CSSProperties, type MouseEvent, useEffect, useState } from 'react'
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, House, Monitor, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
+import { ArrowUpRight, Columns4, House, Monitor, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
 import { CARDS, type CardId } from 'components/canvas/nodes';
 import { packetIcon } from 'components/canvas/packets';
 import { pixelNavigate } from 'lib/pixel-transition';
@@ -14,7 +14,13 @@ const CYCLE_MS = 3800;
 const PACKETS = 3;
 const PACKET_STAGGER_MS = 220;
 
-const ICONS: Record<CardId, typeof House> = { home: House, terminal: SquareTerminal, notebook: NotebookPen, midnight: Moon };
+const ICONS: Record<CardId, typeof House> = {
+  home: House,
+  terminal: SquareTerminal,
+  notebook: NotebookPen,
+  midnight: Moon,
+  panorama: Columns4
+};
 
 /** Which page the card sits on; each look borrows that page's palette, type and wording. */
 export type DockLook = 'site' | 'terminal' | 'notebook' | 'midnight';

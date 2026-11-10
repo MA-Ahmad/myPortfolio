@@ -26,6 +26,7 @@
   --dock-terminal: #6f7d1f;
   --dock-notebook: #d43d8f;
   --dock-midnight: #4b5563;
+  --dock-panorama: #5b5bd6;
 
   position: fixed;
   right: 24px;
@@ -62,6 +63,7 @@
   --dock-terminal: #b8c572;
   --dock-notebook: #f27ab9;
   --dock-midnight: #f3f3f4;
+  --dock-panorama: #a5b4fc;
 }
 
 /* The terminal theme: its gruvbox palette, mono type, near-square corners and a soft glow. */
@@ -81,6 +83,7 @@
   --dock-terminal: var(--term-accent);
   --dock-notebook: var(--term-purple);
   --dock-midnight: var(--term-fg);
+  --dock-panorama: var(--term-blue);
 }
 
 /* The notebook theme: ink on paper, hairline rules, no rounding, no shadow, its pixel face. */
@@ -102,6 +105,7 @@
   --dock-terminal: var(--nb-ink);
   --dock-notebook: var(--nb-ink);
   --dock-midnight: var(--nb-ink);
+  --dock-panorama: var(--nb-ink);
 }
 
 /* The midnight theme: near-black tiles, hairline borders, soft rounding. */
@@ -123,6 +127,7 @@
   --dock-terminal: var(--mn-ink);
   --dock-notebook: var(--mn-ink);
   --dock-midnight: var(--mn-ink);
+  --dock-panorama: var(--mn-ink);
 }
 
 /*

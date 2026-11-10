@@ -22,7 +22,7 @@ import {
   type SharedWire
 } from 'lib/canvas/presence';
 import styles from './canvas.module.css';
-import type { Layout } from './nodes';
+import { type Layout, wireAxis } from './nodes';
 
 export type { SharedWire };
 
@@ -405,7 +405,7 @@ function RoomLayer({ room, layout, scale, toWorld, wire, width, height }: LayerP
               className={styles.peerWire}
               data-lit={wire.lit || undefined}
               style={{ '--peer': color, '--accent': `var(--accent-${wire.source})` } as CSSProperties}
-              d={wirePath(wire.from, wire.fromDir, wire.to, wire.toDir, wire.reachCap ?? Infinity)}
+              d={wirePath(wire.from, wire.fromDir, wire.to, wire.toDir, wire.reachCap ?? Infinity, wireAxis(layout))}
             />
           ) : null
         )}
