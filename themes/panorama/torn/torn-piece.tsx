@@ -14,8 +14,7 @@ import { Attract } from './attract';
 import { Tether } from './tether';
 import { Strain, type Strained } from './strain';
 import { ditherStore, drawDitherSky } from './dither-sky';
-import { drawPixelSky, skyStore, trackedCells } from './pixel-sky';
-import { createSkyTrack } from './sky-track';
+import { drawPixelSky, skyStore } from './pixel-sky';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
 import {
@@ -229,18 +228,11 @@ function DitherSky() {
 function PixelSky() {
   const ref = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<SVGSVGElement>(null);
   const config = useSyncExternalStore(skyStore.subscribe, skyStore.get, skyStore.getServer);
   useEffect(() => {
     const canvas = ref.current!;
     const stars = starsRef.current!;
     const surface = canvas.parentElement!;
-    const skyTrack = createSkyTrack(trackRef.current!, {
-      line: styles.trackLine,
-      mark: styles.trackMark,
-      text: styles.trackText,
-      box: styles.trackBox
-    });
     const draw = () => {
       const twinkling = drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
       // Each twinkle is a static glow whose opacity loops, on its own period and phase, so only a
@@ -254,7 +246,6 @@ function PixelSky() {
           return star;
         })
       );
-      skyTrack.setCells(trackedCells());
     };
     draw();
     // Drawn only once the page runs, so the field fades in rather than popping onto the sky.
@@ -262,10 +253,7 @@ function PixelSky() {
     stars.dataset.drawn = '';
     const observer = new ResizeObserver(draw);
     observer.observe(surface);
-    return () => {
-      observer.disconnect();
-      skyTrack.destroy();
-    };
+    return () => observer.disconnect();
   }, [config]);
   return (
     <>
@@ -279,7 +267,6 @@ function PixelSky() {
         className={`${styles.sky} ${styles.twinkles}`}
         style={{ '--glow': `${config.glow}px`, '--sparkle': config.sparkle } as CSSProperties}
       />
-      <svg ref={trackRef} className={`${styles.sky} ${styles.track}`} aria-hidden />
     </>
   );
 }
