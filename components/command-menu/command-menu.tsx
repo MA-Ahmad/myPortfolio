@@ -10,6 +10,7 @@ import {
   FolderGit2Icon,
   HashIcon,
   GraduationCapIcon,
+  Columns4Icon,
   HomeIcon,
   LayersIcon,
   MoonIcon,
@@ -102,6 +103,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
   const terminalIconRef = useRef<SVGSVGElement>(null);
   const notebookIconRef = useRef<SVGSVGElement>(null);
   const midnightIconRef = useRef<SVGSVGElement>(null);
+  const panoramaIconRef = useRef<SVGSVGElement>(null);
   const canvasIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -113,6 +115,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     router.prefetch('/themes/terminal');
     router.prefetch('/themes/notebook');
     router.prefetch('/themes/midnight');
+    router.prefetch('/themes/panorama');
     router.prefetch('/theme-studio');
   }, [open, router]);
 
@@ -226,6 +229,19 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     });
   };
 
+  const openPanoramaTheme = () => {
+    const icon = panoramaIconRef.current?.getBoundingClientRect();
+    setOpen(false);
+    pixelNavigate(router, '/themes/panorama', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --pn-ink and --pn-bg in themes/panorama/panorama.module.css.
+      edge: '#f4f4f5',
+      background: '#1c1f24'
+    });
+  };
+
   const openCanvas = () => {
     const icon = canvasIconRef.current?.getBoundingClientRect();
     const dark = resolvedTheme === 'dark';
@@ -322,6 +338,10 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
                   <CommandItem className={s.item} onSelect={openMidnightTheme}>
                     <MoonIcon ref={midnightIconRef} className={iconClass} />
                     <span>Midnight</span>
+                  </CommandItem>
+                  <CommandItem className={s.item} onSelect={openPanoramaTheme}>
+                    <Columns4Icon ref={panoramaIconRef} className={iconClass} />
+                    <span>Panorama</span>
                   </CommandItem>
                   <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
                     <SwatchBookIcon className={iconClass} />

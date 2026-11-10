@@ -81,7 +81,7 @@ function CanvasLayout({ children }: { children: ReactNode }) {
               <ArrowLeft className="size-4" />
             </Link>
             Theme Studio
-            <span className={styles.hint}>Tap a theme, or drag its wire into the display</span>
+            <span className={styles.hint}>Pick a theme, then open it from the display</span>
           </div>
         </header>
         <main>{children}</main>

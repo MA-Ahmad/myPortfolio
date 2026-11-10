@@ -337,7 +337,7 @@ function RoomLayer({ room, layout, scale, toWorld, wire, width, height }: LayerP
 
   useEffect(() => room.update({ layout }), [room, layout]);
 
-  // The wire changes every frame while it's dragged; only an actual change goes out.
+  // The wire is a new object on every render; only an actual change goes out.
   const wireKey = JSON.stringify(wire);
   useEffect(() => {
     room.update({ wire: JSON.parse(wireKey) });

@@ -1,0 +1,132 @@
+/* Colours are the panorama theme's own at night (--pn-* in themes/panorama/panorama.module.css,
+   --tn-* in themes/panorama/torn/torn.module.css). */
+.root {
+  --ink: #f4f4f5;
+  --fill: color-mix(in srgb, var(--ink) 7%, transparent);
+  --accent: #7aa2ff;
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  /* The page behind the sheet, a shade lighter, so the cracks torn in the sheet show. */
+  background: #1c1f24;
+  color: var(--ink);
+}
+
+.sheet {
+  position: absolute;
+  inset: 9px 7px 7px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #0b0c0f;
+}
+
+.sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.84;
+}
+
+/* The page's moon photograph with its thin bright rim and wide cool halo. */
+.moon {
+  position: absolute;
+  left: 60%;
+  top: 14%;
+  width: 13px;
+  height: 13px;
+  background: center / contain no-repeat;
+  filter: drop-shadow(0 0 1.5px oklch(0.97 0.02 90 / 0.55)) drop-shadow(0 0 9px oklch(0.88 0.03 250 / 0.35));
+}
+
+.open {
+  position: absolute;
+  left: 10px;
+  top: 9px;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.intro {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  display: grid;
+  gap: 6px;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/* The page's contribution cells: one a day, a week a column, levels mixed from its one accent. */
+.cells {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-rows: repeat(7, 4px);
+  gap: 1px;
+}
+
+.cells i {
+  border-radius: 1px;
+  background: var(--fill);
+}
+
+.cells [data-level='1'] {
+  background: color-mix(in oklch, var(--accent) 20%, var(--fill));
+}
+
+.cells [data-level='2'] {
+  background: color-mix(in oklch, var(--accent) 42%, var(--fill));
+}
+
+.cells [data-level='3'] {
+  background: color-mix(in oklch, var(--accent) 68%, var(--fill));
+}
+
+.cells [data-level='4'] {
+  background: var(--accent);
+}
+
+.caption {
+  font-size: 7px;
+  line-height: 1;
+  color: color-mix(in srgb, var(--ink) 60%, transparent);
+}
+
+/* A closed section's label, on end at its top, as on the page. */
+.closed {
+  position: absolute;
+  top: 9px;
+  translate: -50% 0;
+  writing-mode: vertical-rl;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.seam {
+  position: absolute;
+  top: 0;
+  overflow: visible;
+}
+
+.crack {
+  fill: #1c1f24;
+  stroke: rgb(122 162 255 / 0.3);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+}
+
+.fibre {
+  fill: none;
+  stroke: rgb(170 190 240 / 0.5);
+  stroke-width: 1;
+  stroke-linecap: round;
+}

@@ -13,6 +13,9 @@
   --accent-terminal: #6f7d1f;
   --accent-notebook: #d43d8f;
   --accent-midnight: #d97706;
+  --accent-panorama: #5b5bd6;
+  /* The strand bundle's colours, gold through to violet (PALETTE_LIGHT in lib/canvas/strands.ts). */
+  --strands: #b45309, #c2410c, #be123c, #a21caf, #6d28d9;
 
   position: relative;
   min-height: 100dvh;
@@ -39,12 +42,9 @@
   --accent-terminal: #b8c572;
   --accent-notebook: #f27ab9;
   --accent-midnight: #f5a524;
-}
-
-@media (max-width: 767px) {
-  .root {
-    overflow: visible;
-  }
+  --accent-panorama: #a5b4fc;
+  /* PALETTE_DARK in lib/canvas/strands.ts. */
+  --strands: #f6d365, #f08a4b, #e5484d, #d6409f, #8e4ec6;
 }
 
 .stage {
@@ -65,6 +65,15 @@
   top: 0;
   left: 0;
   overflow: visible;
+  pointer-events: none;
+}
+
+/* The visitor's wire: a bundle of strands on one canvas over the whole stage, so a wire dragged
+   past the nodes is never clipped. */
+.strands {
+  position: absolute;
+  top: 0;
+  left: 0;
   pointer-events: none;
 }
 
@@ -100,67 +109,117 @@
   transition-duration: 200ms;
 }
 
-/* A card pushed away from another: out along --rx/--ry, then settling. Two identical keyframes
-   so a second repel restarts the animation. Declared before the connect shake, which wins. */
-.node[data-repel='a'] {
-  animation: repelA 480ms cubic-bezier(0.2, 0, 0, 1);
+/* The carousel: cards glide a slot at a time; those beside the slot under the display sit back. */
+.node[data-slot] {
+  transform-origin: 50% 50%;
+  transition:
+    transform 520ms cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 320ms ease,
+    border-color 300ms ease,
+    box-shadow 400ms ease;
 }
 
-.node[data-repel='b'] {
-  animation: repelB 480ms cubic-bezier(0.2, 0, 0, 1);
+.node[data-slot='1'] {
+  opacity: 0.5;
 }
 
-@keyframes repelA {
-  0% {
-    translate: 0 0;
-    rotate: 0deg;
-  }
-  16% {
-    translate: calc(var(--rx) * 9px) calc(var(--ry) * 9px);
-    rotate: calc(var(--rx) * 0.9deg);
-  }
-  38% {
-    translate: calc(var(--rx) * -3px) calc(var(--ry) * -3px);
-    rotate: calc(var(--rx) * -0.45deg);
-  }
-  58% {
-    translate: calc(var(--rx) * 1.5px) calc(var(--ry) * 1.5px);
-    rotate: calc(var(--rx) * 0.2deg);
-  }
-  80% {
-    translate: calc(var(--rx) * -0.5px) calc(var(--ry) * -0.5px);
-    rotate: 0deg;
-  }
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
+.node[data-slot='2'] {
+  opacity: 0.18;
+}
+
+/* A node in the hand follows the pointer exactly; the glide is only for the carousel. */
+.node[data-slot][data-dragging] {
+  transition:
+    opacity 320ms ease,
+    border-color 300ms ease,
+    box-shadow 400ms ease;
+}
+
+.node[data-dragging] .open {
+  cursor: grabbing;
+}
+
+/* A display that was moved goes home with the cards when the carousel turns. */
+.display[data-gliding] {
+  transition:
+    transform 520ms cubic-bezier(0.32, 0.72, 0, 1),
+    border-color 300ms ease,
+    box-shadow 400ms ease;
+}
+
+@media (hover: hover) {
+  .node[data-slot='1']:hover,
+  .node[data-slot='2']:hover {
+    opacity: 0.85;
   }
 }
 
-@keyframes repelB {
-  0% {
-    translate: 0 0;
-    rotate: 0deg;
+/* Previous / next theme, either side of the slot under the display. */
+.step {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -18px 0 0 -18px;
+  border: 1px solid var(--cv-border-strong);
+  border-radius: 50%;
+  background: var(--cv-card);
+  color: var(--cv-text);
+  box-shadow: var(--cv-shadow);
+  cursor: pointer;
+  transition:
+    opacity 200ms ease,
+    border-color 150ms ease,
+    transform 120ms ease;
+}
+
+.step:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.step:not(:disabled):active {
+  transform: scale(0.94);
+}
+
+.step:focus-visible {
+  outline: 2px solid var(--cv-text);
+  outline-offset: 2px;
+}
+
+@media (hover: hover) {
+  .step:not(:disabled):hover {
+    border-color: var(--cv-text);
   }
-  16% {
-    translate: calc(var(--rx) * 9px) calc(var(--ry) * 9px);
-    rotate: calc(var(--rx) * 0.9deg);
-  }
-  38% {
-    translate: calc(var(--rx) * -3px) calc(var(--ry) * -3px);
-    rotate: calc(var(--rx) * -0.45deg);
-  }
-  58% {
-    translate: calc(var(--rx) * 1.5px) calc(var(--ry) * 1.5px);
-    rotate: calc(var(--rx) * 0.2deg);
-  }
-  80% {
-    translate: calc(var(--rx) * -0.5px) calc(var(--ry) * -0.5px);
-    rotate: 0deg;
-  }
-  100% {
-    translate: 0 0;
-    rotate: 0deg;
+}
+
+/* The display and the theme plugged into it wear the bundle's colours as their border, gold on the
+   left through to violet on the right, so the strands read as running out of one outline and into
+   the other. Drawn over the 1px border and masked down to it. */
+.node[data-linked]::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--strands));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.85;
+  animation: linked 420ms ease-out;
+}
+
+@keyframes linked {
+  from {
+    opacity: 0;
   }
 }
 
@@ -301,63 +360,6 @@
   }
 }
 
-/* Ports */
-
-.port {
-  position: absolute;
-  width: 12px;
-  height: 12px;
-  margin: -6px 0 0 -6px;
-  border-radius: 50%;
-  border: 2px solid var(--cv-card);
-  background: var(--cv-wire);
-  box-shadow: 0 0 0 1px var(--cv-border-strong);
-  transition:
-    background-color 250ms ease,
-    box-shadow 250ms ease,
-    transform 200ms cubic-bezier(0.2, 0, 0, 1),
-    left 360ms cubic-bezier(0.32, 0.72, 0, 1);
-}
-
-.port::after {
-  content: '';
-  position: absolute;
-  inset: -12px;
-  border-radius: 50%;
-}
-
-.output {
-  cursor: crosshair;
-  touch-action: none;
-}
-
-@media (hover: hover) {
-  .output:hover {
-    transform: scale(1.25);
-  }
-}
-
-.port[data-lit] {
-  background: var(--accent);
-  box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--accent) 60%, transparent),
-    0 0 12px color-mix(in oklab, var(--accent) 80%, transparent);
-}
-
-.input {
-  z-index: 3;
-  background: var(--cv-card-raised);
-  box-shadow: 0 0 0 1px var(--cv-muted);
-}
-
-.input[data-near] {
-  transform: scale(1.3);
-  background: var(--accent);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    0 0 14px color-mix(in oklab, var(--accent) 80%, transparent);
-}
-
 /* Display */
 
 .display {
@@ -389,6 +391,33 @@
   border-radius: 0 14px 14px 0;
   background: radial-gradient(
     ellipse 64px 55% at 100% 50%,
+    color-mix(in oklab, var(--accent) 55%, transparent),
+    transparent 70%
+  );
+}
+
+.display[data-side='top']::before,
+.display[data-side='bottom']::before {
+  top: -1px;
+  bottom: auto;
+  left: 8%;
+  right: 8%;
+  width: auto;
+  height: 64px;
+  border-radius: 14px 14px 0 0;
+  background: radial-gradient(
+    ellipse 55% 64px at 50% 0,
+    color-mix(in oklab, var(--accent) 55%, transparent),
+    transparent 70%
+  );
+}
+
+.display[data-side='bottom']::before {
+  top: auto;
+  bottom: -1px;
+  border-radius: 0 0 14px 14px;
+  background: radial-gradient(
+    ellipse 55% 64px at 50% 100%,
     color-mix(in oklab, var(--accent) 55%, transparent),
     transparent 70%
   );
@@ -435,10 +464,6 @@
   stroke-width: 1.5;
 }
 
-.trace[data-loop] .traceLayer {
-  animation: trace 1400ms cubic-bezier(0.45, 0, 0.25, 1) infinite;
-}
-
 /* Fades out along the top and bottom, before the streaks reach the far edge. */
 @keyframes traceOnce {
   0% {
@@ -460,226 +485,69 @@
   }
 }
 
-@keyframes trace {
-  0% {
-    stroke-dashoffset: 60;
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  70% {
-    opacity: 1;
-  }
-  100% {
-    stroke-dashoffset: -58;
-    opacity: 0;
-  }
-}
-
-.rows {
-  flex: none;
-  padding: 8px 0;
-}
-
-.row {
+/* The display's screen: the connected theme's own page, scaled down, scrollable. */
+.screen {
   position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 36px;
-  padding: 0 18px;
-  font-size: 12px;
-  color: var(--cv-muted);
+  flex: none;
+  overflow: hidden;
+  /* The display's own bottom corners, inside its 1px border. */
+  border-radius: 0 0 13px 13px;
+  background: #0b0b0c;
 }
 
-.value {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: Cascadia, ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 11px;
-  color: var(--cv-text);
+.page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border: 0;
+  transform-origin: 0 0;
+  opacity: 0;
+  transition: opacity 320ms ease;
 }
 
-.check {
-  width: 14px;
-  height: 14px;
-  color: var(--accent);
+.page[data-on] {
+  opacity: 1;
 }
 
-.check path {
-  stroke-dasharray: 20;
-  stroke-dashoffset: 20;
-  animation: draw 360ms 120ms cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-@keyframes draw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-.status {
-  display: flex;
+.openButton {
+  display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  height: 40px;
-  padding: 0 14px;
-  border-top: 1px solid var(--cv-border);
-  font-size: 11px;
+  margin-left: auto;
+  height: 24px;
+  line-height: 1;
+  padding: 0 10px;
+  border: 1px solid var(--cv-border-strong);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--cv-text);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 120ms ease;
+}
+
+.openButton:disabled {
   color: var(--cv-muted);
+  cursor: default;
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--cv-muted);
-  opacity: 0.6;
+.openButton:not(:disabled):active {
+  transform: scale(0.97);
 }
 
-.status[data-state='armed'] .dot {
-  background: var(--accent);
-  opacity: 1;
-  animation: blink 900ms ease-in-out infinite;
+.openButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.status[data-state='open'] .dot {
-  background: var(--accent);
-  opacity: 1;
-  box-shadow: 0 0 8px var(--accent);
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0.35;
-  }
-}
-
-/* Wires and effects */
-
-.wire {
-  fill: none;
-  stroke: var(--cv-wire);
-  stroke-width: 2;
-  stroke-linecap: round;
-  transition: stroke 250ms ease;
-}
-
-.wire[data-lit] {
-  stroke: var(--accent);
-}
-
-.wireGlow {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 7;
-  stroke-linecap: round;
-  opacity: 0;
-  filter: blur(5px);
-  transition: opacity 400ms ease;
-}
-
-.wireGlow[data-lit] {
-  opacity: 0.55;
-  transition-duration: 200ms;
-}
-
-.tip {
-  fill: var(--cv-wire);
-}
-
-/* The wire is drawn over the nodes, so its ends repeat the port dots on top of it. */
-.cap {
-  fill: var(--cv-wire);
-  stroke: var(--cv-card);
-  stroke-width: 2;
-  transition: fill 250ms ease;
-}
-
-.cap[data-lit] {
-  fill: var(--accent);
-}
-
-.bolt {
-  fill: none;
-  stroke: var(--accent);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.boltGlow {
-  composes: bolt;
-  stroke-width: 5;
-  opacity: 0.5;
-  filter: blur(3px);
-}
-
-.boltCore {
-  composes: bolt;
-  stroke-width: 1.5;
-}
-
-.boltCoreWhite {
-  composes: bolt;
-  stroke: #fff;
-  stroke-width: 0.75;
-  opacity: 0.8;
-}
-
-.fork {
-  composes: bolt;
-  stroke-width: 1;
-  opacity: 0.8;
-}
-
-.spark {
-  fill: var(--accent);
-}
-
-.ring {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: ring 800ms cubic-bezier(0.2, 0, 0, 1) infinite;
-}
-
-.ring:nth-child(2) {
-  animation-delay: 400ms;
-}
-
-@keyframes ring {
-  from {
-    transform: scale(1);
-    opacity: 0.9;
-  }
-  to {
-    transform: scale(1.9);
-    opacity: 0;
-  }
-}
-
-.burst {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 2;
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: burst 300ms cubic-bezier(0.2, 0, 0, 1) forwards;
-}
-
-@keyframes burst {
-  from {
-    transform: scale(0.5);
-    opacity: 1;
-  }
-  to {
-    transform: scale(4);
-    opacity: 0;
+@media (hover: hover) {
+  .openButton:not(:disabled):hover {
+    border-color: var(--accent);
+    background: color-mix(in oklab, var(--accent) 12%, transparent);
   }
 }
 
@@ -882,29 +750,8 @@
   }
 }
 
-/* Packets: the skill icons a plugged-in theme sends down its wire. */
-
-.packetHalo {
-  fill: var(--accent);
-  opacity: 0.22;
-}
-
-.packetGlyph {
-  font-family: Cascadia, ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 13px;
-  font-weight: 600;
-  fill: var(--accent);
-  user-select: none;
-}
-
-.packetToken {
-  fill: #fff;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-}
-
-/* The display glows brighter with each packet that lands; --swell counts them. While lit it is
-   its own layer, so swelling it each frame only recomposites it. */
+/* The display glows brighter as a send lands; --swell says how far. While lit it is its own
+   layer, so swelling it each frame only recomposites it. */
 .display[data-lit] {
   will-change: transform;
   box-shadow:
@@ -920,16 +767,9 @@
   transition: none;
 }
 
-/* Pulling the wire back out of a display that is taking packets in. */
-
-.input[data-plugged] {
-  cursor: grab;
-  touch-action: none;
-}
-
 /*
  * The display switching off like an old set, over its body: the card's own color covers the
- * rows, the picture squashes into a bright line, the line shrinks to a dot, the dot fades, and
+ * screen, the picture squashes into a bright line, the line shrinks to a dot, the dot fades, and
  * the cover lifts off the display, back to awaiting input.
  */
 .powerOff {
@@ -951,7 +791,7 @@
   width: 100%;
   height: 100%;
   /* Brightest through the middle and soft at the edges, so it squashes into a glowing band
-     rather than a flat slab, tinted by the theme that was plugged in. */
+     rather than a flat slab, tinted by the theme that was being sent. */
   background: linear-gradient(
     to bottom,
     transparent,
@@ -1000,60 +840,19 @@
   }
 }
 
-/* Packets caught on the wire by an unplug stop where they are and fade. */
-.packets[data-stopped] {
-  opacity: 0;
-  transition: opacity 240ms ease-out;
-}
-
-/* The hint while a port is hovered: a ghost wire to the display, a token gliding down it. */
-
-.hint {
-  transition: opacity 200ms ease-out;
-}
-
-.hint[data-leaving] {
-  opacity: 0;
-}
-
-.hintWire {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  stroke-linecap: round;
-  stroke-dasharray: 1 1;
-  stroke-dashoffset: 1;
-  opacity: 0.4;
-  animation: hintDraw 480ms cubic-bezier(0.3, 0.7, 0, 1) forwards;
-}
-
-.hintPulse {
-  fill: none;
-  stroke: var(--accent);
-  stroke-width: 1.5;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
-@keyframes hintDraw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .ring,
-  .burst,
   .caret,
-  .node[data-shake],
-  .node[data-repel],
-  .status[data-state='armed'] .dot {
+  .node[data-shake] {
     animation: none;
   }
 
-  .ring,
-  .burst {
-    opacity: 0;
+  .display[data-gliding],
+  .node[data-slot] {
+    transition: none;
+  }
+
+  .node[data-linked]::after {
+    animation: none;
   }
 
   .trace {
@@ -1062,10 +861,5 @@
 
   .powerOff {
     display: none;
-  }
-
-  .check path {
-    animation: none;
-    stroke-dashoffset: 0;
   }
 }
