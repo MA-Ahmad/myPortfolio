@@ -1,5 +1,5 @@
 import { type Ref, useEffect, useImperativeHandle, useLayoutEffect, useRef } from 'react';
-import { type Axis, type Point, wireReach } from 'lib/canvas/geometry';
+import { type Point, wireReach } from 'lib/canvas/geometry';
 import {
   PALETTE_DARK,
   PALETTE_LIGHT,
@@ -12,7 +12,7 @@ import {
 } from 'lib/canvas/strands';
 import styles from './canvas.module.css';
 
-export type StrandsMode = 'drag' | 'near' | 'live' | 'retract' | 'idle' | 'off';
+export type StrandsMode = 'live' | 'idle' | 'off';
 export type StrandsHandle = { moveEnd: (to: Point) => void };
 
 type Props = {
@@ -27,8 +27,6 @@ type Props = {
   fromDir: number;
   to: Point;
   toDir: number;
-  reachCap?: number;
-  axis: Axis;
   /**
    * Half the width of the fan at each end, when it should span a card's edge whatever the distance.
    * Left out, the fan grows with the wire's length.
@@ -49,11 +47,8 @@ type Spark = { strand: number; s: number; speed: number };
 // start (seconds; 0 = never), how fast they cross (bundle lengths / s) and how strong they are.
 type Mode = { level: number; tipFan: number; every: number; speed: number; strength: number };
 const MODES: Record<StrandsMode, Mode> = {
-  drag: { level: 0.6, tipFan: 0.25, every: 1.5, speed: 0.55, strength: 0.45 },
-  near: { level: 0.85, tipFan: 0.7, every: 0.55, speed: 0.8, strength: 0.7 },
   // Sending: band after band at speed, with sparks racing up single strands between them.
   live: { level: 1, tipFan: 1, every: 0.13, speed: 2.2, strength: 1 },
-  retract: { level: 0.3, tipFan: 0.25, every: 0, speed: 0, strength: 0 },
   // Connected and waiting: the whole fan open, a slow band of light every second or so.
   idle: { level: 0.8, tipFan: 1, every: 1.1, speed: 0.5, strength: 0.6 },
   // Between themes while the carousel moves: dark, so it can fade back in on the next one.
@@ -82,9 +77,8 @@ const COUNT = 96;
 const COUNT_COMPACT = 64;
 const SEGMENTS = 36;
 const SEGMENTS_COMPACT = 28;
-const FAN_MAX = 72;
-// A vertical bundle fans across most of a card's top edge.
-const FAN_MAX_TALL = 112;
+// The bundle fans across most of a card's top edge.
+const FAN_MAX = 112;
 const FAN_MAX_COMPACT = 14;
 // The bundle's middle is a weight on a spring: it trails the ends when a node is moved, swings past
 // and settles. Underdamped, so it reads as a rope and not a rod.
@@ -99,14 +93,6 @@ const STIR_PACE = 0.65; // share of the wait between bands it removes
 const STIR_EASE = 0.25; // seconds for the stir to die down
 
 const rgba = (c: Rgb, a: number) => `rgba(${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${a})`;
-
-// The ends are reused every frame: write all four numbers of both vectors.
-function setEnd(end: StrandEnd, axis: Axis, dir: number) {
-  end.dir.x = axis === 'x' ? dir : 0;
-  end.dir.y = axis === 'x' ? 0 : dir;
-  end.perp.x = axis === 'x' ? 0 : 1;
-  end.perp.y = axis === 'x' ? 1 : 0;
-}
 
 export function Strands(props: Props) {
   const { ref, width, height } = props;
@@ -150,8 +136,9 @@ export function Strands(props: Props) {
     const sparks: Spark[] = [];
     let sending = false;
     let sparkDue = 0;
-    const a: StrandEnd = { at: { x: 0, y: 0 }, dir: { x: 1, y: 0 }, perp: { x: 0, y: 1 }, half: 0 };
-    const b: StrandEnd = { at: { x: 0, y: 0 }, dir: { x: 1, y: 0 }, perp: { x: 0, y: 1 }, half: 0 };
+    // The bundle runs up and down, so each end points along y and fans along x.
+    const a: StrandEnd = { at: { x: 0, y: 0 }, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 }, half: 0 };
+    const b: StrandEnd = { at: { x: 0, y: 0 }, dir: { x: 0, y: 1 }, perp: { x: 1, y: 0 }, half: 0 };
     let level = 0;
     let tipFan = 0;
     let sinceSpawn = 0;
@@ -251,21 +238,21 @@ export function Strands(props: Props) {
         }
       }
 
-      const { from, fromDir, toDir, scale, ox, oy, compact, axis } = p;
+      const { from, fromDir, toDir, scale, ox, oy, compact } = p;
       const dpr = dprRef.current;
       const count = compact ? COUNT_COMPACT : COUNT;
       const segments = compact ? SEGMENTS_COMPACT : SEGMENTS;
       const length = Math.hypot(to.x - from.x, to.y - from.y);
-      const half = fanHalf(length, compact ? FAN_MAX_COMPACT : axis === 'y' ? FAN_MAX_TALL : FAN_MAX);
+      const half = fanHalf(length, compact ? FAN_MAX_COMPACT : FAN_MAX);
       a.at = from;
-      setEnd(a, axis, fromDir);
+      a.dir.y = fromDir;
       a.half = p.fanFrom ?? half;
       b.at = to;
-      setEnd(b, axis, toDir);
+      b.dir.y = toDir;
       b.half = (p.fanTo ?? half) * tipFan;
-      const reach = wireReach(from, fromDir, to, p.reachCap, axis);
+      const reach = wireReach(from, fromDir, to);
       const flip = fromDir === toDir ? -1 : 1;
-      const lane = flip === 1 ? 0 : (axis === 'x' ? from.y > to.y : from.x > to.x) ? 1 : -1;
+      const lane = flip === 1 ? 0 : from.x > to.x ? 1 : -1;
 
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);

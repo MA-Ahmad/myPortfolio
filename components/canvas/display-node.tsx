@@ -2,38 +2,21 @@ import { type CSSProperties, type PointerEvent, type Ref, useState } from 'react
 import { GripVertical, Monitor } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
-import {
-  type CardId,
-  DISPLAY_FOOTER_H,
-  DISPLAY_HEADER_H,
-  DISPLAY_SCREEN_H,
-  type Layout,
-  type Side,
-  cardById,
-  displaySize
-} from './nodes';
-
-// Each input sits 1px out past the border on whichever edge it is on.
-const inputStyle = (side: Side, w: number, h: number): CSSProperties =>
-  ({
-    left: { left: -1, top: h / 2 - 1 },
-    right: { left: w + 1, top: h / 2 - 1 },
-    top: { left: w / 2, top: -1 },
-    bottom: { left: w / 2, top: h + 1 }
-  })[side];
+import { type CardId, DISPLAY_HEADER_H, DISPLAY_SCREEN_H, type Layout, type Side, cardById, displaySize } from './nodes';
 
 // The page in the display's screen is laid out this wide and scaled down to fit, so it shows the
-// theme as a desktop visitor gets it.
+// theme as a visitor on that kind of screen gets it.
 const PAGE_W: Record<Layout, number> = { desktop: 1200, mobile: 390 };
 
-export type DisplayState = 'idle' | 'armed' | 'near' | 'open' | 'ready';
+/** Connected and waiting, sending its theme, or between themes while the carousel slides. */
+export type DisplayState = 'ready' | 'open' | 'idle';
 
 type Props = {
   ref?: Ref<HTMLElement>;
   layout: Layout;
   /**
-   * The theme whose page plays in the screen (desktop): the one connected, scrollable like the page
-   * itself. Without it the body is the rows of readouts.
+   * The theme whose page plays in the screen: the one connected, scrollable like the page itself.
+   * Without it the screen is dark.
    */
   page?: CardId | null;
   at: Point;
@@ -42,26 +25,22 @@ type Props = {
   dragging: boolean;
   /** Set while the carousel slides, so a display that was moved glides home with the cards. */
   gliding?: boolean;
-  /** The card whose wire is near or plugged in, which tints the node. */
+  /** The card that is connected or being sent, which tints the node. */
   source: CardId | null;
   state: DisplayState;
-  /** The inputs cards can reach in this layout. */
-  inputs: Side[];
-  /** The input the current source plugs into. */
+  /** The edge the bundle lands on. */
   side: Side;
-  /** How many packets have landed; each one brightens the glow. */
+  /** How far the glow has come up as a send lands. */
   swell: number;
-  /** The node's size about its center, as it swells with each packet. */
+  /** The node's size about its center, as it swells with a send. */
   scale: number;
   /** Hidden under the screen that grows out of it. */
   lifted: boolean;
-  /** Set when a wire was just pulled out; `key` replays the power-down, tinted for `source`. */
+  /** Set when a send was just pulled out; `key` replays the power-down, tinted for `source`. */
   powerOff: { key: number; source: CardId } | null;
   onGrab?: (event: PointerEvent) => void;
-  /** Opens the connected theme from the footer. */
+  /** Opens the connected theme from the header. */
   onOpen?: () => void;
-  /** A press on the plugged-in input, which pulls the wire back out. */
-  onUnplug: (event: PointerEvent) => void;
 };
 
 export function DisplayNode({
@@ -75,15 +54,13 @@ export function DisplayNode({
   gliding,
   source,
   state,
-  inputs,
   side,
   swell,
   scale,
   lifted,
   powerOff,
   onGrab,
-  onOpen,
-  onUnplug
+  onOpen
 }: Props) {
   const card = source ? cardById(source) : null;
   const open = state === 'open';
@@ -96,16 +73,7 @@ export function DisplayNode({
   const pageScale = (w - 2) / pageW;
   const ready = state === 'ready';
 
-  const status =
-    state === 'open' && card
-      ? `Opening ${card.title}…`
-      : ready && card
-        ? `${card.title} connected`
-        : state === 'near' && card
-        ? `Release to open ${card.title}`
-        : state === 'armed'
-          ? 'Drop the wire on an input'
-          : 'Awaiting input';
+  const status = open && card ? `Opening ${card.title}…` : ready && card ? `${card.title} connected` : 'Awaiting input';
 
   return (
     <article
@@ -131,7 +99,7 @@ export function DisplayNode({
         } as CSSProperties
       }
     >
-      {(state === 'near' || open) && <Trace key={state} side={side} loop={!open} w={w} h={h} />}
+      {open && <Trace side={side} w={w} h={h} />}
 
       <header
         className={styles.header}
@@ -150,8 +118,8 @@ export function DisplayNode({
         Display
         {/* A phone's header has room for the name and the way in, not the route as well. */}
         {layout === 'desktop' && <span className={styles.meta}>{shown ? shown.route : 'full page'}</span>}
-        {/* On desktop the header carries the way in, so the screen runs to the display's bottom edge
-            and the bundle below it has the room a footer would take. */}
+        {/* The header carries the way in, so the screen runs to the display's bottom edge and the
+            bundle below it has the room a footer would take. */}
         {shown && card && onOpen && (ready || open) && (
           <button
             type="button"
@@ -167,9 +135,9 @@ export function DisplayNode({
         )}
       </header>
 
-      {shown ? (
-        <div className={styles.screen} style={{ height: screenH }}>
-          {/* Keyed by page, so each theme starts from the top with a dark screen. */}
+      <div className={styles.screen} style={{ height: screenH }}>
+        {/* Keyed by page, so each theme starts from the top with a dark screen. */}
+        {shown && (
           <iframe
             key={shown.href}
             className={styles.page}
@@ -179,57 +147,16 @@ export function DisplayNode({
             style={{ width: pageW, height: screenH / pageScale, transform: `scale(${pageScale})` }}
             onLoad={() => setLoaded(shown.href)}
           />
-        </div>
-      ) : (
-        <div className={styles.rows}>
-          <div className={styles.row}>
-            source
-            <span className={styles.value}>
-              {(open || ready) && card ? (
-                <>
-                  {card.title.toLowerCase()}
-                  {open && (
-                    <svg className={styles.check} viewBox="0 0 16 16" fill="none" aria-hidden>
-                      <path
-                        d="M3.5 8.5l3 3 6-7"
-                        stroke="currentColor"
-                        strokeWidth="1.75"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  )}
-                </>
-              ) : (
-                '—'
-              )}
-            </span>
-          </div>
-          <div className={styles.row}>
-            route
-            <span className={styles.value}>{(open || ready) && card ? card.route : '—'}</span>
-          </div>
-          <div className={styles.row}>
-            transition
-            <span className={styles.value}>pixel</span>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {shown ? (
-        // Still said aloud, and still the footer the growing screen copies, but it takes no room.
-        <div className="sr-only" role="status">
-          {status}
-        </div>
-      ) : (
-        <div className={styles.status} style={{ height: DISPLAY_FOOTER_H - 1 }} data-state={state} role="status">
-          <span className={styles.dot} aria-hidden />
-          {status}
-        </div>
-      )}
+      {/* Said aloud, and the footer the growing screen copies, but it takes no room. */}
+      <div className="sr-only" role="status">
+        {status}
+      </div>
 
       {/* An old set switching off: the picture squashes to a line, the line to a dot. A span, so
-          the screen that copies this node's rows never mistakes it for them. */}
+          the growing screen that copies this node's screen never mistakes it for that. */}
       {powerOff && (
         <span
           key={powerOff.key}
@@ -238,22 +165,6 @@ export function DisplayNode({
           aria-hidden
         />
       )}
-
-      {inputs.map((input) => {
-        const plugged = open && input === side;
-        return (
-          <span
-            key={input}
-            className={`${styles.port} ${styles.input}`}
-            data-side={input}
-            data-near={(input === side && (state === 'near' || open)) || undefined}
-            data-plugged={plugged || undefined}
-            aria-hidden
-            style={inputStyle(input, w, h)}
-            onPointerDown={plugged ? onUnplug : undefined}
-          />
-        );
-      })}
     </article>
   );
 }
@@ -289,22 +200,12 @@ const TRACE_LAYERS = [
   { className: styles.traceCore, opacity: 1 },
 ];
 
-/**
- * Light running from the input around the border both ways, meeting on the far side. It loops
- * while a wire is close enough to plug in and runs once when it does.
- */
-function Trace({ side, loop, w, h }: { side: Side; loop: boolean; w: number; h: number }) {
+/** Light running once from where the bundle lands around the border both ways, meeting on the far side. */
+function Trace({ side, w, h }: { side: Side; w: number; h: number }) {
   // The right and bottom inputs mirror the left and top ones.
   const flip = side === 'right' ? `matrix(-1 0 0 1 ${w} 0)` : side === 'bottom' ? `matrix(1 0 0 -1 0 ${h})` : undefined;
   return (
-    <svg
-      className={styles.trace}
-      data-loop={loop || undefined}
-      width={w}
-      height={h}
-      viewBox={`0 0 ${w} ${h}`}
-      aria-hidden
-    >
+    <svg className={styles.trace} width={w} height={h} viewBox={`0 0 ${w} ${h}`} aria-hidden>
       <g transform={flip}>
         {tracePaths(side, w, h).map((d) => (
           <g key={d}>

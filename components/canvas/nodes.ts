@@ -1,6 +1,4 @@
-import type { Axis, Point } from 'lib/canvas/geometry';
-
-export type { Axis } from 'lib/canvas/geometry';
+import type { Point } from 'lib/canvas/geometry';
 
 export type CardId = 'home' | 'terminal' | 'notebook' | 'midnight' | 'panorama';
 export type NodeId = CardId | 'display';
@@ -11,12 +9,8 @@ export const CARD_W = 300;
 export const CARD_HEADER_H = 44;
 /** Below the preview: the same 6px inset it has at the sides, plus the card border. */
 export const CARD_BOTTOM = 7;
-export const PORT_SIZE = 12;
 
 export const DISPLAY_HEADER_H = 48;
-export const DISPLAY_ROW_H = 36;
-export const DISPLAY_BODY_PAD = 8;
-export const DISPLAY_FOOTER_H = 40;
 /**
  * The display's body is a screen showing the connected theme's page: 16:9 on desktop, where the page
  * is laid out as a desktop sees it; nearly square on a phone, which shows the page's phone layout.
@@ -28,9 +22,6 @@ const DISPLAY: Record<Layout, { w: number; h: number }> = {
   mobile: { w: 320, h: DISPLAY_HEADER_H + DISPLAY_SCREEN_H.mobile }
 };
 export const displaySize = (layout: Layout) => DISPLAY[layout];
-
-export const NEAR_RADIUS = 64;
-export const SNAP_RADIUS = 18;
 
 // Every card is one size, so each sits the same in the slot under the display.
 const PREVIEW_H: Record<Layout, number> = { desktop: 200, mobile: 170 };
@@ -56,10 +47,7 @@ export type CardDef = {
   href: string;
   width: Record<Layout, number>;
   previewHeight: Record<Layout, number>;
-  /**
-   * Skill icons, from /assets/images/skills. Plugging in sends the first few down the wire (see
-   * TRANSFER_COUNT in packets.tsx); hovering the port cycles through them all.
-   */
+  /** Skill icons, from /assets/images/skills. The studio dock sends the first few down its wire. */
   packets: string[];
 };
 
@@ -123,9 +111,6 @@ export const nodeSize = (id: NodeId, layout: Layout) => {
   return { w: card.width[layout], h: cardHeight(card, layout) };
 };
 
-/** Every wire runs up from a card into the display. */
-export const wireAxis = (_layout: Layout): Axis => 'y';
-
 /**
  * The card edge the wire leaves by. It faces the display: the top edge while the card is below the
  * display, the bottom edge if it has been dragged above it.
@@ -164,9 +149,6 @@ export function initialPositions(layout: Layout, active: CardId = DEFAULT_ACTIVE
   return row;
 }
 
-/** Nothing limits how far a wire's curve reaches out of its ends. */
-export const wireReachCap = (_layout: Layout) => Infinity;
-
 const tallest = (layout: Layout) => Math.max(...CARDS.map((card) => cardHeight(card, layout)));
 
 /**
@@ -195,7 +177,3 @@ export const inputPort = (at: Point, side: Side, layout: Layout): Point => {
 
 /** Which way a wire leaves a port along its axis: -1 from a left or top edge, +1 from a right or bottom one. */
 export const direction = (side: Side) => (side === 'left' || side === 'top' ? -1 : 1);
-
-/** A step out of a port on `side`, as a vector. */
-export const outward = (side: Side): Point =>
-  side === 'left' || side === 'right' ? { x: direction(side), y: 0 } : { x: 0, y: direction(side) };

@@ -1,40 +1,9 @@
 export type Point = { x: number; y: number };
-/** The axis a wire runs along: sideways between left and right edges, or up and down. */
-export type Axis = 'x' | 'y';
-
-export const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y);
-
-export const lerp = (a: Point, b: Point, t: number): Point => ({
-  x: a.x + (b.x - a.x) * t,
-  y: a.y + (b.y - a.y) * t
-});
-
-/**
- * Moves `p` out to the outline of the box at `at` grown by `pad` with round corners, through the
- * nearest side, or returns it as is when it is already outside.
- */
-export function outside(p: Point, at: Point, size: { w: number; h: number }, pad: number): Point {
-  const hw = size.w / 2;
-  const hh = size.h / 2;
-  const cx = at.x + hw;
-  const cy = at.y + hh;
-  const sx = p.x < cx ? -1 : 1;
-  const sy = p.y < cy ? -1 : 1;
-  const qx = Math.abs(p.x - cx) - hw;
-  const qy = Math.abs(p.y - cy) - hh;
-  if (qx > 0 && qy > 0) {
-    const d = Math.hypot(qx, qy);
-    if (d >= pad) return p;
-    return { x: cx + sx * (hw + (qx / d) * pad), y: cy + sy * (hh + (qy / d) * pad) };
-  }
-  if (qx >= qy) return qx >= pad ? p : { x: cx + sx * (hw + pad), y: p.y };
-  return qy >= pad ? p : { x: p.x, y: cy + sy * (hh + pad) };
-}
 
 /** How far a wire's bezier handles reach out of its two ports. See `wirePath`. */
-export function wireReach(from: Point, fromDir: number, to: Point, reachCap = Infinity, axis: Axis = 'x') {
-  const along = axis === 'x' ? to.x - from.x : to.y - from.y;
-  const across = axis === 'x' ? to.y - from.y : to.x - from.x;
+export function wireReach(from: Point, fromDir: number, to: Point, reachCap = Infinity) {
+  const along = to.y - from.y;
+  const across = to.x - from.x;
   const ahead = along * fromDir;
   const length = Math.hypot(along, across);
   return Math.min(
@@ -45,28 +14,17 @@ export function wireReach(from: Point, fromDir: number, to: Point, reachCap = In
 }
 
 /**
- * A wire leaves its output straight out of the port's edge and enters its input the same way,
- * like a node editor: `fromDir` and `toDir` are +1 for a port on a right edge, -1 for a left one
- * (on the y axis, +1 for a bottom edge, -1 for a top one).
+ * A wire runs up and down: it leaves its output straight out of the port's edge and enters its
+ * input the same way, like a node editor. `fromDir` and `toDir` are +1 for a port on a bottom edge,
+ * -1 for one on a top edge.
  * The handles grow with the gap, and more when the input sits behind the output, so the wire
  * loops back instead of folding over itself. They never outgrow the distance between the ends,
- * so a short wire is a short line toward the pointer rather than a sideways hook, and a wire
- * pulled behind its port bends only slightly that way. `reachCap` limits the handles where there
- * is little room beside the ports, such as a phone's single column.
+ * so a short wire is a short line rather than a hook, and a wire pulled behind its port bends only
+ * slightly that way. `reachCap` limits the handles further; a peer's wire may carry one.
  */
-export function wirePath(
-  from: Point,
-  fromDir: number,
-  to: Point,
-  toDir: number,
-  reachCap = Infinity,
-  axis: Axis = 'x'
-) {
-  const reach = wireReach(from, fromDir, to, reachCap, axis);
-  if (axis === 'y') {
-    return `M${from.x} ${from.y} C${from.x} ${from.y + reach * fromDir} ${to.x} ${to.y + reach * toDir} ${to.x} ${to.y}`;
-  }
-  return `M${from.x} ${from.y} C${from.x + reach * fromDir} ${from.y} ${to.x + reach * toDir} ${to.y} ${to.x} ${to.y}`;
+export function wirePath(from: Point, fromDir: number, to: Point, toDir: number, reachCap = Infinity) {
+  const reach = wireReach(from, fromDir, to, reachCap);
+  return `M${from.x} ${from.y} C${from.x} ${from.y + reach * fromDir} ${to.x} ${to.y + reach * toDir} ${to.x} ${to.y}`;
 }
 
 /**
@@ -91,6 +49,3 @@ export function boltPoints(from: Point, to: Point, amplitude: number, segments =
 
 export const pointsAttribute = (points: Point[]) =>
   points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
-
-export const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
-export const easeInOutCubic = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
