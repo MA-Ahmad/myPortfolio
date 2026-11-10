@@ -48,7 +48,7 @@ export function Peel() {
     const timed = svg.closest<HTMLElement>('[data-time]')!;
     const fold = svg.querySelector<SVGGElement>('[data-fold]')!;
     const [under, flap] = Array.from(fold.querySelectorAll('polygon'));
-    const [shadeRight, shadeBelow] = Array.from(fold.querySelectorAll('rect'));
+    const [shadeRight, shadeBelow, shadeCorner] = Array.from(fold.querySelectorAll('rect'));
     const crease = fold.querySelector('line')!;
     const grad = svg.querySelector('linearGradient')!;
     const stops = Array.from(grad.querySelectorAll('stop'));
@@ -127,11 +127,15 @@ export function Peel() {
         // The corner folds back on the line x + y = l: what it uncovers, and the flap, its mirror.
         under.setAttribute('points', `0,0 ${at},0 0,${at}`);
         flap.setAttribute('points', `${at},0 0,${at} ${at},${at}`);
-        // Its shadow falls just past its two free edges.
+        // Its shadow falls just past its two free edges, each strip as long as its edge, and turns
+        // the flap's corner as a quarter round. Strips that ran on past the corner would lie over
+        // each other there and leave a dark square.
         shadeRight.setAttribute('x', at);
-        shadeRight.setAttribute('height', (l + SHADE).toFixed(1));
+        shadeRight.setAttribute('height', at);
         shadeBelow.setAttribute('y', at);
-        shadeBelow.setAttribute('width', (l + SHADE).toFixed(1));
+        shadeBelow.setAttribute('width', at);
+        shadeCorner.setAttribute('x', at);
+        shadeCorner.setAttribute('y', at);
         crease.setAttribute('x1', at);
         crease.setAttribute('y2', at);
         grad.setAttribute('x1', (l / 2).toFixed(1));
@@ -349,11 +353,17 @@ export function Peel() {
             <stop offset="0" stopColor="#000" stopOpacity="0.34" />
             <stop offset="1" stopColor="#000" stopOpacity="0" />
           </linearGradient>
+          {/* Centred on the flap's corner, so it meets both strips with the same falloff. */}
+          <radialGradient id="peel-shade-corner" cx="0" cy="0" r="1">
+            <stop offset="0" stopColor="#000" stopOpacity="0.34" />
+            <stop offset="1" stopColor="#000" stopOpacity="0" />
+          </radialGradient>
         </defs>
         <g data-fold opacity={0}>
           <polygon />
           <rect fill="url(#peel-shade-right)" y={0} width={SHADE} />
           <rect fill="url(#peel-shade-below)" x={0} height={SHADE} />
+          <rect fill="url(#peel-shade-corner)" width={SHADE} height={SHADE} />
           <polygon fill="url(#peel-flap)" />
           <line className={styles.peelCrease} y1={0} x2={0} />
         </g>
