@@ -135,5 +135,21 @@ export function drawPixelSky(
     }
   }
   ctx.globalAlpha = 1;
-  return lit.sort((a, b) => a.pick - b.pick).slice(0, Math.max(0, Math.round(config.twinkles)));
+  lit.sort((a, b) => a.pick - b.pick);
+  lastLit = lit;
+  return lit.slice(0, Math.max(0, Math.round(config.twinkles)));
+}
+
+/** The lit cells of the field last drawn, in seeded order. */
+let lastLit: LitCell[] = [];
+
+/** How many of the field's pixels the cursor can track. */
+const TRACKED = 36;
+
+/**
+ * The pixels the cursor tracks (see sky-track.ts): a seeded handful of the field last drawn,
+ * spread across it, the twinkling ones among them.
+ */
+export function trackedCells(): LitCell[] {
+  return lastLit.slice(0, TRACKED);
 }

@@ -14,7 +14,7 @@ export type Seam = {
 };
 
 /** How far each torn edge stands back from its seam's centre line, px: the gap is twice this. */
-export const GAP = 3;
+export const GAP = 4;
 
 /** Tearing is sudden: the seam springs open in this long, on a strong ease-out. */
 export const TEAR_MS = 260;
@@ -38,6 +38,12 @@ export function introAt(t: number) {
   const eased = x < 0.5 ? 4 * x ** 3 : 1 - (-2 * x + 2) ** 3 / 2;
   return STRAINED + (1 - STRAINED) * eased;
 }
+
+/**
+ * A torn seam being pulled shut by its threads: it is as closed as a weld started at `at` (px
+ * along the seam) would be `t` ms in.
+ */
+export type Pinch = { t: number; at: number };
 
 /**
  * The sheet the sections are cut from: one seam between each pair of neighbours, and the state of
@@ -64,6 +70,16 @@ export function createSheet(count: number) {
   const origin: (number | null)[] = seams.map(() => null);
   const aims: (number | null)[] = seams.map(() => null);
   /**
+   * How far a pull had already shut the seam when its weld started (ms into that weld), so the
+   * weld carries on from there instead of opening the seam again; `hold` sets it for the seam's
+   * next weld only.
+   */
+  const held = seams.map(() => 0);
+  const holds = seams.map(() => 0);
+  /** Each torn seam's live pull, or null. On its own listeners: a pull never re-renders React. */
+  const pinches: (Pinch | null)[] = seams.map(() => null);
+  const pinchListeners = new Set<(index: number) => void>();
+  /**
    * How far a welded seam had been pulled open at each point along it (0 to 1 of the gap) when it
    * was let go past tearing, or null; the tear then opens from that crack.
    */
@@ -79,9 +95,25 @@ export function createSheet(count: number) {
     started,
     from,
     origin,
+    held,
     crack,
     aim(index: number, along: number) {
       aims[index] = along;
+    },
+    hold(index: number, t: number) {
+      holds[index] = t;
+    },
+    pinchOf: (index: number) => pinches[index],
+    /** Sets a torn seam's live pull (null: let go) and tells whoever draws that seam. */
+    pinch(index: number, value: Pinch | null) {
+      pinches[index] = value;
+      pinchListeners.forEach((listener) => listener(index));
+    },
+    onPinch(listener: (index: number) => void) {
+      pinchListeners.add(listener);
+      return () => {
+        pinchListeners.delete(listener);
+      };
     },
     /** Sets how far a seam was pulled open along its length, for its next tear to open from. */
     pulled(index: number, at: (along: number) => number) {
@@ -113,12 +145,19 @@ export function createSheet(count: number) {
       if (state === 'welding') {
         origin[index] = aims[index];
         aims[index] = null;
+        held[index] = holds[index];
+        holds[index] = 0;
       }
+      // Whoever drew the pull is gone with the torn seam: no one to tell.
+      if (state !== 'torn') pinches[index] = null;
       states = states.map((value, i) => (i === index ? state : value));
       notify();
     },
     reset() {
       aims.fill(null);
+      held.fill(0);
+      holds.fill(0);
+      pinches.fill(null);
       crack.fill(null);
       spans.fill(TEAR_MS);
       states = initial;

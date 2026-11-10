@@ -132,7 +132,7 @@
   --tear-ease: cubic-bezier(0.23, 1, 0.32, 1);
   --join-ease: cubic-bezier(0.65, 0, 0.35, 1);
   --radius: 16px;
-  --gap: 3px; /* GAP in sheet.ts */
+  --gap: 4px; /* GAP in sheet.ts */
   --tn-band: #161b2c;
   --tn-hair: #283049;
   --tn-fibre: #3c4566;
@@ -458,6 +458,36 @@
   .twinkle {
     animation: none;
   }
+}
+
+/* The cursor's tracking lines over the night sky (sky-track.ts): hairlines, small squares, 9px type. */
+.track {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  opacity: var(--tn-night);
+  z-index: 1;
+}
+
+.trackLine {
+  stroke: rgb(226 232 244 / 0.9);
+  stroke-width: 1;
+}
+
+.trackMark,
+.trackBox {
+  fill: none;
+  stroke: rgb(236 240 250);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+
+.trackText {
+  fill: rgb(236 240 250);
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
 }
 
 .clouds {
@@ -1171,9 +1201,113 @@
   fill: var(--tn-warm);
 }
 
+/* Threads from the pointer to a torn seam's edges (see tether.tsx): hairlines and small squares. */
+.tether {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.tetherLine {
+  stroke: var(--tn-warm);
+  stroke-width: 1;
+  stroke-opacity: 0.85;
+  /* Going taut on a pull, and slack again, is eased rather than switched. */
+  transition:
+    stroke-width 150ms ease-out,
+    stroke-opacity 150ms ease-out;
+}
+
+.tetherMark {
+  fill: none;
+  stroke: var(--tn-warm);
+  stroke-width: 1;
+}
+
+/*
+ * The sheet's top left corner, lifted by its threads (peel.tsx): the triangle it uncovers, the
+ * turned-over flap with its shadow past its edges, and a light crease on the fold; and the threads,
+ * on a layer of their own. Over the sections, each no larger than the corner it draws in and a
+ * layer to itself, so a frame of the pull repaints only that and never the sheet under it.
+ */
+.peel {
+  position: absolute;
+  top: 0;
+  left: var(--pn-gutter);
+  z-index: 3;
+  max-width: calc(100% - 2 * var(--pn-gutter));
+  max-height: calc(100% - var(--pn-gutter));
+  border-top-left-radius: var(--radius);
+  overflow: hidden;
+  will-change: transform;
+}
+
+.peelFold {
+  width: 300px;
+  height: 300px;
+}
+
+.peelThreads {
+  width: 680px;
+  height: 680px;
+}
+
+.peelCrease {
+  stroke: rgb(255 255 255 / 0.5);
+  stroke-width: 1;
+}
+
+/*
+ * The flap that rides the fold while the sheet peels: a band across the middle of a layer the size
+ * of the sheet, lit along its top edge, with a soft shadow before it. The transition turns the
+ * layer's snapshot onto the fold and carries it across. Shown only for that.
+ */
+.peelFlap {
+  display: none;
+  position: absolute;
+  inset: 0 var(--pn-gutter) var(--pn-gutter);
+  z-index: 3;
+  overflow: hidden;
+}
+
+.peelBand {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 100%;
+  height: var(--peel-band);
+  background: linear-gradient(
+    to bottom,
+    var(--peel-lit),
+    var(--peel-mid) 16%,
+    var(--peel-dark)
+  );
+}
+
+.peelBand::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 100%;
+  left: 0;
+  height: calc(var(--peel-band) * 0.16);
+  background: linear-gradient(to top, rgb(0 0 0 / 0.24), transparent);
+}
+
+/* Pulled, the threads go taut. */
+.tether[data-grab='pulling'] .tetherLine {
+  stroke-width: 1.25;
+  stroke-opacity: 1;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .weld,
-  .attract {
+  .attract,
+  .tether {
     display: none;
   }
 

@@ -11,11 +11,24 @@ import {
 } from 'react';
 import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } from './sheet';
 import { Attract } from './attract';
+import { Tether } from './tether';
+import { Strain, type Strained } from './strain';
 import { ditherStore, drawDitherSky } from './dither-sky';
-import { drawPixelSky, skyStore } from './pixel-sky';
+import { drawPixelSky, skyStore, trackedCells } from './pixel-sky';
+import { createSkyTrack } from './sky-track';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
-import { gapAt, isZip, shutAt, taperOf, track, Weld, WELD_MS, type WeldKind } from './welds';
+import {
+  gapAt,
+  isZip,
+  pinchedAt,
+  shutAt,
+  taperOf,
+  track,
+  Weld,
+  WELD_MS,
+  type WeldKind
+} from './welds';
 import styles from './torn.module.css';
 
 /** How far a piece reaches past a seam's centre line, for the tear to wander into. */
@@ -216,11 +229,18 @@ function DitherSky() {
 function PixelSky() {
   const ref = useRef<HTMLCanvasElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
+  const trackRef = useRef<SVGSVGElement>(null);
   const config = useSyncExternalStore(skyStore.subscribe, skyStore.get, skyStore.getServer);
   useEffect(() => {
     const canvas = ref.current!;
     const stars = starsRef.current!;
     const surface = canvas.parentElement!;
+    const skyTrack = createSkyTrack(trackRef.current!, {
+      line: styles.trackLine,
+      mark: styles.trackMark,
+      text: styles.trackText,
+      box: styles.trackBox
+    });
     const draw = () => {
       const twinkling = drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
       // Each twinkle is a static glow whose opacity loops, on its own period and phase, so only a
@@ -234,6 +254,7 @@ function PixelSky() {
           return star;
         })
       );
+      skyTrack.setCells(trackedCells());
     };
     draw();
     // Drawn only once the page runs, so the field fades in rather than popping onto the sky.
@@ -241,7 +262,10 @@ function PixelSky() {
     stars.dataset.drawn = '';
     const observer = new ResizeObserver(draw);
     observer.observe(surface);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      skyTrack.destroy();
+    };
   }, [config]);
   return (
     <>
@@ -255,6 +279,7 @@ function PixelSky() {
         className={`${styles.sky} ${styles.twinkles}`}
         style={{ '--glow': `${config.glow}px`, '--sparkle': config.sparkle } as CSSProperties}
       />
+      <svg ref={trackRef} className={`${styles.sky} ${styles.track}`} aria-hidden />
     </>
   );
 }
@@ -302,7 +327,14 @@ function gapOf(sheet: Sheet, kind: WeldKind, states: SeamState[], index: number,
   return (at: number) => (along: number) => {
     if (state === 'torn') return GAP;
     if (state === 'welded' || state === 'sealed') return 0;
-    if (state === 'welding') return GAP * gapAt(kind, at - started, along, length, origin);
+    if (state === 'welding') {
+      // A weld that follows a pull starts from the seam as the pull left it: narrowed, not open.
+      const held = sheet.held[index];
+      const open = gapAt(kind, at - started, along, length, origin);
+      const pulled =
+        held && origin !== null ? pinchedAt(kind, held, along, length, origin) : open;
+      return GAP * Math.min(open, pulled);
+    }
     const before = crack
       ? crack(along)
       : from === null
@@ -334,6 +366,8 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
   const axis: Axis = h ? 'h' : 'v';
   const boxRef = useRef<HTMLDivElement>(null);
   const gapRefs = useRef<Partial<Record<Axis, HTMLDivElement | null>>>({});
+  // A welded seam's pull in progress, for its threads (see Strain).
+  const strain = useRef<Strained | null>(null);
   const [size, setSize] = useState({ v: 0, h: 0 });
 
   const first = index === 0;
@@ -386,6 +420,27 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
   // At rest it changes only when the seam changes state or the piece resizes.
   const gapV = useMemo(() => gap('v', 0), [endState, lengths.v]);
   const gapH = useMemo(() => gap('h', 0), [endState, lengths.h]);
+
+  // A torn seam being pulled by its threads: the gap narrows with the pull, written straight to
+  // the strip, as for a welded seam's crack. Let go (null), it goes back to React's clip.
+  useEffect(() => {
+    if (endState !== 'torn' || !endSeam || !isZip(weld)) return;
+    return sheet.onPinch((changed) => {
+      const element = gapRefs.current[axis];
+      if (changed !== index || !element) return;
+      const pinch = sheet.pinchOf(index);
+      const length = lengths[axis];
+      element.style.clipPath = pinch
+        ? gapShape(
+            {
+              tear: endSeam[axis],
+              gap: (along) => GAP * pinchedAt(weld, pinch.t, along, length, pinch.at)
+            },
+            length
+          )
+        : gap(axis, 0);
+    });
+  }, [endState, axis, lengths[axis]]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   // A welded seam being pulled: its gap follows the pointer as a crack, written straight to the
@@ -393,6 +448,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
   const pull = (amount: number, at: number) => {
     const element = gapRefs.current[axis];
     if (!element || !endSeam) return;
+    strain.current = { amount, at };
     const length = lengths[axis];
     element.dataset.pull = '';
     element.style.clipPath = gapShape(
@@ -401,6 +457,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
     );
   };
   const settle = () => {
+    strain.current = null;
     const element = gapRefs.current[axis];
     if (!element) return;
     delete element.dataset.pull;
@@ -416,6 +473,7 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
 
   useEffect(() => {
     if (endState === 'welded') return;
+    strain.current = null;
     Object.values(gapRefs.current).forEach((element) => {
       if (element) delete element.dataset.pull;
     });
@@ -508,20 +566,53 @@ export function TornPiece({ sheet, index, weld, onJoin, onTear }: PieceProps) {
                       />
                     </div>
                   )}
-                {endState === 'welded' && on === axis && (
-                  <Grip axis={on} onPull={pull} onSettle={settle} onTear={tear} />
-                )}
-                {endState === 'torn' && on === axis && (
-                  <Attract
-                    id={index}
+                {(endState === 'welded' || endState === 'tearing') && on === axis && (
+                  <Strain
                     tear={endSeam[on]}
                     length={lengths[on]}
                     axis={on}
-                    onJoin={(along) => {
-                      sheet.aim(index, along);
-                      onJoin();
-                    }}
+                    state={endState}
+                    live={strain}
+                    pullOf={pullOf}
+                    tearAt={TEAR_AT}
+                    spread={(amount, at, along) => GAP * crackAt(amount, at, lengths[on], along)}
+                    onPull={pull}
+                    onSettle={settle}
+                    onTear={tear}
                   />
+                )}
+                {endState === 'welded' && on === axis && (
+                  <Grip axis={on} onPull={pull} onSettle={settle} onTear={tear} />
+                )}
+                {/* The threads stay through the weld, to fade out rather than vanish. */}
+                {(endState === 'torn' || endState === 'welding') && on === axis && (
+                  <>
+                    <Tether
+                      sheet={sheet}
+                      index={index}
+                      kind={weld}
+                      tear={endSeam[on]}
+                      length={lengths[on]}
+                      axis={on}
+                      state={endState}
+                      onJoin={(along) => {
+                        sheet.aim(index, along);
+                        onJoin();
+                      }}
+                    />
+                    {endState === 'torn' && (
+                      <Attract
+                        id={index}
+                        tear={endSeam[on]}
+                        length={lengths[on]}
+                        axis={on}
+                        onJoin={(along) => {
+                          sheet.aim(index, along);
+                          onJoin();
+                        }}
+                      />
+                    )}
+                  </>
                 )}
               </>
             )}
@@ -635,7 +726,7 @@ function Grip({
     };
   }, [axis]);
 
-  return <div ref={ref} className={styles.grip} aria-hidden />;
+  return <div ref={ref} className={styles.grip} data-grip aria-hidden />;
 }
 
 /**

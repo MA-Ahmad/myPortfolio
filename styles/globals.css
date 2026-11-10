@@ -454,6 +454,65 @@ html[data-pixel-transition]::view-transition-image-pair(root) {
 }
 
 /*
+ * Panorama: while a seam or the sheet's corner is pulled, the mouse is drawn on the hand that
+ * holds the threads and the real cursor is hidden, see themes/panorama/torn/stick.ts. Written to
+ * outweigh the sheet's own grab cursors.
+ */
+html[data-stuck]:root,
+html[data-stuck]:root * {
+  cursor: none !important;
+}
+
+/*
+ * Panorama's sheet peeling away to the other time of day, see themes/panorama/torn/peel-transition.ts.
+ * Three layers, bottom to top: the new sheet, the turned-over flap riding the fold, and the old
+ * sheet cut back along it; the script moves the flap and the cut. The page round the sheet fades
+ * across.
+ */
+html[data-peel]::view-transition-old(panorama-sheet),
+html[data-peel]::view-transition-new(panorama-sheet-under),
+html[data-peel]::view-transition-new(panorama-flap) {
+  animation: none;
+  mix-blend-mode: normal;
+  opacity: 1;
+}
+
+html[data-peel]::view-transition-group(panorama-sheet-under) {
+  z-index: 1;
+}
+
+/* The flap shows only on the sheet, not on the page's margin round it. */
+html[data-peel]::view-transition-group(panorama-flap) {
+  z-index: 2;
+  overflow: clip;
+  border-radius: 16px;
+}
+
+html[data-peel]::view-transition-group(panorama-sheet) {
+  z-index: 3;
+}
+
+/* The threads that held the corner let go: their layer fades off as the sheet starts to move. */
+html[data-peel]::view-transition-group(panorama-threads) {
+  z-index: 4;
+}
+
+html[data-peel]::view-transition-old(panorama-threads),
+html[data-peel]::view-transition-new(panorama-threads) {
+  animation-duration: 160ms;
+  animation-timing-function: ease-out;
+}
+
+html[data-peel]::view-transition-group(root) {
+  animation-duration: 600ms;
+}
+
+html[data-peel]::view-transition-old(root),
+html[data-peel]::view-transition-new(root) {
+  animation-duration: 600ms;
+}
+
+/*
  * Top-nav avatar: a hairline ring a little off the photo, with a highlight gliding round it and a
  * soft glow trailing it. The ring and glow are masked bands of one conic gradient whose start angle
  * turns. Rotating the pseudo-elements instead looks the same in Chrome, but iOS Safari renders a
