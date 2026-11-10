@@ -59,6 +59,15 @@ function reachAt(kind: ZipKind, t: number, length: number, origin: Origin) {
   return (span + taper) * clamp((t - from) / duration) - taper;
 }
 
+/**
+ * How far into a zip weld (ms) its fronts have run `reach` px from where they left: the inverse
+ * of `reachAt`, for a seam being pulled shut by hand (see tether.tsx).
+ */
+export function timeAtReach(kind: ZipKind, reach: number, length: number) {
+  const { from, to, taper } = ZIPS[kind];
+  return from + ((to - from) * (reach + taper)) / (length + taper);
+}
+
 /** The stretch of seam a zip weld has shut `t` ms in, `[start, end]` px, grown `lead` past each front. */
 export function shutAt(kind: ZipKind, t: number, length: number, origin: Origin, lead = 0) {
   const { o, up, down } = zipFrom(kind, length, origin);
@@ -133,6 +142,19 @@ export function gapAt(
     ],
     t
   );
+}
+
+/** A torn seam pulled by its threads narrows to this share of its gap and no further. */
+export const PINCHED = 0.12;
+
+/**
+ * How open a torn seam is at `along` while its threads are pulled as far as a weld from `at`
+ * would be `t` ms in: the weld's own profile, but never narrower than PINCHED. Only the weld
+ * that follows shuts it.
+ */
+export function pinchedAt(kind: WeldKind, t: number, along: number, length: number, at: number) {
+  const open = gapAt(kind, t, along, length, at);
+  return isZip(kind) ? Math.max(PINCHED, open) : open;
 }
 
 /** Frames every 25ms across `duration`, for the Web Animations API (linear between frames). */

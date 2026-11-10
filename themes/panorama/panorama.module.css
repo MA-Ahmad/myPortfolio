@@ -477,6 +477,18 @@
   cursor: pointer !important;
 }
 
+/* A torn seam's threads can be pulled to weld it (see torn/tether.tsx). */
+.sections:has([data-grab='ready']),
+.sections:has([data-grab='ready']) * {
+  cursor: grab !important;
+}
+
+.sections:has([data-grab='pulling']),
+.sections:has([data-grab='pulling']) * {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
 /* ---- A closed section: its edge, labeled ---- */
 
 .face {

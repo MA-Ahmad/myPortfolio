@@ -1,5 +1,6 @@
 import type { Backdrop } from '../components/sections';
 import { SECTIONS } from '../content';
+import { Peel } from './peel';
 import { SoundToggle } from './sound-toggle';
 import { createSheet } from './sheet';
 import { SheetRunner, SheetSurface, TornPiece } from './torn-piece';
@@ -17,6 +18,7 @@ export function tornBackdrop(weld: WeldKind = 'torch'): Backdrop {
       <>
         <SheetSurface open={open} count={sheet.count} />
         <SheetRunner sheet={sheet} weld={weld} open={open} />
+        <Peel />
         <SoundToggle />
       </>
     ),
