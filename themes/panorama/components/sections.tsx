@@ -21,7 +21,7 @@ const OPEN = 9; // fr of the open section; closed ones get 1fr
 /** Stacked, a swipe that keeps pulling this far past the end of a section moves to the next one, px. */
 const PULL_PX = 70;
 /** --pn-switch: how long the columns take to settle after a section opens. */
-const SWITCH_MS = 760;
+const SWITCH_MS = 820;
 
 /**
  * Every section on one screen, side by side. One is open; clicking another opens it. The columns
