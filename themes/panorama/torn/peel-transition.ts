@@ -32,7 +32,7 @@ const SHEET = 'panorama-sheet';
 const UNDER = 'panorama-sheet-under';
 const FLAP = 'panorama-flap';
 const THREADS = 'panorama-threads';
-const DURATION_MS = 1050;
+const DURATION_MS = 1140;
 const FRAMES = 64;
 /**
  * How the fold's speed runs over the peel. It leaves at the speed the hand let it go at, picks up
