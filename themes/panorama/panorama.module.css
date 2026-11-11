@@ -115,10 +115,13 @@
   /* The open/close curve: quick to start, long soft landing. */
   --pn-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   /*
-   * A section switch, on one clock: the columns, both sections' text and both labels all move for
-   * this long on --pn-drawer, so the closing and opening sections mirror each other.
+   * A section switch: the columns and both labels move for this long on --pn-drawer, so the closing
+   * and opening sections mirror each other. The content runs on its own timing, below.
    */
-  --pn-switch: 760ms;
+  --pn-switch: 820ms;
+  /* The opening section's content waits this long for its column, then rises this far into place. */
+  --pn-content-delay: 300ms;
+  --pn-content-rise: 20px;
   /* A closed section's width (or height, stacked): 1fr of the 12 the columns share. */
   --pn-closed: calc((100vw - 2 * var(--pn-gutter) - 3 * var(--pn-gap)) / 12);
   --pn-closed-h: calc((100dvh - 56px - var(--pn-gutter) - 3 * var(--pn-gap)) / 12);
@@ -644,10 +647,9 @@
 }
 
 /*
- * The content settles into place with the column as one block, and sinks back as it closes,
- * fading on the same clock: a closing section keeps its text while its column narrows, dimming
- * exactly as the opening one brightens, so the strip is never blank between the two. Transitions,
- * so a switch caught midway turns back smoothly instead of jumping.
+ * Staggered: the column opens first, and its content rises into place once there is room for it,
+ * while the closing section's content leaves at once, so the two never fight over the narrowing
+ * column. Transitions, so a switch caught midway turns back smoothly instead of jumping.
  *
  * Closed, it is only transparent, never hidden: a hidden layer can lose its drawn tiles and be
  * drawn again a tile at a time on reopening. It keeps its own small layer for good, so its text is
@@ -655,16 +657,19 @@
  */
 .content {
   opacity: 0;
-  transform: translateY(8px);
+  transform: translateY(var(--pn-content-rise));
   transition:
-    opacity var(--pn-switch) var(--pn-drawer),
-    transform var(--pn-switch) var(--pn-drawer);
+    opacity 140ms ease-out,
+    transform 140ms ease-out;
   will-change: opacity, transform;
 }
 
 .section[data-open] .content {
   opacity: 1;
   transform: none;
+  transition:
+    opacity 360ms ease-out var(--pn-content-delay),
+    transform 520ms var(--pn-ease) var(--pn-content-delay);
 }
 
 .sectionName {
