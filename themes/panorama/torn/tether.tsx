@@ -148,6 +148,17 @@ export const Tether = memo(function Tether({
     let mid = 0;
     // How taut the threads are, 0 to 1: eased, so the ring and the outer threads come up smoothly.
     let taut = 0;
+    // Where the pointer really is, which a pull's hand is not: it stops short and can be far behind.
+    let seen: { offset: number; at: number } | null = null;
+    // How strongly the threads reach for a pointer at `p`: nothing out of reach or inside the spark.
+    const reachFor = ({ offset, at }: { offset: number; at: number }) => {
+      const d = Math.abs(offset - xAt(tear, at));
+      if (at <= 0 || at >= length || d >= REACH) return 0;
+      return (
+        Math.min(1, (REACH - d) / (REACH - NEAR)) *
+        Math.min(1, Math.max(0, (d - NEAR * 0.5) / (NEAR * 0.5)))
+      );
+    };
 
     // While this seam has hold of the pointer it carries data-tethered; other overlays read it to step aside.
     // Both are written only when they change: the cursor's :has() rules read data-grab, so a
@@ -252,6 +263,7 @@ export const Tether = memo(function Tether({
     };
 
     const onMove = (event: PointerEvent) => {
+      seen = locate(event);
       // Welding: the threads only fade.
       if (seam.current !== 'torn') {
         want = 0;
@@ -284,17 +296,10 @@ export const Tether = memo(function Tether({
       if ((event.buttons !== 0 && !down) || !sheetEl.contains(event.target as Node)) {
         want = 0;
       } else {
-        const { offset, at } = locate(event);
-        const d = Math.abs(offset - xAt(tear, at));
-        if (at <= 0 || at >= length || d >= REACH) {
-          want = 0;
-        } else {
-          pointer = { offset, at };
-          // Grows as the pointer closes in, and is gone once the spark has it.
-          want =
-            Math.min(1, (REACH - d) / (REACH - NEAR)) *
-            Math.min(1, Math.max(0, (d - NEAR * 0.5) / (NEAR * 0.5)));
-        }
+        const here = locate(event);
+        // Grows as the pointer closes in, and is gone once the spark has it.
+        want = reachFor(here);
+        if (want > 0) pointer = here;
       }
       sync();
       if (want > 0 && !frame) frame = requestAnimationFrame(tick);
@@ -343,6 +348,10 @@ export const Tether = memo(function Tether({
         sync();
         return join.current(grab.at);
       }
+      // Let go short of a weld, the threads go back to the pointer where it really is, and let go of
+      // it if that is out of reach: the hand they were pulled to is no reason to stay.
+      want = seen ? reachFor(seen) : 0;
+      if (want > 0) pointer = seen;
       release();
       sync();
     };

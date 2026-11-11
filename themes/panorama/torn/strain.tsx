@@ -105,6 +105,15 @@ export const Strain = memo(
       let mid = 0;
       // How taut the threads are, 0 to 1: eased, so the ring and the outer threads come up smoothly.
       let taut = 0;
+      // Where the pointer really is, which a pull's hand is not: it stops short and can be far behind.
+      let seen: { offset: number; at: number } | null = null;
+      // How strongly the threads reach for a pointer at `p`. No spark on a welded seam, so the
+      // threads stay up right onto the scar.
+      const reachFor = ({ offset, at }: { offset: number; at: number }) => {
+        const d = Math.abs(offset - xAt(tear, at));
+        if (at <= 0 || at >= length || d >= REACH) return 0;
+        return Math.min(1, (REACH - d) / (REACH - NEAR));
+      };
 
       // Both are written only when they change: the cursor's :has() rules read data-grab, so a
       // rewrite of the same value would have the sheet's styles worked out again on every move.
@@ -227,6 +236,7 @@ export const Strain = memo(
       };
 
       const onMove = (event: PointerEvent) => {
+        seen = locate(event);
         if (seam.current !== 'welded') {
           want = 0;
           sync();
@@ -270,15 +280,9 @@ export const Strain = memo(
         if ((event.buttons !== 0 && !down) || !sheetEl.contains(event.target as Node)) {
           want = 0;
         } else {
-          const { offset, at } = locate(event);
-          const d = Math.abs(offset - xAt(tear, at));
-          if (at <= 0 || at >= length || d >= REACH) {
-            want = 0;
-          } else {
-            pointer = { offset, at };
-            // No spark on a welded seam, so the threads stay up right onto the scar.
-            want = Math.min(1, (REACH - d) / (REACH - NEAR));
-          }
+          const here = locate(event);
+          want = reachFor(here);
+          if (want > 0) pointer = here;
         }
         sync();
         if (want > 0 && !frame) frame = requestAnimationFrame(tick);
@@ -314,10 +318,8 @@ export const Strain = memo(
             spring = 0;
             props.current.onSettle();
             // The pull is over: the threads go back to following the pointer where it is now.
-            if (pointer) {
-              const d = Math.abs(pointer.offset - xAt(tear, pointer.at));
-              want = d >= REACH ? 0 : Math.min(1, (REACH - d) / (REACH - NEAR));
-            }
+            want = seen ? reachFor(seen) : 0;
+            if (want > 0) pointer = seen;
             sync();
           }
         };
@@ -348,6 +350,10 @@ export const Strain = memo(
           }, 400);
           return;
         }
+        // Let go short of a tear, the threads go back to the pointer where it really is, and let go
+        // of it if that is out of reach, while the crack closes.
+        want = seen ? reachFor(seen) : 0;
+        if (want > 0) pointer = seen;
         release();
         sync();
       };
