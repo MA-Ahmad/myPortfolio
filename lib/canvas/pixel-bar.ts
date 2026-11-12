@@ -13,6 +13,11 @@ export type BarStyle = {
    * these (two or three) rather than set by the segment.
    */
   dots?: string[];
+  /**
+   * One continuous run of colour across the whole bar instead of segments: the leading edge
+   * changes colour as it travels, and there are no lines between segments.
+   */
+  blend?: string[];
 };
 
 /** Square pixels in nine segments. */
@@ -28,6 +33,12 @@ export const PIXELS: BarStyle = {
     { color: '#f28530', share: 14 },
     { color: '#e84846', share: 9.5 }
   ]
+};
+
+/** Square pixels in the Theme Studio wire's colours: gold, orange, red, magenta, violet. */
+export const STRANDS: BarStyle = {
+  segments: [{ color: '#f6d365', share: 1 }],
+  blend: ['#f6d365', '#f08a4b', '#e5484d', '#d6409f', '#8e4ec6']
 };
 
 /** Round dots in one segment, washing from red through coral to a pale peach. */
@@ -172,6 +183,14 @@ export function drawPixelBar(
       0,
       ends.findIndex((end) => col <= end)
     );
+  const blend = style.blend?.map(rgb);
+  // A column's colour: its segment's, or its place along the blend.
+  const colorAt = (col: number): Rgb => {
+    if (!blend) return COLORS[segmentOf(col)];
+    const k = clamp(col / Math.max(1, cols)) * (blend.length - 1);
+    const i = Math.min(blend.length - 2, Math.floor(k));
+    return mix(blend[i], blend[i + 1], k - i);
+  };
   const hot = (x: number) => clamp(1 - (head - x) / (HEAT * PITCH)) * heat;
 
   // The track: a hairline and a dot in every cell still to fill.
@@ -190,7 +209,7 @@ export function drawPixelBar(
   ctx.restore();
   if (head < 1) return;
 
-  const last = COLORS[segmentOf(Math.floor(head / PITCH))];
+  const last = colorAt(Math.floor(head / PITCH));
 
   // The bloom round the leading edge, under everything: drawn as a shadow whose box is off canvas.
   if (heat > 0.01) {
@@ -212,13 +231,20 @@ export function drawPixelBar(
 
   // Each segment's tint, then the heat's wash over the leading stretch.
   let start = 0;
-  ends.forEach((end, i) => {
-    const from = start * PITCH;
-    start = end;
-    if (from >= head) return;
-    ctx.fillStyle = css(mix([22, 23, 26], COLORS[i], 0.24));
-    ctx.fillRect(from, 0, Math.min(head, end * PITCH) - from, height);
-  });
+  if (blend) {
+    for (let col = 0; col * PITCH < head; col++) {
+      ctx.fillStyle = css(mix([22, 23, 26], colorAt(col), 0.24));
+      ctx.fillRect(col * PITCH - PITCH / 2, 0, PITCH + 0.5, height);
+    }
+  } else {
+    ends.forEach((end, i) => {
+      const from = start * PITCH;
+      start = end;
+      if (from >= head) return;
+      ctx.fillStyle = css(mix([22, 23, 26], COLORS[i], 0.24));
+      ctx.fillRect(from, 0, Math.min(head, end * PITCH) - from, height);
+    });
+  }
   if (heat > 0.01) {
     const glare = ctx.createLinearGradient(head - HEAT * PITCH * 1.4, 0, head, 0);
     glare.addColorStop(0, 'rgba(255,255,255,0)');
@@ -236,7 +262,7 @@ export function drawPixelBar(
     for (let row = 0; row < ROWS; row++) {
       const y = row * PITCH;
       const edge = row === 0 || row === ROWS - 1;
-      let color = COLORS[segmentOf(col)];
+      let color = colorAt(col);
       if (wash) {
         // The wash: broad, slow patches of each colour.
         const w = clamp(noise(col / 13, row / 9, time * 0.18, 31) * 1.7 - 0.35) * (wash.length - 1);
@@ -271,17 +297,40 @@ export function drawPixelBar(
     if (hop.col * PITCH > head - PITCH) continue;
     const age = (now - hop.born) / hop.life;
     if (age < 0 || age > 1) continue;
-    const base = wash ? wash[wash.length - 1] : COLORS[segmentOf(hop.col)];
+    const base = wash ? wash[wash.length - 1] : colorAt(hop.col);
     ctx.fillStyle = css(mix(base, WHITE, 0.78), Math.sin(Math.PI * age) ** 0.5);
     cell(hop.col * PITCH, hop.row * PITCH, wash ? LIT + 0.5 : LIT);
   }
 
   // The lines between segments.
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  for (const end of ends.slice(0, -1)) {
+  for (const end of blend ? [] : ends.slice(0, -1)) {
     if (end * PITCH < head - 1) ctx.fillRect(end * PITCH - 0.5, 0, 1, height);
   }
   ctx.restore();
+
+  // A blend's outline runs through its colours, glowing in the leading edge's.
+  if (blend) {
+    const line = ctx.createLinearGradient(0, 0, width, 0);
+    blend.forEach((color, i) => line.addColorStop(i / (blend.length - 1), css(color)));
+    const lead = mix(last, WHITE, 0.55 * heat);
+    const tip = ctx.createLinearGradient(head - HEAT * PITCH, 0, head, 0);
+    tip.addColorStop(0, css(lead, 0));
+    tip.addColorStop(1, css(lead, heat));
+    ctx.save();
+    outline(ctx, head, height);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = line;
+    ctx.shadowColor = css(last, 0.7);
+    ctx.shadowBlur = 7 * ctx.getTransform().a;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.stroke();
+    ctx.strokeStyle = tip;
+    ctx.stroke();
+    ctx.restore();
+    return;
+  }
 
   // Each segment's stretch of the outline in its own colour: a soft glow, then the line.
   start = 0;

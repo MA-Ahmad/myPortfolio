@@ -3,7 +3,16 @@
 import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import type { GetStaticProps } from 'next';
 import Meta from 'components/shared/meta';
-import { BLEED, type BarStyle, DOTS, PIXELS, type PixelBar, barHeight, runPixelBar } from 'lib/canvas/pixel-bar';
+import {
+  BLEED,
+  type BarStyle,
+  DOTS,
+  PIXELS,
+  type PixelBar,
+  STRANDS,
+  barHeight,
+  runPixelBar
+} from 'lib/canvas/pixel-bar';
 import type { NextPageWithLayout } from 'pages/_app';
 
 /* The reference's own run: seconds in, and how full the bar is by then. */
@@ -56,7 +65,14 @@ function Bar({ progress, jump, look }: { progress: number; jump: boolean; look: 
     return () => bar.current?.stop();
   }, [look]);
   useEffect(() => bar.current?.set(progress, jump), [progress, jump]);
-  return <canvas ref={ref} className="pp-bar" style={{ height: barHeight + BLEED * 2 }} aria-hidden="true" />;
+  return (
+    <canvas
+      ref={ref}
+      className="pp-bar"
+      style={{ height: barHeight + BLEED * 2 }}
+      aria-hidden="true"
+    />
+  );
 }
 
 const PixelProgressProto: NextPageWithLayout = () => {
@@ -103,6 +119,7 @@ const PixelProgressProto: NextPageWithLayout = () => {
       <div className="pp-col">
         {[
           { name: 'Pixels', look: PIXELS },
+          { name: 'Wire colours', look: STRANDS },
           { name: 'Dots', look: DOTS }
         ].map(({ name, look }) => (
           <div key={name} className="pp-col">
