@@ -615,10 +615,9 @@
 
   /*
    * Scrolled, the text fades out under the section's title instead of running beneath it. At rest
-   * the content starts below the faded band, so nothing is dimmed until it scrolls up. Not over the
-   * dithered sky, where the cards are glass: a mask would cut their blur off from the sky.
+   * the content starts below the faded band, so nothing is dimmed until it scrolls up.
    */
-  .sections:not(:has([data-dither-sky])) .body {
+  .body {
     -webkit-mask-image: linear-gradient(to bottom, transparent 44px, #000 70px);
     mask-image: linear-gradient(to bottom, transparent 44px, #000 70px);
   }
@@ -692,70 +691,9 @@
 
 /* ---- Section content ---- */
 
-/*
- * A pane's blocks: the hero, the pipeline, the chart, a list. On the plain sky they leave no trace
- * in the layout. Over the dithered night sky, which is too busy to read text on, each is a card of
- * dark frosted glass, as the sky's reference does it: the sky shows through, blurred, behind solid
- * text.
- */
+/* A pane's blocks: the hero, the pipeline, the chart, a list. They leave no trace in the layout. */
 .group {
   display: contents;
-}
-
-/*
- * A backdrop blur only sees past an ancestor with no opacity (or will-change: opacity) of its own,
- * so here the column only slides and each card fades itself in: its own opacity doesn't hide the
- * sky from its blur.
- */
-.root[data-time='night'] .sections:has([data-dither-sky]) .content {
-  gap: 14px;
-  width: min(100%, 640px);
-  opacity: 1;
-  will-change: transform;
-}
-
-.root[data-time='night'] .sections:has([data-dither-sky]) .group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 18px 20px 20px;
-  border-radius: 16px;
-  background: rgb(15 17 21 / 0.72);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
-  backdrop-filter: blur(18px) saturate(1.25);
-  box-shadow:
-    inset 0 0 0 1px rgb(255 255 255 / 0.06),
-    inset 0 1px 0 rgb(255 255 255 / 0.05),
-    0 1px 2px rgb(0 0 0 / 0.3),
-    0 12px 32px -8px rgb(0 0 0 / 0.45);
-  opacity: 0;
-  transition: opacity var(--pn-switch) var(--pn-drawer);
-}
-
-.root[data-time='night'] .sections:has([data-dither-sky]) .section[data-open] .group {
-  opacity: 1;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
-    transition: none;
-  }
-}
-
-/* Inside a card, the blocks start and end at its padding. */
-.root[data-time='night'] .sections:has([data-dither-sky]) .group > :first-child {
-  margin-top: 0;
-}
-
-.root[data-time='night'] .sections:has([data-dither-sky]) .group > :last-child {
-  margin-bottom: 0;
-}
-
-@media (max-width: 719px) {
-  .root[data-time='night'] .sections:has([data-dither-sky]) .group {
-    padding: 16px 16px 18px;
-    border-radius: 14px;
-  }
 }
 
 .name {

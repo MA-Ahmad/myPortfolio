@@ -13,8 +13,7 @@ import { GAP, INTRO_TEAR_MS, type Seam, type SeamState, type Sheet, TEAR_MS } fr
 import { Attract } from './attract';
 import { Tether } from './tether';
 import { Strain, type Strained } from './strain';
-import { ditherStore, drawDitherSky } from './dither-sky';
-import { drawPixelSky, skyStore } from './pixel-sky';
+import { FIELD_DEFAULTS, runPixelField } from './pixel-field';
 import { playTear, playWeld } from './sound';
 import { type Axis, type Edge, fibresOf, gapShape, pointsOf, type Point } from './tear';
 import {
@@ -161,9 +160,8 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
       style={{ '--open': open, '--count': count } as CSSProperties}
       aria-hidden
     >
-      {/* The night sky's dithered band and pixels, the moon in its glow, faded out by day; the day's clouds on top. */}
-      <DitherSky />
-      <PixelSky />
+      {/* The night sky's pixels and the moon in its glow, faded out by day; the day's clouds on top. */}
+      <PixelField />
       <div className={styles.glow} />
       <div className={styles.moon} />
       <div className={`${styles.sky} ${styles.clouds}`} />
@@ -172,103 +170,19 @@ export function SheetSurface({ open, count }: { open: number; count: number }) {
 }
 
 /**
- * A dithered band of colour across the night sky (see dither-sky.ts), off unless its config turns
- * it on; redrawn when the sheet resizes.
+ * The night sky's pixels along the top (see pixel-field.ts), faded out by day and not drawn then.
  */
-function DitherSky() {
+function PixelField() {
   const ref = useRef<HTMLCanvasElement>(null);
-  const config = useSyncExternalStore(
-    ditherStore.subscribe,
-    ditherStore.get,
-    ditherStore.getServer
-  );
-  const on = config.enabled > 0;
-  useEffect(() => {
-    if (!on) return;
-    const canvas = ref.current!;
-    const surface = canvas.parentElement!;
-    let size = '';
-    const draw = () => {
-      const next = `${surface.clientWidth}x${surface.clientHeight}`;
-      if (next === size) return;
-      size = next;
-      drawDitherSky(canvas, surface.clientWidth, surface.clientHeight, config);
-    };
-    draw();
-    canvas.dataset.drawn = '';
-    // A draw takes tens of ms, too long for every frame of a window resize: the drawn canvas
-    // stretches meanwhile, and it's redrawn once the size settles.
-    let timer = 0;
-    const observer = new ResizeObserver(() => {
-      window.clearTimeout(timer);
-      timer = window.setTimeout(draw, 150);
-    });
-    observer.observe(surface);
-    return () => {
-      observer.disconnect();
-      window.clearTimeout(timer);
-    };
-  }, [config, on]);
-  if (!on) return null;
-  return (
-    <canvas
-      ref={ref}
-      // With cards on, the panes put their text on glass cards over the sky (see .group).
-      data-dither-sky={config.cards > 0 ? '' : undefined}
-      className={`${styles.sky} ${styles.ditherSky}`}
-      style={{ '--dither': config.opacity } as CSSProperties}
-    />
-  );
-}
-
-/**
- * The night sky's pixels along the top, faded out by day, redrawn when the sheet resizes
- * or its config changes.
- */
-function PixelSky() {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const starsRef = useRef<HTMLDivElement>(null);
-  const config = useSyncExternalStore(skyStore.subscribe, skyStore.get, skyStore.getServer);
   useEffect(() => {
     const canvas = ref.current!;
-    const stars = starsRef.current!;
-    const surface = canvas.parentElement!;
-    const draw = () => {
-      const twinkling = drawPixelSky(canvas, surface.clientWidth, surface.clientHeight, config);
-      // Each twinkle is a static glow whose opacity loops, on its own period and phase, so only a
-      // few are ever lit at once.
-      stars.replaceChildren(
-        ...twinkling.map(({ x, y, size, pick }) => {
-          const star = document.createElement('span');
-          const period = config.period * (0.7 + 0.6 * ((pick * 7919) % 1));
-          star.className = styles.twinkle;
-          star.style.cssText = `left:${x}px;top:${y}px;width:${size}px;height:${size}px;--period:${period.toFixed(2)}s;--delay:${(-period * ((pick * 104729) % 1)).toFixed(2)}s`;
-          return star;
-        })
-      );
-    };
-    draw();
+    const root = canvas.closest<HTMLElement>('[data-time]');
+    const stop = runPixelField(canvas, FIELD_DEFAULTS, () => root?.dataset.time === 'night');
     // Drawn only once the page runs, so the field fades in rather than popping onto the sky.
     canvas.dataset.drawn = '';
-    stars.dataset.drawn = '';
-    const observer = new ResizeObserver(draw);
-    observer.observe(surface);
-    return () => observer.disconnect();
-  }, [config]);
-  return (
-    <>
-      <canvas
-        ref={ref}
-        className={`${styles.sky} ${styles.pixelSky}`}
-        style={{ '--sky-night': config.night } as CSSProperties}
-      />
-      <div
-        ref={starsRef}
-        className={`${styles.sky} ${styles.twinkles}`}
-        style={{ '--glow': `${config.glow}px`, '--sparkle': config.sparkle } as CSSProperties}
-      />
-    </>
-  );
+    return stop;
+  }, []);
+  return <canvas ref={ref} className={`${styles.sky} ${styles.pixelField}`} />;
 }
 
 /** A pull gives less with each px, at this scale (px), so the weld feels like it's holding. */
