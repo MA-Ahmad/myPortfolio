@@ -14,7 +14,7 @@ import pipelineStyles from '../pipeline/pipeline.module.css';
 
 export function IntroPane({ contributions }: { contributions: Activity[] }) {
   return (
-    // The groups are cards on a busy sky (see .group); otherwise they leave no trace in the layout.
+    // The groups leave no trace in the layout (see .group).
     <div className={pipelineStyles.pipeline}>
       <div className={styles.group}>
         <h1 className={styles.name}>{C.name}</h1>

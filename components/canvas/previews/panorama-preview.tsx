@@ -3,7 +3,7 @@ import { PROFILE } from 'data/profile';
 import type { Activity } from 'lib/github-contributions';
 import { SECTIONS } from 'themes/panorama/content';
 import moon from 'themes/panorama/torn/moon.png';
-import { SKY_DEFAULTS, drawPixelSky } from 'themes/panorama/torn/pixel-sky';
+import { FIELD_DEFAULTS, drawPixelField, fitCanvas } from 'themes/panorama/torn/pixel-field';
 import { fibresOf, noise, tearOf } from 'themes/panorama/torn/tear';
 import styles from './panorama-preview.module.css';
 
@@ -18,7 +18,7 @@ const STRIP = 16;
 // Tall enough for the card at either layout's height.
 const TEAR_LENGTH = 220 / SCALE;
 // The page's own field of pixels on a finer grid, and stronger, so it reads at this size.
-const SKY = { ...SKY_DEFAULTS, cell: 3, size: 1, reach: 0.62, brightness: 0.55, twinkles: 0 };
+const SKY = { ...FIELD_DEFAULTS, cell: 3, size: 1, reach: 0.62, density: 0.6, brightness: 0.55 };
 const WEEKS = 30;
 // Shown when the contributions could not be fetched: a plausible, mostly quiet half year.
 const QUIET = Array.from({ length: WEEKS * 7 }, (_, i) => ({ level: Math.max(0, Math.floor(noise(i, 3) * 7) - 2) }));
@@ -46,7 +46,10 @@ export function PanoramaPreview({ contributions }: { contributions: Activity[] }
     const sheet = sheetRef.current;
     const sky = skyRef.current;
     if (!sheet || !sky) return;
-    const draw = () => drawPixelSky(sky, sheet.clientWidth, sheet.clientHeight, SKY);
+    const draw = () => {
+      const ctx = fitCanvas(sky, sheet.clientWidth, sheet.clientHeight);
+      if (ctx) drawPixelField(ctx, sheet.clientWidth, sheet.clientHeight, SKY);
+    };
     draw();
     const observer = new ResizeObserver(draw);
     observer.observe(sheet);

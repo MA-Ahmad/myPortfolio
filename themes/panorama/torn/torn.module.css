@@ -371,92 +371,25 @@
 }
 
 /*
- * A clumped field of square pixels along the top, thinning downward: drawn white on a canvas from
- * pixel-sky.json. Night only: it fades out with the moon by day.
+ * The night's field of pixels along the top, thinning downward: drawn white on a canvas (see
+ * pixel-field.ts), set in pixel-field.json. Night only: it fades out with the moon by day. It is
+ * drawn once the page runs: until then it's hidden, and it fades in. A change of time still snaps
+ * (no transition runs while the layout is switching).
  */
-.pixelSky {
+.pixelField {
   width: 100%;
   height: 100%;
-  opacity: calc(var(--sky-night) * var(--tn-night));
-}
-
-/*
- * The dithered band (dither-sky.ts), night only. Screened over the sheet, so its black cells add
- * nothing and the sheet's own night shows through; only the band and the dots add light.
- */
-.ditherSky {
-  width: 100%;
-  height: 100%;
-  mix-blend-mode: screen;
-  opacity: calc(var(--dither) * var(--tn-night));
-  transition: opacity 600ms ease-out;
-}
-
-.ditherSky:not([data-drawn]) {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ditherSky {
-    transition: none;
-  }
-}
-
-/*
- * The field and its stars are drawn once the page runs: until then they're hidden, and they fade
- * in. A change of time still snaps (no transition runs while the layout is switching).
- */
-.pixelSky,
-.twinkles {
-  transition: opacity 600ms ease-out;
-}
-
-.pixelSky:not([data-drawn]),
-.twinkles:not([data-drawn]) {
-  opacity: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .pixelSky,
-  .twinkles {
-    transition: none;
-  }
-}
-
-/*
- * At night a few of the sky's pixels twinkle: each swells into a small soft glow and fades back,
- * on its own loop. Only opacity animates; the glow itself is a fixed shadow.
- */
-.twinkles {
   opacity: var(--tn-night);
+  transition: opacity 600ms ease-out;
 }
 
-.twinkle {
-  position: absolute;
-  border-radius: 1px;
-  background: #fff;
-  box-shadow:
-    0 0 calc(var(--glow) * 0.5) rgba(255, 255, 255, 0.7),
-    0 0 var(--glow) calc(var(--glow) * 0.15) rgba(225, 232, 255, 0.35);
+.pixelField:not([data-drawn]) {
   opacity: 0;
-  animation: twinkle var(--period) ease-in-out var(--delay) infinite;
-}
-
-@keyframes twinkle {
-  0%,
-  35%,
-  75%,
-  100% {
-    opacity: 0;
-  }
-  55% {
-    opacity: var(--sparkle);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .twinkle {
-    animation: none;
+  .pixelField {
+    transition: none;
   }
 }
 
