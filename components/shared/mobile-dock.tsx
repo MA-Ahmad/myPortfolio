@@ -14,7 +14,7 @@ const LINKS: { name: string; href: string; external?: boolean }[] = [
 ];
 
 const BUTTON =
-  'inline-flex h-11 items-center rounded-full border border-line bg-popover/90 text-popover-foreground shadow-lg backdrop-blur-md transition-[background-color,transform] duration-150 ease-out active:scale-[0.96]';
+  'inline-flex h-10 items-center rounded-full border border-line bg-popover/90 text-popover-foreground shadow-lg backdrop-blur-md transition-[background-color,transform] duration-150 ease-out active:scale-[0.96]';
 
 /**
  * Phones only: the site's menu and search sit in a floating dock at the bottom of the screen,
@@ -110,9 +110,9 @@ export function MobileDock() {
           aria-expanded={open}
           aria-controls="mobile-dock-menu"
           onClick={() => setOpen((value) => !value)}
-          className={cn(BUTTON, 'w-11 justify-center')}
+          className={cn(BUTTON, 'w-10 justify-center')}
         >
-          {open ? <XIcon className="size-5" /> : <MenuIcon className="size-5" />}
+          {open ? <XIcon className="size-4" /> : <MenuIcon className="size-4" />}
         </button>
 
         <button
@@ -122,9 +122,9 @@ export function MobileDock() {
             setOpen(false);
             openCommandMenu();
           }}
-          className={cn(BUTTON, 'w-44 justify-start gap-2 px-4 text-base text-muted-foreground')}
+          className={cn(BUTTON, 'w-36 justify-start gap-2 px-3.5 text-sm text-muted-foreground')}
         >
-          <SearchIcon className="size-4" />
+          <SearchIcon className="size-3.5" />
           <span>Search…</span>
         </button>
       </div>
