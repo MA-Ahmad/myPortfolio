@@ -199,7 +199,7 @@ function Panel({ values, set }: { values: Values; set: (key: keyof Values, value
   const copy = () => {
     const on = (['bloom', 'lattice', 'blocks', 'hop', 'sweep', 'cursor', 'keepSky'] as const).filter((key) => values[key]);
     navigator.clipboard?.writeText(
-      `pieces: ${on.join(' + ') || 'none'} · weld: ${WELDS[values.weld]} · cell: ${values.cell}px · size: ${values.size}px · reach: ${values.reach} · density: ${values.density} · brightness: ${values.brightness} · glow: ${values.glow}px · hops: ${values.hops} · drift: ${values.drift} · sweep every: ${values.sweepEvery}s`
+      `pieces: ${on.join(' + ') || 'none'} · position: ${values.place ? 'top' : 'corners'} · weld: ${WELDS[values.weld]} · cell: ${values.cell}px · size: ${values.size}px · reach: ${values.reach} · density: ${values.density} · brightness: ${values.brightness} · glow: ${values.glow}px · hops: ${values.hops} · drift: ${values.drift} · sweep every: ${values.sweepEvery}s`
     );
   };
   return (
@@ -218,6 +218,13 @@ function Panel({ values, set }: { values: Values; set: (key: keyof Values, value
         {check('cursor', 'Cursor')}
       </fieldset>
       <label>
+        <span>Position</span>
+        <select value={values.place} onChange={(e) => set('place', +e.target.value)}>
+          <option value={0}>Top left + bottom right</option>
+          <option value={1}>Along the top</option>
+        </select>
+      </label>
+      <label>
         <span>Seam join (R to replay)</span>
         <select value={values.weld} onChange={(e) => set('weld', +e.target.value)}>
           {WELDS.map((name, i) => (
@@ -229,7 +236,7 @@ function Panel({ values, set }: { values: Values; set: (key: keyof Values, value
       </label>
       {slider('cell', 'Grid', 4, 12, 1, 'px')}
       {slider('size', 'Pixel', 1, 10, 0.5, 'px')}
-      {slider('reach', 'Reach from corners', 0.15, 0.8, 0.01, '')}
+      {slider('reach', 'Reach', 0.15, 0.8, 0.01, '')}
       {slider('density', 'Density', 0.1, 1, 0.01, '')}
       {slider('brightness', 'Brightness', 0.1, 1, 0.01, '')}
       {slider('glow', 'Glow', 0, 16, 1, 'px')}

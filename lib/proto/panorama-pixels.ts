@@ -12,6 +12,8 @@ export const DEFAULTS = {
   keepSky: 0,
   /** 0 current, 1 zip-evaporate, 2 condense, 3 pixel sparks. */
   weld: 1,
+  /** Where the pixels sit: 0 the top left and bottom right corners, 1 along the top. */
+  place: 0,
   // The numbers.
   cell: 6,
   size: 4,
@@ -71,10 +73,20 @@ const bayer = (gx: number, gy: number) => BAYER[(gy & 3) * 4 + (gx & 3)];
 type Block = { x: number; y: number; w: number; h: number; level: number; seed: number };
 
 /** A bar of outlined blocks out of each corner, as in the reference, in cells. */
-function blocksOf(cols: number, rows: number): Block[] {
+function blocksOf(cols: number, rows: number, top: boolean): Block[] {
   const out: Block[] = [];
   const h = 14;
   const widths = [26, 12, 20, 9, 16, 5, 11];
+  if (top) {
+    // One bar the whole way across, brightest at its ends.
+    for (let x = 3, i = 0; x < cols - 3; i++) {
+      const w = Math.min(widths[i % widths.length], cols - 3 - x);
+      const side = Math.abs((x + w / 2) / cols - 0.5) * 2;
+      out.push({ x, y: 3, w, h, level: 0.3 + 0.45 * side, seed: 11 + i });
+      x += w;
+    }
+    return out;
+  }
   let x = 3;
   widths.forEach((w, i) => {
     out.push({ x, y: 3, w, h, level: 0.75 - i * 0.09, seed: 11 + i });
@@ -152,7 +164,7 @@ export function startField(canvas: HTMLCanvasElement, root: HTMLElement) {
         const x = gx * cell;
         // How deep into a corner's field this cell is, with a ragged edge.
         const near = Math.min(Math.hypot(x, y * 1.25), Math.hypot(width - x, (height - y) * 1.25));
-        const depth = 1 - near / reach;
+        const depth = v.place ? 1 - y / (height * v.reach * 1.1) : 1 - near / reach;
         const field = clamp(depth + (noise(gx / 9, gy / 9, 0, 5) * 0.45 - 0.2) * (depth + 0.3));
         if (field <= 0.01) continue;
 
@@ -190,7 +202,7 @@ export function startField(canvas: HTMLCanvasElement, root: HTMLElement) {
     }
 
     if (v.blocks) {
-      for (const block of blocksOf(cols, rows)) {
+      for (const block of blocksOf(cols, rows, v.place > 0)) {
         const bx = block.x * cell;
         const by = block.y * cell;
         const bw = block.w * cell;
