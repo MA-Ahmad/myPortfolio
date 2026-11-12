@@ -27,6 +27,10 @@ import { cn } from 'lib/cn';
 import { pixelNavigate } from 'lib/pixel-transition';
 import { requestRedraw } from 'lib/redraw';
 
+/** Opens the site's command menu from elsewhere on the page (the mobile dock's search pill). */
+export const OPEN_COMMAND_MENU_EVENT = 'command-menu:open';
+export const openCommandMenu = () => window.dispatchEvent(new Event(OPEN_COMMAND_MENU_EVENT));
+
 const PAGE_LINKS = [
   { title: 'Home', href: '/', shortcut: 'GH', icon: HomeIcon },
   { title: 'Blocks', href: '/blocks', icon: BlocksIcon },
@@ -65,8 +69,8 @@ const DEFAULT_SKIN: CommandMenuSkin = {
     'relative mx-auto mt-16 w-[min(32rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-popover text-popover-foreground shadow-2xl',
   inputRow: 'flex h-12 items-center gap-2 border-b border-line px-3',
   input:
-    'h-12 w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground',
-  list: 'max-h-80 overflow-y-auto p-2',
+    'h-12 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm',
+  list: 'max-h-[min(20rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain p-2',
   group: 'mb-2',
   item: 'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm outline-none data-[selected=true]:bg-muted',
   empty: 'py-8 text-center font-mono text-sm text-muted-foreground',
@@ -81,9 +85,11 @@ type Props = {
   sections?: { title: string; href: string }[];
   /** Hide the light/dark group on themes that have a single palette. */
   showMode?: boolean;
+  /** Extra classes for the trigger button (the site nav hides it on phones, where the dock has it). */
+  triggerClassName?: string;
 };
 
-export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
+export function CommandMenu({ skin, sections, showMode = true, triggerClassName }: Props = {}) {
   const s = { ...DEFAULT_SKIN, ...skin };
   const iconClass = cn('size-4', s.icon);
   const router = useRouter();
@@ -147,8 +153,17 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
       }
     };
 
+    const onOpenRequest = () => {
+      rememberFocus();
+      setOpen(true);
+    };
+
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    window.addEventListener(OPEN_COMMAND_MENU_EVENT, onOpenRequest);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener(OPEN_COMMAND_MENU_EVENT, onOpenRequest);
+    };
   }, []);
 
   // Closes on any press outside the panel, whatever sits behind it.
@@ -233,7 +248,7 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
           rememberFocus();
           setOpen(true);
         }}
-        className={s.trigger}
+        className={cn(s.trigger, triggerClassName)}
         aria-label="Open command menu"
       >
         <SearchIcon className="size-3.5" />
@@ -244,7 +259,8 @@ export function CommandMenu({ skin, sections, showMode = true }: Props = {}) {
       </button>
 
       {open ? (
-        <div className="fixed inset-0 z-[80]">
+        // data-command-menu-open lifts the site header above the spider while open (globals.css).
+        <div data-command-menu-open className="fixed inset-0 z-[80] overflow-x-hidden overscroll-contain">
           <button
             type="button"
             className={s.backdrop}

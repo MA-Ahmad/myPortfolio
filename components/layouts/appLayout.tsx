@@ -1,6 +1,7 @@
 import { useRouter } from 'next/router';
 import TopNav from '../shared/top-nav';
 import Footer from '../shared/footer';
+import { MobileDock } from '../shared/mobile-dock';
 import { cn } from 'lib/cn';
 
 function AppLayout(props: { children: React.ReactNode }) {
@@ -39,7 +40,9 @@ function AppLayout(props: { children: React.ReactNode }) {
           </div>
         )}
       </main>
-      <Footer wide={isWide} className={cn(!isHome && 'border-t-0')} />
+      {/* max-md:pb-24 keeps the footer clear of the mobile dock. */}
+      <Footer wide={isWide} className={cn('max-md:pb-24', !isHome && 'border-t-0')} />
+      <MobileDock />
     </div>
   );
 }
