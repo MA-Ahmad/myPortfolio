@@ -3,7 +3,7 @@
 import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
 import type { GetStaticProps } from 'next';
 import Meta from 'components/shared/meta';
-import { BLEED, type PixelBar, barHeight, runPixelBar } from 'lib/canvas/pixel-bar';
+import { BLEED, type BarStyle, DOTS, PIXELS, type PixelBar, barHeight, runPixelBar } from 'lib/canvas/pixel-bar';
 import type { NextPageWithLayout } from 'pages/_app';
 
 /* The reference's own run: seconds in, and how full the bar is by then. */
@@ -32,7 +32,7 @@ function runAt(t: number) {
 
 const CSS = `
 .pp-root { min-height: 100vh; padding: 48px 24px 96px; background: #fff; color: #e8e9ec; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.pp-col { display: grid; gap: 40px; justify-items: center; }
+.pp-col { display: grid; gap: 40px; justify-items: center; width: 100%; }
 .pp-card { width: min(1040px, 100%); padding: 20px 4px 28px; border-radius: 14px; background: #16171a; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 12px 32px -8px rgba(0,0,0,.35); }
 .pp-card h2 { margin: 0 20px 2px; font-size: 20px; font-weight: 600; line-height: 1.2; }
 .pp-card p { margin: 0 20px; color: rgba(255,255,255,.5); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
@@ -48,13 +48,13 @@ const CSS = `
 `;
 
 /** One bar on a canvas, following `progress`. */
-function Bar({ progress, jump }: { progress: number; jump: boolean }) {
+function Bar({ progress, jump, look }: { progress: number; jump: boolean; look: BarStyle }) {
   const ref = useRef<HTMLCanvasElement>(null);
   const bar = useRef<PixelBar | null>(null);
   useEffect(() => {
-    bar.current = runPixelBar(ref.current!);
+    bar.current = runPixelBar(ref.current!, look);
     return () => bar.current?.stop();
-  }, []);
+  }, [look]);
   useEffect(() => bar.current?.set(progress, jump), [progress, jump]);
   return <canvas ref={ref} className="pp-bar" style={{ height: barHeight + BLEED * 2 }} aria-hidden="true" />;
 }
@@ -101,21 +101,28 @@ const PixelProgressProto: NextPageWithLayout = () => {
       <Meta title="Pixel progress prototype" noindex />
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
       <div className="pp-col">
-        <section className="pp-card">
-          <h2>{(progress * 357.8).toFixed(1)} GB</h2>
-          <p>At the reference&apos;s size</p>
-          <Bar progress={progress} jump={jump} />
-        </section>
-        <section className="pp-display">
-          <header>Display</header>
-          <div className="pp-screen">
-            <div className="pp-label">
-              <span>Loading Midnight</span>
-              <span>{Math.round(progress * 100)}%</span>
-            </div>
-            <Bar progress={progress} jump={jump} />
+        {[
+          { name: 'Pixels', look: PIXELS },
+          { name: 'Dots', look: DOTS }
+        ].map(({ name, look }) => (
+          <div key={name} className="pp-col">
+            <section className="pp-card">
+              <h2>{name}</h2>
+              <p>At the reference&apos;s size · {(progress * 357.8).toFixed(1)} GB</p>
+              <Bar progress={progress} jump={jump} look={look} />
+            </section>
+            <section className="pp-display">
+              <header>Display</header>
+              <div className="pp-screen">
+                <div className="pp-label">
+                  <span>Loading Midnight</span>
+                  <span>{Math.round(progress * 100)}%</span>
+                </div>
+                <Bar progress={progress} jump={jump} look={look} />
+              </div>
+            </section>
           </div>
-        </section>
+        ))}
       </div>
       <div className="pp-tools">
         <button type="button" onClick={replay}>

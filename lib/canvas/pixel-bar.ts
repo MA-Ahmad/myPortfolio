@@ -5,18 +5,36 @@
  * edge is solid white with a bloom, cooling to the segment's colour behind it.
  */
 
-/** The segments, left to right: a colour and a share of the bar. */
-export const SEGMENTS: { color: string; share: number }[] = [
-  { color: '#4a98f0', share: 16 },
-  { color: '#4fd373', share: 10.5 },
-  { color: '#ec5aa5', share: 17 },
-  { color: '#9d6cf0', share: 12.5 },
-  { color: '#2acbe8', share: 12 },
-  { color: '#f5c938', share: 4 },
-  { color: '#b0b4c0', share: 9.5 },
-  { color: '#f28530', share: 14 },
-  { color: '#e84846', share: 9.5 }
-];
+export type BarStyle = {
+  /** The segments, left to right: a colour and a share of the bar. */
+  segments: { color: string; share: number }[];
+  /**
+   * Round dots instead of square pixels, lit in runs along each row, their colour washing between
+   * these (two or three) rather than set by the segment.
+   */
+  dots?: string[];
+};
+
+/** Square pixels in nine segments. */
+export const PIXELS: BarStyle = {
+  segments: [
+    { color: '#4a98f0', share: 16 },
+    { color: '#4fd373', share: 10.5 },
+    { color: '#ec5aa5', share: 17 },
+    { color: '#9d6cf0', share: 12.5 },
+    { color: '#2acbe8', share: 12 },
+    { color: '#f5c938', share: 4 },
+    { color: '#b0b4c0', share: 9.5 },
+    { color: '#f28530', share: 14 },
+    { color: '#e84846', share: 9.5 }
+  ]
+};
+
+/** Round dots in one segment, washing from red through coral to a pale peach. */
+export const DOTS: BarStyle = {
+  segments: [{ color: '#e5402c', share: 1 }],
+  dots: ['#d9301f', '#f0694f', '#f9c2ad']
+};
 
 /** Grid pitch, a lit cell, a dim cell and a track dot, px. */
 const PITCH = 6;
@@ -49,7 +67,6 @@ const mix = (a: Rgb, b: Rgb, k: number): Rgb => [
 ];
 const css = (c: Rgb, alpha = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${alpha.toFixed(3)})`;
 const WHITE: Rgb = [255, 255, 255];
-const COLORS = SEGMENTS.map((segment) => rgb(segment.color));
 
 function hash(x: number, y: number, seed: number) {
   let h = Math.imul(x, 374761393) ^ Math.imul(y, 668265263) ^ Math.imul(seed, 2246822519);
@@ -118,10 +135,10 @@ export type BarFrame = {
 };
 
 /** Each segment's first column, and one past the last. */
-function bounds(cols: number) {
-  const total = SEGMENTS.reduce((sum, segment) => sum + segment.share, 0);
+function bounds(cols: number, style: BarStyle) {
+  const total = style.segments.reduce((sum, segment) => sum + segment.share, 0);
   let run = 0;
-  return SEGMENTS.map((segment) => {
+  return style.segments.map((segment) => {
     run += segment.share;
     return Math.round((run / total) * cols);
   });
@@ -131,13 +148,30 @@ function bounds(cols: number) {
  * Draws one frame, on a context already scaled to CSS px and moved to the bar's top left corner.
  * Pure: the same frame always draws the same pixels.
  */
-export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
+export function drawPixelBar(
+  ctx: CanvasRenderingContext2D,
+  frame: BarFrame,
+  style: BarStyle = PIXELS
+) {
   const { width, heat, time, now } = frame;
   const height = barHeight;
   const cols = Math.round(width / PITCH);
   const head = Math.max(0, Math.min(width, frame.head));
-  const ends = bounds(cols);
-  const segmentOf = (col: number) => Math.max(0, ends.findIndex((end) => col <= end));
+  const ends = bounds(cols, style);
+  const COLORS = style.segments.map((segment) => rgb(segment.color));
+  const wash = style.dots?.map(rgb);
+  // A cell: a square, or a dot of the same width.
+  const cell = (x: number, y: number, size: number) => {
+    if (!wash) return ctx.fillRect(x - size / 2, y - size / 2, size, size);
+    ctx.beginPath();
+    ctx.arc(x, y, size / 2 + 0.25, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const segmentOf = (col: number) =>
+    Math.max(
+      0,
+      ends.findIndex((end) => col <= end)
+    );
   const hot = (x: number) => clamp(1 - (head - x) / (HEAT * PITCH)) * heat;
 
   // The track: a hairline and a dot in every cell still to fill.
@@ -150,7 +184,7 @@ export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
   for (let col = Math.max(1, Math.ceil(head / PITCH)); col < cols; col++) {
     for (let row = 1; row < ROWS - 1; row++) {
-      ctx.fillRect(col * PITCH - DOT / 2, row * PITCH - DOT / 2, DOT, DOT);
+      cell(col * PITCH, row * PITCH, DOT);
     }
   }
   ctx.restore();
@@ -186,10 +220,10 @@ export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
     ctx.fillRect(from, 0, Math.min(head, end * PITCH) - from, height);
   });
   if (heat > 0.01) {
-    const wash = ctx.createLinearGradient(head - HEAT * PITCH * 1.4, 0, head, 0);
-    wash.addColorStop(0, 'rgba(255,255,255,0)');
-    wash.addColorStop(1, `rgba(255,255,255,${(0.42 * heat).toFixed(3)})`);
-    ctx.fillStyle = wash;
+    const glare = ctx.createLinearGradient(head - HEAT * PITCH * 1.4, 0, head, 0);
+    glare.addColorStop(0, 'rgba(255,255,255,0)');
+    glare.addColorStop(1, `rgba(255,255,255,${(0.42 * heat).toFixed(3)})`);
+    ctx.fillStyle = glare;
     ctx.fillRect(head - HEAT * PITCH * 1.4, 0, HEAT * PITCH * 1.4, height);
   }
 
@@ -197,14 +231,27 @@ export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
   const filled = Math.min(cols, Math.floor(head / PITCH + 0.5));
   for (let col = 0; col <= filled; col++) {
     const x = col * PITCH;
-    const color = COLORS[segmentOf(col)];
     const e = hot(x);
     const white = clamp(e * 1.5);
-    const lit = css(mix(color, WHITE, white));
-    const dim = css(mix(color, WHITE, white), 0.17 + 0.5 * white);
     for (let row = 0; row < ROWS; row++) {
       const y = row * PITCH;
       const edge = row === 0 || row === ROWS - 1;
+      let color = COLORS[segmentOf(col)];
+      if (wash) {
+        // The wash: broad, slow patches of each colour.
+        const w = clamp(noise(col / 13, row / 9, time * 0.18, 31) * 1.7 - 0.35) * (wash.length - 1);
+        const i = Math.min(wash.length - 2, Math.floor(w));
+        color = mix(wash[i], wash[i + 1], w - i);
+      }
+      const lit = css(mix(color, WHITE, white));
+      const dim = css(mix(color, WHITE, white), 0.17 + 0.5 * white);
+      if (wash) {
+        // Dots are lit in runs along their row, with short gaps, each row on its own.
+        const on = edge ? !(col & 1) : noise(col / 2.4, row * 3.7, time * 0.28, 23) > 0.36 - e;
+        ctx.fillStyle = on ? lit : dim;
+        cell(x, y, on ? LIT + 0.5 : DIM);
+        continue;
+      }
       const n = noise(col / 5, row / 5, time * 0.3, 17);
       // At most a checker: the bar never fills solid away from its leading edge.
       let level = edge ? (col & 1 ? 0 : 1) : Math.min(0.5, Math.max(0, 1.5 * n - 0.42));
@@ -224,8 +271,9 @@ export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
     if (hop.col * PITCH > head - PITCH) continue;
     const age = (now - hop.born) / hop.life;
     if (age < 0 || age > 1) continue;
-    ctx.fillStyle = css(mix(COLORS[segmentOf(hop.col)], WHITE, 0.78), Math.sin(Math.PI * age) ** 0.5);
-    ctx.fillRect(hop.col * PITCH - LIT / 2, hop.row * PITCH - LIT / 2, LIT, LIT);
+    const base = wash ? wash[wash.length - 1] : COLORS[segmentOf(hop.col)];
+    ctx.fillStyle = css(mix(base, WHITE, 0.78), Math.sin(Math.PI * age) ** 0.5);
+    cell(hop.col * PITCH, hop.row * PITCH, wash ? LIT + 0.5 : LIT);
   }
 
   // The lines between segments.
@@ -246,7 +294,12 @@ export function drawPixelBar(ctx: CanvasRenderingContext2D, frame: BarFrame) {
     const color = leading ? mix(COLORS[i], WHITE, 0.55 * heat) : COLORS[i];
     ctx.save();
     ctx.beginPath();
-    ctx.rect(from - (i === 0 ? BLEED : 0), -BLEED, to - from + (i === 0 ? BLEED : 0) + (leading ? BLEED : 0), height + BLEED * 2);
+    ctx.rect(
+      from - (i === 0 ? BLEED : 0),
+      -BLEED,
+      to - from + (i === 0 ? BLEED : 0) + (leading ? BLEED : 0),
+      height + BLEED * 2
+    );
     ctx.clip();
     outline(ctx, head, height);
     ctx.lineWidth = 1.5;
@@ -272,7 +325,7 @@ export type PixelBar = {
  * Runs the bar on `canvas`, which is BLEED px larger than the bar on every side. The leading edge
  * stays hot while the bar is short of full, and cools once it gets there.
  */
-export function runPixelBar(canvas: HTMLCanvasElement): PixelBar {
+export function runPixelBar(canvas: HTMLCanvasElement, style: BarStyle = PIXELS): PixelBar {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const started = performance.now();
   let ctx: CanvasRenderingContext2D | null = null;
@@ -314,7 +367,11 @@ export function runPixelBar(canvas: HTMLCanvasElement): PixelBar {
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.setTransform(dpr, 0, 0, dpr, BLEED * dpr, BLEED * dpr);
-    drawPixelBar(ctx, { width, head, heat, time: reduced ? 0 : (now - started) / 1000, now, hops });
+    drawPixelBar(
+      ctx,
+      { width, head, heat, time: reduced ? 0 : (now - started) / 1000, now, hops },
+      style
+    );
   };
 
   const observer = new ResizeObserver(() => {
