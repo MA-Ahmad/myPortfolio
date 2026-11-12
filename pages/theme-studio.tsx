@@ -20,9 +20,10 @@ const CanvasPage: NextPageWithLayout<Props> = ({ contributions }) => (
   <>
     <Meta
       title="Theme Studio"
-      description="Pick a theme for Muhammad Ahmad's portfolio by wiring its card into the display."
-      image={`${SITE_URL}/og/theme-studio.png`}
-      imageAlt="Theme Studio in dark mode: a wire from the Classic theme card reaches the display, with sparks jumping to its input, between the Notebook and Terminal cards."
+      description="Pick a theme for Muhammad Ahmad's portfolio, plug it into the display and watch it load."
+      // The version makes sites that cached the old picture fetch this one.
+      image={`${SITE_URL}/og/theme-studio.png?v=2`}
+      imageAlt="Theme Studio in dark mode: the display at the top plays the Classic theme, joined to the Classic card below it by a glowing bundle of gold-to-violet wires, with the Notebook, Terminal, Midnight and Panorama cards either side."
     />
     <h1 className="sr-only">Theme Studio: open a theme by choosing its card, or wire it into the display</h1>
     <CanvasStage contributions={contributions} />
