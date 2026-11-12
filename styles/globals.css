@@ -935,3 +935,9 @@ html[data-redraw] [data-rd='on'] {
     animation: none;
   }
 }
+
+/* The command menu opens inside the sticky header, whose stacking context (z-50) sits under the
+   home page's spider (z-53). Lift the header while the menu is open so nothing crawls over it. */
+header:has([data-command-menu-open]) {
+  z-index: 70;
+}
