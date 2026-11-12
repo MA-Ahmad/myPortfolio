@@ -247,6 +247,9 @@ export const Strain = memo(
           // Only a pull the way the grip strip pulls (right, or down when stacked) parts the
           // pieces; the other way does nothing.
           const away = here.offset - grab.offset;
+          // A press that moves off the other way is not a pull: the threads let go of it, and
+          // stay off until the button is up (see the held-button check below).
+          if (!pulling && away < -START) down = false;
           if (!pulling && away > START) {
             if (take('part', svg)) {
               pulling = true;
@@ -258,7 +261,8 @@ export const Strain = memo(
             }
           }
           if (pulling) {
-            pointer = handAt(here, grab);
+            // The hand goes no further back than where it grabbed: the threads only pull one way.
+            pointer = handAt({ offset: Math.max(here.offset, grab.offset), at: here.at }, grab);
             want = 1;
             amount = props.current.pullOf(away - START);
             props.current.onPull(amount, grab.at);
@@ -327,7 +331,16 @@ export const Strain = memo(
       };
       const onUp = (event: PointerEvent) => {
         strip = false;
-        if (!down) return;
+        if (!down) {
+          // A press let go of, or made elsewhere: the threads come back to a pointer still in reach.
+          if (event.type === 'pointerup' && seen && seam.current === 'welded' && !live.current) {
+            want = reachFor(seen);
+            if (want > 0) pointer = seen;
+            sync();
+            if (want > 0 && !frame) frame = requestAnimationFrame(tick);
+          }
+          return;
+        }
         down = false;
         if (!pulling) return;
         pulling = false;
