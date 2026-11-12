@@ -66,16 +66,17 @@ const DEFAULT_SKIN: CommandMenuSkin = {
   kbd: 'ml-1 hidden rounded border border-line px-1 font-mono text-[10px] md:inline',
   backdrop: 'absolute inset-0 bg-black/40',
   panel:
-    'relative mx-auto mt-16 w-[min(32rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-popover text-popover-foreground shadow-2xl',
-  inputRow: 'flex h-12 items-center gap-2 border-b border-line px-3',
+    'relative mx-auto mt-16 w-[min(32rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-line bg-muted text-popover-foreground shadow-2xl dark:bg-popover',
+  inputRow: 'flex h-12 items-center gap-2 px-3',
   input:
     'h-12 w-full min-w-0 bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm',
-  list: 'max-h-[min(20rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain p-2',
+  // The results sit on their own dark, rounded card between the search row and the footer.
+  list: 'mx-1.5 max-h-[min(20rem,calc(100dvh-12rem))] overflow-y-auto overscroll-contain rounded-xl border border-line bg-background p-2',
   group: 'mb-2',
   item: 'flex cursor-pointer items-center gap-2 rounded-lg px-2 py-2 text-sm outline-none data-[selected=true]:bg-muted',
   empty: 'py-8 text-center font-mono text-sm text-muted-foreground',
   footer:
-    'flex items-center justify-between border-t border-line px-3 py-2 text-xs text-muted-foreground',
+    'flex items-center justify-between px-3 py-2 text-xs text-muted-foreground',
   icon: 'text-muted-foreground'
 };
 
