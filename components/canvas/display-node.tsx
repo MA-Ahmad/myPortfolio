@@ -165,7 +165,6 @@ export function DisplayNode({
             layout={layout}
             // Inside the display's 1px border.
             width={w - 2}
-            height={screenH}
             landsAt={sending.landsAt}
             ready={sending.ready}
             onDone={() => onSent?.()}
