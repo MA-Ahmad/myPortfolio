@@ -57,8 +57,6 @@ const SIDE_ROOM: Record<Layout, number> = { desktop: 96, mobile: 24 };
 // A sideways drag on a phone's card this long turns the carousel.
 const SWIPE_PX = 36;
 const MOBILE_BREAKPOINT = 768;
-// The screen grows out of the display once its swell has peaked.
-const LIFT_DELAY_MS = 220;
 // The display swells about its center on a bouncy spring.
 const SWELL_SPRING = { stiffness: 380, damping: 14 };
 // Pulled out, it settles back without the bounce.
@@ -67,10 +65,10 @@ const SHRINK_SPRING = { stiffness: 260, damping: 26 };
 const PREPARE_IDLE_MS = 2000;
 // Matches the transform transition on .node[data-slot].
 const SLIDE_MS = 520;
-// Sending a theme: when the first light lands on the display, how long until its screen grows, how
-// much the display swells and how far its glow comes up (the display's --swell).
+// Sending a theme: when the first light lands on the display, how much the display swells and how
+// far its glow comes up (the display's --swell). Its screen grows once the progress bar on it is
+// full (see SendProgress).
 const SEND_LANDS_MS = 320;
-const SEND_MS = 820;
 const SEND_SWELL = 0.035;
 const SEND_GLOW = 3;
 // A press that travels this far moves the node; less is a click.
@@ -126,6 +124,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const [wire, setWire] = useState<WireState | null>(null);
   // The theme being sent, and whether its screen has grown out of the display.
   const [booting, setBooting] = useState<CardId | null>(null);
+  // Whether the page being sent has loaded, so its progress bar may finish.
+  const [sendReady, setSendReady] = useState(false);
   const [lifted, setLifted] = useState(false);
   const [arrivals, setArrivals] = useState(0);
   const [powerOff, setPowerOff] = useState<{ key: number; source: CardId } | null>(null);
@@ -145,7 +145,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const draggedRef = useRef(false);
 
   const releaseRef = useRef<(() => void) | null>(null);
-  const timerRef = useRef<number | undefined>(undefined);
   const swellRef = useRef({ x: 1, v: 0, target: 1, frame: 0, spring: SWELL_SPRING });
   const liftedRef = useRef(false);
   const screenRef = useRef<Screen | null>(null);
@@ -199,7 +198,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     return () => {
       query.removeEventListener('change', onChange);
       releaseRef.current?.();
-      window.clearTimeout(timerRef.current);
       window.clearTimeout(discardRef.current);
       window.clearTimeout(sendTimerRef.current);
       window.clearTimeout(swapTimerRef.current);
@@ -244,8 +242,9 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
 
   /**
    * Sends a theme to the display: the card and the display vibrate, the glow runs round the display
-   * and light races up the bundle. Meanwhile the theme's page starts loading in a screen that grows
-   * out of the display once the light has landed (see `lift`). Reduced motion opens the page at once.
+   * and light races up the bundle while a progress bar fills on the display's screen. Meanwhile the
+   * theme's page starts loading in a screen that grows out of the display once the bar is full (see
+   * `lift`). Reduced motion opens the page at once.
    */
   const snap = (from: CardId) => {
     releaseRef.current?.();
@@ -258,13 +257,18 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     }
     setStatus(`Opening ${title} theme. Press Escape to cancel.`);
     setBooting(from);
+    setSendReady(false);
+    const screen = screenRef.current;
+    screen?.ready.then(() => {
+      // Still this send, and not pulled out: the bar may finish (a page that timed out opens anyway).
+      if (screenRef.current === screen && wireRef.current?.from === from) setSendReady(true);
+    });
     // The bundle itself carries the send, a volley of light and sparks up the strands. The display
     // takes it in with one swell, then its screen grows.
     window.clearTimeout(sendTimerRef.current);
     sendTimerRef.current = window.setTimeout(() => {
       setArrivals(SEND_GLOW);
       swellTo(1 + SEND_SWELL);
-      sendTimerRef.current = window.setTimeout(lift, SEND_MS - SEND_LANDS_MS);
     }, SEND_LANDS_MS);
   };
 
@@ -273,8 +277,6 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
    * the display's screen collapses old-TV style.
    */
   const powerDown = (id: CardId) => {
-    // A lift may be waiting on the swell.
-    window.clearTimeout(timerRef.current);
     window.clearTimeout(sendTimerRef.current);
     setBooting(null);
     setArrivals(0);
@@ -363,14 +365,13 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     swell.frame = requestAnimationFrame(step);
   };
 
+  /** The send's progress bar is full: the screen grows out of the display and opens the page. */
   const lift = () => {
-    timerRef.current = window.setTimeout(() => {
-      const display = displayRef.current;
-      if (!screenRef.current || !display) return;
-      screenRef.current.run(display);
-      liftedRef.current = true;
-      setLifted(true);
-    }, LIFT_DELAY_MS);
+    const display = displayRef.current;
+    if (!wireRef.current || liftedRef.current || !screenRef.current || !display) return;
+    screenRef.current.run(display);
+    liftedRef.current = true;
+    setLifted(true);
   };
 
   const retract = () => {
@@ -622,6 +623,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
           scale={displayScale}
           lifted={lifted}
           powerOff={powerOff}
+          sending={booting && wire ? { id: booting, landsAt: SEND_LANDS_MS, ready: sendReady } : null}
+          onSent={lift}
           onOpen={() => connect(active)}
         />
 

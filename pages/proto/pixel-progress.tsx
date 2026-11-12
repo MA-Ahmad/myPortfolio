@@ -1,174 +1,191 @@
-// PROTOTYPE: a page to check the pixel progress bar on before it goes into the Theme Studio's
-// display. Delete it once the bar is in.
-import { type ReactElement, useCallback, useEffect, useRef, useState } from 'react';
+// PROTOTYPE: a page to see (and record) each theme's send progress bar on its own, as the Theme
+// Studio's display shows it. Delete it once it has served.
+import { type CSSProperties, type ReactElement, useCallback, useEffect, useState } from 'react';
 import type { GetStaticProps } from 'next';
+import { Monitor } from 'lucide-react';
+import { type CardId, cardById } from 'components/canvas/nodes';
+import { SendProgress } from 'components/canvas/send-progress';
 import Meta from 'components/shared/meta';
-import {
-  BLEED,
-  type BarStyle,
-  DOTS,
-  PIXELS,
-  type PixelBar,
-  STRANDS,
-  barHeight,
-  runPixelBar
-} from 'lib/canvas/pixel-bar';
 import type { NextPageWithLayout } from 'pages/_app';
 
-/* The reference's own run: seconds in, and how full the bar is by then. */
-const RUN: [number, number][] = [
-  [0, 0],
-  [0.35, 0.22],
-  [0.7, 0.32],
-  [1.03, 0.46],
-  [1.37, 0.63],
-  [1.7, 0.785],
-  [2.03, 0.87],
-  [2.37, 0.897],
-  [2.7, 0.928],
-  [3.03, 0.987],
-  [3.3, 1]
+/* One display for each bar: Classic, Terminal, Panorama, and Midnight (Notebook shares its bar). */
+const THEMES: { id: CardId; note: string; accent: string }[] = [
+  { id: 'home', note: "The wire's colours", accent: '#7db4ff' },
+  { id: 'terminal', note: 'Contribution greens', accent: '#b8c572' },
+  { id: 'panorama', note: 'Blue dots', accent: '#a5b4fc' },
+  { id: 'midnight', note: 'A colour for each section (Midnight, Notebook)', accent: '#f5a524' }
 ];
-const RUN_S = RUN[RUN.length - 1][0];
 
-function runAt(t: number) {
-  if (t >= RUN_S) return 1;
-  const i = RUN.findIndex(([at]) => at > t);
-  const [t0, p0] = RUN[i - 1];
-  const [t1, p1] = RUN[i];
-  return p0 + ((p1 - p0) * (t - t0)) / (t1 - t0);
-}
+// The display's own size on desktop (nodes.ts): 560 wide, a 43px header over a 315px screen.
+const W = 560;
+const SCREEN_H = 315;
+// The send's light lands on the display this long after it starts (SEND_LANDS_MS).
+const LANDS_MS = 320;
+// How long a finished bar stays up before it plays again.
+const AGAIN_MS = 1400;
 
 const CSS = `
-.pp-root { min-height: 100vh; padding: 48px 24px 96px; background: #fff; color: #e8e9ec; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-.pp-col { display: grid; gap: 40px; justify-items: center; width: 100%; }
-.pp-card { width: min(1040px, 100%); padding: 20px 4px 28px; border-radius: 14px; background: #16171a; box-shadow: 0 1px 2px rgba(0,0,0,.2), 0 12px 32px -8px rgba(0,0,0,.35); }
-.pp-card h2 { margin: 0 20px 2px; font-size: 20px; font-weight: 600; line-height: 1.2; }
-.pp-card p { margin: 0 20px; color: rgba(255,255,255,.5); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.pp-bar { display: block; width: 100%; }
-.pp-display { width: 560px; max-width: 100%; border-radius: 14px; overflow: hidden; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.12), 0 12px 32px -8px rgba(0,0,0,.25); color: #111; }
-.pp-display header { height: 43px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid rgba(0,0,0,.1); font-weight: 500; }
-.pp-screen { height: 315px; display: grid; align-content: center; background: #0c0d0f; }
-.pp-label { display: flex; justify-content: space-between; margin: 0 ${BLEED}px -${BLEED - 10}px; color: rgba(255,255,255,.55); font: 11px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
-.pp-tools { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 999px; background: rgba(10,10,10,.86); color: #fff; box-shadow: 0 8px 24px rgba(0,0,0,.24); }
-.pp-tools button, .pp-tools select { font: inherit; color: inherit; background: rgba(255,255,255,.12); border: 0; border-radius: 999px; padding: 5px 12px; cursor: pointer; }
-.pp-tools label { display: flex; align-items: center; gap: 6px; }
-.pp-tools input[type=range] { width: 160px; }
+.pp-root { min-height: 100vh; padding: 40px 24px 112px; background: #0a0a0b; background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1.2px); background-size: 22px 22px; color: #e8e9ec; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+.pp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(${W}px, ${W}px)); justify-content: center; gap: 48px 40px; }
+.pp-one { display: grid; justify-items: center; padding-top: 6vh; }
+.pp-one .pp-item { transform: scale(var(--zoom)); transform-origin: top center; }
+.pp-item { display: grid; gap: 12px; }
+.pp-note { display: flex; justify-content: space-between; color: rgb(255 255 255 / 0.5); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pp-display { width: ${W}px; border-radius: 14px; overflow: hidden; background: #141416; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 12px 32px -8px rgb(0 0 0 / 0.6); }
+.pp-display header { height: 43px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid rgb(255 255 255 / 0.08); font-weight: 500; }
+.pp-display header span:last-child { margin-left: auto; color: rgb(255 255 255 / 0.45); font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pp-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: rgb(255 255 255 / 0.08); }
+.pp-screen { position: relative; height: ${SCREEN_H}px; background: #0b0b0c; }
+.pp-tools { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 999px; background: rgb(24 24 27 / 0.9); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.4); color: #fff; }
+.pp-tools button, .pp-tools select { height: 30px; white-space: nowrap; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 999px; padding: 0 12px; cursor: pointer; transition: background-color 150ms ease-out; }
+.pp-tools button:hover, .pp-tools select:hover { background: rgb(255 255 255 / 0.1); }
+.pp-tools button[data-on] { background: rgb(255 255 255 / 0.16); }
+.pp-tools label { display: flex; align-items: center; gap: 6px; padding: 0 10px; }
+.pp-divider { width: 1px; height: 16px; background: rgb(255 255 255 / 0.12); }
 `;
 
-/** One bar on a canvas, following `progress`. */
-function Bar({ progress, jump, look }: { progress: number; jump: boolean; look: BarStyle }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  const bar = useRef<PixelBar | null>(null);
-  useEffect(() => {
-    bar.current = runPixelBar(ref.current!, look);
-    return () => bar.current?.stop();
-  }, [look]);
-  useEffect(() => bar.current?.set(progress, jump), [progress, jump]);
+/** A display playing one theme's send bar; `run` changes to play it again. */
+function Display({
+  id,
+  accent,
+  run,
+  onDone,
+  resolution
+}: {
+  id: CardId;
+  accent: string;
+  run: number;
+  onDone: () => void;
+  resolution: number;
+}) {
+  const card = cardById(id);
   return (
-    <canvas
-      ref={ref}
-      className="pp-bar"
-      style={{ height: barHeight + BLEED * 2 }}
-      aria-hidden="true"
-    />
+    <section className="pp-display" aria-label={`${card.title} display`}>
+      <header>
+        <span className="pp-icon" style={{ color: accent }}>
+          <Monitor className="size-3.5" />
+        </span>
+        Display
+        <span>{card.route}</span>
+      </header>
+      <div className="pp-screen">
+        <SendProgress
+          key={run}
+          id={id}
+          layout="desktop"
+          width={W - 2}
+          landsAt={LANDS_MS}
+          ready
+          onDone={onDone}
+          resolution={resolution}
+        />
+      </div>
+    </section>
   );
 }
 
 const PixelProgressProto: NextPageWithLayout = () => {
-  const [progress, setProgress] = useState(0);
-  const [jump, setJump] = useState(false);
+  // 'all', or one theme shown alone and larger, for recording.
+  const [shown, setShown] = useState<'all' | CardId>('all');
+  const [zoom, setZoom] = useState(1.5);
   const [loop, setLoop] = useState(true);
-  const [speed, setSpeed] = useState(1);
-  const [run, setRun] = useState(1);
+  const [runs, setRuns] = useState<Record<string, number>>({});
 
-  const replay = useCallback(() => setRun((n) => n + 1), []);
-
-  // Plays the reference's run; looping, it holds full for a moment and starts over.
-  useEffect(() => {
-    if (!run) return;
-    const started = performance.now();
-    let frame = 0;
-    let timer = 0;
-    const step = (now: number) => {
-      const t = ((now - started) / 1000) * speed;
-      setJump(t < 0.05);
-      setProgress(t < 0.05 ? 0 : runAt(t - 0.05));
-      if (t < RUN_S + 0.05) frame = requestAnimationFrame(step);
-      else if (loop) timer = window.setTimeout(replay, 1800 / speed);
-    };
-    frame = requestAnimationFrame(step);
-    return () => {
-      cancelAnimationFrame(frame);
-      window.clearTimeout(timer);
-    };
-  }, [run, loop, speed, replay]);
+  const replay = useCallback((id?: CardId) => {
+    setRuns((now) => {
+      const next = { ...now };
+      for (const theme of THEMES)
+        if (!id || theme.id === id) next[theme.id] = (now[theme.id] ?? 0) + 1;
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      const tag = (event.target as HTMLElement).tagName;
+      if (tag === 'SELECT' || tag === 'INPUT') return;
       if (event.key === 'r' || event.key === 'R') replay();
+      const n = parseInt(event.key, 10);
+      if (n === 0) setShown('all');
+      else if (n >= 1 && n <= THEMES.length) {
+        setShown(THEMES[n - 1].id);
+        replay(THEMES[n - 1].id);
+      }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [replay]);
 
+  const done = (id: CardId) => () => {
+    if (loop) window.setTimeout(() => replay(id), AGAIN_MS);
+  };
+
+  const items = THEMES.filter(({ id }) => shown === 'all' || shown === id);
+
   return (
     <div className="pp-root">
-      <Meta title="Pixel progress prototype" noindex />
+      <Meta title="Send progress prototype" noindex />
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
-      <div className="pp-col">
-        {[
-          { name: 'Pixels', look: PIXELS },
-          { name: 'Wire colours', look: STRANDS },
-          { name: 'Dots', look: DOTS }
-        ].map(({ name, look }) => (
-          <div key={name} className="pp-col">
-            <section className="pp-card">
-              <h2>{name}</h2>
-              <p>At the reference&apos;s size · {(progress * 357.8).toFixed(1)} GB</p>
-              <Bar progress={progress} jump={jump} look={look} />
-            </section>
-            <section className="pp-display">
-              <header>Display</header>
-              <div className="pp-screen">
-                <div className="pp-label">
-                  <span>Loading Midnight</span>
-                  <span>{Math.round(progress * 100)}%</span>
-                </div>
-                <Bar progress={progress} jump={jump} look={look} />
-              </div>
-            </section>
+      <div
+        className={shown === 'all' ? 'pp-grid' : 'pp-one'}
+        style={{ '--zoom': zoom } as CSSProperties}
+      >
+        {items.map(({ id, note, accent }) => (
+          <div key={id} className="pp-item">
+            <div className="pp-note">
+              <span>{cardById(id).title}</span>
+              <span>{note}</span>
+            </div>
+            <Display
+              id={id}
+              accent={accent}
+              run={runs[id] ?? 0}
+              onDone={done(id)}
+              // Shown alone, the screen is scaled up: its bar is drawn as much sharper.
+              resolution={shown === 'all' ? 1 : zoom}
+            />
           </div>
         ))}
       </div>
-      <div className="pp-tools">
-        <button type="button" onClick={replay}>
+      <nav className="pp-tools" aria-label="Prototype controls">
+        <button
+          type="button"
+          data-on={shown === 'all' || undefined}
+          onClick={() => setShown('all')}
+        >
+          All
+        </button>
+        {THEMES.map(({ id }) => (
+          <button
+            key={id}
+            type="button"
+            data-on={shown === id || undefined}
+            onClick={() => {
+              setShown(id);
+              replay(id);
+            }}
+          >
+            {cardById(id).title}
+          </button>
+        ))}
+        <span className="pp-divider" aria-hidden />
+        <button type="button" onClick={() => replay()}>
           Replay (R)
         </button>
         <label>
           <input type="checkbox" checked={loop} onChange={(e) => setLoop(e.target.checked)} /> Loop
         </label>
-        <label>
-          Progress
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.001}
-            value={progress}
-            onChange={(e) => {
-              setRun(0);
-              setJump(false);
-              setProgress(+e.target.value);
-            }}
-          />
-        </label>
-        <select value={speed} onChange={(e) => setSpeed(+e.target.value)} aria-label="Speed">
+        <select
+          value={zoom}
+          onChange={(e) => setZoom(+e.target.value)}
+          aria-label="Size when shown alone"
+        >
           <option value={1}>1x</option>
-          <option value={0.5}>0.5x</option>
-          <option value={0.25}>0.25x</option>
+          <option value={1.25}>1.25x</option>
+          <option value={1.5}>1.5x</option>
+          <option value={1.75}>1.75x</option>
         </select>
-      </div>
+      </nav>
     </div>
   );
 };
