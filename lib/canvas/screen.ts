@@ -3,8 +3,10 @@ import type { NextRouter } from 'next/router';
 type Options = { href: string; title: string; colors: { backdrop: string; accent: string } };
 
 export type Screen = {
-  /** Grows `display` into a screen, powers it on with the page, dives into it and opens the page. */
+  /** Grows `display` into a screen, brings the page up on it, dives into it and opens the page. */
   run: (display: HTMLElement) => void;
+  /** Settles once the page has loaded in the screen, or has taken too long to (false). */
+  ready: Promise<boolean>;
   /** Jumps straight to the page. */
   skip: () => void;
   /** Removes the screen and says so, unless it has already started running. */
@@ -14,11 +16,7 @@ export type Screen = {
 type Rect = { left: number; top: number; width: number; height: number };
 
 const EXPAND_MS = 520;
-const STATIC_IN_MS = 160;
-const LINE_MS = 150;
-const OPEN_MS = 460;
-const STATIC_OUT_MS = 420;
-const SCANLINES_MS = 900;
+const OPEN_MS = 360;
 const HOLD_MS = 220;
 const DIVE_MS = 520;
 // How long the real page plays its own entrance under the screen before the screen fades off it.
@@ -68,32 +66,12 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
-/** Fills `canvas` with fresh grey static every frame until stopped. */
-function runStatic(canvas: HTMLCanvasElement) {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return () => {};
-  const image = ctx.createImageData(canvas.width, canvas.height);
-  let frame = 0;
-  const draw = () => {
-    const data = image.data;
-    for (let i = 0; i < data.length; i += 4) {
-      const v = Math.random() * 255;
-      data[i] = data[i + 1] = data[i + 2] = v;
-      data[i + 3] = 255;
-    }
-    ctx.putImageData(image, 0, 0);
-    frame = requestAnimationFrame(draw);
-  };
-  draw();
-  return () => cancelAnimationFrame(frame);
-}
-
 /**
  * The display grown into a screen showing the page. The page loads in a frame as soon as the
  * screen is created, before anyone plugs in, so it is ready by the time the display has grown.
  * When it runs, the screen takes on the display's own header, rows, footer and look, at its exact
- * place and size, so the display itself seems to grow: the rows fade into a dark tube, which
- * powers on old-TV style into the page, and then it dives into the page.
+ * place and size, so the display itself seems to grow: its finished progress bar fades into the
+ * dark screen, the page comes up on it, and then it dives into the page.
  *
  * It lives on the body rather than in React, and positions everything inline, so it outlives the
  * Theme Studio page: once the page opens, the screen stays over it while it settles and then
@@ -125,7 +103,7 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
       height: `${vh}px`,
       border: '0',
       transformOrigin: '0 0',
-      clipPath: 'inset(50% 0 50% 0)',
+      opacity: '0',
       pointerEvents: 'none'
     },
     area
@@ -133,43 +111,6 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
   frame.title = title;
   frame.tabIndex = -1;
   frame.setAttribute('aria-hidden', 'true');
-
-  // The tube: static, scanlines and the line it powers on from, drawn over the page.
-  const noise = element(
-    'canvas',
-    { position: 'absolute', inset: '0', width: '100%', height: '100%', opacity: '0', filter: 'blur(0.6px)' },
-    area
-  );
-  noise.width = 160;
-  noise.height = Math.round((160 * vh) / vw);
-  // The picture comes on blown out: a white wash over it that fades, cheaper than a filter.
-  const flash = element('div', { position: 'absolute', inset: '0', background: '#fff', opacity: '0' }, area);
-  const scanlines = element(
-    'div',
-    {
-      position: 'absolute',
-      inset: '0',
-      background: 'repeating-linear-gradient(to bottom, rgb(0 0 0 / 0.45) 0 1px, transparent 1px 3px)',
-      opacity: '0'
-    },
-    area
-  );
-  const line = element(
-    'div',
-    {
-      position: 'absolute',
-      top: '50%',
-      left: '0',
-      right: '0',
-      height: '2px',
-      marginTop: '-1px',
-      background: '#fff',
-      boxShadow: `0 0 16px 3px ${colors.accent}`,
-      transform: 'scaleX(0)',
-      opacity: '0'
-    },
-    area
-  );
 
   const loaded = new Promise<boolean>((resolve) => {
     frame.addEventListener('load', () => resolve(true), { once: true });
@@ -181,11 +122,9 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
   let stage: 'idle' | 'running' | 'leaving' | 'gone' = 'idle';
   let clear = () => {};
   let full: Rect = { left: 0, top: 0, width: vw, height: vh };
-  let stopStatic = () => {};
 
   const remove = () => {
     stage = 'gone';
-    stopStatic();
     window.removeEventListener('keydown', onKey);
     root.remove();
     clear();
@@ -250,6 +189,14 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
     // A display that already plays the page hands over to this screen's own copy of it; a cloned
     // frame would load the page a third time.
     content.querySelectorAll('iframe').forEach((copy) => copy.remove());
+    // A copied canvas comes up blank: the progress bar is drawn into its copy as it stands.
+    const canvases = rows.querySelectorAll('canvas');
+    content.querySelectorAll('canvas').forEach((copy, i) => {
+      const source = canvases[i];
+      copy.width = source.width;
+      copy.height = source.height;
+      copy.getContext('2d')?.drawImage(source, 0, 0);
+    });
     Object.assign(content.style, { position: 'absolute', top: '0', left: '0', width: `${rows.offsetWidth}px` });
     // Added beside the frame, never around it: moving a frame reloads it.
     shell.insertBefore(top, area);
@@ -306,36 +253,14 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
     if (stage !== 'running') return;
     if (!ok) return leave();
 
-    // Power on like an old set: blurry static, a bright line across the middle, then the picture
-    // opening out of the line, blown out and soft before it settles.
-    stopStatic = runStatic(noise);
-    noise.animate([{ opacity: 0 }, { opacity: 0.55 }], { duration: STATIC_IN_MS, easing: 'ease-out', fill: 'forwards' });
-    scanlines.animate([{ opacity: 0 }, { opacity: 1 }], { duration: STATIC_IN_MS, fill: 'forwards' });
-    await wait(STATIC_IN_MS * 0.6);
-    line.animate([{ transform: 'scaleX(0)', opacity: 1 }, { transform: 'scaleX(1)', opacity: 1 }], {
-      duration: LINE_MS,
-      easing: EASE_OUT,
-      fill: 'forwards'
-    });
-    await wait(LINE_MS * 0.8);
-    line.animate([{ opacity: 1 }, { opacity: 0 }], { duration: OPEN_MS * 0.6, easing: 'ease-out', fill: 'forwards' });
-    noise.animate([{ opacity: 0.55 }, { opacity: 0 }], { duration: STATIC_OUT_MS, easing: 'ease-in', fill: 'forwards' });
-    scanlines.animate([{ opacity: 1 }, { opacity: 0 }], { duration: SCANLINES_MS, easing: 'ease-in', fill: 'forwards' });
+    // The page comes up on the dark screen.
     const label = bottom.lastChild;
     if (label) label.textContent = `Showing ${title}`;
-    // No filter on the frame: blurring a whole live page each frame stalls it. The soft static
-    // fading over the picture and a fading white wash read as the blur and the glare.
-    flash.animate([{ opacity: 0.7 }, { opacity: 0.25, offset: 0.4 }, { opacity: 0 }], {
-      duration: OPEN_MS * 1.3,
+    await frame.animate([{ opacity: 0 }, { opacity: 1 }], {
+      duration: OPEN_MS,
       easing: 'ease-out',
       fill: 'forwards'
-    });
-    await frame.animate([{ clipPath: 'inset(50% 0 50% 0)' }, { clipPath: 'inset(0% 0 0% 0)' }], {
-      duration: OPEN_MS,
-      easing: EASE_OUT,
-      fill: 'forwards'
     }).finished;
-    window.setTimeout(() => stopStatic(), STATIC_OUT_MS);
 
     await wait(HOLD_MS);
     if (stage !== 'running') return;
@@ -362,14 +287,11 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
         router.push(href);
         return;
       }
-      stopStatic();
       root.getAnimations({ subtree: true }).forEach((animation) => animation.cancel());
       Object.assign(shell.style, px(full), { transform: 'none', borderRadius: '0px', opacity: '1' });
-      Object.assign(frame.style, { transform: 'scale(1)', clipPath: 'none' });
-      Object.assign(flash.style, { opacity: '0' });
+      Object.assign(frame.style, { transform: 'scale(1)', opacity: '1' });
       Object.assign(backdrop.style, { opacity: '1' });
       Object.assign(area.style, { background: SCREEN_OFF });
-      Object.assign(noise.style, { opacity: '0' });
       leave();
     });
   }
@@ -380,6 +302,7 @@ export function createScreen(router: NextRouter, { href, title, colors }: Option
 
   return {
     run,
+    ready: loaded,
     skip,
     destroy: () => {
       if (stage !== 'idle') return false;
