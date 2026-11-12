@@ -510,13 +510,17 @@
 }
 
 /*
- * While a theme is sent, the picture goes dark under a pixel progress bar (send-progress.tsx). It
- * comes up quickly over the page, and is the screen the display grows from.
+ * While a theme is sent, the picture goes dark under a pixel progress bar (send-progress.tsx), with
+ * the site's sections filling in turn under it. It comes up quickly over the page, and is the
+ * screen the display grows from.
  */
 .sending {
   position: absolute;
   inset: 0;
+  display: grid;
+  place-items: center;
   background: #0b0b0c;
+  color: rgb(255 255 255 / 0.9);
   animation: sendingIn 180ms ease-out;
 }
 
@@ -526,22 +530,106 @@
   }
 }
 
-.sendingBar {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+.sendingBody {
+  display: flex;
+  flex-direction: column;
 }
 
 .sendingLabel {
-  position: absolute;
   display: flex;
   justify-content: space-between;
-  transform: translateY(-100%);
+  margin-bottom: 10px;
   color: rgb(255 255 255 / 0.55);
   font: 11px/1.4 Cascadia, ui-monospace, SFMono-Regular, Menlo, monospace;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+/* The bar's own box; its canvas spills past it on every side for the glow. */
+.sendingTrack {
+  position: relative;
+}
+
+.sendingBar {
+  position: absolute;
+  pointer-events: none;
+}
+
+.sendingSections {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px 12px;
+  margin-top: 14px;
+}
+
+/* One section: a tile in its colour, its name and how much of it has come through. */
+.sendingSection {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px 0 4px;
+  margin: 0 -8px 0 -4px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  transition-property: background-color, color;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.sendingIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--section) 22%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--section) 35%, transparent);
+  color: var(--section);
+  transition-property: background-color, box-shadow, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: ease-out;
+}
+
+.sendingName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendingPercent {
+  color: rgb(255 255 255 / 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Not reached yet: quiet. Filling: picked out, as the row under the pointer is. */
+.sendingSection[data-state='waiting'] {
+  color: rgb(255 255 255 / 0.4);
+}
+
+.sendingSection[data-state='waiting'] .sendingIcon {
+  opacity: 0.45;
+}
+
+.sendingSection[data-state='active'] .sendingIcon {
+  background: color-mix(in srgb, var(--section) 34%, transparent);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--section) 55%, transparent),
+    0 0 10px color-mix(in srgb, var(--section) 45%, transparent);
+}
+
+.sendingSection[data-state='active'],
+.sendingSection:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+
+.sendingSection[data-state='active'] .sendingPercent {
+  color: rgb(255 255 255 / 0.8);
 }
 
 @media (prefers-reduced-motion: reduce) {

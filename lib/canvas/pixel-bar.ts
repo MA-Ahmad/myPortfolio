@@ -56,12 +56,40 @@ export const BLUES: BarStyle = {
   wash: ['#1d4ed8', '#3b82f6', '#8ec1ff']
 };
 
+/**
+ * The colour a style shows at `share` of the way along the bar (its segment's, its blend's, or
+ * the middle of its wash), as a CSS hex colour.
+ */
+export function colorOf(style: BarStyle, share: number) {
+  const pick = style.blend ?? style.wash;
+  if (style.wash) return style.wash[Math.floor(style.wash.length / 2)];
+  if (pick) {
+    const k = Math.max(0, Math.min(1, share)) * (pick.length - 1);
+    const i = Math.min(pick.length - 2, Math.floor(k));
+    const a = rgb(pick[i]);
+    const b = rgb(pick[i + 1]);
+    return `#${mix(a, b, k - i)
+      .map((v) => Math.round(v).toString(16).padStart(2, '0'))
+      .join('')}`;
+  }
+  const total = style.segments.reduce((sum, segment) => sum + segment.share, 0);
+  let run = 0;
+  for (const segment of style.segments) {
+    run += segment.share / total;
+    if (share <= run) return segment.color;
+  }
+  return style.segments[style.segments.length - 1].color;
+}
+
 /** Grid pitch, a lit cell, a dim cell and a track dot, px. */
 const PITCH = 6;
 const LIT = 4;
 const DIM = 1.5;
 const DOT = 2;
-/** Rows of cells; the first and last sit on the bar's top and bottom edges, cut in half by them. */
+/**
+ * Rows of cells, unless a bar asks for fewer; the first and last sit on the bar's top and bottom
+ * edges, cut in half by them.
+ */
 export const ROWS = 23;
 /** Room round the bar for its glow, px. */
 export const BLEED = 36;
@@ -74,7 +102,8 @@ const HEAT = 13;
 const FOLLOW = 12;
 const COOL_MS = 520;
 
-export const barHeight = (ROWS - 1) * PITCH;
+/** A bar's height for `rows` rows of cells, px. */
+export const barHeight = (rows = ROWS) => (rows - 1) * PITCH;
 /** The bar's own width for a box `width` px wide: a whole number of cells. */
 export const barWidth = (width: number) => Math.floor(width / PITCH) * PITCH;
 
@@ -152,6 +181,12 @@ export type BarFrame = {
   time: number;
   now: number;
   hops: Hop[];
+  /** Rows of cells (ROWS unless given). */
+  rows?: number;
+  /** Shares of the bar (0 to 1) to draw a line at, as between segments. */
+  marks?: number[];
+  /** A stretch of the bar, as shares, to pick out: the rest dims. */
+  focus?: [number, number] | null;
 };
 
 /** Each segment's first column, and one past the last. */
@@ -174,7 +209,8 @@ export function drawPixelBar(
   style: BarStyle = PIXELS
 ) {
   const { width, heat, time, now } = frame;
-  const height = barHeight;
+  const rows = frame.rows ?? ROWS;
+  const height = barHeight(rows);
   const cols = Math.round(width / PITCH);
   const head = Math.max(0, Math.min(width, frame.head));
   const ends = bounds(cols, style);
@@ -212,7 +248,7 @@ export function drawPixelBar(
   ctx.clip();
   ctx.fillStyle = 'rgba(255,255,255,0.05)';
   for (let col = Math.max(1, Math.ceil(head / PITCH)); col < cols; col++) {
-    for (let row = 1; row < ROWS - 1; row++) {
+    for (let row = 1; row < rows - 1; row++) {
       cell(col * PITCH, row * PITCH, DOT);
     }
   }
@@ -269,9 +305,9 @@ export function drawPixelBar(
     const x = col * PITCH;
     const e = hot(x);
     const white = clamp(e * 1.5);
-    for (let row = 0; row < ROWS; row++) {
+    for (let row = 0; row < rows; row++) {
       const y = row * PITCH;
-      const edge = row === 0 || row === ROWS - 1;
+      const edge = row === 0 || row === rows - 1;
       let color = colorAt(col);
       if (wash) {
         // The wash: broad, slow patches of each colour.
@@ -314,8 +350,20 @@ export function drawPixelBar(
 
   // The lines between segments.
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
-  for (const end of blend ? [] : ends.slice(0, -1)) {
-    if (end * PITCH < head - 1) ctx.fillRect(end * PITCH - 0.5, 0, 1, height);
+  const lines = [
+    ...(blend ? [] : ends.slice(0, -1).map((end) => end * PITCH)),
+    ...(frame.marks ?? []).map((share) => Math.round(share * cols) * PITCH)
+  ];
+  for (const x of lines) {
+    if (x < head - 1) ctx.fillRect(x - 0.5, 0, 1, height);
+  }
+
+  // A picked-out stretch: everything else on the bar sinks back.
+  if (frame.focus) {
+    const [from, to] = frame.focus.map((share) => Math.round(share * cols) * PITCH);
+    ctx.fillStyle = 'rgba(11,11,12,0.62)';
+    if (from > 0) ctx.fillRect(0, 0, from, height);
+    if (to < head) ctx.fillRect(to, 0, head - to, height);
   }
   ctx.restore();
 
@@ -372,7 +420,18 @@ export function drawPixelBar(
   });
 }
 
+export type BarOptions = {
+  /** The least room either side of the bar, px. */
+  margin?: number;
+  /** Rows of cells. */
+  rows?: number;
+  /** Shares of the bar to draw a line at. */
+  marks?: number[];
+};
+
 export type PixelBar = {
+  /** Picks out a stretch of the bar, as shares, dimming the rest; null for none. */
+  focus: (range: [number, number] | null) => void;
   /** Where the bar should fill to, 0 to 1; it follows smoothly. `jump` puts it there at once. */
   set: (progress: number, jump?: boolean) => void;
   /** How far the bar has filled on screen, 0 to 1 (it trails the target a little). */
@@ -389,7 +448,7 @@ export type PixelBar = {
 export function runPixelBar(
   canvas: HTMLCanvasElement,
   style: BarStyle = PIXELS,
-  margin = BLEED
+  { margin = BLEED, rows = ROWS, marks }: BarOptions = {}
 ): PixelBar {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const started = performance.now();
@@ -404,6 +463,7 @@ export function runPixelBar(
   let last = started;
   let frame = 0;
   let hops: Hop[] = [];
+  let focus: [number, number] | null = null;
 
   const draw = (now: number) => {
     frame = requestAnimationFrame(draw);
@@ -421,11 +481,11 @@ export function runPixelBar(
 
     const cols = Math.floor(head / PITCH) - 1;
     hops = hops.filter((hop) => now - hop.born < hop.life && hop.col <= cols);
-    const want = reduced ? 0 : Math.round((cols * ROWS) / 130);
+    const want = reduced ? 0 : Math.round((cols * rows) / 130);
     while (hops.length < want) {
       hops.push({
         col: 1 + Math.floor(Math.random() * cols),
-        row: 1 + Math.floor(Math.random() * (ROWS - 2)),
+        row: 1 + Math.floor(Math.random() * (rows - 2)),
         born: now,
         life: 350 + Math.random() * 1100
       });
@@ -437,7 +497,17 @@ export function runPixelBar(
     ctx.setTransform(dpr, 0, 0, dpr, left * dpr, top * dpr);
     drawPixelBar(
       ctx,
-      { width, head, heat, time: reduced ? 0 : (now - started) / 1000, now, hops },
+      {
+        width,
+        head,
+        heat,
+        time: reduced ? 0 : (now - started) / 1000,
+        now,
+        hops,
+        rows,
+        marks,
+        focus
+      },
       style
     );
   };
@@ -448,7 +518,7 @@ export function runPixelBar(
     width = barWidth(canvas.clientWidth - margin * 2);
     // Whole px, so the grid lands on the pixel grid.
     left = Math.round((canvas.clientWidth - width) / 2);
-    top = Math.round((canvas.clientHeight - barHeight) / 2);
+    top = Math.round((canvas.clientHeight - barHeight(rows)) / 2);
     canvas.width = Math.round(canvas.clientWidth * dpr);
     canvas.height = Math.round(canvas.clientHeight * dpr);
     ctx = canvas.getContext('2d');
@@ -464,6 +534,9 @@ export function runPixelBar(
         head = target * width;
         hops = [];
       }
+    },
+    focus(range) {
+      focus = range;
     },
     shown: () => (width ? head / width : 0),
     settled: () => target >= 1 && head >= width && width > 0,
