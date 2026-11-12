@@ -9,33 +9,34 @@ import Meta from 'components/shared/meta';
 import type { NextPageWithLayout } from 'pages/_app';
 
 /* One display for each bar: Classic, Terminal, Panorama, and Midnight (Notebook shares its bar). */
-const THEMES: { id: CardId; note: string; accent: string }[] = [
-  { id: 'home', note: "The wire's colours", accent: '#7db4ff' },
-  { id: 'terminal', note: 'Contribution greens', accent: '#b8c572' },
-  { id: 'panorama', note: 'Blue dots', accent: '#a5b4fc' },
-  { id: 'midnight', note: 'A colour for each section (Midnight, Notebook)', accent: '#f5a524' }
+const THEMES: { id: CardId; accent: string }[] = [
+  { id: 'home', accent: '#7db4ff' },
+  { id: 'terminal', accent: '#b8c572' },
+  { id: 'panorama', accent: '#a5b4fc' },
+  { id: 'midnight', accent: '#f5a524' }
 ];
 
 // The display's own size on desktop (nodes.ts): 560 wide, a 43px header over a 315px screen.
 const W = 560;
-const SCREEN_H = 315;
+// Shorter than the real display's, so all four fit in one recording.
+const SCREEN_H = 232;
 // The send's light lands on the display this long after it starts (SEND_LANDS_MS).
 const LANDS_MS = 320;
 // How long a finished bar stays up before it plays again.
 const AGAIN_MS = 1400;
 
 const CSS = `
-.pp-root { min-height: 100vh; padding: 40px 24px 112px; background: #0a0a0b; background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1.2px); background-size: 22px 22px; color: #e8e9ec; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
-.pp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(${W}px, ${W}px)); justify-content: center; gap: 48px 40px; }
-.pp-one { display: grid; justify-items: center; padding-top: 6vh; }
-.pp-one .pp-item { transform: scale(var(--zoom)); transform-origin: top center; }
-.pp-item { display: grid; gap: 12px; }
-.pp-note { display: flex; justify-content: space-between; color: rgb(255 255 255 / 0.5); font: 12px/1.4 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.pp-root { min-height: 100vh; display: grid; place-items: center; padding: 32px 24px; background: #0a0a0b; background-image: radial-gradient(rgb(255 255 255 / 0.07) 1px, transparent 1.2px); background-size: 22px 22px; color: #e8e9ec; font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; -webkit-font-smoothing: antialiased; }
+.pp-grid { display: grid; grid-template-columns: repeat(2, ${W}px); justify-content: center; gap: 32px; }
+.pp-one { display: grid; justify-items: center; }
+.pp-one .pp-item { transform: scale(var(--zoom)); }
+.pp-item { display: grid; }
 .pp-display { width: ${W}px; border-radius: 14px; overflow: hidden; background: #141416; box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.1), 0 12px 32px -8px rgb(0 0 0 / 0.6); }
 .pp-display header { height: 43px; display: flex; align-items: center; gap: 10px; padding: 0 14px; border-bottom: 1px solid rgb(255 255 255 / 0.08); font-weight: 500; }
 .pp-display header span:last-child { margin-left: auto; color: rgb(255 255 255 / 0.45); font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; }
 .pp-icon { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: rgb(255 255 255 / 0.08); }
 .pp-screen { position: relative; height: ${SCREEN_H}px; background: #0b0b0c; }
+.pp-tools[hidden] { display: none; }
 .pp-tools { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 10; display: flex; align-items: center; gap: 8px; padding: 6px; border-radius: 999px; background: rgb(24 24 27 / 0.9); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08), 0 8px 24px rgb(0 0 0 / 0.4); color: #fff; }
 .pp-tools button, .pp-tools select { height: 30px; white-space: nowrap; font: inherit; color: inherit; background: transparent; border: 0; border-radius: 999px; padding: 0 12px; cursor: pointer; transition: background-color 150ms ease-out; }
 .pp-tools button:hover, .pp-tools select:hover { background: rgb(255 255 255 / 0.1); }
@@ -89,6 +90,8 @@ const PixelProgressProto: NextPageWithLayout = () => {
   const [shown, setShown] = useState<'all' | CardId>('all');
   const [zoom, setZoom] = useState(1.5);
   const [loop, setLoop] = useState(true);
+  // The controls stay out of the recording; H shows them.
+  const [tools, setTools] = useState(false);
   const [runs, setRuns] = useState<Record<string, number>>({});
 
   const replay = useCallback((id?: CardId) => {
@@ -105,6 +108,7 @@ const PixelProgressProto: NextPageWithLayout = () => {
       const tag = (event.target as HTMLElement).tagName;
       if (tag === 'SELECT' || tag === 'INPUT') return;
       if (event.key === 'r' || event.key === 'R') replay();
+      if (event.key === 'h' || event.key === 'H') setTools((on) => !on);
       const n = parseInt(event.key, 10);
       if (n === 0) setShown('all');
       else if (n >= 1 && n <= THEMES.length) {
@@ -130,12 +134,8 @@ const PixelProgressProto: NextPageWithLayout = () => {
         className={shown === 'all' ? 'pp-grid' : 'pp-one'}
         style={{ '--zoom': zoom } as CSSProperties}
       >
-        {items.map(({ id, note, accent }) => (
+        {items.map(({ id, accent }) => (
           <div key={id} className="pp-item">
-            <div className="pp-note">
-              <span>{cardById(id).title}</span>
-              <span>{note}</span>
-            </div>
             <Display
               id={id}
               accent={accent}
@@ -147,7 +147,7 @@ const PixelProgressProto: NextPageWithLayout = () => {
           </div>
         ))}
       </div>
-      <nav className="pp-tools" aria-label="Prototype controls">
+      <nav className="pp-tools" aria-label="Prototype controls" hidden={!tools}>
         <button
           type="button"
           data-on={shown === 'all' || undefined}
