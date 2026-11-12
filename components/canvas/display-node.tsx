@@ -2,6 +2,7 @@ import { type CSSProperties, type PointerEvent, type Ref, useState } from 'react
 import { GripVertical, Monitor } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
+import { SendProgress } from './send-progress';
 import { type CardId, DISPLAY_HEADER_H, DISPLAY_SCREEN_H, type Layout, type Side, cardById, displaySize } from './nodes';
 
 // The page in the display's screen is laid out this wide and scaled down to fit, so it shows the
@@ -38,6 +39,13 @@ type Props = {
   lifted: boolean;
   /** Set when a send was just pulled out; `key` replays the power-down, tinted for `source`. */
   powerOff: { key: number; source: CardId } | null;
+  /**
+   * The theme being sent, while its progress shows on the screen: when the light lands, and
+   * whether its page has loaded.
+   */
+  sending?: { id: CardId; landsAt: number; ready: boolean } | null;
+  /** The send's progress bar is full: the screen may grow. */
+  onSent?: () => void;
   onGrab?: (event: PointerEvent) => void;
   /** Opens the connected theme from the header. */
   onOpen?: () => void;
@@ -59,6 +67,8 @@ export function DisplayNode({
   scale,
   lifted,
   powerOff,
+  sending,
+  onSent,
   onGrab,
   onOpen
 }: Props) {
@@ -146,6 +156,19 @@ export function DisplayNode({
             title={`${shown.title} theme, live`}
             style={{ width: pageW, height: screenH / pageScale, transform: `scale(${pageScale})` }}
             onLoad={() => setLoaded(shown.href)}
+          />
+        )}
+        {sending && (
+          <SendProgress
+            key={sending.id}
+            id={sending.id}
+            layout={layout}
+            // Inside the display's 1px border.
+            width={w - 2}
+            height={screenH}
+            landsAt={sending.landsAt}
+            ready={sending.ready}
+            onDone={() => onSent?.()}
           />
         )}
       </div>
