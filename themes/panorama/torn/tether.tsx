@@ -274,6 +274,9 @@ export const Tether = memo(function Tether({
         // Only a pull back toward the open section (left, or up when stacked) draws the pieces
         // together; the other way does nothing.
         const away = grab.offset - here.offset;
+        // A press that moves off the other way is not a pull: the threads let go of it, and stay
+        // off until the button is up (see the held-button check below).
+        if (!pulling && away < -START) down = false;
         if (!pulling && away > START) {
           if (take('join', svg)) {
             pulling = true;
@@ -285,7 +288,8 @@ export const Tether = memo(function Tether({
           }
         }
         if (pulling) {
-          pointer = handAt(here, grab);
+          // The hand goes no further back than where it grabbed: the threads only pull one way.
+          pointer = handAt({ offset: Math.min(here.offset, grab.offset), at: here.at }, grab);
           want = 1;
           pinch(1 - Math.exp(-Math.max(0, away - START) / RESIST));
           sync();
@@ -330,7 +334,16 @@ export const Tether = memo(function Tether({
       spring = requestAnimationFrame(step);
     };
     const onUp = (event: PointerEvent) => {
-      if (!down) return;
+      if (!down) {
+        // A press let go of, or made elsewhere: the threads come back to a pointer still in reach.
+        if (event.type === 'pointerup' && seen && seam.current === 'torn') {
+          want = reachFor(seen);
+          if (want > 0) pointer = seen;
+          sync();
+          if (want > 0 && !frame) frame = requestAnimationFrame(tick);
+        }
+        return;
+      }
       down = false;
       if (!pulling) return;
       pulling = false;

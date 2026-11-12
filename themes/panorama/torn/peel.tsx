@@ -212,6 +212,9 @@ export function Peel() {
         const here = locate(event);
         // Only a pull in toward the sheet, down and to the right, lifts the corner.
         const inward = (here.x - grab.x + (here.y - grab.y)) / Math.SQRT2;
+        // A press that moves off outward is not a pull: the threads let go of it, and stay off
+        // until the button is up (see the held-button check below).
+        if (!pulling && inward < -START) down = false;
         if (!pulling && inward > START) {
           if (take('peel', svg)) {
             pulling = true;
@@ -225,8 +228,10 @@ export function Peel() {
         }
         if (pulling) {
           // The hand follows the pointer less and less and stops short, so the threads keep shape.
-          const dx = here.x - grab.x;
-          const dy = here.y - grab.y;
+          // The hand goes no further out than where it grabbed: the threads only pull inward.
+          const back = Math.min(0, inward) / Math.SQRT2;
+          const dx = here.x - grab.x - back;
+          const dy = here.y - grab.y - back;
           const far = Math.hypot(dx, dy) || 1;
           const out = (HAND * (1 - Math.exp(-far / HAND))) / far;
           pointer = { x: grab.x + dx * out, y: grab.y + dy * out };
