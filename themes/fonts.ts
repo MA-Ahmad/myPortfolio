@@ -6,5 +6,6 @@
  * would hold up the page for fonts it never uses.
  */
 export const THEME_FONTS: Record<string, string[]> = {
-  panorama: ['Geist_Variable', 'GeistMono_Variable']
+  panorama: ['Geist_Variable', 'GeistMono_Variable'],
+  relay: ['Geist_Variable', 'GeistMono_Variable']
 };

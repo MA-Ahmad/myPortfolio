@@ -21,6 +21,7 @@ import {
   SwatchBookIcon,
   PencilRulerIcon,
   PilcrowIcon,
+  RadioTowerIcon,
   TerminalIcon,
   WorkflowIcon
 } from 'lucide-react';
@@ -106,6 +107,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
   const midnightIconRef = useRef<SVGSVGElement>(null);
   const panoramaIconRef = useRef<SVGSVGElement>(null);
   const marginaliaIconRef = useRef<SVGSVGElement>(null);
+  const relayIconRef = useRef<SVGSVGElement>(null);
   const canvasIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -119,6 +121,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     router.prefetch('/themes/midnight');
     router.prefetch('/themes/panorama');
     router.prefetch('/themes/marginalia');
+    router.prefetch('/themes/relay');
     router.prefetch('/theme-studio');
   }, [open, router]);
 
@@ -259,6 +262,19 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     });
   };
 
+  const openRelayTheme = () => {
+    const icon = relayIconRef.current?.getBoundingClientRect();
+    setOpen(false);
+    pixelNavigate(router, '/themes/relay', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --rl-ink and --rl-bg in themes/relay/relay.module.css.
+      edge: '#ffffff',
+      background: '#050506'
+    });
+  };
+
   const openCanvas = () => {
     const icon = canvasIconRef.current?.getBoundingClientRect();
     const dark = resolvedTheme === 'dark';
@@ -363,6 +379,10 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
                   <CommandItem className={s.item} onSelect={openMarginaliaTheme} keywords={['paragraph', 'notes', 'margin']}>
                     <PilcrowIcon ref={marginaliaIconRef} className={iconClass} />
                     <span>Marginalia</span>
+                  </CommandItem>
+                  <CommandItem className={s.item} onSelect={openRelayTheme} keywords={['blue', 'wire', 'spokes', 'relay']}>
+                    <RadioTowerIcon ref={relayIconRef} className={iconClass} />
+                    <span>Relay</span>
                   </CommandItem>
                   <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
                     <SwatchBookIcon className={iconClass} />

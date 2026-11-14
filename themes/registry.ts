@@ -6,6 +6,7 @@ import { NotebookHome, NotebookLayout } from './notebook';
 import { MidnightHome, MidnightLayout, MidnightSkills, MidnightWork } from './midnight';
 import { PanoramaHome, PanoramaLayout } from './panorama';
 import { MarginaliaHome, MarginaliaLayout } from './marginalia';
+import { RelayHome, RelayLayout } from './relay';
 
 export type ThemeHomeProps = {
   contributions: Activity[];
@@ -50,6 +51,11 @@ export const THEMES = {
     title: 'Muhammad Ahmad - Full Stack Developer',
     Home: MarginaliaHome,
     Layout: MarginaliaLayout
+  },
+  relay: {
+    title: 'Muhammad Ahmad - Full Stack Developer',
+    Home: RelayHome,
+    Layout: RelayLayout
   }
 } satisfies Record<string, Theme>;
 
