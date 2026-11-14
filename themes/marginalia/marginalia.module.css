@@ -4,6 +4,7 @@
  * both margins from 1280px, the right margin from 880px, footnotes below that.
  */
 .root {
+  position: relative;
   --mg-bg: oklch(98.3% 0.004 255);
   --mg-ink: oklch(23% 0.025 265);
   --mg-soft: oklch(47% 0.02 265);
@@ -45,8 +46,9 @@
   border-radius: 2px;
 }
 
+/* It scrolls away with the page: fixed, it sat on top of the paragraph once the page scrolled. */
 .back {
-  position: fixed;
+  position: absolute;
   top: max(16px, env(safe-area-inset-top, 0px));
   left: max(16px, env(safe-area-inset-left, 0px));
   z-index: 10;
@@ -151,6 +153,11 @@
   display: none;
 }
 
+/* Before the script runs, a tapped phrase follows its link to the note, which shows. */
+.stage:not([data-mode]) .note:target {
+  display: block;
+}
+
 .note p,
 .note ul,
 .note dl {
@@ -210,6 +217,30 @@
 @media (hover: none) {
   .fold {
     opacity: 1;
+  }
+}
+
+/* On touch, the small buttons keep their look but take a 44px tap. */
+@media (pointer: coarse) {
+  .fold,
+  .copy,
+  .all {
+    position: relative;
+  }
+
+  .fold::before,
+  .copy::before,
+  .all::before {
+    content: '';
+    position: absolute;
+    inset: 50% auto auto 50%;
+    width: max(100%, 44px);
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+
+  .email {
+    margin-bottom: 14px !important;
   }
 }
 
@@ -322,6 +353,26 @@
     max-width: min(36rem, calc(100% - 20rem));
   }
 
+  /* Before the script places them, the notes open at the start stand at the top of their margin,
+     one under another, instead of waiting unseen. */
+  .stage:not([data-mode]) .notes {
+    display: grid;
+    grid-template-columns: 1fr 16rem;
+    align-content: start;
+    row-gap: 18px;
+  }
+
+  .stage:not([data-mode]) .note[data-open],
+  .stage:not([data-mode]) .note:target {
+    position: static;
+    grid-column: 2;
+    width: auto;
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
   .wires {
     display: block;
     position: absolute;
@@ -405,7 +456,27 @@
   }
 }
 
+/* With one margin, the paragraph and its margin are centred together rather than pinned left. */
+@media (min-width: 880px) and (max-width: 1279.98px) {
+  .page {
+    max-width: calc(36rem + 4rem + 16rem + 40px);
+  }
+}
+
 @media (min-width: 1280px) {
+  .stage:not([data-mode]) .notes {
+    grid-template-columns: 16rem 1fr 16rem;
+    grid-auto-flow: dense;
+  }
+
+  .stage:not([data-mode]) .note[data-side='left'] {
+    grid-column: 1;
+  }
+
+  .stage:not([data-mode]) .note[data-side='right'] {
+    grid-column: 3;
+  }
+
   .paragraph {
     max-width: 36rem;
     margin-inline: auto;

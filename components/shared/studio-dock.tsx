@@ -34,7 +34,8 @@ const LABELS: Record<DockLook, { title: string; open: string; display: string }>
 };
 
 // The stage is drawn 1:1 in px: the cards stacked on the left, wired into the display.
-const CARD = { w: 92, h: 28, gap: 8 };
+// Wide enough for the longest title (Marginalia) in the terminal look's mono.
+const CARD = { w: 104, h: 28, gap: 8 };
 const STAGE_H = 8 * 2 + CARDS.length * CARD.h + (CARDS.length - 1) * CARD.gap;
 const DISPLAY = { x: 160, y: (STAGE_H - 88) / 2, w: 88, h: 88 };
 const INPUT = { x: DISPLAY.x, y: DISPLAY.y + DISPLAY.h / 2 };

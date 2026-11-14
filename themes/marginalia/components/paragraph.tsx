@@ -1,7 +1,6 @@
 import {
   type KeyboardEvent,
   type MouseEvent,
-  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -59,9 +58,42 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
   const anchors = useRef<Partial<Record<NoteId, HTMLAnchorElement | null>>>({});
   const notes = useRef<Partial<Record<NoteId, HTMLElement | null>>>({});
 
-  const toggle = useCallback((id: NoteId) => {
-    setOpen((current) => (current.includes(id) ? current.filter((n) => n !== id) : [...current, id]));
+  // The note opened last, so a footnote that opens below the screen can be brought into view.
+  // The note opened last (a new object each time), so a footnote that opens below the screen can
+  // be brought into view.
+  const [opened, setOpened] = useState<{ id: NoteId } | null>(null);
+  const toggle = (id: NoteId) => {
+    if (open.includes(id)) return setOpen(open.filter((n) => n !== id));
+    setOpen([...open, id]);
+    setOpened({ id });
+  };
+
+  // A link to a note (#note-web3) opens it. Before the script runs, a tapped phrase shows its note
+  // through the hash (:target in the CSS); this keeps that note open once it has.
+  useEffect(() => {
+    const read = () => {
+      const id = location.hash.replace('#note-', '') as NoteId;
+      if (ORDER.includes(id)) setOpen((current) => (current.includes(id) ? current : [...current, id]));
+    };
+    const frame = requestAnimationFrame(read);
+    window.addEventListener('hashchange', read);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('hashchange', read);
+    };
   }, []);
+
+  // On a phone the notes are footnotes under the paragraph: one opened from low in the paragraph
+  // lands below the screen, so scroll it up into view (only as far as needed).
+  useEffect(() => {
+    if (mode !== 'foot' || !opened) return;
+    const note = notes.current[opened.id];
+    if (!note) return;
+    const box = note.getBoundingClientRect();
+    if (box.top >= 0 && box.bottom <= innerHeight) return;
+    const smooth = !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    note.scrollIntoView({ block: box.height > innerHeight * 0.8 ? 'start' : 'nearest', behavior: smooth ? 'smooth' : 'auto' });
+  }, [opened, mode]);
 
   // Stack the open notes in their margin, each as close to its word as the note above allows, and
   // draw a wire from the word's underline to the note.
@@ -215,7 +247,7 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
                   notes.current[id] = el;
                 }}
                 className={styles.note}
-                data-side={mode === 'two' ? SIDE[id] : 'right'}
+                data-side={SIDE[id]}
                 data-open={isOpen ? '' : undefined}
                 data-placed={spot ? '' : undefined}
                 data-hot={hot === id ? '' : undefined}

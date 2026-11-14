@@ -251,7 +251,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 92px;
+  width: 104px;
   height: 28px;
   padding: 0 8px;
   border: 1px solid var(--dock-border);
