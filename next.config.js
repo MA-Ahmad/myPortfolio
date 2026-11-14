@@ -1,6 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Blog covers come from Dev.to; keep this list in step with lib/cover-image.ts.
+  images: {
+    formats: ['image/avif', 'image/webp'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'dev-to-uploads.s3.amazonaws.com', pathname: '/uploads/**' },
+      { protocol: 'https', hostname: 'media.dev.to', pathname: '/**' },
+      { protocol: 'https', hostname: 'media2.dev.to', pathname: '/**' }
+    ]
+  },
   // Inlined at build time so the page view calls in lib/gtag.js can read it in the browser.
   env: { GA_TRACKING_ID: process.env.GA_TRACKING_ID ?? '' },
   turbopack: {

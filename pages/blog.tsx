@@ -38,7 +38,7 @@ const Posts = ({ posts }: { posts: BlogListPost[] }) => {
               placeholder="Search blog…"
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              className="h-full w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+              className="h-full w-full bg-transparent text-base outline-none placeholder:text-muted-foreground sm:text-sm"
             />
           </div>
         </div>

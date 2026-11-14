@@ -56,6 +56,18 @@ export default function WorldGlobe() {
   }, []);
   const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
 
+  // On a touch screen the hints say tap, not click.
+  const [touch, setTouch] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia('(hover: none) and (pointer: coarse)');
+    const update = () => setTouch(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+  const hint = state.hint || 'Drag to turn it any way · click a country';
+  const shownHint = touch ? hint.replace(/\bclick/g, 'tap').replace(/\bClick/g, 'Tap') : hint;
+
   const onState = useCallback((next: GlobeState) => setState(next), []);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -120,7 +132,7 @@ export default function WorldGlobe() {
       <Plate
         fig="Fig 1"
         title="A globe in pieces"
-        hint={state.hint || 'Drag to turn it any way · click a country'}
+        hint={shownHint}
         readout="Facing · axis 23.4°"
         keys={[
           { mark: 'lit', label: 'The country you picked' },

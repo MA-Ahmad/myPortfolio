@@ -11,7 +11,7 @@ const SKIN: Partial<CommandMenuSkin> = {
   panel:
     'relative mx-auto mt-16 w-[min(34rem,calc(100vw-1.5rem))] overflow-hidden border border-term-accent/40 bg-term-card text-term-fg shadow-[0_0_32px_#a9b66522]',
   inputRow: 'flex h-11 items-center gap-2 border-b border-term-border px-3 text-term-accent',
-  input: 'h-11 w-full bg-transparent text-sm text-term-fg outline-none placeholder:text-term-dim',
+  input: 'h-11 w-full bg-transparent text-base sm:text-sm text-term-fg outline-none placeholder:text-term-dim',
   list: `max-h-80 overflow-y-auto p-2 ${HEADING}`,
   item: 'flex cursor-pointer items-center gap-2 px-2 py-1.5 text-sm text-term-muted outline-none data-[selected=true]:bg-term-accent/10 data-[selected=true]:text-term-accent',
   empty: 'py-8 text-center text-sm text-term-dim',

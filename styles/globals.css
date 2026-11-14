@@ -301,6 +301,38 @@ a.nav-link:hover {
   padding: 0;
 }
 
+/* Code in posts: a smaller mono face in its own panel that scrolls sideways, so long lines
+   aren't cut off at the edge of a phone. */
+.article pre {
+  margin-block: 1.25em 0;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--muted);
+  padding: 0.875rem 1rem;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+  -webkit-overflow-scrolling: touch;
+}
+
+.article pre code {
+  font-size: inherit;
+  white-space: pre;
+}
+
+.article :not(pre) > code {
+  border-radius: 0.375rem;
+  background: var(--muted);
+  padding: 0.125em 0.375em;
+  font-size: 0.875em;
+}
+
+/* The panel replaces the backticks the global Prism theme puts around inline code. */
+.article :not(pre) > code::before,
+.article :not(pre) > code::after {
+  content: none;
+}
+
 /* Port of shadcn/tailwind.css `scroll-fade-x` (shadcn 4.12.0, spacing = 0.25rem) */
 @property --scroll-fade-s {
   syntax: '<length-percentage>';
