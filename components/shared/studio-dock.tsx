@@ -2,8 +2,8 @@ import { type CSSProperties, type MouseEvent, useEffect, useState } from 'react'
 import NextLink from 'next/link';
 import { useRouter } from 'next/router';
 import { useReducedMotion } from 'framer-motion';
-import { ArrowUpRight, Columns4, Pilcrow, House, Monitor, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
-import { CARDS, type CardId } from 'components/canvas/nodes';
+import { ArrowUpRight, Monitor, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
+import { type CardId, cardById } from 'components/canvas/nodes';
 import { packetIcon } from 'components/canvas/packets';
 import { pixelNavigate } from 'lib/pixel-transition';
 import styles from './studio-dock.module.css';
@@ -14,13 +14,14 @@ const CYCLE_MS = 3800;
 const PACKETS = 3;
 const PACKET_STAGGER_MS = 220;
 
-const ICONS: Record<CardId, typeof House> = {
-  home: House,
+/** The themes the dock plugs in, kept to three so the card stays small. */
+const DOCK_THEMES = ['terminal', 'notebook', 'midnight'] as const satisfies readonly CardId[];
+const DOCK_CARDS = DOCK_THEMES.map((id) => cardById(id));
+
+const ICONS: Record<(typeof DOCK_THEMES)[number], typeof Moon> = {
   terminal: SquareTerminal,
   notebook: NotebookPen,
-  midnight: Moon,
-  panorama: Columns4,
-  marginalia: Pilcrow
+  midnight: Moon
 };
 
 /** Which page the card sits on; each look borrows that page's palette, type and wording. */
@@ -34,9 +35,8 @@ const LABELS: Record<DockLook, { title: string; open: string; display: string }>
 };
 
 // The stage is drawn 1:1 in px: the cards stacked on the left, wired into the display.
-// Wide enough for the longest title (Marginalia) in the terminal look's mono.
-const CARD = { w: 104, h: 28, gap: 8 };
-const STAGE_H = 8 * 2 + CARDS.length * CARD.h + (CARDS.length - 1) * CARD.gap;
+const CARD = { w: 92, h: 28, gap: 8 };
+const STAGE_H = 8 * 2 + DOCK_CARDS.length * CARD.h + (DOCK_CARDS.length - 1) * CARD.gap;
 const DISPLAY = { x: 160, y: (STAGE_H - 88) / 2, w: 88, h: 88 };
 const INPUT = { x: DISPLAY.x, y: DISPLAY.y + DISPLAY.h / 2 };
 const portY = (index: number) => 8 + index * (CARD.h + CARD.gap) + CARD.h / 2;
@@ -91,9 +91,9 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
     pixelNavigate(router, HREF, { origin: inputOrigin(event.currentTarget), ...studioColors() });
   };
 
-  const activeIndex = cycle % CARDS.length;
-  const active = CARDS[activeIndex];
-  const ActiveIcon = ICONS[active.id];
+  const activeIndex = cycle % DOCK_CARDS.length;
+  const active = DOCK_CARDS[activeIndex];
+  const ActiveIcon = ICONS[active.id as keyof typeof ICONS];
   const labels = LABELS[look];
 
   return (
@@ -127,7 +127,7 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
         style={{ height: STAGE_H, '--accent': `var(--dock-${active.id})` } as CSSProperties}
       >
         <svg className={styles.wires} width={DISPLAY.x + DISPLAY.w} height={STAGE_H}>
-          {CARDS.map((card, index) => (
+          {DOCK_CARDS.map((card, index) => (
             <path
               key={card.id}
               d={wire(index)}
@@ -139,8 +139,8 @@ export function StudioDock({ look = 'site' }: { look?: DockLook }) {
           <circle className={styles.input} cx={INPUT.x} cy={INPUT.y} r={3.5} />
         </svg>
 
-        {CARDS.map((card, index) => {
-          const Icon = ICONS[card.id];
+        {DOCK_CARDS.map((card, index) => {
+          const Icon = ICONS[card.id as keyof typeof ICONS];
           return (
             <span
               key={card.id}
