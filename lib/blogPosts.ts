@@ -1,12 +1,9 @@
-import fs from 'fs';
-import path from 'path';
 import matter from 'gray-matter';
 import { BlogListPost } from 'components/blog/post-item';
 import { getDevtoPosts } from 'lib/fetchPosts';
+import { localPostSlugs, localPostSource } from 'lib/local-posts';
 
 export const LATEST_BLOG_COUNT = 10;
-
-const root = process.cwd();
 
 type DevtoPosts = Awaited<ReturnType<typeof getDevtoPosts>>;
 
@@ -24,16 +21,8 @@ export const blogRevalidate = (devtoPosts: DevtoPosts | null) => (devtoPosts ? 3
 export const getLatestBlogPosts = async (devtoPosts?: DevtoPosts): Promise<BlogListPost[]> => {
   devtoPosts ??= await getDevtoPosts();
 
-  const slugs = fs
-    .readdirSync(path.join(root, 'data', 'posts'))
-    .map((file) => file.replace(/\.mdx/, ''));
-
-  const localPosts: BlogListPost[] = slugs.map((slug) => {
-    const markdownWithMeta = fs.readFileSync(
-      path.join(root, 'data', 'posts', `${slug}.mdx`),
-      'utf-8'
-    );
-    const { data: frontmatter } = matter(markdownWithMeta);
+  const localPosts: BlogListPost[] = localPostSlugs().map((slug) => {
+    const { data: frontmatter } = matter(localPostSource(slug));
     const devPost = devtoPosts.find(
       (data) =>
         !data.canonical_url.includes('dev.to') && data.canonical_url.split('/blog/')[1] === slug

@@ -1,0 +1,48 @@
+// Cloudflare Workers config for the site, built by OpenNext (`pnpm cf:build`).
+// Resources to create before the first deploy are listed in docs/cloudflare-deploy.md.
+// The presence relay in workers/presence/ is a separate Worker with its own wrangler.jsonc.
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "myportfolio",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-13",
+  // nodejs_compat: Next's server needs Node APIs. global_fetch_strictly_public: fetch() to the
+  // Worker's own zone goes out over the internet instead of looping back into the Worker.
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  // Wrangler's esbuild pass would otherwise wrap functions in __name(...) calls, which then leak
+  // into scripts the server inlines from Function.prototype.toString() (next-themes' no-flash
+  // script) and throw in the browser on every page the Worker renders (ISR, fallback pages).
+  "keep_names": false,
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "services": [
+    {
+      // ISR revalidation requests go back through this Worker (open-next.config.ts, memoryQueue).
+      // `service` must match `name` above.
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "myportfolio"
+    }
+  ],
+  "r2_buckets": [
+    {
+      // ISR / SSG cache. Create the bucket first:
+      //   pnpm wrangler r2 bucket create myportfolio-opennext-cache
+      // The binding name is fixed by OpenNext; the bucket name is yours to change.
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "myportfolio-opennext-cache"
+    }
+  ],
+  // next/image optimization through Cloudflare Images (blog covers from Dev.to hosts).
+  "images": {
+    "binding": "IMAGES"
+  },
+  // Needed by `wrangler deploy` to upload the Worker's source maps; also makes logs readable.
+  "observability": {
+    "enabled": true
+  },
+  // Runtime variables (DEVTO_USERNAME, MICROSOFT_CLARITY) are set in the dashboard, see
+  // docs/cloudflare-deploy.md; keep them when deploying instead of resetting them to this file.
+  "keep_vars": true
+}

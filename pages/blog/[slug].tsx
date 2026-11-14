@@ -1,10 +1,7 @@
 import * as React from 'react';
-import fs from 'fs';
-import path from 'path';
 import matter from 'gray-matter';
 import html from 'remark-html';
 import { remark } from 'remark';
-import prism from 'remark-prism';
 import { ArrowLeftIcon } from 'lucide-react';
 import NextImage from 'next/image';
 import NextLink from 'next/link';
@@ -14,6 +11,8 @@ import PageLayout from 'components/layouts/pageLayout';
 import { blogRevalidate, getDevtoPostsOrNull, getLatestBlogPosts } from 'lib/blogPosts';
 import { SITE_URL } from 'data/constants';
 import { canOptimizeCover } from 'lib/cover-image';
+import { localPostSlugs, localPostSource } from 'lib/local-posts';
+import prism from 'lib/remark-prism';
 
 export interface AllBlogProps {
   blogDetails: BlogPost;
@@ -94,7 +93,6 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
   );
 };
 
-const root = process.cwd();
 export const getStaticPaths: GetStaticPaths = async () => {
   const latestPosts = await getLatestBlogPosts((await getDevtoPostsOrNull()) ?? []);
 
@@ -137,9 +135,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
   const devData = devtoPosts ?? [];
   const latestPosts = await getLatestBlogPosts(devData);
   const isLatestPost = latestPosts.some((post) => post.slug === slug);
-  const localSlugs = fs
-    .readdirSync(path.join(root, 'data', 'posts'))
-    .map((file) => file.replace(/\.mdx/, ''));
+  const localSlugs = localPostSlugs();
 
   // Without Dev.to a slug that isn't a local post can't be resolved; failing keeps the last good page.
   if (!devtoPosts && !localSlugs.includes(slug)) {
@@ -166,11 +162,7 @@ export const getStaticProps: GetStaticProps = async ({ params }) => {
     blogObj = await res.json();
     remarkContent = await markdownToHtml(blogObj.body_markdown);
   } else {
-    const markdownWithMeta = fs.readFileSync(
-      path.join(root, 'data', 'posts', `${params?.slug}.mdx`),
-      'utf-8'
-    );
-    const { data: frontmatter, content } = matter(markdownWithMeta);
+    const { data: frontmatter, content } = matter(localPostSource(slug));
     const devtoPost = devData.filter(
       (data) =>
         !data.canonical_url.includes('dev.to') &&

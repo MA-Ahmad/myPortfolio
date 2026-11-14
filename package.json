@@ -3,41 +3,54 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "content": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/generate-content.mjs",
+    "dev": "pnpm content && next dev",
+    "build": "pnpm content && next build",
     "start": "next start",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm content && tsc --noEmit",
+    "cf:login": "XDG_CONFIG_HOME=.cloudflare wrangler login",
+    "cf:whoami": "XDG_CONFIG_HOME=.cloudflare wrangler whoami",
+    "cf:build": "opennextjs-cloudflare build",
+    "cf:preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "cf:deploy": "opennextjs-cloudflare build && XDG_CONFIG_HOME=.cloudflare opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@base-ui/react": "1.8.0",
     "@emotion/react": "^11.11.1",
     "@headlessui/react": "^2.2.10",
     "@radix-ui/react-tooltip": "^1.3.0",
-    "@vercel/analytics": "^1.0.1",
+    "classnames": "2.5.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "css-selector-parser": "1.4.1",
     "d3-geo": "^3.1.1",
     "date-fns": "^4.4.0",
+    "escape-html": "1.0.3",
     "framer-motion": "^12.23.24",
     "geist": "^1.8.1",
     "gray-matter": "^4.0.3",
     "lucide-react": "^1.52.0",
-    "next": "16.3.8",
+    "next": "16.4.6",
     "next-themes": "^0.4.6",
-    "prismjs": "^1.29.0",
+    "parse-numeric-range": "1.3.0",
+    "parse5": "6.0.1",
+    "parse5-htmlparser2-tree-adapter": "6.0.1",
+    "prismjs": "^1.30.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-icons": "^4.10.1",
     "remark": "^14.0.3",
     "remark-html": "^15.0.2",
-    "remark-prism": "^1.3.6",
+    "styled-jsx": "5.1.6",
     "three": "^0.186.1",
     "topojson-client": "^3.1.0",
+    "unist-util-map": "2.0.1",
     "world-atlas": "^2.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
+    "@opennextjs/cloudflare": "1.20.17",
     "@types/d3-geo": "^3.1.1",
     "@types/geojson": "^7946.0.16",
     "@types/node": "^22",
@@ -50,14 +63,15 @@
     "autoprefixer": "^10.6.1",
     "clipper-lib": "^6.4.2",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.8",
+    "eslint-config-next": "16.4.6",
     "polylabel": "^2.1.0",
     "postcss": "^8.5.29",
     "prettier": "^3.0.0",
     "tailwindcss": "^3",
     "topojson-server": "^3.0.1",
     "topojson-simplify": "^3.0.3",
-    "typescript": "^5.1.6"
+    "typescript": "^5.1.6",
+    "wrangler": "4.162.0"
   },
   "packageManager": "pnpm@9.15.4",
   "pnpm": {
@@ -67,7 +81,9 @@
       "@types/react": "19.3.0"
     },
     "onlyBuiltDependencies": [
-      "unrs-resolver"
+      "esbuild",
+      "unrs-resolver",
+      "workerd"
     ]
   }
 }

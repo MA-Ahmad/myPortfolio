@@ -1,4 +1,3 @@
-import { promises as fs } from 'fs';
 import path from 'path';
 import Prism from 'prismjs';
 import 'prismjs/components/prism-jsx';
@@ -6,6 +5,7 @@ import 'prismjs/components/prism-typescript';
 import 'prismjs/components/prism-tsx';
 import 'prismjs/components/prism-css';
 import { type BlockMeta, blockRegistryPath } from 'blocks/registry';
+import { BLOCK_FILES } from 'lib/generated/block-files';
 
 export type BlockFile = {
   path: string;
@@ -91,11 +91,16 @@ export function blockRegistryItem(block: BlockMeta, files: BlockFile[]) {
   };
 }
 
-/** Reads and highlights a block's files. Server only: call it from getStaticProps. */
+/**
+ * Highlights a block's files, bundled at build time by scripts/generate-content.mjs (the server
+ * has no project filesystem on Cloudflare). Server only: call it from getStaticProps or an API route.
+ */
 export async function getBlockFiles(block: BlockMeta): Promise<BlockFile[]> {
   return Promise.all(
     block.files.map(async (file) => {
-      const code = (await fs.readFile(path.join(process.cwd(), 'blocks', block.name, file), 'utf8')).trimEnd();
+      const source = BLOCK_FILES[block.name]?.[file];
+      if (source === undefined) throw new Error(`blocks/${block.name}/${file} is missing from lib/generated/block-files.ts`);
+      const code = source.trimEnd();
       const extension = path.extname(file).slice(1);
       const language = LANGUAGES[extension] ?? 'tsx';
       return {

@@ -9,7 +9,6 @@ import { PrismGlobal } from 'components/theme/prism';
 import { useRouter } from 'next/router';
 import * as gtag from 'lib/gtag';
 import { AnimatePresence } from 'framer-motion';
-import { Analytics } from '@vercel/analytics/react';
 import { cn } from 'lib/cn';
 import '../styles/globals.css';
 
@@ -58,8 +57,6 @@ function MyApp({ Component, pageProps }: AppPropsWithLayout) {
       <div className={cn(inter.className, inter.variable)}>
         <TooltipProvider delayDuration={200}>
           <PrismGlobal />
-          {/* Theme Studio previews a page in a frame before opening it; that isn't a visit. */}
-          <Analytics beforeSend={(event) => (window.self === window.top ? event : null)} />
           {getLayout(
             <AnimatePresence
               mode="wait"

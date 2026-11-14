@@ -49,11 +49,6 @@ const nextConfig = {
       )
     ];
   },
-  // The block Markdown and registry routes read their source files from disk at request time.
-  outputFileTracingIncludes: {
-    '/api/agents/blocks/*': ['./blocks/**/*'],
-    '/api/registry/*': ['./blocks/**/*']
-  },
   async rewrites() {
     return {
       beforeFiles: [
