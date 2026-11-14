@@ -1,0 +1,448 @@
+/*
+ * Marginalia: one paragraph in a bookish serif, notes in small mono in the margins, joined to
+ * their words by thin ink wires. Breakpoints match `useMode` in components/paragraph.tsx:
+ * both margins from 1280px, the right margin from 880px, footnotes below that.
+ */
+.root {
+  --mg-bg: oklch(98.3% 0.004 255);
+  --mg-ink: oklch(23% 0.025 265);
+  --mg-soft: oklch(47% 0.02 265);
+  --mg-faint: oklch(88% 0.01 265);
+  --mg-pen: oklch(47% 0.2 266);
+  --mg-hl: oklch(92% 0.16 100 / 0.75);
+  --mg-serif: var(--mg-font-serif), 'Iowan Old Style', Georgia, serif;
+  --mg-mono: var(--mg-font-mono), ui-monospace, Menlo, monospace;
+  --mg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--mg-bg);
+  color: var(--mg-ink);
+  font-family: var(--mg-mono);
+  -webkit-font-smoothing: antialiased;
+}
+
+:global(.dark) .root {
+  --mg-bg: oklch(17.5% 0.012 265);
+  --mg-ink: oklch(93% 0.008 265);
+  --mg-soft: oklch(70% 0.015 265);
+  --mg-faint: oklch(32% 0.015 265);
+  --mg-pen: oklch(74% 0.13 262);
+  --mg-hl: oklch(80% 0.14 95 / 0.32);
+}
+
+.root a {
+  color: var(--mg-pen);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.root a:focus-visible,
+.root button:focus-visible {
+  outline: 2px solid var(--mg-pen);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.back {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top, 0px));
+  left: max(16px, env(safe-area-inset-left, 0px));
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  color: var(--mg-soft) !important;
+  transition: color 150ms ease, background-color 150ms ease;
+}
+
+.back:hover {
+  color: var(--mg-ink) !important;
+  background: var(--mg-faint);
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+  max-width: 84rem;
+  margin: 0 auto;
+  padding: clamp(72px, 14vh, 140px) max(20px, env(safe-area-inset-right, 0px)) 64px
+    max(20px, env(safe-area-inset-left, 0px));
+}
+
+.top,
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  max-width: 36rem;
+}
+
+.dim {
+  color: var(--mg-soft);
+}
+
+.stage {
+  position: relative;
+}
+
+.paragraph {
+  margin: 0;
+  max-width: 36rem;
+  font-family: var(--mg-serif);
+  font-size: clamp(1.4rem, 1.05rem + 1.15vw, 2rem);
+  line-height: 1.6;
+  font-variation-settings: 'opsz' 36;
+  text-wrap: pretty;
+}
+
+.word {
+  color: inherit !important;
+  text-decoration-color: color-mix(in oklch, var(--mg-pen) 70%, transparent) !important;
+  text-decoration-thickness: 1.5px !important;
+  text-underline-offset: 0.18em !important;
+  cursor: pointer;
+  border-radius: 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background: linear-gradient(var(--mg-hl), var(--mg-hl)) no-repeat 0 85% / 0% 55%;
+  transition:
+    background-size 320ms var(--mg-ease),
+    text-decoration-color 150ms ease;
+}
+
+.word:hover {
+  text-decoration-color: var(--mg-pen) !important;
+}
+
+.word[data-open] {
+  background-size: 100% 55%;
+  text-decoration-color: var(--mg-pen) !important;
+}
+
+/* Wires and margin notes only exist beside the paragraph. */
+.wires {
+  display: none;
+}
+
+.notes {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-top: 32px;
+  max-width: 36rem;
+}
+
+.note {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--mg-ink);
+  padding-left: 14px;
+  border-left: 1px solid var(--mg-pen);
+}
+
+.note:not([data-open]) {
+  display: none;
+}
+
+.note p,
+.note ul,
+.note dl {
+  margin: 0 0 6px;
+}
+
+.note p:last-child,
+.note ul:last-child,
+.note dl:last-child {
+  margin-bottom: 0;
+}
+
+.noteHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.noteHead h2 {
+  margin: 0;
+  font-family: var(--mg-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.fold {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: var(--mg-soft);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 150ms ease, background-color 150ms ease;
+}
+
+.note:hover .fold,
+.fold:focus-visible {
+  opacity: 1;
+}
+
+.fold:hover {
+  background: var(--mg-faint);
+  color: var(--mg-ink);
+}
+
+@media (hover: none) {
+  .fold {
+    opacity: 1;
+  }
+}
+
+.list,
+.rows,
+.inline {
+  list-style: none;
+  padding: 0;
+}
+
+.list li + li {
+  margin-top: 4px;
+}
+
+.rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.rows li > :first-child {
+  min-width: 0;
+}
+
+.rows li > :last-child {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+
+.stack div + div {
+  margin-top: 4px;
+}
+
+.stack dt {
+  color: var(--mg-soft);
+}
+
+.stack dd {
+  margin: 0;
+}
+
+.figure {
+  font-family: var(--mg-serif);
+  font-size: 22px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.spark {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin: 2px 0 8px;
+  overflow: visible;
+}
+
+.sparkArea {
+  fill: color-mix(in oklch, var(--mg-pen) 12%, transparent);
+  stroke: none;
+}
+
+.sparkLine {
+  fill: none;
+  stroke: var(--mg-pen);
+  stroke-width: 1.25;
+  vector-effect: non-scaling-stroke;
+  stroke-linejoin: round;
+}
+
+.email {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  word-break: break-all;
+}
+
+.copy,
+.all {
+  border: 1px solid var(--mg-faint);
+  border-radius: 999px;
+  background: none;
+  color: var(--mg-soft);
+  font: inherit;
+  font-size: 11px;
+  padding: 1px 9px;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease;
+}
+
+.copy:hover,
+.all:hover {
+  color: var(--mg-ink);
+  border-color: var(--mg-soft);
+}
+
+.foot {
+  align-items: center;
+}
+
+/* Beside the paragraph: notes leave the flow and sit in a margin at the height of their word. */
+@media (min-width: 880px) {
+  .paragraph {
+    max-width: min(36rem, calc(100% - 20rem));
+  }
+
+  .wires {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  .wires path {
+    fill: none;
+    stroke: var(--mg-pen);
+    stroke-width: 1;
+    stroke-linecap: round;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    opacity: 0.55;
+  }
+
+  .wires path[data-open] {
+    stroke-dashoffset: 0;
+  }
+
+  .wires path[data-hot] {
+    opacity: 1;
+    stroke-width: 1.4;
+  }
+
+  .notes {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    max-width: none;
+    pointer-events: none;
+  }
+
+  .note,
+  .note:not([data-open]) {
+    display: block;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 16rem;
+    border-left: 0;
+    padding-left: 0;
+    transform: translateY(calc(var(--y) + 6px));
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .note[data-placed][data-open] {
+    transform: translateY(var(--y));
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+  }
+
+  .stage[data-settled] .note {
+    transition:
+      transform 360ms var(--mg-ease),
+      opacity 220ms ease,
+      visibility 0s linear 220ms;
+  }
+
+  .stage[data-settled] .note[data-open] {
+    transition:
+      transform 360ms var(--mg-ease),
+      opacity 280ms ease 140ms,
+      visibility 0s;
+  }
+
+  .stage[data-settled] .wires path {
+    transition:
+      stroke-dashoffset 420ms var(--mg-ease),
+      opacity 150ms ease;
+  }
+
+  .note[data-hot] .noteHead h2 {
+    color: var(--mg-pen);
+  }
+}
+
+@media (min-width: 1280px) {
+  .paragraph {
+    max-width: 36rem;
+    margin-inline: auto;
+  }
+
+  .top,
+  .foot {
+    margin-inline: auto;
+    width: 100%;
+  }
+
+  .note[data-side='left'] {
+    left: 0;
+    right: auto;
+    text-align: right;
+  }
+
+  .note[data-side='left'] .noteHead {
+    flex-direction: row-reverse;
+  }
+
+  .note[data-side='left'] .fold {
+    margin-right: 0;
+    margin-left: -4px;
+  }
+
+  .note[data-side='left'] .inline,
+  .note[data-side='left'] .email {
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage[data-settled] .note,
+  .stage[data-settled] .note[data-open],
+  .stage[data-settled] .wires path,
+  .word {
+    transition: none;
+  }
+}

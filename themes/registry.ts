@@ -5,6 +5,7 @@ import { TerminalHome, TerminalLayout } from './terminal';
 import { NotebookHome, NotebookLayout } from './notebook';
 import { MidnightHome, MidnightLayout, MidnightSkills, MidnightWork } from './midnight';
 import { PanoramaHome, PanoramaLayout } from './panorama';
+import { MarginaliaHome, MarginaliaLayout } from './marginalia';
 
 export type ThemeHomeProps = {
   contributions: Activity[];
@@ -44,6 +45,11 @@ export const THEMES = {
     title: 'Muhammad Ahmad - Full Stack Developer',
     Home: PanoramaHome,
     Layout: PanoramaLayout
+  },
+  marginalia: {
+    title: 'Muhammad Ahmad - Full Stack Developer',
+    Home: MarginaliaHome,
+    Layout: MarginaliaLayout
   }
 } satisfies Record<string, Theme>;
 

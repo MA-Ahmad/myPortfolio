@@ -20,6 +20,7 @@ import {
   SunMediumIcon,
   SwatchBookIcon,
   PencilRulerIcon,
+  PilcrowIcon,
   TerminalIcon,
   WorkflowIcon
 } from 'lucide-react';
@@ -104,6 +105,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
   const notebookIconRef = useRef<SVGSVGElement>(null);
   const midnightIconRef = useRef<SVGSVGElement>(null);
   const panoramaIconRef = useRef<SVGSVGElement>(null);
+  const marginaliaIconRef = useRef<SVGSVGElement>(null);
   const canvasIconRef = useRef<SVGSVGElement>(null);
 
   useEffect(() => {
@@ -116,6 +118,7 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     router.prefetch('/themes/notebook');
     router.prefetch('/themes/midnight');
     router.prefetch('/themes/panorama');
+    router.prefetch('/themes/marginalia');
     router.prefetch('/theme-studio');
   }, [open, router]);
 
@@ -242,6 +245,20 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
     });
   };
 
+  const openMarginaliaTheme = () => {
+    const icon = marginaliaIconRef.current?.getBoundingClientRect();
+    const dark = resolvedTheme === 'dark';
+    setOpen(false);
+    pixelNavigate(router, '/themes/marginalia', {
+      origin: icon
+        ? { x: icon.left + icon.width / 2, y: icon.top + icon.height / 2 }
+        : { x: window.innerWidth / 2, y: window.innerHeight / 2 },
+      // Must match --mg-ink and --mg-bg in themes/marginalia/marginalia.module.css.
+      edge: dark ? 'oklch(93% 0.008 265)' : 'oklch(23% 0.025 265)',
+      background: dark ? 'oklch(17.5% 0.012 265)' : 'oklch(98.3% 0.004 255)'
+    });
+  };
+
   const openCanvas = () => {
     const icon = canvasIconRef.current?.getBoundingClientRect();
     const dark = resolvedTheme === 'dark';
@@ -342,6 +359,10 @@ export function CommandMenu({ skin, sections, showMode = true, triggerClassName 
                   <CommandItem className={s.item} onSelect={openPanoramaTheme}>
                     <Columns4Icon ref={panoramaIconRef} className={iconClass} />
                     <span>Panorama</span>
+                  </CommandItem>
+                  <CommandItem className={s.item} onSelect={openMarginaliaTheme} keywords={['paragraph', 'notes', 'margin']}>
+                    <PilcrowIcon ref={marginaliaIconRef} className={iconClass} />
+                    <span>Marginalia</span>
                   </CommandItem>
                   <CommandItem className={s.item} onSelect={() => go('/?play=1')} keywords={['customize', 'layout', 'lines', 'accent']}>
                     <SwatchBookIcon className={iconClass} />
