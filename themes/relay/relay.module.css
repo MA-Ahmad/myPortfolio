@@ -1,16 +1,17 @@
 /*
- * Relay: a sheet of black liquid (lib/liquid.ts) under a dark glass card. The nav stands beside a translucent card it is wired to; picking a
+ * Relay: one near-black sheet with a slightly raised card. The nav stands beside a translucent card it is wired to; picking a
  * section sends a packet down the wire and fans hairlines out to the card's border
  * (lib/burst.ts draws them on the stage's canvas). One fixed look in every mode.
- * Layout: nav and card side by side from 1000px (data-layout='side'), stacked below.
+ * Layout: nav and card side by side from 1060px (data-layout='side'), stacked below.
  */
 .root {
-  --rl-bg: #050506;
+  --rl-bg: #0b0b0c;
   --rl-ink: #ffffff;
   --rl-text: rgb(255 255 255 / 0.7);
   --rl-dim: rgb(255 255 255 / 0.46);
   --rl-rule: rgb(255 255 255 / 0.16);
-  --rl-card: rgb(14 14 17 / 0.42);
+  --rl-card: #111113;
+  --rl-raised: #18181b;
   --rl-button: #f4f4f5;
   --rl-button-ink: #09090b;
   --rl-button-hover: #ffffff;
@@ -19,8 +20,8 @@
   --rl-mono: var(--font-geist-mono), ui-monospace, Menlo, monospace;
   --rl-marker: var(--rl-font-hand), 'Comic Sans MS', cursive;
   --rl-ease: cubic-bezier(0.32, 0.72, 0, 1);
-  --rl-z-liquid: -1;
   --rl-z-canvas: 1;
+  --rl-z-glimpse: 50;
   --rl-z-handle: 2;
 
   position: relative;
@@ -131,14 +132,14 @@
 }
 
 /* The spec needs room around the card for its notes: only on wide screens with a mouse. */
-@media (min-width: 1360px) and (hover: hover) {
+@media (min-width: 1400px) and (hover: hover) {
   .specToggle {
     display: inline-flex;
     align-items: center;
   }
 }
 
-@media not ((min-width: 1360px) and (hover: hover)) {
+@media not ((min-width: 1400px) and (hover: hover)) {
   .stage .note {
     display: none;
   }
@@ -147,19 +148,10 @@
 .stage {
   position: relative;
   display: grid;
-  grid-template-columns: 200px auto;
+  grid-template-columns: 200px minmax(0, var(--bounds-w, 720px));
   justify-content: center;
   align-items: center;
-  gap: 80px;
-}
-
-.liquid {
-  position: fixed;
-  inset: 0;
-  z-index: var(--rl-z-liquid);
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
+  gap: 48px;
 }
 
 .canvas {
@@ -223,10 +215,49 @@
   background: var(--rl-ink);
 }
 
-/* The card, sized like a frame in a design tool: its width set, its height at least the set one. */
-.frame {
+/*
+ * The card's boundary: the most it can be pulled out to. While an edge is dragged it shows as a
+ * dashed frame with its size, like the limits of an artboard.
+ */
+.bounds {
   position: relative;
-  width: var(--card-w);
+  width: 100%;
+  height: var(--bounds-h);
+}
+
+.bounds::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px dashed rgb(255 255 255 / 0.16);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease;
+}
+
+.boundsLabel {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  font-family: var(--rl-mono);
+  font-size: 11px;
+  color: var(--rl-dim);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 180ms ease;
+}
+
+.bounds[data-dragging]::before,
+.bounds[data-dragging] .boundsLabel {
+  opacity: 1;
+}
+
+/* The card, pinned to the boundary's right edge; its top, width and least height are set inline. */
+.frame {
+  position: absolute;
+  right: 0;
   max-width: 100%;
 }
 
@@ -235,10 +266,7 @@
   padding: 32px 40px 36px 64px;
   border: 1px solid var(--rl-rule);
   background: var(--rl-card);
-  /* Dark glass over the liquid: it softens the highlights moving behind the text. */
-  -webkit-backdrop-filter: blur(18px) saturate(1.1);
-  backdrop-filter: blur(18px) saturate(1.1);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
 }
 
 .hub {
@@ -397,27 +425,83 @@
   }
 }
 
-/* The resize handle: two hairlines in the corner, with a 40px grip. */
-.handle {
+/*
+ * The edges that resize the card: the left, top and bottom edges and the two left corners. Each is
+ * a thin grip along the edge with a small square on it, shown while the card is pointed at.
+ */
+.edge {
   position: absolute;
   z-index: var(--rl-z-handle);
-  right: -1px;
-  bottom: -1px;
-  width: 14px;
-  height: 14px;
   padding: 0;
   border: 0;
-  background:
-    linear-gradient(135deg, transparent 45%, rgb(255 255 255 / 0.55) 45% 52%, transparent 52%),
-    linear-gradient(135deg, transparent 72%, rgb(255 255 255 / 0.55) 72% 79%, transparent 79%);
-  cursor: nwse-resize;
+  background: none;
   touch-action: none;
 }
 
-.handle::after {
+.edge::after {
   content: '';
   position: absolute;
-  inset: -13px;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border: 1px solid rgb(255 255 255 / 0.7);
+  background: var(--rl-bg);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.edge[data-edge='left'] {
+  top: 12px;
+  bottom: 12px;
+  left: -6px;
+  width: 12px;
+  cursor: ew-resize;
+}
+
+.edge[data-edge='top'],
+.edge[data-edge='bottom'] {
+  left: 12px;
+  right: 12px;
+  height: 12px;
+  cursor: ns-resize;
+}
+
+.edge[data-edge='top'] {
+  top: -6px;
+}
+
+.edge[data-edge='bottom'] {
+  bottom: -6px;
+}
+
+.edge[data-edge='top-left'],
+.edge[data-edge='bottom-left'] {
+  left: -8px;
+  width: 16px;
+  height: 16px;
+}
+
+.edge[data-edge='top-left'] {
+  top: -8px;
+  cursor: nwse-resize;
+}
+
+.edge[data-edge='bottom-left'] {
+  bottom: -8px;
+  cursor: nesw-resize;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .frame:hover .edge::after {
+    opacity: 1;
+  }
+}
+
+.bounds[data-dragging] .edge::after,
+.edge:focus-visible::after {
+  opacity: 1;
 }
 
 .readout {
@@ -528,7 +612,7 @@
   flex-direction: column-reverse;
 }
 
-/* Below 1000px: the nav is a row above the card, and the card is the page's width. */
+/* Below 1060px: the nav is a row above the card, and the card is the page's width. */
 .stage[data-layout='stack'] {
   grid-template-columns: minmax(0, 1fr);
   gap: 20px;
@@ -554,8 +638,13 @@
   gap: 8px;
 }
 
+.stage[data-layout='stack'] .bounds {
+  height: auto;
+}
+
 .stage[data-layout='stack'] .frame {
-  width: 100%;
+  position: static;
+  width: auto !important;
 }
 
 .stage[data-layout='stack'] .card {
@@ -571,7 +660,8 @@
   font-size: 20px;
 }
 
-.stage[data-layout='stack'] .handle,
+.stage[data-layout='stack'] .edge,
+.stage[data-layout='stack'] .boundsLabel,
 .stage[data-layout='stack'] .readout,
 .stage[data-layout='stack'] .note {
   display: none;
@@ -579,7 +669,7 @@
 
 /* A mouse resizes the card; a finger scrolls past it. */
 @media (pointer: coarse) {
-  .handle {
+  .edge {
     display: none;
   }
 }
@@ -602,5 +692,498 @@
   .content .action:active,
   .specToggle:active {
     scale: none;
+  }
+}
+
+/*
+ * Glimpses: a word or a row that has a card behind it gets a quiet dotted underline; the card
+ * opens above it (components/glimpse.tsx). Links keep their own underline.
+ */
+.glimpseTrigger {
+  display: inline;
+}
+
+.glimpseWord {
+  color: var(--rl-ink);
+  text-decoration: underline dotted rgb(255 255 255 / 0.4);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.24em;
+  cursor: default;
+  transition: text-decoration-color 150ms ease;
+}
+
+.glimpseWord[aria-expanded='true'] {
+  text-decoration-color: var(--rl-ink);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glimpseWord:hover {
+    text-decoration-color: var(--rl-ink);
+  }
+}
+
+.glimpseWord:focus-visible {
+  outline: 2px solid var(--rl-ink);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.glimpse {
+  position: fixed;
+  z-index: var(--rl-z-glimpse);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 12px;
+  background: var(--rl-raised);
+  color: var(--rl-ink);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.04) inset,
+    0 12px 32px -12px rgb(0 0 0 / 0.7),
+    0 2px 6px -2px rgb(0 0 0 / 0.5);
+  pointer-events: none;
+  user-select: none;
+  will-change: transform;
+}
+
+.cardBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+}
+
+.cardRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  text-wrap: balance;
+}
+
+.cardMeta {
+  display: block;
+  font-family: var(--rl-mono);
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--rl-dim);
+}
+
+.cardMeta b {
+  font-weight: 500;
+  color: var(--rl-ink);
+}
+
+.cardText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--rl-text);
+  text-wrap: pretty;
+}
+
+.cardNum {
+  font-family: var(--rl-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile > span {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.avatar {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  object-fit: cover;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.logo {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+.xMark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  align-self: flex-start;
+  fill: var(--rl-dim);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  padding: 2px 7px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 999px;
+  font-family: var(--rl-mono);
+  font-size: 10.5px;
+  color: var(--rl-text);
+}
+
+/* A picture keeps its shape while it loads, with a hairline inside its edge. */
+.shot {
+  position: relative;
+  overflow: hidden;
+  margin: -6px -6px 0;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.05);
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.08);
+}
+
+/* The map: Pakistan in a hairline among its neighbours' edges, Lahore pinned with a slow ring. */
+.map {
+  display: block;
+  width: calc(100% + 12px);
+  height: auto;
+  margin: -6px -6px 0;
+  border-radius: 7px;
+  background: rgb(255 255 255 / 0.025);
+}
+
+.mapNear {
+  fill: none;
+  stroke: rgb(255 255 255 / 0.13);
+  stroke-width: 0.8;
+}
+
+.mapLand {
+  fill: rgb(255 255 255 / 0.06);
+  stroke: rgb(255 255 255 / 0.55);
+  stroke-width: 0.8;
+  stroke-linejoin: round;
+}
+
+.mapPin {
+  fill: var(--rl-ink);
+}
+
+.mapRing {
+  fill: none;
+  stroke: var(--rl-ink);
+  stroke-width: 1;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rl-ring 2.4s cubic-bezier(0.32, 0.72, 0, 1) infinite;
+}
+
+@keyframes rl-ring {
+  from {
+    opacity: 0.7;
+    transform: scale(0.35);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+.mapLabel {
+  fill: var(--rl-ink);
+  font-family: var(--rl-mono);
+  font-size: 8px;
+}
+
+/* Twenty weeks of contributions, a column a week, in white at five strengths. */
+.heat {
+  display: grid;
+  grid-template-rows: repeat(7, 8px);
+  grid-auto-flow: column;
+  grid-auto-columns: 8px;
+  gap: 3px;
+}
+
+.heat i {
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.06);
+}
+
+.heat i[data-level='1'] {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.heat i[data-level='2'] {
+  background: rgb(255 255 255 / 0.42);
+}
+
+.heat i[data-level='3'] {
+  background: rgb(255 255 255 / 0.66);
+}
+
+.heat i[data-level='4'] {
+  background: var(--rl-ink);
+}
+
+/*
+ * Micro: a word with a small drawing after it that acts the word out when pointed at (or tapped).
+ * Each plays once per visit of the pointer, in about half a second.
+ */
+.micro {
+  white-space: nowrap;
+  color: var(--rl-ink);
+}
+
+.microSlot {
+  display: inline-block;
+  width: 0.82em;
+  height: 0.82em;
+  margin-left: 0.22em;
+  vertical-align: -0.06em;
+}
+
+.microIcon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: rgb(255 255 255 / 0.62);
+  transition: color 150ms ease;
+}
+
+.plane,
+.disc,
+.pixel,
+.heart {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.pixel {
+  fill: currentColor;
+  stroke: none;
+  opacity: 0.35;
+}
+
+.heart {
+  transition:
+    fill 200ms ease,
+    stroke 200ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .micro:hover .microIcon {
+    color: var(--rl-ink);
+  }
+
+  .micro:hover .plane {
+    animation: rl-fly 620ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .micro:hover .disc {
+    animation: rl-stack 380ms cubic-bezier(0.32, 0.72, 0, 1) both;
+    animation-delay: calc(var(--i) * 70ms);
+  }
+
+  .micro:hover .pixel {
+    animation: rl-light 360ms ease both;
+    animation-delay: calc(var(--i) * 40ms);
+  }
+
+  .micro:hover .heart {
+    fill: #ff5a67;
+    stroke: #ff5a67;
+    animation: rl-beat 760ms ease;
+  }
+}
+
+.micro[data-play] .microIcon {
+  color: var(--rl-ink);
+}
+
+.micro[data-play] .plane {
+  animation: rl-fly 620ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.micro[data-play] .disc {
+  animation: rl-stack 380ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: calc(var(--i) * 70ms);
+}
+
+.micro[data-play] .pixel {
+  animation: rl-light 360ms ease both;
+  animation-delay: calc(var(--i) * 40ms);
+}
+
+.micro[data-play] .heart {
+  fill: #ff5a67;
+  stroke: #ff5a67;
+  animation: rl-beat 760ms ease;
+}
+
+/* Off to the top right, gone, and back in from the bottom left. */
+@keyframes rl-fly {
+  0% {
+    transform: none;
+    opacity: 1;
+  }
+  42% {
+    transform: translate(7px, -7px) rotate(-8deg);
+    opacity: 0;
+  }
+  43% {
+    transform: translate(-6px, 6px);
+    opacity: 0;
+  }
+  100% {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* Each disc drops onto the one below. */
+@keyframes rl-stack {
+  from {
+    transform: translateY(-5px);
+    opacity: 0;
+  }
+}
+
+@keyframes rl-light {
+  to {
+    opacity: 1;
+  }
+}
+
+/* Two beats, the second softer. */
+@keyframes rl-beat {
+  0%,
+  100% {
+    transform: none;
+  }
+  15% {
+    transform: scale(1.24);
+  }
+  30% {
+    transform: none;
+  }
+  45% {
+    transform: scale(1.12);
+  }
+  60% {
+    transform: none;
+  }
+}
+
+/* The address copies itself; "Copied to clipboard" takes its place, in the same cell. */
+.copyEmail {
+  display: inline-grid;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--rl-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgb(255 255 255 / 0.55);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  cursor: copy;
+}
+
+.copyEmail > span {
+  grid-area: 1 / 1;
+  transition:
+    opacity 150ms ease,
+    transform 150ms var(--rl-ease);
+}
+
+.copyEmail > span:last-child,
+.copyEmail[data-copied] > span:first-child {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+.copyEmail[data-copied] > span:first-child {
+  transform: translateY(-3px);
+}
+
+.copyEmail[data-copied] > span:last-child {
+  opacity: 1;
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .copyEmail:hover {
+    text-decoration-color: var(--rl-ink);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mapRing {
+    animation: none;
+    opacity: 0.4;
+  }
+
+  .micro:hover .plane,
+  .micro:hover .disc,
+  .micro:hover .pixel,
+  .micro:hover .heart,
+  .micro[data-play] .plane,
+  .micro[data-play] .disc,
+  .micro[data-play] .pixel,
+  .micro[data-play] .heart {
+    animation: none;
+  }
+
+  .micro:hover .pixel,
+  .micro[data-play] .pixel {
+    opacity: 1;
+  }
+
+  .bounds::before,
+  .boundsLabel,
+  .edge::after,
+  .copyEmail > span {
+    transition: none;
   }
 }

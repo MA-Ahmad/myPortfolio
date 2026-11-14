@@ -2,7 +2,6 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type PointerEvent,
-  type ReactNode,
   useCallback,
   useEffect,
   useLayoutEffect,
@@ -10,25 +9,31 @@ import {
   useState,
   useSyncExternalStore
 } from 'react';
-import Link from 'next/link';
-import { format } from 'date-fns';
 import type { ThemeHomeProps } from 'themes/registry';
 import { RELAY_CONTENT as C, SECTIONS, type SectionId } from '../content';
 import { BURST_MS, PACKET_MS, type Scene, draw } from '../lib/burst';
-import { type Liquid, startLiquid } from '../lib/liquid';
+import { GlimpseProvider } from './glimpse';
+import { Section } from './sections';
 import { Spec } from './spec';
 import styles from '../relay.module.css';
 
-/** The card's starting size, and the least it can be dragged down to. */
-const START = { w: 640, h: 400 };
-const MIN = { w: 420, h: 320 };
+/**
+ * The card lives inside a fixed boundary, like a frame on a canvas: its right edge is pinned, and
+ * it can be pulled out to the left, up and down, as far as the boundary and no smaller than MIN.
+ */
+const BOUNDS = { w: 720, h: 560 };
+const START = { w: 580, h: 380 };
+const MIN = { w: 420, h: 300 };
+type Box = { top: number; w: number; h: number };
+type Edge = 'left' | 'top' | 'bottom' | 'top-left' | 'bottom-left';
+const EDGES: Edge[] = ['left', 'top', 'bottom', 'top-left', 'bottom-left'];
 /** Room around the stage the canvas keeps, so nodes popping on the border aren't clipped. */
 const BLEED = 24;
 
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** From this width the nav stands beside the card, wired to it; below, it is a row above it. */
-const SIDE = '(min-width: 1000px)';
+const SIDE = '(min-width: 1060px)';
 const subscribeSide = (change: () => void) => {
   const query = matchMedia(SIDE);
   query.addEventListener('change', change);
@@ -36,11 +41,20 @@ const subscribeSide = (change: () => void) => {
 };
 const useSide = () => useSyncExternalStore(subscribeSide, () => matchMedia(SIDE).matches, () => true);
 
-export function Relay({ posts }: ThemeHomeProps) {
+export function Relay(props: ThemeHomeProps) {
+  return (
+    <GlimpseProvider>
+      <Stage {...props} />
+    </GlimpseProvider>
+  );
+}
+
+function Stage({ contributions, posts }: ThemeHomeProps) {
   const [active, setActive] = useState<SectionId>('intro');
   // How the last switch happened: a click plays the relay, keys and reduced motion switch at once.
   const [instant, setInstant] = useState(true);
-  const [size, setSize] = useState(START);
+  const [box, setBox] = useState<Box>({ top: (BOUNDS.h - START.h) / 2, w: START.w, h: START.h });
+  const [dragging, setDragging] = useState(false);
   const [shown, setShown] = useState({ w: START.w, h: START.h });
   const [pulse, setPulse] = useState(0);
   const [spec, setSpec] = useState(false);
@@ -48,6 +62,7 @@ export function Relay({ posts }: ThemeHomeProps) {
   const stageRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const boundsRef = useRef<HTMLDivElement>(null);
   const hubRef = useRef<HTMLSpanElement>(null);
   const nodes = useRef<Partial<Record<SectionId, HTMLSpanElement | null>>>({});
   const activeRef = useRef(active);
@@ -60,20 +75,6 @@ export function Relay({ posts }: ThemeHomeProps) {
   // first burst, so the resting frame keeps its faint spokes.
   const burst = useRef<{ start: number; packet: boolean } | null>(null);
 
-  // The black liquid behind everything: the light follows the pointer, a relay ripples it.
-  const liquidRef = useRef<HTMLCanvasElement>(null);
-  const liquid = useRef<Liquid | null>(null);
-  useEffect(() => {
-    if (!liquidRef.current) return;
-    liquid.current = startLiquid(liquidRef.current, { still: reducedMotion() });
-    const move = (event: globalThis.PointerEvent) => liquid.current?.point(event.clientX, event.clientY);
-    window.addEventListener('pointermove', move, { passive: true });
-    return () => {
-      window.removeEventListener('pointermove', move);
-      liquid.current?.destroy();
-      liquid.current = null;
-    };
-  }, []);
   const lit = useRef(false);
   const frame = useRef(0);
 
@@ -147,11 +148,6 @@ export function Relay({ posts }: ThemeHomeProps) {
       }
       burst.current = { start: performance.now(), packet };
       run();
-      // The liquid ripples out from the hub as the spokes leave it.
-      window.setTimeout(() => {
-        const hub = hubRef.current?.getBoundingClientRect();
-        if (hub) liquid.current?.ripple(hub.left + hub.width / 2, hub.top + hub.height / 2);
-      }, packet ? PACKET_MS : 0);
     },
     [run]
   );
@@ -229,40 +225,51 @@ export function Relay({ posts }: ThemeHomeProps) {
     document.getElementById(`relay-tab-${next}`)?.focus();
   };
 
-  // The corner handle resizes the card, like a frame in a design tool.
-  const drag = useRef<{ x: number; y: number; w: number; h: number; max: number } | null>(null);
-  const onHandleDown = (event: PointerEvent<HTMLButtonElement>) => {
-    const card = cardRef.current;
-    const stage = stageRef.current;
-    if (!card || !stage) return;
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const room = stage.getBoundingClientRect().right - card.getBoundingClientRect().left;
-    drag.current = { x: event.clientX, y: event.clientY, w: card.offsetWidth, h: card.offsetHeight, max: room };
+  // The edges resize the card, like a frame in a design tool, inside its boundary.
+  const drag = useRef<{ edge: Edge; x: number; y: number; from: Box; maxW: number } | null>(null);
+  const resize = (edge: Edge, from: Box, dx: number, dy: number, maxW: number): Box => {
+    let { top, w, h } = from;
+    if (edge.includes('left')) w = Math.min(maxW, Math.max(MIN.w, from.w - dx));
+    if (edge.includes('top')) {
+      top = Math.min(from.top + from.h - MIN.h, Math.max(0, from.top + dy));
+      h = from.h + from.top - top;
+    }
+    if (edge.includes('bottom')) h = Math.min(BOUNDS.h - from.top, Math.max(MIN.h, from.h + dy));
+    return { top: Math.round(top), w: Math.round(w), h: Math.round(h) };
   };
-  const onHandleMove = (event: PointerEvent<HTMLButtonElement>) => {
+  const onEdgeDown = (edge: Edge) => (event: PointerEvent<HTMLButtonElement>) => {
+    const card = cardRef.current;
+    const bounds = boundsRef.current;
+    if (!card || !bounds) return;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    // The card can stand taller than set when its content needs it: start from what is drawn.
+    drag.current = { edge, x: event.clientX, y: event.clientY, from: { ...box, h: card.offsetHeight }, maxW: bounds.offsetWidth };
+    setDragging(true);
+  };
+  const onEdgeMove = (event: PointerEvent<HTMLButtonElement>) => {
     const d = drag.current;
     if (!d) return;
-    setSize({
-      w: Math.round(Math.min(d.max, Math.max(MIN.w, d.w + event.clientX - d.x))),
-      h: Math.round(Math.min(760, Math.max(MIN.h, d.h + event.clientY - d.y)))
-    });
+    setBox(resize(d.edge, d.from, event.clientX - d.x, event.clientY - d.y, d.maxW));
   };
-  const onHandleUp = () => {
+  const onEdgeUp = () => {
     if (!drag.current) return;
     drag.current = null;
+    setDragging(false);
     fire(false);
   };
-  const onHandleKey = (event: KeyboardEvent) => {
+  // Arrow keys on a focused edge move that edge out or in by 10px (40 with Shift).
+  const onEdgeKey = (edge: Edge) => (event: KeyboardEvent) => {
     const step = event.shiftKey ? 40 : 10;
-    const delta = { ArrowRight: [step, 0], ArrowLeft: [-step, 0], ArrowDown: [0, step], ArrowUp: [0, -step] }[event.key];
-    if (!delta) return;
+    const dx = { ArrowLeft: -step, ArrowRight: step }[event.key] ?? 0;
+    const dy = { ArrowUp: -step, ArrowDown: step }[event.key] ?? 0;
+    if (!dx && !dy) return;
     event.preventDefault();
-    setSize((s) => ({ w: Math.max(MIN.w, s.w + delta[0]), h: Math.max(MIN.h, s.h + delta[1]) }));
+    const maxW = boundsRef.current?.offsetWidth ?? BOUNDS.w;
+    setBox((from) => resize(edge, { ...from, h: cardRef.current?.offsetHeight ?? from.h }, dx, dy, maxW));
   };
 
   return (
     <div className={styles.page}>
-      <canvas ref={liquidRef} className={styles.liquid} aria-hidden="true" />
       <header className={styles.top}>
         <span>{C.name}</span>
         <span className={styles.dim}>{C.role}</span>
@@ -310,171 +317,52 @@ export function Relay({ posts }: ThemeHomeProps) {
           <Spec at="nav" />
         </nav>
 
-        <div className={styles.frame} style={{ '--card-w': `${size.w}px` } as CSSProperties}>
-          <div
-            ref={cardRef}
-            id="relay-card"
-            role="tabpanel"
-            aria-labelledby={`relay-tab-${active}`}
-            className={styles.card}
-            style={{ minHeight: size.h }}
-          >
-            <span key={pulse} ref={hubRef} className={styles.hub} data-pulse={pulse > 0 || undefined} aria-hidden="true" />
-            <div key={active} className={styles.content} data-instant={instant || undefined}>
-              <Section id={active} posts={posts} go={(id) => go(id, 'click')} />
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className={styles.handle}
-            aria-label={`Resize the card, now ${shown.w} by ${shown.h}`}
-            onPointerDown={onHandleDown}
-            onPointerMove={onHandleMove}
-            onPointerUp={onHandleUp}
-            onPointerCancel={onHandleUp}
-            onKeyDown={onHandleKey}
-            onKeyUp={(event) => event.key.startsWith('Arrow') && fire(false)}
-          />
-          <span className={styles.readout} aria-hidden="true">
-            {shown.w} × {shown.h}
+        <div
+          ref={boundsRef}
+          className={styles.bounds}
+          data-dragging={dragging || undefined}
+          style={{ '--bounds-w': `${BOUNDS.w}px`, '--bounds-h': `${BOUNDS.h}px` } as CSSProperties}
+        >
+          <span className={styles.boundsLabel} aria-hidden="true">
+            max {BOUNDS.w} × {BOUNDS.h}
           </span>
-          <Spec at="card" />
+          <div className={styles.frame} style={{ top: box.top, width: box.w } as CSSProperties}>
+            <div
+              ref={cardRef}
+              id="relay-card"
+              role="tabpanel"
+              aria-labelledby={`relay-tab-${active}`}
+              className={styles.card}
+              style={{ minHeight: box.h }}
+            >
+              <span key={pulse} ref={hubRef} className={styles.hub} data-pulse={pulse > 0 || undefined} aria-hidden="true" />
+              <div key={active} className={styles.content} data-instant={instant || undefined}>
+                <Section id={active} contributions={contributions} posts={posts} go={(id) => go(id, 'click')} />
+              </div>
+            </div>
+
+            {EDGES.map((edge) => (
+              <button
+                key={edge}
+                type="button"
+                className={styles.edge}
+                data-edge={edge}
+                aria-label={`Resize from the ${edge.replace('-', ' ')} edge, now ${shown.w} by ${shown.h}`}
+                onPointerDown={onEdgeDown(edge)}
+                onPointerMove={onEdgeMove}
+                onPointerUp={onEdgeUp}
+                onPointerCancel={onEdgeUp}
+                onKeyDown={onEdgeKey(edge)}
+                onKeyUp={(event) => event.key.startsWith('Arrow') && fire(false)}
+              />
+            ))}
+            <span className={styles.readout} aria-hidden="true">
+              {shown.w} × {shown.h}
+            </span>
+            <Spec at="card" />
+          </div>
         </div>
       </div>
     </div>
-  );
-}
-
-function Section({
-  id,
-  posts,
-  go
-}: {
-  id: SectionId;
-  posts: ThemeHomeProps['posts'];
-  go: (id: SectionId) => void;
-}) {
-  const jump = (to: SectionId, label: ReactNode) => (
-    <button type="button" className={styles.inlineLink} onClick={() => go(to)}>
-      {label}
-    </button>
-  );
-
-  switch (id) {
-    case 'intro':
-      return (
-        <>
-          <h1>I build web products, from the database to the pixels.</h1>
-          <p>
-            Full stack engineer in Pakistan, shipping since 2017. These days I build web3 products at{' '}
-            {jump('work', C.now.title)} in Next.js, React and Rails.
-          </p>
-          <Action href={C.resumeUrl}>Résumé</Action>
-        </>
-      );
-    case 'work':
-      return (
-        <>
-          <h1>
-            {C.now.role} at {C.now.title}, since {C.now.period.split(' - ')[0]}.
-          </h1>
-          <Rows rows={C.career.slice(1).map((job) => ({ key: job.title, left: job.title, right: job.period }))} />
-          <Action href={C.linkedinUrl}>LinkedIn</Action>
-        </>
-      );
-    case 'projects':
-      return (
-        <>
-          <h1>Products I’ve shipped, from DeFi to property software.</h1>
-          <Rows
-            rows={C.projects.map((p) => ({
-              key: p.title,
-              left: (
-                <a href={p.href} target="_blank" rel="noreferrer">
-                  {p.title}
-                </a>
-              ),
-              right: p.stack
-            }))}
-          />
-          <Action href={C.githubUrl}>GitHub</Action>
-        </>
-      );
-    case 'writing':
-      return (
-        <>
-          <h1>Notes from building for the web, published on DEV.</h1>
-          {posts.length ? (
-            <Rows
-              rows={posts.slice(0, 5).map((post) => ({
-                key: post.slug,
-                left: <Link href={`/blog/${post.slug}`}>{post.title}</Link>,
-                right: format(new Date(post.published_at), 'MMM yyyy')
-              }))}
-            />
-          ) : (
-            <p>The latest posts load from DEV; the full list is on the blog.</p>
-          )}
-          <Action href="/blog" internal>
-            All posts
-          </Action>
-        </>
-      );
-    case 'blocks':
-      return (
-        <>
-          <h1>Blocks: sections you can copy into your own site.</h1>
-          <p>Each one comes with a live preview and its full source.</p>
-          <Rows rows={C.blocks.map((b) => ({ key: b.href, left: <Link href={b.href}>{b.title}</Link>, right: '' }))} />
-          <Action href="/blocks" internal>
-            Browse all {C.blockCount}
-          </Action>
-        </>
-      );
-    case 'contact':
-      return (
-        <>
-          <h1>Building something? Write to me.</h1>
-          <p>
-            <a href={`mailto:${C.email}`}>{C.email}</a>
-          </p>
-          <ul className={styles.links}>
-            {C.links.map((link) => (
-              <li key={link.label}>
-                <a href={link.href} target="_blank" rel="noreferrer">
-                  {link.label}
-                </a>
-              </li>
-            ))}
-          </ul>
-          <Action href={`mailto:${C.email}`}>Email me</Action>
-        </>
-      );
-  }
-}
-
-function Rows({ rows }: { rows: { key: string; left: ReactNode; right: ReactNode }[] }) {
-  return (
-    <ul className={styles.rows}>
-      {rows.map((row) => (
-        <li key={row.key}>
-          <span>{row.left}</span>
-          <span className={styles.dim}>{row.right}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-function Action({ href, internal, children }: { href: string; internal?: boolean; children: ReactNode }) {
-  return internal ? (
-    <Link href={href} className={styles.action}>
-      {children}
-    </Link>
-  ) : (
-    <a href={href} className={styles.action} target={href.startsWith('mailto:') ? undefined : '_blank'} rel="noreferrer">
-      {children}
-    </a>
   );
 }
