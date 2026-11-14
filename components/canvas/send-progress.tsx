@@ -5,6 +5,7 @@ import {
   BLUES,
   type BarStyle,
   GREENS,
+  INK,
   type PixelBar,
   STRANDS,
   barHeight,
@@ -45,7 +46,8 @@ const LOOKS: Record<CardId, BarStyle> = {
   terminal: GREENS,
   panorama: BLUES,
   midnight: SECTIONED,
-  notebook: SECTIONED
+  notebook: SECTIONED,
+  marginalia: INK
 };
 
 /** The least room either side of the bar, inside the screen, and its rows of cells. */

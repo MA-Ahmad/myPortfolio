@@ -1,25 +1,10 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useTheme } from 'next-themes';
-import { IBM_Plex_Mono, Newsreader } from 'next/font/google';
 import { ArrowLeft } from 'lucide-react';
 import { cn } from 'lib/cn';
+import { mono, serif } from '../fonts';
 import styles from '../marginalia.module.css';
-
-const serif = Newsreader({
-  subsets: ['latin'],
-  style: ['normal', 'italic'],
-  axes: ['opsz'],
-  variable: '--mg-font-serif',
-  display: 'swap'
-});
-
-const mono = IBM_Plex_Mono({
-  subsets: ['latin'],
-  weight: ['400', '500'],
-  variable: '--mg-font-mono',
-  display: 'swap'
-});
 
 export function MarginaliaLayout({ children }: { children: ReactNode }) {
   const rootRef = useRef<HTMLDivElement>(null);

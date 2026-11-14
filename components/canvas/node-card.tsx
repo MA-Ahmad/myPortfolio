@@ -1,5 +1,5 @@
 import type { CSSProperties, MouseEvent, PointerEvent, ReactNode } from 'react';
-import { Columns4, GripVertical, House, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
+import { Columns4, Pilcrow, GripVertical, House, Moon, NotebookPen, SquareTerminal } from 'lucide-react';
 import type { Point } from 'lib/canvas/geometry';
 import styles from './canvas.module.css';
 import { CARD_HEADER_H, type CardDef, type CardId, type Layout, cardHeight } from './nodes';
@@ -9,7 +9,8 @@ const ICONS: Record<CardId, typeof House> = {
   terminal: SquareTerminal,
   notebook: NotebookPen,
   midnight: Moon,
-  panorama: Columns4
+  panorama: Columns4,
+  marginalia: Pilcrow
 };
 
 type Props = {

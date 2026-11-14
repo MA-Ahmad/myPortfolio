@@ -1,6 +1,6 @@
 import type { Point } from 'lib/canvas/geometry';
 
-export type CardId = 'home' | 'terminal' | 'notebook' | 'midnight' | 'panorama';
+export type CardId = 'home' | 'terminal' | 'notebook' | 'midnight' | 'panorama' | 'marginalia';
 export type NodeId = CardId | 'display';
 export type Layout = 'desktop' | 'mobile';
 export type Side = 'left' | 'right' | 'top' | 'bottom';
@@ -30,7 +30,7 @@ const chrome = (preview: number) => CARD_HEADER_H + preview + CARD_BOTTOM;
 // The display on top and, straight under it, the slot the connected theme sits in. The other themes
 // wait in the same row on either side, a slot apart, and slide along it. On a phone the slots are
 // close enough that the neighbours' edges show.
-export const ROW: CardId[] = ['notebook', 'terminal', 'home', 'midnight', 'panorama'];
+export const ROW: CardId[] = ['marginalia', 'notebook', 'terminal', 'home', 'midnight', 'panorama'];
 export const DEFAULT_ACTIVE: CardId = 'home';
 const SLOT_W = CARD_W;
 const SLOT_STEP: Record<Layout, number> = { desktop: SLOT_W + 56, mobile: SLOT_W + 14 };
@@ -98,6 +98,15 @@ export const CARDS: CardDef[] = [
     width: { desktop: CARD_W, mobile: CARD_W },
     previewHeight: PREVIEW_H,
     packets: ['react.png', 'typescript.png', 'nextjs.png', 'claude.svg', 'tailwindcss.svg', 'vercel.svg']
+  },
+  {
+    id: 'marginalia',
+    title: 'Marginalia',
+    route: '/themes/marginalia',
+    href: '/themes/marginalia',
+    width: { desktop: CARD_W, mobile: CARD_W },
+    previewHeight: PREVIEW_H,
+    packets: ['nextjs.png', 'rails.png', 'react.png', 'typescript.png', 'postgresql.png', 'claude.svg']
   }
 ];
 

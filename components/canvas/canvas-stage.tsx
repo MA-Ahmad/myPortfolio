@@ -40,6 +40,7 @@ import { HomePreview } from './previews/home-preview';
 import { MidnightPreview } from './previews/midnight-preview';
 import { NotebookPreview } from './previews/notebook-preview';
 import { PanoramaPreview } from './previews/panorama-preview';
+import { MarginaliaPreview } from './previews/marginalia-preview';
 import { TerminalPreview } from './previews/terminal-preview';
 import { Strands, type StrandsHandle } from './strands';
 
@@ -98,6 +99,13 @@ function transitionColors(id: CardId) {
   // --pn-ink and --pn-bg in themes/panorama/panorama.module.css.
   if (id === 'panorama') return { edge: '#f4f4f5', background: '#1c1f24' };
   const dark = document.documentElement.classList.contains('dark');
+  // --mg-ink and --mg-bg in themes/marginalia/marginalia.module.css.
+  if (id === 'marginalia') {
+    return {
+      edge: dark ? 'oklch(93% 0.008 265)' : 'oklch(23% 0.025 265)',
+      background: dark ? 'oklch(17.5% 0.012 265)' : 'oklch(98.3% 0.004 255)'
+    };
+  }
   if (id === 'notebook') {
     return {
       edge: dark ? 'oklch(94% 0.004 80)' : 'oklch(21% 0.006 70)',
@@ -116,7 +124,7 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
   const stageRef = useRef<HTMLDivElement>(null);
   const [view, setView] = useState<View | null>(null);
   const [positions, setPositions] = useState(() => initialPositions('desktop'));
-  const [order, setOrder] = useState<NodeId[]>(['notebook', 'midnight', 'panorama', 'home', 'terminal', 'display']);
+  const [order, setOrder] = useState<NodeId[]>(['marginalia', 'notebook', 'midnight', 'panorama', 'home', 'terminal', 'display']);
   const [grabbed, setGrabbed] = useState<NodeId | null>(null);
   // The theme in the slot under the display, and whether the row is sliding to a new one.
   const [active, setActive] = useState<CardId>(DEFAULT_ACTIVE);
@@ -566,7 +574,8 @@ export function CanvasStage({ contributions }: { contributions: Activity[] }) {
     terminal: <TerminalPreview contributions={contributions} weeks={43} />,
     notebook: <NotebookPreview />,
     midnight: <MidnightPreview />,
-    panorama: <PanoramaPreview contributions={contributions} />
+    panorama: <PanoramaPreview contributions={contributions} />,
+    marginalia: <MarginaliaPreview />
   };
 
   return (

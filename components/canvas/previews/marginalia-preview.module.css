@@ -1,0 +1,136 @@
+/* Colours are the marginalia theme's own (--mg-* in themes/marginalia/marginalia.module.css). */
+.root {
+  --paper: oklch(98.3% 0.004 255);
+  --ink: oklch(23% 0.025 265);
+  --soft: oklch(47% 0.02 265);
+  --pen: oklch(47% 0.2 266);
+  --hl: oklch(92% 0.16 100 / 0.75);
+
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+:global(.dark) .root {
+  --paper: oklch(17.5% 0.012 265);
+  --ink: oklch(93% 0.008 265);
+  --soft: oklch(70% 0.015 265);
+  --pen: oklch(74% 0.13 262);
+  --hl: oklch(80% 0.14 95 / 0.32);
+}
+
+.paragraph {
+  position: absolute;
+  top: 12px;
+  left: 76px;
+  width: 136px;
+  margin: 0;
+  font-family: var(--mg-font-serif), Georgia, serif;
+  font-size: 9.5px;
+  line-height: 14px;
+}
+
+.word {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklch, var(--pen) 70%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 1.5px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.word[data-open] {
+  background: linear-gradient(var(--hl), var(--hl)) no-repeat 0 85% / 100% 55%;
+  text-decoration-color: var(--pen);
+}
+
+.wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.wires path {
+  fill: none;
+  stroke: var(--pen);
+  stroke-width: 0.75;
+  opacity: 0.6;
+}
+
+.draw {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  animation: draw 600ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.note {
+  position: absolute;
+  width: 62px;
+  font-family: var(--mg-font-mono), ui-monospace, monospace;
+  font-size: 6px;
+  line-height: 1.5;
+  color: var(--soft);
+  opacity: 0;
+}
+
+.note[data-side='left'] {
+  left: 8px;
+  text-align: right;
+}
+
+.note[data-side='right'] {
+  right: 6px;
+}
+
+.note[data-placed] {
+  animation: rise 360ms ease 220ms forwards;
+}
+
+.note[data-side='left'][data-placed] {
+  animation: none;
+  opacity: 1;
+}
+
+.title {
+  font-family: var(--mg-font-serif), Georgia, serif;
+  font-style: italic;
+  font-size: 8.5px;
+  line-height: 1.3;
+  color: var(--ink);
+  margin-bottom: 1px;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+
+  .note[data-placed] {
+    animation: none;
+    opacity: 1;
+  }
+}

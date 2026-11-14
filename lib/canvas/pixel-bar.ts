@@ -56,6 +56,13 @@ export const BLUES: BarStyle = {
   wash: ['#1d4ed8', '#3b82f6', '#8ec1ff']
 };
 
+/** Square pixels running from highlighter yellow into ink blue, like a marked-up page. */
+export const INK: BarStyle = {
+  shape: 'square',
+  segments: [{ color: '#3b5bdb', share: 1 }],
+  blend: ['#f2c94c', '#9aa7e8', '#4263eb', '#2343c4']
+};
+
 /**
  * The colour a style shows at `share` of the way along the bar (its segment's, its blend's, or
  * the middle of its wash), as a CSS hex colour.
