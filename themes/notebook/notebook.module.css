@@ -664,6 +664,23 @@ a.row:focus-visible > * {
   text-transform: lowercase;
 }
 
+/* The field fills its row, and the row sits in the dialog's frame: an outline 3px out ran over the
+   frame and the rule under the row. Focus shows on the row's search icon instead. */
+.root .searchInput:focus-visible {
+  outline: none;
+}
+
+.searchInputRow:focus-within {
+  color: var(--nb-ink);
+}
+
+/* 16px on phones: anything smaller and iOS Safari zooms the page when the field is focused. */
+@media (max-width: 639px) {
+  .searchInput {
+    font-size: 16px;
+  }
+}
+
 .searchInput::placeholder {
   color: var(--nb-faint);
 }

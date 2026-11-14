@@ -458,6 +458,8 @@
 
 .heroHead {
   position: relative;
+  /* Room for the sound switch (26px + a gap), so the handle wraps before it instead of under it. */
+  padding-right: 38px;
 }
 
 /* The sound switch sits at the top right of the page, level with the name. */

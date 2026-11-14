@@ -58,7 +58,10 @@ export function TerminalLayout({ children }: { children: ReactNode }) {
         'flex min-h-screen flex-col bg-term-bg text-term-fg antialiased'
       )}
     >
-      <header className="fixed inset-x-0 top-0 z-50 border-b border-term-border/50 bg-term-bg/80 backdrop-blur-md">
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-term-border/50">
+        {/* The frosted glass is its own layer: a backdrop-filter on the header itself would make it
+            the containing block of the search dialog's fixed overlay, clipping it to the header. */}
+        <div aria-hidden className="absolute inset-0 -z-10 bg-term-bg/80 backdrop-blur-md" />
         <nav className="mx-auto flex max-w-4xl items-center justify-between gap-2 px-4 py-3 sm:px-6">
           <div className="flex shrink-0 items-center gap-3">
             <Link

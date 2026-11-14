@@ -6,12 +6,14 @@ import html from 'remark-html';
 import { remark } from 'remark';
 import prism from 'remark-prism';
 import { ArrowLeftIcon } from 'lucide-react';
+import NextImage from 'next/image';
 import NextLink from 'next/link';
 import { BlogPost } from '../../interfaces/interface';
 import { GetStaticPaths, GetStaticProps, NextPage } from 'next';
 import PageLayout from 'components/layouts/pageLayout';
 import { blogRevalidate, getDevtoPostsOrNull, getLatestBlogPosts } from 'lib/blogPosts';
 import { SITE_URL } from 'data/constants';
+import { canOptimizeCover } from 'lib/cover-image';
 
 export interface AllBlogProps {
   blogDetails: BlogPost;
@@ -66,10 +68,16 @@ const ArticlePage: NextPage<AllBlogProps> = ({ articleContent, blogDetails }) =>
 
         {blogDetails.cover_image && !coverFailed ? (
           <div className="relative my-5 select-none">
-            <img
+            <NextImage
               className="aspect-[1200/630] w-full rounded-xl object-cover"
               src={blogDetails.cover_image}
               alt={blogDetails.title}
+              width={1200}
+              height={630}
+              sizes="(min-width: 768px) 736px, 100vw"
+              loading="eager"
+              fetchPriority="high"
+              unoptimized={!canOptimizeCover(blogDetails.cover_image)}
               onError={() => setCoverFailed(true)}
             />
             <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-black/15 dark:ring-white/15" />

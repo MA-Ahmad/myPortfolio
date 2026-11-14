@@ -650,3 +650,16 @@
     animation: none;
   }
 }
+
+/* Keyboard shortcuts mean nothing without a keyboard: on touch screens the legend and the key caps go. */
+@media (hover: none) and (pointer: coarse) {
+  .keys,
+  .kbd {
+    display: none;
+  }
+
+  /* Below 16px iOS Safari zooms the page when the field is focused. */
+  .find {
+    font-size: 16px;
+  }
+}

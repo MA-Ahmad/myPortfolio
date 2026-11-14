@@ -1,5 +1,7 @@
+import NextImage from 'next/image';
 import NextLink from 'next/link';
 import { format } from 'date-fns';
+import { canOptimizeCover } from 'lib/cover-image';
 
 export type BlogListPost = {
   slug: string;
@@ -27,13 +29,16 @@ export function PostItem({
     <div className="group/post relative flex h-full flex-col gap-2 p-2 transition-[background-color] ease-out hover:bg-accent-muted">
       {post.cover_image ? (
         <div className="relative select-none">
-          <img
-            className="aspect-[1200/630] rounded-xl grayscale transition-[filter] duration-300 ease-[cubic-bezier(0.42,0,0.58,1)] group-hover/post:grayscale-0"
+          <NextImage
+            className="aspect-[1200/630] rounded-xl object-cover grayscale transition-[filter] duration-300 ease-[cubic-bezier(0.42,0,0.58,1)] group-hover/post:grayscale-0"
             src={post.cover_image}
             alt={post.title}
             width={1200}
             height={630}
+            // One column on phones, two from `sm` in a 768px-wide page.
+            sizes="(min-width: 640px) 384px, 100vw"
             loading={imageLoading}
+            unoptimized={!canOptimizeCover(post.cover_image)}
           />
           <div className="pointer-events-none absolute inset-0 rounded-xl ring-1 ring-inset ring-black/15 dark:ring-white/15" />
         </div>
