@@ -13,7 +13,17 @@
   --mg-hl: oklch(92% 0.16 100 / 0.75);
   --mg-serif: var(--mg-font-serif), 'Iowan Old Style', Georgia, serif;
   --mg-mono: var(--mg-font-mono), ui-monospace, Menlo, monospace;
-  --mg-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --mg-card: oklch(100% 0 0);
+  /*
+   * Entering: a strong ease-out. Leaving: ease-in. Notes making room for a new one move with the
+   * same fast-start ease-out, so the room is there before the new note fades into it.
+   */
+  --mg-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  --mg-move: cubic-bezier(0.32, 0.72, 0, 1);
+  --mg-leave: cubic-bezier(0.4, 0, 1, 1);
+  /* The page's only layers: the back arrow, and the hover card above everything. */
+  --mg-z-back: 1;
+  --mg-z-preview: 50;
 
   min-height: 100vh;
   min-height: 100dvh;
@@ -21,9 +31,11 @@
   color: var(--mg-ink);
   font-family: var(--mg-mono);
   -webkit-font-smoothing: antialiased;
+  isolation: isolate;
 }
 
 :global(.dark) .root {
+  --mg-card: oklch(22.5% 0.014 265);
   --mg-bg: oklch(17.5% 0.012 265);
   --mg-ink: oklch(93% 0.008 265);
   --mg-soft: oklch(70% 0.015 265);
@@ -41,7 +53,7 @@
 
 .root a:focus-visible,
 .root button:focus-visible {
-  outline: 2px solid var(--mg-pen);
+  outline: 2px solid var(--mg-ink);
   outline-offset: 2px;
   border-radius: 2px;
 }
@@ -51,7 +63,7 @@
   position: absolute;
   top: max(16px, env(safe-area-inset-top, 0px));
   left: max(16px, env(safe-area-inset-left, 0px));
-  z-index: 10;
+  z-index: var(--mg-z-back);
   display: grid;
   place-items: center;
   width: 32px;
@@ -61,9 +73,11 @@
   transition: color 150ms ease, background-color 150ms ease;
 }
 
-.back:hover {
-  color: var(--mg-ink) !important;
-  background: var(--mg-faint);
+@media (hover: hover) and (pointer: fine) {
+  .back:hover {
+    color: var(--mg-ink) !important;
+    background: var(--mg-faint);
+  }
 }
 
 .page {
@@ -113,19 +127,25 @@
   border-radius: 2px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
+  /* The highlighter: drawn left to right when the note opens, wiped back faster when it folds. */
   background: linear-gradient(var(--mg-hl), var(--mg-hl)) no-repeat 0 85% / 0% 55%;
   transition:
-    background-size 320ms var(--mg-ease),
+    background-size 180ms var(--mg-leave),
     text-decoration-color 150ms ease;
 }
 
-.word:hover {
-  text-decoration-color: var(--mg-pen) !important;
+@media (hover: hover) and (pointer: fine) {
+  .word:hover {
+    text-decoration-color: var(--mg-pen) !important;
+  }
 }
 
 .word[data-open] {
   background-size: 100% 55%;
   text-decoration-color: var(--mg-pen) !important;
+  transition:
+    background-size 300ms var(--mg-ease),
+    text-decoration-color 150ms ease;
 }
 
 /* Wires and margin notes only exist beside the paragraph. */
@@ -151,6 +171,25 @@
 
 .note:not([data-open]) {
   display: none;
+}
+
+/* On a phone a footnote rises into place as it opens: only the one just opened, never on arrival. */
+@keyframes mg-footnote-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+    filter: blur(2px);
+  }
+}
+
+@media (max-width: 879.98px) {
+  .note[data-open][data-enter] {
+    animation: mg-footnote-in 240ms var(--mg-ease) both;
+  }
+
+  .stage[data-stagger] .note[data-open][data-enter] {
+    animation-delay: calc(var(--i) * 28ms);
+  }
 }
 
 /* Before the script runs, a tapped phrase follows its link to the note, which shows. */
@@ -180,6 +219,7 @@
 
 .noteHead h2 {
   margin: 0;
+  transition: color 150ms ease;
   font-family: var(--mg-serif);
   font-style: italic;
   font-weight: 400;
@@ -189,19 +229,23 @@
 
 .fold {
   flex: none;
+  display: grid;
+  place-items: center;
   width: 22px;
   height: 22px;
   margin-right: -4px;
+  padding: 0;
   border: 0;
   border-radius: 999px;
   background: none;
   color: var(--mg-soft);
-  font: inherit;
-  font-size: 16px;
-  line-height: 1;
   cursor: pointer;
   opacity: 0;
-  transition: opacity 150ms ease, background-color 150ms ease;
+  transition:
+    opacity 150ms ease,
+    color 150ms ease,
+    background-color 150ms ease,
+    scale 150ms ease-out;
 }
 
 .note:hover .fold,
@@ -209,9 +253,17 @@
   opacity: 1;
 }
 
-.fold:hover {
-  background: var(--mg-faint);
-  color: var(--mg-ink);
+@media (hover: hover) and (pointer: fine) {
+  .fold:hover {
+    background: var(--mg-faint);
+    color: var(--mg-ink);
+  }
+}
+
+.fold:active,
+.copy:active,
+.all:active {
+  scale: 0.96;
 }
 
 @media (hover: none) {
@@ -220,27 +272,30 @@
   }
 }
 
-/* On touch, the small buttons keep their look but take a 44px tap. */
+/* The small buttons keep their look but take a 40px click, 44px on touch. */
+.fold,
+.copy,
+.all {
+  position: relative;
+  --hit: 40px;
+}
+
+.fold::before,
+.copy::before,
+.all::before {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: max(100%, var(--hit));
+  height: var(--hit);
+  transform: translate(-50%, -50%);
+}
+
 @media (pointer: coarse) {
   .fold,
   .copy,
   .all {
-    position: relative;
-  }
-
-  .fold::before,
-  .copy::before,
-  .all::before {
-    content: '';
-    position: absolute;
-    inset: 50% auto auto 50%;
-    width: max(100%, 44px);
-    height: 44px;
-    transform: translate(-50%, -50%);
-  }
-
-  .email {
-    margin-bottom: 14px !important;
+    --hit: 44px;
   }
 }
 
@@ -322,6 +377,12 @@
   align-items: baseline;
   gap: 4px 10px;
   word-break: break-all;
+  /* Room for the Copy button's tap area above the links. */
+  margin-bottom: 14px !important;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
 }
 
 .copy,
@@ -334,13 +395,45 @@
   font-size: 11px;
   padding: 1px 9px;
   cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    scale 150ms ease-out;
 }
 
-.copy:hover,
-.all:hover {
-  color: var(--mg-ink);
-  border-color: var(--mg-soft);
+@media (hover: hover) and (pointer: fine) {
+  .copy:hover,
+  .all:hover {
+    color: var(--mg-ink);
+    border-color: var(--mg-soft);
+  }
+}
+
+/* "Copy" and "Copied" share one cell; the button keeps the wider one's width. */
+.copy {
+  display: inline-grid;
+}
+
+.copy > span {
+  grid-area: 1 / 1;
+  transition:
+    opacity 150ms ease,
+    transform 150ms var(--mg-ease);
+}
+
+.copy > span:last-child,
+.copy[data-copied] > span:first-child {
+  opacity: 0;
+  transform: translateY(3px);
+}
+
+.copy[data-copied] > span:first-child {
+  transform: translateY(-3px);
+}
+
+.copy[data-copied] > span:last-child {
+  opacity: 1;
+  transform: none;
 }
 
 .foot {
@@ -410,6 +503,7 @@
     pointer-events: none;
   }
 
+  /* A closed note waits, faded and a touch blurred, a few px below where it opens. */
   .note,
   .note:not([data-open]) {
     display: block;
@@ -421,34 +515,61 @@
     padding-left: 0;
     transform: translateY(calc(var(--y) + 6px));
     opacity: 0;
+    filter: blur(3px);
     visibility: hidden;
   }
 
   .note[data-placed][data-open] {
     transform: translateY(var(--y));
     opacity: 1;
+    filter: none;
     visibility: visible;
     pointer-events: auto;
   }
 
+  /*
+   * Opening: the wire draws out from the word, the notes below slide down to make room, and the
+   * new note settles in once they have. Folding is quicker and quieter. A wire glides with its
+   * note on the same timing.
+   */
   .stage[data-settled] .note {
+    --d: 0ms;
     transition:
-      transform 360ms var(--mg-ease),
-      opacity 220ms ease,
-      visibility 0s linear 220ms;
+      transform 300ms var(--mg-move) var(--d),
+      opacity 140ms var(--mg-leave) var(--d),
+      filter 140ms var(--mg-leave) var(--d),
+      visibility 0s linear calc(var(--d) + 140ms);
   }
 
   .stage[data-settled] .note[data-open] {
     transition:
-      transform 360ms var(--mg-ease),
-      opacity 280ms ease 140ms,
-      visibility 0s;
+      transform 300ms var(--mg-move) var(--d),
+      opacity 220ms var(--mg-ease) calc(var(--d) + 110ms),
+      filter 220ms var(--mg-ease) calc(var(--d) + 110ms),
+      visibility 0s linear var(--d);
   }
 
   .stage[data-settled] .wires path {
+    --d: 0ms;
     transition:
-      stroke-dashoffset 420ms var(--mg-ease),
-      opacity 150ms ease;
+      stroke-dashoffset 180ms var(--mg-leave) var(--d),
+      d 300ms var(--mg-move),
+      opacity 150ms ease,
+      stroke-width 150ms ease;
+  }
+
+  .stage[data-settled] .wires path[data-open] {
+    transition:
+      stroke-dashoffset 300ms var(--mg-ease) var(--d),
+      d 300ms var(--mg-move),
+      opacity 150ms ease,
+      stroke-width 150ms ease;
+  }
+
+  /* Open all / fold all: a ripple in paragraph order. */
+  .stage[data-stagger] .note,
+  .stage[data-stagger] .wires path {
+    --d: calc(var(--i) * 28ms);
   }
 
   .note[data-hot] .noteHead h2 {
@@ -513,7 +634,220 @@
   .stage[data-settled] .note,
   .stage[data-settled] .note[data-open],
   .stage[data-settled] .wires path,
-  .word {
+  .stage[data-settled] .wires path[data-open],
+  .word,
+  .word[data-open],
+  .copy > span,
+  .fold,
+  .copy,
+  .all {
     transition: none;
   }
+
+  .note[data-open][data-enter] {
+    animation: none;
+  }
+
+  .note,
+  .note:not([data-open]) {
+    filter: none;
+  }
+
+  .fold:active,
+  .copy:active,
+  .all:active {
+    scale: none;
+  }
+}
+
+/* The hover card: fixed to the window, following the mouse; never in the way of a click. */
+.previewAnchor {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: var(--mg-z-preview);
+  pointer-events: none;
+}
+
+.preview {
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--mg-card);
+  color: var(--mg-ink);
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--mg-ink) 9%, transparent),
+    0 2px 4px -1px color-mix(in oklch, var(--mg-ink) 8%, transparent),
+    0 14px 32px -10px color-mix(in oklch, var(--mg-ink) 26%, transparent);
+  user-select: none;
+  will-change: transform;
+}
+
+.plate {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 4px;
+}
+
+.plate figcaption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 2px 2px 0;
+}
+
+.plateRow {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.plateRow > span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plateTitle {
+  font-family: var(--mg-serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.plateMeta {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--mg-soft);
+}
+
+.plateMeta b {
+  font-weight: 500;
+  color: var(--mg-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A picture keeps its shape before it loads, with a hairline inside its edge. */
+.shot {
+  position: relative;
+  overflow: hidden;
+  margin: -4px -4px 0;
+  border-radius: 7px;
+  background: var(--mg-faint);
+}
+
+.shot img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.shot::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--mg-ink) 8%, transparent);
+  pointer-events: none;
+}
+
+.logo {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 9px;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px color-mix(in oklch, var(--mg-ink) 8%, transparent);
+}
+
+.clock {
+  font-family: var(--mg-serif);
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
+}
+
+.clock small {
+  margin-left: 6px;
+  font-family: var(--mg-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--mg-soft);
+}
+
+.names {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.names li::before {
+  content: '— ';
+  color: var(--mg-soft);
+}
+
+.icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 2px 0;
+}
+
+.icons img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+:global(.dark) .icons img[src*='nextjs'],
+:global(.dark) .icons img[src*='vercel'] {
+  filter: invert(1);
+}
+
+/* AWS's lettering is black: on the dark card it sits on a small light chip. */
+:global(.dark) .icons img[src*='aws'] {
+  padding: 2px;
+  border-radius: 5px;
+  background: oklch(96% 0 0);
+}
+
+/* Twenty weeks of contributions, a column a week, in the page's ink. */
+.heat {
+  display: grid;
+  grid-template-rows: repeat(7, 8px);
+  grid-auto-flow: column;
+  grid-auto-columns: 8px;
+  gap: 2.5px;
+}
+
+.heat i {
+  border-radius: 2px;
+  background: color-mix(in oklch, var(--mg-ink) 7%, transparent);
+}
+
+.heat i[data-level='1'] {
+  background: color-mix(in oklch, var(--mg-pen) 30%, transparent);
+}
+
+.heat i[data-level='2'] {
+  background: color-mix(in oklch, var(--mg-pen) 55%, transparent);
+}
+
+.heat i[data-level='3'] {
+  background: color-mix(in oklch, var(--mg-pen) 78%, transparent);
+}
+
+.heat i[data-level='4'] {
+  background: var(--mg-pen);
 }

@@ -1,4 +1,4 @@
-import { BLOCKS } from 'blocks/registry';
+import { BLOCKS, BLOCK_CATEGORIES } from 'blocks/registry';
 import { companies, skillsArray } from 'data/data';
 import { PROFILE } from 'data/profile';
 import { projectsList } from 'data/projectData';
@@ -95,6 +95,27 @@ export const MARGINALIA_CONTENT = {
     .slice(0, 4)
     .map((block) => ({ title: block.title, href: `/blocks/${block.category}/${block.name}` })),
   blockCount: BLOCKS.length,
+  /** Blocks with a card picture, newest first, for the hover cards. */
+  blockCards: [...BLOCKS]
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .flatMap((block) =>
+      block.images
+        ? [
+            {
+              title: block.title,
+              href: `/blocks/${block.category}/${block.name}`,
+              card: block.images.card,
+              alt: block.images.alt,
+              categoryTitle: BLOCK_CATEGORIES.find((c) => c.name === block.category)?.title ?? 'Block'
+            }
+          ]
+        : []
+    ),
+  companies,
+  /** The stack's hover card: what is used most, in this order. */
+  stackIcons: ['React', 'Nextjs', 'Ruby on Rails', 'Typescript', 'Postgres', 'Nestjs', 'Tailwind CSS', 'Redis', 'AWS']
+    .map((name) => skillsArray.find((skill) => skill.name === name)!)
+    .map((skill) => ({ name: SKILL_NAMES[skill.name] ?? skill.name, image: skill.image })),
   email: PROFILE.email,
   links: [
     ...PROFILE.socials

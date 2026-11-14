@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { format } from 'date-fns';
+import { useTheme } from 'next-themes';
 import type { Activity } from 'lib/github-contributions';
 import type { BlogListPost } from 'components/blog/post-item';
 import { MARGINALIA_CONTENT as C, type NoteId } from '../content';
+import { blockPreview, postPreview } from './plates';
+import { usePreview } from './preview';
 import styles from '../marginalia.module.css';
 
 type NoteProps = { contributions: Activity[]; posts: BlogListPost[] };
@@ -23,6 +26,10 @@ export const NOTE_TITLES: Record<NoteId, string> = {
 };
 
 export function NoteBody({ id, contributions, posts }: NoteProps & { id: NoteId }) {
+  const preview = usePreview();
+  const dark = useTheme().resolvedTheme === 'dark';
+  // A link with a picture behind it shows it beside the cursor.
+  const glimpse = (key: string, node: React.ReactNode) => (node && preview ? preview.bind(key, node) : {});
   switch (id) {
     case 'place':
       return <PlaceNote />;
@@ -86,7 +93,9 @@ export function NoteBody({ id, contributions, posts }: NoteProps & { id: NoteId 
           <ul className={styles.rows}>
             {posts.slice(0, 4).map((post) => (
               <li key={post.slug}>
-                <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                <Link href={`/blog/${post.slug}`} {...glimpse(`post:${post.slug}`, postPreview(post))}>
+                  {post.title}
+                </Link>
                 <span className={styles.dim}>{format(new Date(post.published_at), 'MMM yyyy')}</span>
               </li>
             ))}
@@ -102,7 +111,9 @@ export function NoteBody({ id, contributions, posts }: NoteProps & { id: NoteId 
           <ul className={styles.list}>
             {C.blocks.map((block) => (
               <li key={block.href}>
-                <Link href={block.href}>{block.title}</Link>
+                <Link href={block.href} {...glimpse(`block:${block.href}`, blockPreview(block.href, dark))}>
+                  {block.title}
+                </Link>
               </li>
             ))}
           </ul>
@@ -151,7 +162,7 @@ function PlaceNote() {
   return (
     <p>
       {C.timeZone.replace('_', ' ')}, GMT+5.
-      {now ? <> It’s {now} here.</> : null} Remote with teams across time zones.
+      {now ? <> It’s <span className={styles.num}>{now}</span> here.</> : null} Remote with teams across time zones.
     </p>
   );
 }
@@ -215,8 +226,16 @@ function ContactNote() {
     <>
       <p className={styles.email}>
         <a href={`mailto:${C.email}`}>{C.email}</a>
-        <button type="button" className={styles.copy} onClick={copy}>
-          {copied ? 'Copied' : 'Copy'}
+        {/* Both labels are laid out on top of each other, so the swap doesn't nudge the row. */}
+        <button
+          type="button"
+          className={styles.copy}
+          onClick={copy}
+          data-copied={copied || undefined}
+          aria-label={copied ? 'Email copied' : 'Copy email'}
+        >
+          <span aria-hidden="true">Copy</span>
+          <span aria-hidden="true">Copied</span>
         </button>
       </p>
       <ul className={styles.inline}>

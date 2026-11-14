@@ -1,14 +1,20 @@
 import {
   type KeyboardEvent,
   type MouseEvent,
+  type PointerEvent,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState
 } from 'react';
+import { useTheme } from 'next-themes';
+import { X } from 'lucide-react';
 import type { ThemeHomeProps } from 'themes/registry';
 import { MARGINALIA_CONTENT as C, type NoteId, OPEN_AT_START, PARAGRAPH, SIDE } from '../content';
 import { NOTE_TITLES, NoteBody } from './notes';
+import { phrasePreview, preloadList } from './plates';
+import { PreviewProvider, usePreview } from './preview';
 import styles from '../marginalia.module.css';
 
 /** Notes in the order their words appear in the paragraph. */
@@ -43,8 +49,21 @@ type Placed = { y: number; side: 'left' | 'right'; wire: string };
 
 /** Space between two notes stacked in the same margin. */
 const GAP = 18;
+/** Opening or folding every note at once runs them in paragraph order, this far apart. */
+const STAGGER_MS = 28;
 
-export function Marginalia({ contributions, posts }: ThemeHomeProps) {
+export function Marginalia(props: ThemeHomeProps) {
+  const dark = useTheme().resolvedTheme === 'dark';
+  const preload = useMemo(() => preloadList(props.posts, dark), [props.posts, dark]);
+  return (
+    <PreviewProvider preload={preload}>
+      <Page {...props} dark={dark} />
+    </PreviewProvider>
+  );
+}
+
+function Page({ contributions, posts, dark }: ThemeHomeProps & { dark: boolean }) {
+  const preview = usePreview();
   const [open, setOpen] = useState<NoteId[]>(OPEN_AT_START);
   const [hot, setHot] = useState<NoteId | null>(null);
   const [placed, setPlaced] = useState<Partial<Record<NoteId, Placed>>>({});
@@ -58,14 +77,27 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
   const anchors = useRef<Partial<Record<NoteId, HTMLAnchorElement | null>>>({});
   const notes = useRef<Partial<Record<NoteId, HTMLElement | null>>>({});
 
-  // The note opened last, so a footnote that opens below the screen can be brought into view.
+  // "Open all" and "Fold all" ripple through the notes in paragraph order instead of all at once.
+  const [stagger, setStagger] = useState(false);
+  useEffect(() => {
+    if (!stagger) return;
+    const timer = window.setTimeout(() => setStagger(false), ORDER.length * STAGGER_MS + 400);
+    return () => window.clearTimeout(timer);
+  }, [stagger]);
+
   // The note opened last (a new object each time), so a footnote that opens below the screen can
   // be brought into view.
   const [opened, setOpened] = useState<{ id: NoteId } | null>(null);
   const toggle = (id: NoteId) => {
+    setStagger(false);
     if (open.includes(id)) return setOpen(open.filter((n) => n !== id));
     setOpen([...open, id]);
     setOpened({ id });
+  };
+
+  // Hover only lights a wire for a real mouse: a tap would leave it lit.
+  const hover = (id: NoteId | null) => (event: PointerEvent) => {
+    if (event.pointerType === 'mouse') setHot(id);
   };
 
   // A link to a note (#note-web3) opens it. Before the script runs, a tapped phrase shows its note
@@ -179,6 +211,24 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
 
   const allOpen = open.length === ORDER.length;
 
+  // A phrase lights its wire and, while its note is closed, shows a glimpse of it beside the cursor.
+  const phraseHandlers = (id: NoteId) => {
+    const glimpse = !open.includes(id) && preview ? preview.bind(id, phrasePreview(id, { contributions, posts, dark })) : null;
+    return {
+      onPointerEnter: (event: PointerEvent) => {
+        hover(id)(event);
+        glimpse?.onPointerEnter(event);
+      },
+      onPointerMove: glimpse?.onPointerMove,
+      onPointerLeave: (event: PointerEvent) => {
+        hover(null)(event);
+        if (glimpse) glimpse.onPointerLeave();
+        else preview?.hide();
+      },
+      onPointerDown: () => preview?.hide()
+    };
+  };
+
   return (
     <div className={styles.page}>
       <header className={styles.top}>
@@ -191,6 +241,7 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
         className={styles.stage}
         data-mode={mode ?? undefined}
         data-settled={settled ? '' : undefined}
+        data-stagger={stagger ? '' : undefined}
         style={{ minHeight: mode && mode !== 'foot' ? height : undefined }}
       >
         <p ref={paragraphRef} className={styles.paragraph}>
@@ -212,8 +263,7 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
                 data-hot={hot === run.note ? '' : undefined}
                 onClick={onAnchorClick(run.note)}
                 onKeyDown={onAnchorKey(run.note)}
-                onPointerEnter={() => setHot(run.note)}
-                onPointerLeave={() => setHot(null)}
+                {...phraseHandlers(run.note)}
               >
                 {run.text}
               </a>
@@ -227,6 +277,9 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
               <path
                 key={id}
                 d={placed[id]!.wire}
+                // As a style too, so the wire glides with its note when the notes restack (where
+                // the browser animates `d`; elsewhere it moves at once).
+                style={{ d: `path('${placed[id]!.wire}')`, '--i': ORDER.indexOf(id) } as React.CSSProperties}
                 pathLength={1}
                 data-open={open.includes(id) ? '' : undefined}
                 data-hot={hot === id ? '' : undefined}
@@ -249,13 +302,15 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
                 className={styles.note}
                 data-side={SIDE[id]}
                 data-open={isOpen ? '' : undefined}
+                // Only the note just opened (or every note, for "Open all") plays the footnote entrance.
+                data-enter={isOpen && (stagger || opened?.id === id) ? '' : undefined}
                 data-placed={spot ? '' : undefined}
                 data-hot={hot === id ? '' : undefined}
                 aria-hidden={!isOpen}
                 inert={!isOpen}
-                style={{ '--y': `${spot?.y ?? 0}px` } as React.CSSProperties}
-                onPointerEnter={() => setHot(id)}
-                onPointerLeave={() => setHot(null)}
+                style={{ '--y': `${spot?.y ?? 0}px`, '--i': ORDER.indexOf(id) } as React.CSSProperties}
+                onPointerEnter={hover(id)}
+                onPointerLeave={hover(null)}
               >
                 <div className={styles.noteHead}>
                   <h2>{NOTE_TITLES[id]}</h2>
@@ -265,7 +320,7 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
                     onClick={() => toggle(id)}
                     aria-label={`Close note: ${NOTE_TITLES[id]}`}
                   >
-                    ×
+                    <X size={14} strokeWidth={1.75} aria-hidden="true" />
                   </button>
                 </div>
                 <NoteBody id={id} contributions={contributions} posts={posts} />
@@ -280,7 +335,10 @@ export function Marginalia({ contributions, posts }: ThemeHomeProps) {
         <button
           type="button"
           className={styles.all}
-          onClick={() => setOpen(allOpen ? [] : ORDER)}
+          onClick={() => {
+                    setStagger(true);
+            setOpen(allOpen ? [] : ORDER);
+          }}
         >
           {allOpen ? 'Fold all notes' : 'Open all notes'}
         </button>
